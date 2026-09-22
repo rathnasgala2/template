@@ -61,7 +61,7 @@
     "test": "node --test",
     "licenses:generate": "node scripts/generate-license-inventory.mjs",
     "licenses:check": "node scripts/generate-license-inventory.mjs --check",
-    "sbom:generate": "cyclonedx-npm --output-file sbom.cdx.json --output-format JSON --spec-version 1.6 && node scripts/apply-sbom-normalization.mjs",
+    "sbom:generate": "cyclonedx-npm --package-lock-only --output-file sbom.cdx.json --output-format JSON --spec-version 1.6 && node scripts/apply-sbom-normalization.mjs",
     "sbom:check": "node scripts/check-sbom-current.mjs",
     "workflows:check": "node scripts/check-workflow-pins.mjs",
     "workflows:drift": "node scripts/check-workflow-drift.mjs",

@@ -44,6 +44,7 @@ async function main() {
       'npx',
       [
         'cyclonedx-npm',
+        '--package-lock-only',
         '--output-file',
         freshPath,
         '--output-format',
