@@ -9,10 +9,7 @@ test('package.json consumes @rathnasgala2/schemas per LOCAL-1', async () => {
   const packageJson = JSON.parse(
     await readFile(path.join(REPO_ROOT, 'package.json'), 'utf8'),
   );
-  assert.equal(
-    packageJson.dependencies['@rathnasgala2/schemas'],
-    'file:../../local-packages/rathnasgala2-schemas-2.8.0.tgz',
-  );
+  assert.equal(packageJson.dependencies['@rathnasgala2/schemas'], '2.11.0');
 });
 
 test('package-lock.json pins @rathnasgala2/schemas version and integrity', async () => {
@@ -21,7 +18,7 @@ test('package-lock.json pins @rathnasgala2/schemas version and integrity', async
   );
   const entry = lock.packages['node_modules/@rathnasgala2/schemas'];
   assert.ok(entry, '@rathnasgala2/schemas must be present in the lockfile');
-  assert.equal(entry.version, '2.8.0');
+  assert.equal(entry.version, '2.11.0');
   assert.ok(
     typeof entry.integrity === 'string' && entry.integrity.length > 0,
     'the lockfile must record a resolved integrity hash for the tarball',

@@ -485,13 +485,14 @@ compatibility promise in this MVP (DEC-097 section 2).
 
 ## Consuming `@rathnasgala2/schemas`
 
-Per LOCAL-1/LOCAL-39, this repository consumes the packed local tarball
-`/Users/anand/ws/galascribe/local-packages/rathnasgala2-schemas-2.8.0.tgz`,
-declared as
-`"@rathnasgala2/schemas": "file:../../local-packages/rathnasgala2-schemas-2.8.0.tgz"`
-so `package-lock.json` records the resolved version and integrity hash. Registry
-resolution replaces this at remote publication time; the tarball dependency is
-not release evidence. Only the `"."` export (`validateGalaDocument`,
+This repository consumes `@rathnasgala2/schemas@2.11.0` from the public npm
+registry, declared as `"@rathnasgala2/schemas": "2.11.0"` (exact pin, no range)
+so `package-lock.json` records the resolved version and integrity hash. The
+LOCAL-1/LOCAL-39 local-tarball convention
+(`file:../../local-packages/rathnasgala2-schemas-*.tgz`) is retired for this
+package now that it publishes to the registry. The 2.8.0->2.11.0 convergence
+changes none of the four roots this renderer validates, for the same reason the
+2.7.0-2.8.0 delta below did not. Only the `"."` export (`validateGalaDocument`,
 `GALA_SCHEMA_IDS`) is consumed; the 2.6.0 `./runtime-origins` narrow export and
 every other addition through 2.6.1 (new OpenAPI operations, App route/catalog
 copy, the `PrincipalSummary`/`AuthenticatorSummary`/keyset field additions) are
