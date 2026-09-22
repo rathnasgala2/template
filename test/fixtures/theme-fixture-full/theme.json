@@ -1,0 +1,23 @@
+{
+  "schemaId": "urn:gala:schema:theme-contract:2.0.0",
+  "schemaVersion": "2.0.0",
+  "themeId": "fixture-full",
+  "package": "@rathnasgala2/theme-default@2.0.0",
+  "contractVersion": "2.0.0",
+  "templateRange": "^2.0.0",
+  "stylesheets": ["tokens.css", "components.css", "utilities.css", "print.css"],
+  "cssLayers": [
+    "gala-tokens",
+    "gala-components",
+    "gala-utilities",
+    "gala-print"
+  ],
+  "assets": [
+    { "path": "tokens.css", "mediaType": "text/css" },
+    { "path": "components.css", "mediaType": "text/css" },
+    { "path": "utilities.css", "mediaType": "text/css" },
+    { "path": "print.css", "mediaType": "text/css" },
+    { "path": "assets/mark.svg", "mediaType": "image/svg+xml" }
+  ],
+  "note": "S2-T12 in-repo fixture theme, shaped like the S2-T13 package file set for the renderer's own theme-asset-integration tests only. Not a real, conformant theme package (authoring one is S2-T13's task)."
+}

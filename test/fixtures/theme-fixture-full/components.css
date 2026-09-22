@@ -1,0 +1,5 @@
+@layer gala-components {
+  [data-gala-publication-root] header {
+    background-color: var(--gala-color-canvas);
+  }
+}

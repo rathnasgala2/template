@@ -1,0 +1,5 @@
+@layer gala-components {
+  [data-gala-publication-root] footer {
+    background-color: var(--gala-color-canvas);
+  }
+}

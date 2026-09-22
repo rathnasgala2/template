@@ -1,0 +1,5 @@
+@layer gala-utilities {
+  [data-gala-publication-root] .token {
+    color: var(--gala-color-canvas);
+  }
+}

@@ -1,0 +1,5 @@
+@layer gala-print {
+  [data-gala-publication-root] nav {
+    display: none;
+  }
+}

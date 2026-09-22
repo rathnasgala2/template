@@ -1,0 +1,6 @@
+coverage/
+node_modules/
+sbom.cdx.json
+package-lock.json
+THIRD_PARTY_LICENSES.json
+contracts/*.jcs

@@ -1,0 +1,9 @@
+{
+  "absolute": true,
+  "formats": ["javascript"],
+  "ignore": ["**/node_modules/**", "types/**", "**/coverage/**"],
+  "minLines": 5,
+  "minTokens": 50,
+  "reporters": ["console"],
+  "threshold": 3
+}

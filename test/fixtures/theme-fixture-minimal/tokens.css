@@ -1,0 +1,8 @@
+@layer gala-tokens {
+  [data-gala-publication-root][data-gala-resolved-color-mode='light'] {
+    --gala-color-canvas: #ffffff;
+  }
+  [data-gala-publication-root][data-gala-resolved-color-mode='dark'] {
+    --gala-color-canvas: #000000;
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "name": "@rathnasgala2/template",
+  "version": "2.0.0",
+  "description": "Deterministic Eleventy-backed static publication renderer for Galascribe portable repositories.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rathnasgala2/template.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rathnasgala2/template/issues"
+  },
+  "homepage": "https://github.com/rathnasgala2/template#readme",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./src/core/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "types": "./types/index.d.ts",
+  "files": [
+    "src/core/",
+    "contracts/",
+    "types/",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
+  "engines": {
+    "node": "24.18.0",
+    "npm": "11.16.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "24.18.0",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "npm",
+      "version": "11.16.0",
+      "onFail": "error"
+    }
+  },
+  "packageManager": "npm@11.16.0",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "typecheck": "tsc --project tsconfig.json",
+    "architecture": "depcruise --validate .dependency-cruiser.cjs src contracts eslint.config.js",
+    "duplication": "jscpd src scripts test eslint.config.js",
+    "contracts:generate": "node scripts/generate-contracts.mjs",
+    "contracts:check": "node scripts/generate-contracts.mjs --check",
+    "test": "node --test",
+    "licenses:generate": "node scripts/generate-license-inventory.mjs",
+    "licenses:check": "node scripts/generate-license-inventory.mjs --check",
+    "sbom:generate": "cyclonedx-npm --output-file sbom.cdx.json --output-format JSON --spec-version 1.6 && node scripts/apply-sbom-normalization.mjs",
+    "sbom:check": "node scripts/check-sbom-current.mjs",
+    "workflows:check": "node scripts/check-workflow-pins.mjs",
+    "workflows:drift": "node scripts/check-workflow-drift.mjs",
+    "audit": "npm audit --audit-level=high",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run architecture && npm run duplication && npm run contracts:check && npm test && npm run licenses:check && npm run sbom:check && npm run workflows:check && npm run audit"
+  },
+  "dependencies": {
+    "@11ty/eleventy": "3.1.6",
+    "@11ty/eleventy-plugin-syntaxhighlight": "5.0.2",
+    "@rathnasgala2/schemas": "file:../../local-packages/rathnasgala2-schemas-2.8.0.tgz",
+    "jpeg-js": "0.4.4",
+    "markdown-it": "14.3.1",
+    "sanitize-html": "2.17.7"
+  },
+  "devDependencies": {
+    "@cyclonedx/cyclonedx-npm": "6.0.1",
+    "@eslint/js": "10.0.1",
+    "@types/markdown-it": "14.2.0",
+    "@types/node": "24.13.4",
+    "@types/sanitize-html": "2.16.1",
+    "dependency-cruiser": "18.2.0",
+    "eslint": "10.10.0",
+    "eslint-plugin-jsdoc": "64.3.9",
+    "globals": "17.12.0",
+    "jscpd": "5.2.0",
+    "jsdom": "30.0.1",
+    "parse5": "8.0.1",
+    "prettier": "3.9.6",
+    "typescript": "5.9.3"
+  }
+}
