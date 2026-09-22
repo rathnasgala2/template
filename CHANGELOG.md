@@ -10,6 +10,22 @@ and this project adheres to
 
 ### Changed
 
+- **Contract re-pin: `@rathnasgala2/schemas` moved from the LOCAL-1 local
+  tarball to the published registry version, exact pin `2.11.0`** (2026-09-22
+  contract re-pin packet). CI was failing with `ENOENT` on
+  `local-packages/rathnasgala2-schemas-2.8.0.tgz`, a path that only ever existed
+  on the owner's laptop; the package is now public on `registry.npmjs.org`, so
+  `package.json` declares `"@rathnasgala2/schemas": "2.11.0"` and
+  `package-lock.json` resolves it from the registry with a verified sha512
+  integrity hash. `test/schema-consumption.test.js` and
+  `CLAUDE.md`/`README.md`'s hardcoded `2.8.0`/tarball-path literals were updated
+  in the same commit. Added `npm run schema-pin:check`
+  (`scripts/check-no-local-schema-pin.mjs`), wired into `verify`, so a
+  `file:.../local-packages/...` specifier can never reappear silently. The four
+  roots this renderer validates (`theme-contract`, `build-input`, `lock`,
+  `artifact-manifest`) and the `"."` export are unchanged between 2.8.0 and
+  2.11.0, for the same reason the 2.7.0-2.8.0 delta below did not touch them.
+
 - THEMES-2.8.0 (2026-09-18): `@rathnasgala2/schemas` pin moved from the packed
   2.6.1 tarball to `rathnasgala2-schemas-2.8.0.tgz` (sha256
   `6352293855cdcff9054d43ced876740644f6b45bc813eda3990b646ec9bef563`, LOCAL-1);

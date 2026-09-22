@@ -65,13 +65,14 @@
     "sbom:check": "node scripts/check-sbom-current.mjs",
     "workflows:check": "node scripts/check-workflow-pins.mjs",
     "workflows:drift": "node scripts/check-workflow-drift.mjs",
+    "schema-pin:check": "node scripts/check-no-local-schema-pin.mjs",
     "audit": "npm audit --audit-level=high",
-    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run architecture && npm run duplication && npm run contracts:check && npm test && npm run licenses:check && npm run sbom:check && npm run workflows:check && npm run audit"
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run architecture && npm run duplication && npm run contracts:check && npm run schema-pin:check && npm test && npm run licenses:check && npm run sbom:check && npm run workflows:check && npm run audit"
   },
   "dependencies": {
     "@11ty/eleventy": "3.1.6",
     "@11ty/eleventy-plugin-syntaxhighlight": "5.0.2",
-    "@rathnasgala2/schemas": "file:../../local-packages/rathnasgala2-schemas-2.8.0.tgz",
+    "@rathnasgala2/schemas": "2.11.0",
     "jpeg-js": "0.4.4",
     "markdown-it": "14.3.1",
     "sanitize-html": "2.17.7"

@@ -36,17 +36,16 @@ any `interactions`/`whitelabel`/`newsletter`/`prism` boundary.
 
 ## Contract sources and generation commands
 
-This repository consumes `@rathnasgala2/schemas@2.8.0` (LOCAL-1/LOCAL-39: the
-packed tarball at
-`/Users/anand/ws/galascribe/local-packages/rathnasgala2-schemas-2.8.0.tgz`,
-declared as a `file:` dependency so `package-lock.json` pins its resolved
-version and integrity). It owns two of its own published contracts,
-`contracts/render-policy.jcs` and `contracts/theme-styling-contract.jcs`,
-emitted as compact RFC 8785 JCS by `npm run contracts:generate` and
-drift-checked by `npm run contracts:check`. `contracts/render-policy.jcs` is
-S2-T04's real, closed sanitizer/parser catalog, generated from
-`src/core/internal/render-policy-content.js` (the single source of truth both
-the published contract and the runtime output-security pipeline in
+This repository consumes `@rathnasgala2/schemas@2.11.0` from the public npm
+registry (the LOCAL-1 `file:../../local-packages/...` tarball convention is
+retired now that `@rathnasgala2/schemas` publishes; `package-lock.json` pins its
+resolved registry version and integrity). It owns two of its own published
+contracts, `contracts/render-policy.jcs` and
+`contracts/theme-styling-contract.jcs`, emitted as compact RFC 8785 JCS by
+`npm run contracts:generate` and drift-checked by `npm run contracts:check`.
+`contracts/render-policy.jcs` is S2-T04's real, closed sanitizer/parser catalog,
+generated from `src/core/internal/render-policy-content.js` (the single source
+of truth both the published contract and the runtime output-security pipeline in
 `src/core/internal/content-security.js` read from);
 `contracts/theme-styling-contract.jcs` is S2-T12's real, closed
 `templateStylingContract` catalog (DEC-097 section 4), generated from
