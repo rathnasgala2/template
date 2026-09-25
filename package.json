@@ -25,7 +25,6 @@
     "contracts/",
     "types/",
     "LICENSE",
-    "NOTICE",
     "README.md"
   ],
   "engines": {
