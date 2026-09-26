@@ -81,7 +81,7 @@ export const TEMPLATE_STYLING_CONTRACT_PACKAGE = '@rathnasgala2/template';
 /** @type {string} */
 export const TEMPLATE_STYLING_CONTRACT_VERSION = '2.1.0';
 /** @type {string} */
-export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '2.0.0';
+export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '2.1.0';
 
 /** @type {string} the `main-content` landmark's fixed `id`. */
 const MAIN_CONTENT_ID = 'main-content';

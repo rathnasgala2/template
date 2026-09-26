@@ -152,7 +152,7 @@ export const TEMPLATE_PACKAGE_NAME = '@rathnasgala2/template';
  *
  * @type {string}
  */
-export const TEMPLATE_PACKAGE_VERSION = '2.0.0';
+export const TEMPLATE_PACKAGE_VERSION = '2.1.0';
 
 /**
  * Validate the caller-supplied render options, independent of build-input

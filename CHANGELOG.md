@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-09-26
+
 ### Security
 
 - **TPL-C2**: theme-declared passive assets (`theme.json.assets[]`) are sniffed
