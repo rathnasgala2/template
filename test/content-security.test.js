@@ -13,6 +13,7 @@ import {
   assertRenderPolicyIdentity,
   computeRenderPolicyIdentity,
   contentSecurityPolicyBaseline,
+  contentSecurityPolicyHeaderOnlyDirectives,
   contentSecurityPolicyMetaTag,
 } from '../src/core/internal/content-security.js';
 import { HIGHLIGHT_GRAMMARS } from '../src/core/internal/render-policy-content.js';
@@ -22,9 +23,12 @@ import {
 } from './helpers/render-fixtures.js';
 import { loadCanonicalBuildInput } from './helpers/schema-fixtures.js';
 
+// TPL-H4 fix: frame-ancestors is excluded here (CSP ignores it inside
+// <meta http-equiv>) and covered separately below as a header-only
+// directive.
 const CSP_BASELINE_STRING =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
-  "frame-ancestors 'none'; form-action 'none'; script-src 'self'; " +
+  "form-action 'none'; script-src 'self'; " +
   "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; " +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
@@ -196,6 +200,16 @@ test('the per-artifact CSP baseline is byte-exact', () => {
     contentSecurityPolicyMetaTag(),
     `<meta http-equiv="Content-Security-Policy" content="${CSP_BASELINE_STRING}">`,
   );
+});
+
+test('TPL-H4 fix: frame-ancestors is a header-only directive, excluded from the <meta> baseline', () => {
+  assert.ok(
+    !contentSecurityPolicyBaseline().includes('frame-ancestors'),
+    'frame-ancestors must not appear in the meta-safe baseline (CSP ignores it there)',
+  );
+  assert.deepEqual(contentSecurityPolicyHeaderOnlyDirectives(), [
+    "frame-ancestors 'none'",
+  ]);
 });
 
 test('computeRenderPolicyIdentity byte-equals a fresh domain-separated digest of the published contract file', async () => {

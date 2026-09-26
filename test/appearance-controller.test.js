@@ -43,9 +43,12 @@ import {
 } from './helpers/render-fixtures.js';
 import { loadCanonicalBuildInput } from './helpers/schema-fixtures.js';
 
+// TPL-H4 fix: frame-ancestors is excluded from the meta-safe baseline (CSP
+// ignores it inside <meta http-equiv>); it is now a header-only directive
+// (see content-security.test.js's own dedicated coverage).
 const CSP_BASELINE_STRING =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
-  "frame-ancestors 'none'; form-action 'none'; script-src 'self'; " +
+  "form-action 'none'; script-src 'self'; " +
   "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; " +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 

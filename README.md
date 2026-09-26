@@ -115,9 +115,23 @@ highlighter grammar/token-class catalog) both surfaces above read from,
 generated deterministically by `scripts/generate-contracts.mjs` from
 `src/core/internal/render-policy-content.js` — the single source of truth, so
 the published contract and the enforced policy cannot drift apart. Every
-rendered page also carries the exact per-artifact CSP baseline as a
+rendered page also carries the meta-safe CSP baseline as a
 `<meta http-equiv="Content-Security-Policy">` tag (byte-identical on every
 route, since S2 materializes no module package/configuration/output/runtime).
+
+**TPL-H4 fix — meta vs. header-only directives.** The CSP specification
+explicitly ignores `frame-ancestors` (and `report-uri`/`sandbox`, neither used
+here) when a policy is delivered via `<meta http-equiv>`; the `<meta>` tag above
+therefore never includes `frame-ancestors`, and
+`contentSecurityPolicyHeaderOnlyDirectives()` (`internal/content-security.js`)
+returns the one directive that is not: `frame-ancestors 'none'`. Clickjacking
+protection for a published artifact is a **hosting-layer requirement**: the
+adapter/deployment serving this artifact must add
+`Content-Security-Policy: frame-ancestors 'none'` (or an equivalent
+`X-Frame-Options` header) as a real HTTP response header. This cannot yet be
+carried in `artifact-manifest:2.0.0`'s own `declarativeHeaders` field, which
+`@rathnasgala2/schemas` currently fixes to `const: []`; surfacing it there is a
+schema-repo change, out of this repository's scope.
 
 `img[src]` is restricted to repository-relative paths only in this pipeline;
 full manifest-coverage verification of media references is the S2-T05 media

@@ -241,15 +241,52 @@ export const ADMITTED_LANGUAGE_CLASSES = Object.freeze(
 );
 
 /**
- * The exact per-artifact CSP baseline (brief S2 section 3). Directive order
- * is byte-exact as written in the brief; every directive's value list is
- * already sorted bytewise and duplicate-free because S2 materializes no
- * module package, configuration, output or runtime, so this string is
- * byte-identical on every route.
+ * TPL-H4 fix: the CSP specification explicitly ignores `frame-ancestors`
+ * (and `report-uri`/`sandbox`, neither used here) when a policy is
+ * delivered via `<meta http-equiv>` — browsers drop the directive and log a
+ * console warning on every page load. `frame-ancestors` is therefore
+ * split out as the one header-only directive: clickjacking protection for a
+ * published artifact is a hosting-layer obligation (a response header, most
+ * commonly `Content-Security-Policy` or `X-Frame-Options`), recorded here so
+ * every consuming adapter/deployment knows to add it, rather than a directive
+ * that silently does nothing inside the `<meta>` tag every page already
+ * carries.
+ *
+ * @type {readonly string[]}
+ */
+export const CSP_HEADER_ONLY_DIRECTIVES = Object.freeze([
+  "frame-ancestors 'none'",
+]);
+
+/**
+ * The exact per-artifact CSP baseline actually deliverable inside a
+ * `<meta http-equiv="Content-Security-Policy">` tag (brief S2 section 3,
+ * narrowed by the TPL-H4 fix above: {@link CSP_HEADER_ONLY_DIRECTIVES} is
+ * excluded). Directive order is byte-exact as written in the brief, minus
+ * the excluded directive; every directive's value list is already sorted
+ * bytewise and duplicate-free because S2 materializes no module package,
+ * configuration, output or runtime, so this string is byte-identical on
+ * every route.
  *
  * @type {string}
  */
-export const CONTENT_SECURITY_POLICY_BASELINE =
+export const CONTENT_SECURITY_POLICY_META_BASELINE =
+  "default-src 'none'; base-uri 'none'; object-src 'none'; " +
+  "form-action 'none'; script-src 'self'; " +
+  "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; " +
+  "media-src 'self'; manifest-src 'self'; worker-src 'none'";
+
+/**
+ * The complete CSP baseline the brief originally specified as one string —
+ * the meta-safe directives plus the header-only directive, in the brief's
+ * own byte-exact order — kept only as the render-policy identity's own
+ * digest input (`renderPolicyDocument`'s `contentSecurityPolicy` field): a
+ * hosting adapter that delivers this policy as a response header, rather
+ * than a `<meta>` tag, may deliver this complete string unmodified.
+ *
+ * @type {string}
+ */
+export const CONTENT_SECURITY_POLICY_COMPLETE =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
   "frame-ancestors 'none'; form-action 'none'; script-src 'self'; " +
   "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; " +
@@ -267,7 +304,9 @@ export function renderPolicyDocument() {
   return {
     name: RENDER_POLICY_NAME,
     version: RENDER_POLICY_VERSION,
-    contentSecurityPolicy: CONTENT_SECURITY_POLICY_BASELINE,
+    contentSecurityPolicy: CONTENT_SECURITY_POLICY_COMPLETE,
+    contentSecurityPolicyMeta: CONTENT_SECURITY_POLICY_META_BASELINE,
+    contentSecurityPolicyHeaderOnlyDirectives: [...CSP_HEADER_ONLY_DIRECTIVES],
     markdownIt: {
       package: MARKDOWN_IT_PACKAGE,
       version: MARKDOWN_IT_VERSION,
