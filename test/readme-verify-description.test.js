@@ -66,7 +66,9 @@ const README_GATE_PHRASE = Object.freeze({
  */
 async function readVerifyParagraph() {
   const readme = await readFile(path.join(REPO_ROOT, 'README.md'), 'utf8');
-  const start = readme.indexOf('`npm run verify` (TPL-M4 fix');
+  const start = readme.indexOf(
+    '`npm run verify` (this description is kept in sync',
+  );
   assert.ok(
     start !== -1,
     'README.md must carry the `npm run verify` descriptive paragraph',

@@ -255,12 +255,11 @@ equality"):
   `<meta name="color-scheme">` also carries `prefers-color-scheme` through to
   user-agent styling (form controls, scrollbars) independent of any script.
 
-**Authoring a theme (TPL-M6 fix):** see
-[`docs/theme-authoring.md`](docs/theme-authoring.md) for the full guide — how a
-theme is a delta over the template-owned `gala-base` layer, the closed 35-token
-catalog, the closed five-member pseudo-class catalog, passive-asset/SVG
-admission, the `theme.json` digest chain, and `templateRange`. Run
-`node scripts/scaffold-theme.mjs <directory>` to write a minimal,
+**Authoring a theme:** see [`docs/theme-authoring.md`](docs/theme-authoring.md)
+for the full guide — how a theme is a delta over the template-owned `gala-base`
+layer, the closed 35-token catalog, the closed five-member pseudo-class catalog,
+passive-asset/SVG admission, the `theme.json` digest chain, and `templateRange`.
+Run `node scripts/scaffold-theme.mjs <directory>` to write a minimal,
 already-conformant theme package skeleton rather than hand-typing one.
 
 The theme styling contract replaces `contracts/theme-styling-contract.jcs`'s
@@ -499,11 +498,12 @@ npm install
 npm run verify
 ```
 
-`npm run verify` (TPL-M4 fix: this description is generated from
-`package.json`'s own `verify` script string, not hand-maintained) runs, in
-order: Prettier format check, ESLint, `tsc --checkJs --noEmit`, the
-dependency-cruiser architecture/module-tree-absence gate, `jscpd` duplication
-scan, the `contracts/*.jcs` canonical-form check, the no-local-schema-pin check,
+`npm run verify` (this description is kept in sync with `package.json`'s own
+`verify` script string by `test/readme-verify-description.test.js`, not
+hand-maintained) runs, in order: Prettier format check, ESLint,
+`tsc --checkJs --noEmit`, the dependency-cruiser
+architecture/module-tree-absence gate, `jscpd` duplication scan, the
+`contracts/*.jcs` canonical-form check, the no-local-schema-pin check,
 `node --test`, the license inventory check, the SBOM currency check
 (`sbom:check` compares `sbom.cdx.json` against the current lockfile — it is not
 a presence check), the workflow-pin check, and `npm audit --audit-level=high`.

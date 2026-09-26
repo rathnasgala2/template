@@ -240,7 +240,7 @@ export const ADMITTED_LANGUAGE_CLASSES = Object.freeze(
 );
 
 /**
- * TPL-H4 fix: the CSP specification explicitly ignores `frame-ancestors`
+ * The CSP specification explicitly ignores `frame-ancestors`
  * (and `report-uri`/`sandbox`, neither used here) when a policy is
  * delivered via `<meta http-equiv>` — browsers drop the directive and log a
  * console warning on every page load. `frame-ancestors` is therefore
@@ -259,9 +259,8 @@ export const CSP_HEADER_ONLY_DIRECTIVES = Object.freeze([
 
 /**
  * The exact per-artifact CSP baseline actually deliverable inside a
- * `<meta http-equiv="Content-Security-Policy">` tag, narrowed by the
- * TPL-H4 fix above: {@link CSP_HEADER_ONLY_DIRECTIVES} is
- * excluded. Directive order is byte-exact, minus
+ * `<meta http-equiv="Content-Security-Policy">` tag: {@link CSP_HEADER_ONLY_DIRECTIVES}
+ * is excluded. Directive order is byte-exact, minus
  * the excluded directive; every directive's value list is already sorted
  * bytewise and duplicate-free because this renderer materializes no module
  * package, configuration, output or runtime, so this string is
