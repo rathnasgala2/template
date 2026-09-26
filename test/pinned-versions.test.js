@@ -30,12 +30,17 @@ test('package.json pins the exact S2 dependency versions', async () => {
   }
 });
 
-test('package.json pins the exact Node and npm toolchain', async () => {
+test("package.json declares a supported engines range (TPL-H5 fix), while devEngines stays exact for this repository's own toolchain", async () => {
   const packageJson = JSON.parse(
     await readFile(path.join(REPO_ROOT, 'package.json'), 'utf8'),
   );
-  assert.equal(packageJson.engines.node, '24.18.0');
-  assert.equal(packageJson.engines.npm, '11.16.0');
+  // A range, not an exact pin: an exact `engines` value published in the
+  // tarball rejects every consumer not on that precise patch version,
+  // including under a consumer's own `engine-strict` setting.
+  assert.equal(packageJson.engines.node, '>=24.0.0');
+  assert.equal(packageJson.engines.npm, '>=11.0.0');
+  assert.equal(packageJson.devEngines.runtime.version, '24.18.0');
+  assert.equal(packageJson.devEngines.packageManager.version, '11.16.0');
 });
 
 test('package-lock.json is lockfile v3 and resolves the exact pinned versions', async () => {

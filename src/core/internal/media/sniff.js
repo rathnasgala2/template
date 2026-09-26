@@ -1,10 +1,10 @@
 /**
  * Media-type sniffing from decoded bytes, never from a file extension or a
- * caller-declared media type (brief S2 section 3: "Establish media type from
- * decoded bytes, not extension").
+ * caller-declared media type: media type is established from
+ * decoded bytes, not extension.
  *
- * SVG is deliberately excluded from this sniffer's admitted output set: "SVG
- * is never processed as author media" (brief S2 section 3). Any byte
+ * SVG is deliberately excluded from this sniffer's admitted output set: SVG
+ * is never processed as author media. Any byte
  * sequence recognizable as SVG/XML is classified `'svg'` here specifically
  * so the caller can reject it with a distinct, explicit
  * `MEDIA_SVG_REJECTED` reason rather than falling through to a generic

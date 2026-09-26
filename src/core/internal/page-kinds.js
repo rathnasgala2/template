@@ -1,19 +1,18 @@
 /**
- * Page-kind assembly (task packet S2-T06): builds every generated page's
+ * Page-kind assembly: builds every generated page's
  * `<main>` content, breadcrumb trail and route from a validated
  * `build-input:2.0.0` instance, and the shared site chrome (header, primary
  * navigation, footer) every page kind is composed with through
  * `internal/skeleton.js`'s {@link import('./skeleton.js').renderPageBody}.
  *
- * Page kinds this module produces, matching brief S2 section 3's "Required
- * generated outputs" and task packet S2-T06's page-kind list:
+ * Page kinds this module produces:
  *
  * - `profile` — the publication's own optional profile page
  *   (`publication.profile`);
- * - `author` — one page per entry in `build-input.authors` (DEC-097 section 5:
- *   this array is already exactly the set of authors referenced by the
- *   selected content, publication contact or footer card — never an
- *   unreferenced author), at `/authors/<id>`;
+ * - `author` — one page per entry in `build-input.authors` (this array is
+ *   already exactly the set of authors referenced by the selected content,
+ *   publication contact or footer card — never an unreferenced author), at
+ *   `/authors/<id>`;
  * - `article` / `page` — one page per `content[]` record, at its own
  *   `contentFrontmatterNormalized` route;
  * - `index` — a paginated reverse-chronological listing of every
@@ -27,10 +26,10 @@
  *   plus one `/archive` root page linking to each year.
  *
  * The `error` page kind ({@link renderErrorPageBody}) is exported as a pure
- * function, not wired into any generated route here: brief S2 section 3
- * assigns the one generated `404.html` artifact to S2-T08, which this task
- * packet's own scope notes forbid touching. S2-T08 composes its `404.html`
- * from this same function.
+ * function, not wired into any generated route here: the one generated
+ * `404.html` artifact is assembled elsewhere, which this module's own scope
+ * notes forbid touching. That module composes its `404.html` from this same
+ * function.
  *
  * Every generated page's own `route` field (see {@link GeneratedPage}) is an
  * un-joined `canonicalRoute`, in the same convention `internal/index.js`
@@ -39,16 +38,18 @@
  * *link href* this module writes into a page's own body (breadcrumbs, tag and
  * series listings, pagination controls) is, by contrast, already joined with
  * `basePath` here, because it is read back only as literal HTML text, never
- * re-joined by a caller. This mirrors DEC-097 section 5's navigation
- * normalization rule: an *authored* navigation item's route is used exactly
- * as authored, never synthesized or rewritten (so `internal/skeleton.js`'s
- * navigation renderer never joins it), while every route this renderer itself
- * derives (every page kind here) is basePath-joined at the point it becomes
- * link text, exactly like S2-T03's own redirect/content route projection.
+ * re-joined by a caller. This mirrors the navigation normalization rule: an
+ * *authored* navigation item's route is used exactly as authored, never
+ * synthesized or rewritten (so `internal/skeleton.js`'s navigation renderer
+ * never joins it), while every route this renderer itself derives (every
+ * page kind here) is basePath-joined at the point it becomes link text,
+ * exactly like the redirect/content route projection elsewhere in this
+ * renderer.
  *
  * Every listing here is a deliberately scoped decision this module documents
  * rather than assumes: page size, sort tie-break and the tag/series/archive
- * root pages are not specified verbatim by the brief text this task read.
+ * root pages have no externally fixed specification this renderer conforms
+ * to verbatim.
  */
 
 import {
@@ -63,22 +64,20 @@ import { routeSegmentForLabel } from './route-labels.js';
 import { joinBasePathAndRoute } from './route.js';
 
 /** Listing page size (index and per-year archive pages). Scoped decision:
- * the brief does not fix a page size; 10 is a deterministic, documented
- * default with no author-facing configuration surface in S2.
+ * this renderer has no externally fixed page size; 10 is a deterministic,
+ * documented default with no author-facing configuration surface.
  * @type {number} */
 export const LISTING_PAGE_SIZE = 10;
 
 /**
- * The DEC-097-style semantic template-owned attribute this renderer sets on
- * every generated page's `<body>` (S2-T12: `contracts/theme-styling-contract.jcs`
- * exposes this as a public theme hook, one per {@link PAGE_KIND_VALUES}
- * entry, so a theme can vary presentation by page kind — e.g. a different
- * article vs. listing background — without the template ever promoting a
- * private/incidental selector). Scoped decision: this attribute did not
- * exist before S2-T12; it is this task packet's own addition, introduced
- * specifically because the published styling contract needs a
- * page-kind-targeting hook the brief's "every page-kind ... class/attribute"
- * language calls for.
+ * The semantic template-owned attribute this renderer sets on every
+ * generated page's `<body>`: `contracts/theme-styling-contract.jcs` exposes
+ * this as a public theme hook, one per {@link PAGE_KIND_VALUES} entry, so a
+ * theme can vary presentation by page kind — e.g. a different article vs.
+ * listing background — without the template ever promoting a
+ * private/incidental selector. This attribute is a deliberate addition,
+ * introduced specifically because the published styling contract needs a
+ * page-kind-targeting hook.
  *
  * @type {string}
  */
@@ -87,8 +86,8 @@ export const PAGE_KIND_ATTRIBUTE = 'data-gala-page-kind';
 /**
  * Every value {@link PAGE_KIND_ATTRIBUTE} may carry: every {@link GeneratedPage}
  * `kind` plus the synthetic `error` kind (`internal/index.js`'s always-present
- * generated `404.html`), sorted by UTF-8 bytes (DEC-097's own attribute-value
- * sort convention).
+ * generated `404.html`), sorted by UTF-8 bytes (this renderer's own
+ * attribute-value sort convention throughout).
  *
  * @type {readonly string[]}
  */
@@ -135,8 +134,8 @@ function paginate(items, pageSize) {
 
 /**
  * Resolve an author's display name by ID, failing closed on a dangling
- * reference (an adapter defect: `resolvedAuthorIds` is schema/DEC-097
- * guaranteed to resolve).
+ * reference (an adapter defect: `resolvedAuthorIds` is schema-guaranteed to
+ * resolve).
  *
  * @param {ReadonlyMap<string, import('../../../types/index.d.ts').AuthorNormalized>} authorsById
  * @param {string} authorId
@@ -161,30 +160,29 @@ function requireAuthor(authorsById, authorId) {
  * @property {string} bodyHtml the page's complete `<main>` inner HTML,
  *   starting with exactly one `<h1>`
  * @property {string} [breadcrumbHtml] an optional already-rendered breadcrumb
- * @property {string} [description] task packet S2-T08: an optional plain-text
+ * @property {string} [description] an optional plain-text
  *   description this page's SEO/Open-Graph/Twitter `<meta>` tags are built
  *   from (never HTML, never the sanitized body — a distinct authored or
  *   publication-level plain-text field)
- * @property {'website' | 'article' | 'profile'} [ogType] task packet S2-T08:
+ * @property {'website' | 'article' | 'profile'} [ogType]
  *   the Open Graph `og:type` this page kind maps to; defaults to `'website'`
  *   when omitted
  * @property {{path: string, sourceDigest: string} | undefined} [socialImageRef]
- *   task packet S2-T08: an optional `resolvedFile` reference this page's
+ *   an optional `resolvedFile` reference this page's
  *   social image is resolved from (the caller, `src/core/index.js`, is the
  *   one place that can turn this into an absolute derivative URL, because
- *   only it has run the S2-T05 media pipeline and knows the derivative
+ *   only it has run the media pipeline and knows the derivative
  *   output path a given `sourceDigest` produced)
- * @property {string} [robotsContent] task packet S2-T08: an optional
+ * @property {string} [robotsContent] an optional
  *   `<meta name="robots">` content value (e.g. `'noindex, follow'` for
  *   `status: "unlisted"` content); omitted entirely for ordinarily indexable
  *   pages, matching this renderer's "documented, not silently assumed" style
  *   elsewhere — every page kind's robots decision is made once, here, rather
  *   than re-derived by every later consumer (sitemap, search index)
- * @property {string} [lastModified] task packet S2-T08: an optional
+ * @property {string} [lastModified] an optional
  *   `rfc3339` timestamp the generated sitemap's `<lastmod>` for this page is
  *   drawn from — always derived from authored content timestamps
- *   (`publishedAt`/`updatedAt`), never build time (brief S2 section 3:
- *   "sitemap ... `lastmod` from content timestamps not build time"). Omitted
+ *   (`publishedAt`/`updatedAt`), never build time. Omitted
  *   for a page kind with no natural underlying timestamp (`profile`,
  *   `author`), which the generated sitemap then emits with no `<lastmod>`
  *   element at all (a sitemap's own `<lastmod>` is optional per the Sitemaps
@@ -194,7 +192,7 @@ function requireAuthor(authorsById, authorId) {
 /**
  * The reverse-chronological, deterministically tie-broken set of every
  * `status: "published"`, `kind: "article"` record — the exact selection and
- * ordering the `index` page kind paginates, and (task packet S2-T08) the
+ * ordering the `index` page kind paginates, and the
  * same selection the generated feeds draw from, so a feed's item order can
  * never drift from the index listing's own order. Extracted to its own
  * export rather than duplicated, since `internal/fs-walk.js`'s duplication
@@ -224,7 +222,7 @@ export function selectPublishedArticles(content) {
 /**
  * The most recent of a content record's own `updatedAt` (when authored) or
  * `publishedAt` — this renderer's one definition of "a content record's own
- * last-modified instant" (task packet S2-T08's sitemap `<lastmod>` and the
+ * last-modified instant" (the sitemap's `<lastmod>` and the
  * static search index both read this, rather than each re-deriving it).
  *
  * @param {import('../../../types/index.d.ts').ContentFrontmatterNormalized} frontmatter
@@ -237,7 +235,7 @@ export function contentLastModified(frontmatter) {
 /**
  * The latest {@link contentLastModified} across a non-empty set of records —
  * this renderer's definition of "a generated listing page's own
- * `<lastmod>`" (task packet S2-T08): the most recent authored timestamp
+ * `<lastmod>`": the most recent authored timestamp
  * among the content actually shown on that page, never build time.
  *
  * @param {readonly import('../../../types/index.d.ts').ContentBuildRecord[]} records
@@ -682,10 +680,10 @@ export function buildGeneratedPages(validatedInput) {
 }
 
 /**
- * Render the `error` page kind's `<main>` body (task packet S2-T06). This is
+ * Render the `error` page kind's `<main>` body. This is
  * a pure function with no route/build-input dependency, exported for a
- * future caller (S2-T08's generated `404.html`, out of this task packet's
- * scope) and for this repository's own structural/golden tests.
+ * caller elsewhere (the generated `404.html`, assembled outside this module)
+ * and for this repository's own structural/golden tests.
  *
  * @param {object} options rendering options
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages

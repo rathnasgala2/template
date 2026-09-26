@@ -1,10 +1,9 @@
 /**
  * Collect the distinct source records this renderer actually consumed from
- * a validated `build-input:2.0.0` instance, as
- * `manifestIncludedSource[]` rows (DEC-097 section 6: "`includedSources` has
- * set equality with the distinct source records placed in the
- * verified-input carrier ... a file used by multiple records appears once
- * and the role is the earliest value in the enum order").
+ * a validated `build-input:2.0.0` instance, as `manifestIncludedSource[]`
+ * rows: `includedSources` has set equality with the distinct source records
+ * placed in the verified-input carrier, a file used by multiple records
+ * appears once, and its role is the earliest value in the enum order.
  */
 
 /** @type {readonly string[]} */

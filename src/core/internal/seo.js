@@ -1,28 +1,26 @@
 /**
- * SEO/localization metadata assembly (task packet S2-T08; brief S2 section 3
- * "Required generated outputs": "canonical share and copy affordances,
- * localization metadata, SEO metadata").
+ * SEO/localization metadata assembly: canonical share and copy affordances,
+ * localization metadata, SEO metadata.
  *
  * This module resolves the per-page facts `internal/page-kinds.js` already
  * decided (`description`, `ogType`, `socialImageRef`, `robotsContent`) into
  * the concrete absolute-URL strings a page's `<head>` needs. It is kept
  * separate from `page-kinds.js` because resolving a `socialImageRef` into an
  * absolute derivative URL needs two facts only `src/core/index.js` has at
- * that point: the S2-T05 media pipeline's own finished `assets` list (so the
- * exact derivative file extension a given source image produced is known —
+ * that point: the media pipeline's own finished `assets` list (so the exact
+ * derivative file extension a given source image produced is known —
  * `page-kinds.js` never decodes an image) and `buildInput.baseUrl` (the
  * origin every absolute URL this renderer emits is resolved against).
  *
- * S2-T12 basePath fix (LOCAL-7 follow-up): every derivative-asset URL this
- * module resolves is now `basePath`-joined through `internal/route.js`'s
- * shared {@link import('./route.js').joinBasePathAndRoute} before being
- * resolved against `baseUrl`, exactly like every other renderer-derived
- * route (`internal/page-kinds.js`, `internal/print-stylesheet.js`). Before
- * this fix, {@link resolveSocialImageUrl} joined a bare root-absolute
+ * basePath fix: every derivative-asset URL this module resolves is
+ * `basePath`-joined through `internal/route.js`'s shared
+ * {@link import('./route.js').joinBasePathAndRoute} before being resolved
+ * against `baseUrl`, exactly like every other renderer-derived route
+ * (`internal/page-kinds.js`, `internal/print-stylesheet.js`). Without this,
+ * {@link resolveSocialImageUrl} would join a bare root-absolute
  * `/${derivativePath}` against `baseUrl`, which 404s under a non-root
- * `basePath` publication (`internal/theme-assets.js` is the S2-T12 module
- * that fixes the equivalent theme/print stylesheet and appearance-script
- * hrefs).
+ * `basePath` publication (`internal/theme-assets.js` applies the equivalent
+ * fix for the theme/print stylesheet and appearance-script hrefs).
  *
  * hreflang note (documented scope decision, not a silent omission):
  * `build-input:2.0.0` has no translation/locale-variant linkage between
@@ -31,11 +29,11 @@
  * `$defs` entry named anything like `translation`/`localizedContent`/
  * `alternateLanguage` exists anywhere in the schema; `authorNormalized`'s own
  * `localized` array carries only a translated author bio, never a route). A
- * page's own `<html lang>` already carries its resolved language (S2-T06),
- * which is the entire localization signal this build-input shape declares.
- * `<link rel="alternate" hreflang="...">` is therefore correctly *empty* for
- * S2 — brief S2 section 3's "hreflang/localization metadata... where the
- * input declares translations" is satisfied vacuously, since the input never
+ * page's own `<html lang>` already carries its resolved language, which is
+ * the entire localization signal this build-input shape declares.
+ * `<link rel="alternate" hreflang="...">` is therefore correctly *empty*
+ * here — the requirement to emit hreflang/localization metadata where the
+ * input declares translations is satisfied vacuously, since the input never
  * declares one. This module has no `hreflang` export for that reason; a
  * later build-input major version that adds translation linkage is the
  * natural place to add one, at which point every page-kind call site below
@@ -52,14 +50,14 @@ import { joinBasePathAndRoute } from './route.js';
  * know this path shape, so a change to either stays a one-place fix).
  *
  * @param {readonly {path: string, mediaType: string}[]} mediaAssets the
- *   S2-T05 media pipeline's own finished `assets` list
+ *   media pipeline's own finished `assets` list
  * @param {{path: string, sourceDigest: string} | undefined} reference a
  *   `resolvedFile`-shaped reference (`publication.defaultImage`,
  *   `author.avatar`, `frontmatter.socialImage`, `frontmatter.hero.file`)
  * @returns {string | undefined} the derivative asset's own output-relative
  *   path (never the raw source path), or `undefined` when no reference was
  *   supplied or the media pipeline produced no matching derivative (an image
- *   this renderer's own S2-T05 pipeline was never asked to process, e.g. a
+ *   this renderer's own media pipeline was never asked to process, e.g. a
  *   test fixture exercising SEO metadata without the media pipeline)
  */
 export function resolveOriginalDerivativePath(mediaAssets, reference) {
@@ -77,11 +75,11 @@ export function resolveOriginalDerivativePath(mediaAssets, reference) {
  *
  * @param {object} options resolution options
  * @param {readonly {path: string, mediaType: string}[]} options.mediaAssets
- *   the S2-T05 media pipeline's own finished `assets` list
+ *   the media pipeline's own finished `assets` list
  * @param {{path: string, sourceDigest: string} | undefined} options.reference
  *   the candidate `resolvedFile` reference
  * @param {string} options.baseUrl the build input's origin-only `baseUrl`
- * @param {string} options.basePath the build input's `basePath` (S2-T12: the
+ * @param {string} options.basePath the build input's `basePath` (the
  *   derivative path is joined with this before being resolved against
  *   `baseUrl`, so a non-root publication's social-image URL is correct)
  * @returns {string | undefined} the absolute derivative image URL, or

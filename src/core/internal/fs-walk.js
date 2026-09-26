@@ -3,8 +3,8 @@
  *
  * Filesystem readdir order is not portable, so every caller that needs a
  * reproducible route/asset ordering must sort explicitly; this module never
- * returns raw enumeration order (brief S2 section 3: "no
- * filesystem-enumeration-order dependence").
+ * returns raw enumeration order, so this renderer has no
+ * filesystem-enumeration-order dependence.
  */
 
 import { readdir } from 'node:fs/promises';

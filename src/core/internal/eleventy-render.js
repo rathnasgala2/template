@@ -3,9 +3,8 @@
  * Every other module reaches rendered output only through
  * {@link renderPagesWithEleventy}'s plain-data return value: no Eleventy
  * instance, plug-in API, config object or Nunjucks environment crosses back
- * out of this module (brief S2 section 3: "No Eleventy object, plug-in API,
- * config object or Nunjucks environment may cross the adapter boundary in
- * either direction").
+ * out of this module: no Eleventy object, plug-in API, config object or
+ * Nunjucks environment may cross the adapter boundary in either direction.
  *
  * Confinement enforced here:
  * - `configPath: false` on the `Eleventy` constructor disables discovery of
@@ -24,8 +23,8 @@
  *   interpreted as Nunjucks/Liquid template syntax.
  * - `elev.write()` runs exactly one full build; this module never calls
  *   `.watch()` or constructs an incremental build, and never sets
- *   `runMode: "watch"` (brief S2 section 3: "Incremental and watch mode
- *   ... cannot produce a releasable artifact").
+ *   `runMode: "watch"`: incremental and watch mode cannot produce a
+ *   releasable artifact.
  * - No plugin that performs network access is registered, and Eleventy's
  *   own default plugins (`HtmlBasePlugin`, `BundlePlugin`) perform no
  *   network access.
@@ -34,7 +33,9 @@
 import Eleventy from '@11ty/eleventy';
 
 import {
+  APPEARANCE_RESOLVED_MODE_ATTRIBUTE,
   APPEARANCE_ROOT_ATTRIBUTE,
+  APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE,
   COLOR_SCHEME_META_CONTENT,
 } from './appearance/contract.js';
 import { contentSecurityPolicyMetaTag } from './content-security.js';
@@ -57,32 +58,41 @@ import { PAGE_KIND_ATTRIBUTE } from './page-kinds.js';
 
 /**
  * The one skeleton layout this repository ships. It is core-owned static
- * markup, not discovered from or influenced by the author repository. As of
- * S2-T06, `{{ content | safe }}` is the page's *complete* body content
- * (skip link, header, primary navigation, main, footer — see
- * `internal/skeleton.js`'s `renderPageBody`), so this layout only supplies
- * the outer document shell, the per-page `lang`/`dir` attributes, the CSP
- * baseline, the S2-T07 appearance-controller wiring and the S2-T08
- * SEO/localization `<head>` metadata below; it does not itself wrap
- * anything in `<main>`.
+ * markup, not discovered from or influenced by the author repository.
+ * `{{ content | safe }}` is the page's *complete* body content (skip link,
+ * header, primary navigation, main, footer — see `internal/skeleton.js`'s
+ * `renderPageBody`), so this layout only supplies the outer document shell,
+ * the per-page `lang`/`dir` attributes, the CSP baseline, the
+ * appearance-controller wiring and the SEO/localization `<head>` metadata
+ * below; it does not itself wrap anything in `<main>`.
  *
- * The one S2-T04 addition on top of S2-T03's minimal layout is the
- * byte-exact per-artifact CSP `<meta>` baseline (brief S2 section 3): S2
- * materializes no module package, configuration, output or runtime, so the
- * same constant tag is correct on every route.
+ * On top of that minimal layout is the byte-exact per-artifact CSP
+ * `<meta>` baseline: this renderer materializes no module package,
+ * configuration, output or runtime, so the same constant tag is correct on
+ * every route.
  *
- * S2-T07 additions, all fixed literals from `internal/appearance/contract.js`
- * (never re-typed here), each byte-identical on every route exactly like the
- * CSP tag above:
+ * Appearance-controller additions, all fixed literals from
+ * `internal/appearance/contract.js` (never re-typed here), each
+ * byte-identical on every route exactly like the CSP tag above:
  *
  * - the `data-gala-publication-root` presence attribute on `<html>`, always
  *   rendered independent of JavaScript, so a theme's own no-JS
  *   `prefers-color-scheme` fallback CSS has a stable root scope to key off;
+ * - (TPL-C1 fix) `data-gala-resolved-color-mode`, server-rendered as
+ *   {@link APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE} (`"light"`) on the same
+ *   `<html>` element, so `RESOLVED_PALETTE_SELECTORS.light` already matches
+ *   before any script runs and a page is never unstyled UA-default HTML for
+ *   a no-JS reader, a text-mode/archival crawler, or a load where the
+ *   blocking bootstrap `<script src>` fails. The bootstrap script's phase 1
+ *   ({@link ../appearance/bootstrap-script.js}) unconditionally overwrites
+ *   this attribute with the resolved value for the reader's actual stored
+ *   selection/system preference the instant it runs, so a scripted reader's
+ *   experience is unchanged;
  * - `<meta name="color-scheme" content="light dark">`, so user-agent styling
  *   (form controls, scrollbars) and the initial paint already follow
  *   `prefers-color-scheme` before any script runs;
- * - the one `<script src>` this renderer ever emits (brief S2 section 3:
- *   "the appearance controller is the only browser bootstrap"): a plain,
+ * - the one `<script src>` this renderer ever emits (the appearance
+ *   controller is the only browser bootstrap it ever ships): a plain,
  *   same-origin, non-`defer`/non-`async`/non-`module` classic script, placed
  *   after the CSP `<meta>` so it is governed by the policy it declares.
  *   Being a blocking `<script src>` in `<head>`, it always finishes running
@@ -90,36 +100,36 @@ import { PAGE_KIND_ATTRIBUTE } from './page-kinds.js';
  *   `<body>` (and so any themed paint) is even parsed, satisfying the
  *   pre-paint requirement with no visibility-hiding trick of any kind (see
  *   `internal/appearance/bootstrap-script.js`'s own module documentation).
- *   Its `href` (S2-T12 basePath fix) is supplied per-page as
- *   `data.appearanceScriptHref`, already `basePath`-joined by the caller
+ *   Its `href` is supplied per-page as `data.appearanceScriptHref`, already
+ *   `basePath`-joined by the caller
  *   (`internal/appearance/contract.js`'s `appearanceBootstrapScriptHref`),
  *   never a literal embedded in this fixed layout source.
  *
- * S2-T08 adds every other `<head>` element: a viewport meta, an optional
- * plain-text description, an optional `robots` directive
+ * Every other `<head>` element is added on top of that: a viewport meta, an
+ * optional plain-text description, an optional `robots` directive
  * (`internal/page-kinds.js`'s per-page-kind `robotsContent`), an optional
  * canonical link, Open Graph and Twitter Card meta tags and the Atom/RSS
  * feed discovery links (present on every page, unconditionally — the feeds
- * themselves are site-wide, not per-page). S2-T12 adds the theme stylesheet
- * `<link>` elements (`internal/theme-assets.js`, in `cssLayers` order,
- * including the print stylesheet hookup that used to be a fixed literal
- * line here) as one already-rendered `data.themeStylesheetLinksHtml`
- * fragment, and the `data-gala-page-kind` attribute on `<body>`
+ * themselves are site-wide, not per-page). The theme stylesheet `<link>`
+ * elements (`internal/theme-assets.js`, in `cssLayers` order, including the
+ * print stylesheet hookup) are added as one already-rendered
+ * `data.themeStylesheetLinksHtml` fragment, along with the
+ * `data-gala-page-kind` attribute on `<body>`
  * (`internal/page-kinds.js`'s `PAGE_KIND_ATTRIBUTE`). Every interpolated
  * `{{ variable }}`
  * below relies on Nunjucks' own default `autoescape: true` (verified: no
  * `nunjucksEnvironmentOptions.autoescape` override exists anywhere in this
  * repository or in `@11ty/eleventy`'s own source, so Nunjucks' own
  * documented default stands) for HTML-entity escaping — the same implicit
- * contract `{{ title }}` already relied on before S2-T08; only
- * `{{ content | safe }}` is deliberately exempted, because that value is
- * already sanitized HTML markup, not plain text.
+ * contract `{{ title }}` already relied on; only `{{ content | safe }}` is
+ * deliberately exempted, because that value is already sanitized HTML
+ * markup, not plain text.
  *
  * @type {string}
  */
 const SKELETON_LAYOUT_SOURCE = [
   '<!doctype html>',
-  `<html lang="{{ lang }}" dir="{{ dir }}" ${APPEARANCE_ROOT_ATTRIBUTE}>`,
+  `<html lang="{{ lang }}" dir="{{ dir }}" ${APPEARANCE_ROOT_ATTRIBUTE} ${APPEARANCE_RESOLVED_MODE_ATTRIBUTE}="${APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE}">`,
   '<head>',
   '<meta charset="utf-8">',
   '<meta name="viewport" content="width=device-width, initial-scale=1">',
@@ -142,6 +152,13 @@ const SKELETON_LAYOUT_SOURCE = [
   '{% if ogImage %}<meta name="twitter:image" content="{{ ogImage }}">{% endif %}',
   '<link rel="alternate" type="application/atom+xml" href="{{ atomFeedUrl }}" title="{{ siteName }}">',
   '<link rel="alternate" type="application/rss+xml" href="{{ rssFeedUrl }}" title="{{ siteName }}">',
+  // TPL-H3/TPL-M7: the template-owned gala-base layer's own `<link>`,
+  // always first among the stylesheets — before any theme `<link>` — so its
+  // own first-line `@layer` order statement (`internal/appearance/
+  // base-layer.js`) is the one every browser sees first, and so a theme's
+  // later-loaded gala-tokens/gala-components/gala-utilities layers can
+  // always override its defaults.
+  '<link rel="stylesheet" href="{{ baseStylesheetHref }}">',
   '{{ themeStylesheetLinksHtml | safe }}',
   '</head>',
   `<body ${PAGE_KIND_ATTRIBUTE}="{{ pageKind }}">`,

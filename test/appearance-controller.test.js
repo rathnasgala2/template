@@ -27,6 +27,7 @@ import {
   APPEARANCE_RESOLVED_MODE_ATTRIBUTE,
   APPEARANCE_ROOT_ATTRIBUTE,
   APPEARANCE_SELECTION_ATTRIBUTE,
+  APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE,
   APPEARANCE_SELECT_ID,
   APPEARANCE_STORAGE_KEY,
   COLOR_SCHEME_META_CONTENT,
@@ -42,9 +43,12 @@ import {
 } from './helpers/render-fixtures.js';
 import { loadCanonicalBuildInput } from './helpers/schema-fixtures.js';
 
+// TPL-H4: frame-ancestors is excluded from the meta-safe baseline (CSP
+// ignores it inside <meta http-equiv>) and is a header-only directive (see
+// content-security.test.js's own dedicated coverage).
 const CSP_BASELINE_STRING =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
-  "frame-ancestors 'none'; form-action 'none'; script-src 'self'; " +
+  "form-action 'none'; script-src 'self'; " +
   "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; " +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
@@ -418,14 +422,16 @@ test('S2-T07 acceptance: every rendered route carries the appearance control, th
       assert.ok(select, `${route.path}: appearance control select present`);
       assert.equal(attr(select, 'id'), APPEARANCE_SELECT_ID);
 
-      // No-JS fallback: the resolved-mode attribute is only ever set by the
-      // script at runtime, never hardcoded server-side, so a JS-free reader
-      // observes no resolved-mode attribute at all and theme CSS's own
-      // `prefers-color-scheme` fallback governs appearance instead.
+      // TPL-C1: the resolved-mode attribute is server-rendered as the
+      // fixed light default, so a JS-free reader (or a load where the
+      // bootstrap script fails) still matches
+      // `RESOLVED_PALETTE_SELECTORS.light` and sees a fully themed page,
+      // never unstyled UA-default HTML. A scripted reader's phase 1 always
+      // overwrites this attribute synchronously before first paint.
       assert.equal(
         attr(htmlElement, APPEARANCE_RESOLVED_MODE_ATTRIBUTE),
-        undefined,
-        `${route.path}: resolved-mode attribute must not be server-rendered`,
+        APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE,
+        `${route.path}: resolved-mode attribute must be server-rendered as the light default`,
       );
     }
   } finally {

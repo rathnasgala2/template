@@ -1,16 +1,258 @@
 {
   "schemaId": "urn:gala:schema:theme-contract:2.0.0",
   "schemaVersion": "2.0.0",
-  "themeId": "fixture-minimal",
+  "themeId": "default",
   "package": "@rathnasgala2/theme-default@2.0.0",
-  "contractVersion": "2.0.0",
+  "contractVersion": "2.1.0",
   "templateRange": "^2.0.0",
   "stylesheets": ["tokens.css", "components.css", "print.css"],
   "cssLayers": ["gala-tokens", "gala-components", "gala-print"],
-  "assets": [
-    { "path": "tokens.css", "mediaType": "text/css" },
-    { "path": "components.css", "mediaType": "text/css" },
-    { "path": "print.css", "mediaType": "text/css" }
+  "slotHooks": ["landmark-header"],
+  "tokens": [
+    {
+      "key": "border-width",
+      "type": "length",
+      "light": "0.25rem",
+      "dark": "0.25rem"
+    },
+    {
+      "key": "color-accent",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-border",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-canvas",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-code-canvas",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-code-text",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-danger",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-focus",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-link",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-link-visited",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-on-accent",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-selection",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-success",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-surface",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-surface-raised",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-text",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-text-muted",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "color-warning",
+      "type": "color",
+      "light": "#000000",
+      "dark": "#ffffff"
+    },
+    {
+      "key": "content-measure",
+      "type": "length",
+      "light": "0.25rem",
+      "dark": "0.25rem"
+    },
+    {
+      "key": "focus-width",
+      "type": "length",
+      "light": "0.25rem",
+      "dark": "0.25rem"
+    },
+    {
+      "key": "font-body",
+      "type": "font-family",
+      "light": "Inter",
+      "dark": "Inter"
+    },
+    {
+      "key": "font-heading",
+      "type": "font-family",
+      "light": "Inter",
+      "dark": "Inter"
+    },
+    {
+      "key": "font-mono",
+      "type": "font-family",
+      "light": "Inter",
+      "dark": "Inter"
+    },
+    {
+      "key": "radius-medium",
+      "type": "length",
+      "light": "0.25rem",
+      "dark": "0.25rem"
+    },
+    {
+      "key": "radius-small",
+      "type": "length",
+      "light": "0.25rem",
+      "dark": "0.25rem"
+    },
+    {
+      "key": "space-1",
+      "type": "length",
+      "light": "0.25rem",
+      "dark": "0.25rem"
+    },
+    {
+      "key": "space-2",
+      "type": "length",
+      "light": "0.25rem",
+      "dark": "0.25rem"
+    },
+    {
+      "key": "space-3",
+      "type": "length",
+      "light": "0.25rem",
+      "dark": "0.25rem"
+    },
+    {
+      "key": "space-4",
+      "type": "length",
+      "light": "0.25rem",
+      "dark": "0.25rem"
+    },
+    {
+      "key": "space-6",
+      "type": "length",
+      "light": "0.25rem",
+      "dark": "0.25rem"
+    },
+    {
+      "key": "space-8",
+      "type": "length",
+      "light": "0.25rem",
+      "dark": "0.25rem"
+    },
+    {
+      "key": "weight-heading",
+      "type": "font-weight",
+      "light": "600",
+      "dark": "600"
+    },
+    {
+      "key": "weight-medium",
+      "type": "font-weight",
+      "light": "600",
+      "dark": "600"
+    },
+    {
+      "key": "weight-normal",
+      "type": "font-weight",
+      "light": "600",
+      "dark": "600"
+    },
+    {
+      "key": "weight-strong",
+      "type": "font-weight",
+      "light": "600",
+      "dark": "600"
+    }
   ],
-  "note": "S2-T12 in-repo fixture theme exercising the stylesheet-list shape without utilities.css. Not a real, conformant theme package."
+  "modes": ["dark", "light", "system"],
+  "assets": [
+    {
+      "path": "tokens.css",
+      "mediaType": "text/css",
+      "byteLength": "242",
+      "sha256": "sha256:0568d9e6cc161d043c30529b6178d63b17a2f029fc60ea5560a97a40a201d52f",
+      "license": "MIT"
+    },
+    {
+      "path": "components.css",
+      "mediaType": "text/css",
+      "byteLength": "119",
+      "sha256": "sha256:0d10561ed67c38886707eafc5b1cb11fc901d702710ca10054b204570946b00f",
+      "license": "MIT"
+    },
+    {
+      "path": "print.css",
+      "mediaType": "text/css",
+      "byteLength": "82",
+      "sha256": "sha256:114d3ed2de1981e32b5082ebda622c47aca9cdc04fcb13aa7d9188b667a1e8b2",
+      "license": "MIT"
+    }
+  ],
+  "fixtures": ["fixture-1"],
+  "browserPolicyRef": "gala-theme-css-v2-20211224",
+  "integrity": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "budgets": {
+    "maximumFileBytes": "262144",
+    "maximumTotalBytes": "1048576",
+    "maximumFiles": 16
+  },
+  "fixtureDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "evidenceDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "stylingContractDigest": "sha256:4aca7e9794bddfb2c3afd22f4efd078e7dcf69dde9d62ce52d28cec19aef8b91"
 }

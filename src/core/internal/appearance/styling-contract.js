@@ -1,26 +1,26 @@
 /**
- * `contracts/theme-styling-contract.jcs` builder and structural validator
- * (task packet S2-T12; DEC-097 section 4 "Closed theme-package and
- * stylesheet admission": the `templateStylingContract` closed object).
+ * `contracts/theme-styling-contract.jcs` builder and structural validator:
+ * the `templateStylingContract` closed object governing closed
+ * theme-package and stylesheet admission.
  *
  * This is the one reviewed source module `scripts/generate-contracts.mjs`
  * reads from to emit the published contract file, and the one module
  * `test/theme-styling-contract.test.js` reads from to drift-check the
  * contract against what this renderer actually renders. Every catalog leaf
- * below is drawn from (or, for the two new S2-T12 hooks documented inline,
+ * below is drawn from (or, for the two hooks documented inline,
  * wired into) the actual rendering modules — `internal/skeleton.js`,
  * `internal/page-kinds.js`, `internal/render-policy-content.js` and
  * `internal/appearance/contract.js` — never a hand-typed literal
  * independent of what those modules emit.
  *
- * Public-hook budget (DEC-097: `publicThemeSlotHooks:[1..64] set`): every
- * catalog leaf below (28 type + 15 class + 2 id + 19 attribute-value) has
- * exactly one corresponding public hook, for exactly 64 entries — this
- * renderer's complete public theming surface for S2. A leaf with no
- * matching hook would be a catalog member no theme could ever validly
- * select (DEC-097: "a used-but-undeclared public slot hook rejects"), so
- * catalogs and hooks are generated from one shared list rather than two
- * independently maintained ones.
+ * Public-hook budget (`publicThemeSlotHooks` is a `[1..64]`-entry set):
+ * every catalog leaf below (28 type + 15 class + 2 id + 19 attribute-value)
+ * has exactly one corresponding public hook, for exactly 64 entries — this
+ * renderer's complete public theming surface. A leaf with no matching hook
+ * would be a catalog member no theme could ever validly select (a
+ * used-but-undeclared public slot hook rejects), so catalogs and hooks are
+ * generated from one shared list rather than two independently maintained
+ * ones.
  *
  * Deliberately out of the S2 public hook surface (documented scope
  * decisions, not omissions):
@@ -29,19 +29,41 @@
  *   `.language-<grammar>` class are public, so a theme can style a
  *   highlighted code block's overall presentation but not recolor
  *   individual token kinds in S2;
- * - `html`/`body` type selectors and interactive pseudo-classes
- *   (`:hover`, `:focus`, `:visited`, ...): themes reach the document root
- *   only through {@link PUBLICATION_ROOT_SELECTOR}/
- *   {@link RESOLVED_PALETTE_SELECTORS}, and no pseudo-class hook is
- *   published in S2 (an empty `pseudoClasses` catalog is schema-valid: `[0..64]`).
+ * - `html`/`body` type selectors: themes reach the document root only
+ *   through {@link PUBLICATION_ROOT_SELECTOR}/{@link RESOLVED_PALETTE_SELECTORS}.
+ *
+ * Iconography (TPL-H6 decision, recorded here rather than left as an
+ * accident of theme authorship): **in scope, and expected.** Nothing in this
+ * contract restricts it — `::before`/`::after` are public pseudo-elements, a
+ * theme package may declare non-CSS passive assets (`theme.json.assets[]`),
+ * and a package-relative `url()` is permitted in theme CSS (only an
+ * external-origin `url()` is a theme-tooling lint concern, not a template
+ * restriction). The only reason no theme shipped an icon before this
+ * decision was recorded is that the prerequisite — safe admission of a
+ * theme-declared SVG — did not exist yet. It does now:
+ * `internal/media/theme-svg-sanitizer.js`, wired into
+ * `internal/theme-assets.js`'s passive-asset pipeline (TPL-C2), is the
+ * mechanism that makes shipping an SVG icon mark safe. A theme is free to
+ * declare one and reference it from `::before`/`::after` `content: url(...)`
+ * or a `background-image`.
+ *
+ * Contract 2.1.0 (TPL-H2/TPL-H3/TPL-M7 fix): S2.0's empty `pseudoClasses`
+ * catalog made every interaction state unstylable while the closed 35-token
+ * catalog already required `color-focus` and `color-link-visited`, tokens
+ * only a pseudo-class can ever apply. {@link PSEUDO_CLASSES} publishes a
+ * small closed catalog instead of widening indefinitely; the module
+ * documentation on that constant records why each member is admitted and
+ * why the set stops there. This is a template-owned, backward-compatible
+ * *contract* addition (a theme still validates if it uses none of these), so
+ * it ships as a minor bump: 2.0.0 -> 2.1.0.
  *
  * Every tag in `internal/render-policy-content.js`'s `ALLOWED_TAGS` that
  * markdown-it's own CommonMark grammar (with `html:false`) never actually
  * produces — `b`, `i`, `u`, `s`, `del`, `ins`, `sub`, `sup`, `mark`, `small`,
  * `wbr`, `table`, `thead`, `tbody`, `tr`, `th`, `td`, `dl`, `dt`, `dd`,
  * `figure`, `figcaption` — is likewise excluded from `typeSelectors`: this
- * catalog is "every hook the template actually renders" (task packet
- * S2-T12), not the sanitizer's own defence-in-depth superset.
+ * catalog is every hook the template actually renders, not the sanitizer's
+ * own defence-in-depth superset.
  */
 
 import { HIGHLIGHT_GRAMMARS } from '../render-policy-content.js';
@@ -57,15 +79,85 @@ import { canonicalizeJcs, domainDigest } from '../canonical-jcs.js';
 /** @type {string} */
 export const TEMPLATE_STYLING_CONTRACT_PACKAGE = '@rathnasgala2/template';
 /** @type {string} */
-export const TEMPLATE_STYLING_CONTRACT_VERSION = '2.0.0';
+export const TEMPLATE_STYLING_CONTRACT_VERSION = '2.1.0';
 /** @type {string} */
-export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '2.0.0';
+export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '2.1.0';
 
 /** @type {string} the `main-content` landmark's fixed `id`. */
 const MAIN_CONTENT_ID = 'main-content';
 
-/** @type {readonly string[]} the ordered `@layer` names DEC-097 fixes. */
+/**
+ * The closed pseudo-class catalog (contract 2.1.0, TPL-H2 fix). Each member
+ * is admitted for a specific, already-published reason — this is a closed
+ * list, not a starting point:
+ *
+ * - `hover`: pointer affordance on links and the appearance control; the
+ *   only way any theme can differentiate a hovered interactive element.
+ * - `focus-visible`: the keyboard/assistive-technology focus indicator
+ *   (WCAG 2.2 SC 2.4.11/2.4.13 are about this indicator specifically).
+ *   `:focus` is deliberately *not* admitted instead: `:focus-visible` is
+ *   what lets a theme paint a ring for keyboard focus without also painting
+ *   one on every mouse click, which is why `internal/appearance/
+ *   base-layer.js`'s own template-owned default ring (unconstrained by this
+ *   catalog) uses it too.
+ * - `active`: pressed-state affordance, the pointer-down counterpart to
+ *   `hover`.
+ * - `visited`: the only way to consume the closed token catalog's own
+ *   `color-link-visited`, which had no reachable application before this.
+ * - `disabled`: the appearance `<select>` is a native form control, which
+ *   may legitimately be disabled by a later module; themes need a way to
+ *   style that state today so it is not a breaking addition later.
+ *
+ * Deliberately still excluded: `:target`, `:checked`, `:required`,
+ * `:invalid` and every other state this renderer's own markup can never
+ * produce (no form beyond the one native `<select>`, no fragment-target
+ * styling contract) — the same "every leaf has a matching hook" discipline
+ * {@link ALL_HOOKS} documents above applies to pseudo-classes too: a
+ * catalog member with nothing that can ever be in that state is a
+ * specification defect, not a convenience.
+ *
+ * @type {readonly string[]}
+ */
+export const PSEUDO_CLASSES = Object.freeze(
+  ['active', 'disabled', 'focus-visible', 'hover', 'visited'].sort(),
+);
+
+/**
+ * Contract 2.1.0 (TPL-H2 fix, alongside {@link PSEUDO_CLASSES}): the
+ * `nth-child`/`nth-last-child` functional pseudo-classes were already
+ * admitted (see `functionalPseudos` below) but only under
+ * `nthExpressionProfile: 'gala-positive-an-plus-b-v2'`, an arithmetic
+ * `an+b` grammar with no keyword form — so a theme could not express the
+ * conventional "every other row" zebra-striping pattern without a
+ * (legal but obscure) `2n`/`2n+1` expression. This publishes the two
+ * keyword arguments as an explicit, closed extension of that same
+ * profile, admitted only as the sole argument to `nth-child`/
+ * `nth-last-child`.
+ *
+ * @type {readonly string[]}
+ */
+export const FUNCTIONAL_PSEUDO_KEYWORD_ARGUMENTS = Object.freeze([
+  'even',
+  'odd',
+]);
+
+/**
+ * TPL-H3/TPL-M7: the ordered `@layer` names this renderer fixes, including
+ * the template-owned `gala-base` layer as the first (lowest-precedence)
+ * entry. `gala-base` is emitted by this renderer itself, never by a theme
+ * package (no `theme.json.cssLayers` entry ever names it —
+ * `urn:gala:schema:theme-contract:2.0.0` only ever admits a theme's own
+ * four-or-five-stylesheet subsequence of the layers *after* it), so it
+ * stays first in this list unconditionally: cascade-layer
+ * precedence is later-wins, and a theme's own `gala-tokens`/`gala-components`/
+ * `gala-utilities` declarations must always be able to override the
+ * template's own base defaults (its focus ring, its type scale, ...),
+ * never the reverse.
+ *
+ * @type {readonly string[]}
+ */
 export const ORDERED_LAYERS = Object.freeze([
+  'gala-base',
   'gala-tokens',
   'gala-components',
   'gala-utilities',
@@ -222,9 +314,9 @@ function sortedUniqueBytes(values) {
 
 /**
  * Build the complete `templateStylingContract` object, including
- * `catalogDigest` (DEC-097 section 8:
+ * `catalogDigest`:
  * `SHA256(UTF8("GALA-TEMPLATE-STYLING-CONTRACT-V2\0") || JCS(the catalog
- * with catalogDigest omitted))`).
+ * with catalogDigest omitted))`.
  *
  * @returns {Record<string, unknown>} the complete, digested contract object
  */
@@ -294,7 +386,7 @@ export function buildTemplateStylingContract() {
       ID_HOOKS.map((hook) => hook.selectorAtom.replace(/^#/, '')),
     ),
     attributes: attributesRows,
-    pseudoClasses: [],
+    pseudoClasses: [...PSEUDO_CLASSES],
     pseudoElements: ['after', 'before', 'marker', 'selection'],
     functionalPseudos: ['is', 'where', 'not', 'nth-child', 'nth-last-child'],
     combinators: [' ', ' > ', ' + ', ' ~ '],
@@ -312,6 +404,9 @@ export function buildTemplateStylingContract() {
       functionalSelectorArguments: 'compound-only',
       maximumFunctionalDepth: 1,
       nthExpressionProfile: 'gala-positive-an-plus-b-v2',
+      functionalPseudoKeywordArguments: [
+        ...FUNCTIONAL_PSEUDO_KEYWORD_ARGUMENTS,
+      ],
     },
   };
 
@@ -353,9 +448,9 @@ export const TEMPLATE_STYLING_CONTRACT_INVALID =
 
 /**
  * Structural self-validation of a `templateStylingContract` object against
- * DEC-097 section 4's closed shape (the checks this repository can run
+ * its closed shape (the checks this repository can run
  * without a published `urn:gala:schema:template-styling-contract` schema
- * entry — no such schema ID is registered in `@rathnasgala2/schemas@2.8.0`;
+ * entry — no such schema ID is registered in `@rathnasgala2/schemas@2.11.0`;
  * only `urn:gala:schema:theme-contract:2.0.0` is, which this module's sibling
  * theme fixtures are validated against with the schema package's own
  * exported `validateGalaDocument`, see `test/theme-styling-contract.test.js`).
@@ -375,7 +470,7 @@ export function assertTemplateStylingContractShape(contract) {
   if (contract.profile !== 'gala-template-styling-contract-v2') {
     fail('profile');
   }
-  if (contract.contractVersion !== '2.0.0') fail('contractVersion');
+  if (contract.contractVersion !== '2.1.0') fail('contractVersion');
   if (contract.templatePackage !== '@rathnasgala2/template') {
     fail('templatePackage');
   }
@@ -439,6 +534,12 @@ export function assertTemplateStylingContractShape(contract) {
   if (paletteRows.length !== 1) fail('palette attribute row');
 
   if (
+    JSON.stringify(contract.pseudoClasses) !==
+    JSON.stringify([...PSEUDO_CLASSES])
+  ) {
+    fail('pseudoClasses');
+  }
+  if (
     JSON.stringify(contract.pseudoElements) !==
     JSON.stringify(['after', 'before', 'marker', 'selection'])
   ) {
@@ -474,7 +575,9 @@ export function assertTemplateStylingContractShape(contract) {
       ]) ||
     composition.functionalSelectorArguments !== 'compound-only' ||
     composition.maximumFunctionalDepth !== 1 ||
-    composition.nthExpressionProfile !== 'gala-positive-an-plus-b-v2'
+    composition.nthExpressionProfile !== 'gala-positive-an-plus-b-v2' ||
+    JSON.stringify(composition.functionalPseudoKeywordArguments) !==
+      JSON.stringify([...FUNCTIONAL_PSEUDO_KEYWORD_ARGUMENTS])
   ) {
     fail('composition');
   }

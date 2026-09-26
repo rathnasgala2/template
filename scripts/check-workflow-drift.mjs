@@ -12,8 +12,8 @@ const DEFAULT_RELATIVE_INFRA_DIR = '../infra';
 
 /**
  * Resolve the `infra` checkout containing the canonical gitleaks fragment
- * and its drift checker: `WORKSPACE_ROOT` (DEC-015 name; mirrors the
- * SIBLING-PATHS resolution order used by `resolveTemplateDir`/
+ * and its drift checker: the `WORKSPACE_ROOT` environment variable (the
+ * same sibling-checkout resolution order used by `resolveTemplateDir`/
  * `resolveWorkspaceRoot`) when set to a non-empty string, else the fixed
  * relative default sibling checkout.
  *

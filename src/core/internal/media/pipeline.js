@@ -1,10 +1,10 @@
 /**
- * Media pipeline orchestration (brief S2 section 3, S2-T05).
+ * Media pipeline orchestration.
  *
  * `build-input:2.0.0` never carries raw asset bytes for a `resolvedFile`
- * reference — only its repository-relative `path` and a `sourceDigest`
- * (DEC-097 section 6: "`build` exposes this decoded set as a read-only
- * source mount"). This pipeline therefore reads actual bytes from
+ * reference — only its repository-relative `path` and a `sourceDigest`:
+ * `build` exposes this decoded set as a read-only source mount. This
+ * pipeline therefore reads actual bytes from
  * `options.sourceDirectory`, the caller-mounted read-only source tree, and
  * fails closed (`MEDIA_SOURCE_DIGEST_MISMATCH`) if what it reads there does
  * not hash to the digest `build-input` declared — the same fail-closed

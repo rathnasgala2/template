@@ -91,13 +91,14 @@ test('S2-T05 acceptance: a PNG default image produces a canonical asset plus eve
       provenance: testProvenance(),
     });
 
-    // Widths below 400 in this pipeline's fixed policy: 320. Plus one more
-    // asset row every build always carries: S2-T07's appearance bootstrap
-    // script (see `appearance-controller.test.js`).
+    // Widths below 400 in this pipeline's fixed policy: 320. Plus two more
+    // asset rows every build always carries: S2-T07's appearance bootstrap
+    // script (see `appearance-controller.test.js`) and TPL-H3's gala-base
+    // stylesheet.
     assert.equal(
       manifest.assets.length,
-      3,
-      'original + one 320w derivative + the appearance bootstrap script',
+      4,
+      'original + one 320w derivative + the appearance bootstrap script + gala-base',
     );
     const original = manifest.assets.find((a) =>
       a.path.endsWith('/original.png'),
@@ -163,8 +164,9 @@ test('S2-T05 acceptance: a JPEG hero image applies its EXIF orientation before d
     assert.ok(original);
     // The oriented raster is 4x10; every configured derivative width (320+)
     // exceeds 4, so only the canonical original is emitted, plus the S2-T07
-    // appearance bootstrap script every build always carries.
-    assert.equal(manifest.assets.length, 2);
+    // appearance bootstrap script and TPL-H3's gala-base stylesheet every
+    // build always carries.
+    assert.equal(manifest.assets.length, 3);
   } finally {
     await cleanup();
   }
@@ -187,9 +189,9 @@ test('S2-T05 acceptance: font policy admits a bounded WOFF2 font asset', async (
       provenance: testProvenance(),
     });
 
-    // The font asset, plus the S2-T07 appearance bootstrap script every
-    // build always carries.
-    assert.equal(manifest.assets.length, 2);
+    // The font asset, plus the S2-T07 appearance bootstrap script and the
+    // TPL-H3 gala-base stylesheet every build always carries.
+    assert.equal(manifest.assets.length, 3);
     const fontAsset = manifest.assets.find(
       (asset) => asset.mediaType === 'font/woff2',
     );

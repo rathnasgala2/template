@@ -1,12 +1,10 @@
 /**
- * Static search index generation (task packet S2-T08; brief S2 section 3
- * "Required generated outputs": "static search index").
+ * Static search index generation.
  *
- * Scope note (documented, not silently assumed): neither the brief text this
- * task read nor DEC-097 fixes an exact search-index document shape (checked
- * with a full-text grep of both for "search" — no hit beyond this brief
- * phrase). This module therefore documents its own deterministic shape here,
- * matching this renderer's established style for an unfixed structural
+ * Scope note (documented, not silently assumed): this renderer has no
+ * externally fixed search-index document shape to conform to. This module
+ * therefore documents its own deterministic shape here, matching this
+ * renderer's established style for an unfixed structural
  * decision (see `internal/route-labels.js`'s route-segment grammar and the
  * media pipeline scope decisions in the package README): one JSON document,
  * `{schemaVersion, generatedAt, publication, documents[]}`, sorted by each
@@ -15,17 +13,17 @@
  * `internal/source-inventory.js#compareUtf8Bytes`).
  *
  * `generatedAt` is `buildInput.buildEpoch` — a build-input *field*, sourced
- * deterministically from the selected Git commit's own committer timestamp
- * (DEC-097 section 5), not read from the wall clock at build time — matching
+ * deterministically from the selected Git commit's own committer timestamp,
+ * not read from the wall clock at build time — matching
  * `src/core/manifest.js`'s own `manifest.generatedAt` convention, so two
  * clean builds of the same `build-input` still produce byte-identical index
  * bytes.
  *
- * No runtime search JavaScript accompanies this document (brief S2 section
- * 1: "reads completely with JavaScript disabled"; acceptance test C: "the
- * appearance controller is the only browser bootstrap" — this renderer's one
- * admitted client-side script in all of S2). This module's only output is
- * the index document's bytes; nothing wires a `<script>` to it.
+ * No runtime search JavaScript accompanies this document: this renderer
+ * must read completely with JavaScript disabled, and the appearance
+ * controller is the only client-side script it ever admits. This module's
+ * only output is the index document's bytes; nothing wires a `<script>` to
+ * it.
  *
  * Only actual authored content (`article`/`page` records, `status:
  * "published"`) is indexed — never a synthetic listing page

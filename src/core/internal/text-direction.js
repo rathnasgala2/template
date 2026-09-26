@@ -7,8 +7,7 @@
  * against `node_modules/@rathnasgala2/schemas/schemas/build-input.schema.json`:
  * no `$defs` entry or property named `dir`/`direction` exists anywhere in the
  * schema). The semantic skeleton must still set an accurate `dir` attribute
- * per brief S2 section 3 ("localized content with mixed direction" is part of
- * acceptance test A's golden fixture), so this module derives it from the
+ * even for localized content with mixed direction, so this module derives it from the
  * tag's primary language subtag against the closed set of right-to-left
  * script languages in Unicode CLDR's exemplar set — the same approach HTML's
  * own `Intl.Locale` `textInfo.direction` uses, reimplemented here as a small

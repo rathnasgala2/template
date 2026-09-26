@@ -1,7 +1,6 @@
 /**
  * Deterministic route-segment derivation for generated listing pages (tag,
- * series, archive) from an authored `plainLabel` (task packet S2-T06:
- * navigation renderer/page kinds).
+ * series, archive) from an authored `plainLabel`.
  *
  * `contentFrontmatterNormalized.tags`/`.series` are `plainLabel` values:
  * normalized Unicode text, 1..80 graphemes, with no further route-safety
@@ -12,12 +11,12 @@
  * or series label can therefore contain spaces, uppercase letters, or any
  * non-Latin script.
  *
- * `route.js` already documents that this renderer's route projection is
- * deliberately not DEC-097 section 8's full Unicode-17 percent-encoding and
+ * `route.js` already documents that this renderer's route projection
+ * deliberately excludes a full Unicode percent-encoding and
  * collision-resolution engine (out of scope; it only ever projects
  * already-schema-validated `canonicalRoute` values, never derives a route
- * from an arbitrary label). This module makes the same scoped choice for the
- * one new case S2-T06 introduces — turning an arbitrary label into a route
+ * from an arbitrary label). This module makes the same scoped choice for
+ * the one new case it introduces — turning an arbitrary label into a route
  * segment — and closes the collision risk a lossy ASCII-only slug would
  * otherwise introduce (two distinct Unicode labels both losing all their
  * characters to filtering) by always appending a short, deterministic content

@@ -1,11 +1,10 @@
 /**
- * The server-rendered Light/Dark/System appearance control (task packet
- * S2-T07: "the three-mode appearance control in the header-actions slot";
- * brief S2 section 3: "the control is a native `select`, a radio group, or a
- * conforming menu/radio pattern. A three-state unlabeled icon cycle is
- * rejected").
+ * The server-rendered Light/Dark/System appearance control, placed in the
+ * header-actions slot. The control must be a native `select`, a radio
+ * group, or a conforming menu/radio pattern; a three-state unlabeled icon
+ * cycle is rejected.
  *
- * Scoped decision (documented, not silently assumed): of the brief's three
+ * Scoped decision (documented, not silently assumed): of those three
  * admitted patterns, this module implements a native `<select>` bound to a
  * visible, programmatically associated `<label>`. A native select needs no
  * `aria-pressed`/`aria-checked` bookkeeping of its own — its accessible
@@ -19,8 +18,8 @@
  * `DOMContentLoaded` phase once it runs (see `bootstrap-script.js`), so this
  * server-rendered default is only ever visible for the brief instant before
  * that phase completes, or permanently with JavaScript disabled — exactly
- * the no-JS fallback the brief requires ("with JavaScript disabled, ...
- * `system` [is preserved]").
+ * the required no-JS fallback: with JavaScript disabled, `system` is
+ * preserved.
  *
  * This markup carries no inline `on*` handler and no `javascript:` URL, so
  * it needs no CSP allowance beyond the renderer's existing

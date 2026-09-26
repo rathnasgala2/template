@@ -1,9 +1,9 @@
 /**
- * Hand-maintained declaration surface for `@rathnasgala2/template`
- * (DEC-094: JSDoc-typed JavaScript ESM, no TypeScript sources).
+ * Hand-maintained declaration surface for `@rathnasgala2/template`: this
+ * package is JSDoc-typed JavaScript ESM, with no TypeScript sources.
  *
  * Every `build-input:2.0.0` / `artifact-manifest:2.0.0` shape below is a
- * pragmatic subset of DEC-097 section 5/6's exact schemas: it types every
+ * pragmatic subset of the published schemas' exact shapes: it types every
  * field this renderer actually reads or writes, and widens everything else
  * to `unknown`/index signatures rather than re-authoring the full published
  * schema as TypeScript. The `@rathnasgala2/schemas` package (JSON Schema
@@ -222,7 +222,7 @@ export interface ManifestRouteEntry {
   interactionBearing: false;
 }
 
-/** A `manifestAsset`-shaped entry (S2-T05's media pipeline emits one per generated file). */
+/** A `manifestAsset`-shaped entry (the media pipeline emits one per generated file). */
 export interface ManifestAssetEntry {
   path: string;
   mediaType: string;
@@ -269,7 +269,7 @@ export interface ManifestExcludedInputEntry {
 /**
  * Provenance facts the renderer cannot derive from `build-input` alone (see
  * `src/core/manifest.js` module documentation). Supplied by the caller
- * (eventually `publish-kernel`/`publish-action`, S2-T15 through S2-T20).
+ * (eventually `publish-kernel`/`publish-action`).
  */
 export interface RenderProvenance {
   builder: PackageIdentity;
@@ -285,13 +285,13 @@ export interface RenderOptions {
   workDirectory: string;
   /**
    * The caller-mounted, read-only repository source tree that
-   * `build-input`'s `resolvedFile` references (images, fonts) point into
-   * (S2-T05). Must be distinct from `outputDirectory` and `workDirectory`.
+   * `build-input`'s `resolvedFile` references (images, fonts) point into.
+   * Must be distinct from `outputDirectory` and `workDirectory`.
    */
   sourceDirectory: string;
   /**
    * An optional caller-mounted, read-only extracted theme package directory
-   * (S2-T12: `internal/theme-assets.js`). When supplied, its `theme.json`
+   * (`internal/theme-assets.js`). When supplied, its `theme.json`
    * declared stylesheets (and any declared passive assets) are copied into
    * `assets/theme/` and linked from every generated page. Must be distinct
    * from `outputDirectory`, `workDirectory` and `sourceDirectory`.
@@ -345,3 +345,17 @@ export declare function normalizeAuthoredMarkdown(markdownSource: string): {
 
 /** A plain (not domain-separated) tagged SHA-256 digest of a body's exact UTF-8 bytes. */
 export declare function computeBodyDigest(html: string): string;
+
+/**
+ * The current published `renderPolicyIdentity`
+ * (`{name, version, digest}`) every `renderableBody.renderPolicy` must
+ * byte-equal, computed from the published `contracts/render-policy.jcs`
+ * file. A consumer that needs to construct or verify a `renderableBody`
+ * ahead of calling `renderPublication` can compute this identity without
+ * reaching into `src/core/internal/`.
+ */
+export declare function computeRenderPolicyIdentity(): Promise<{
+  name: string;
+  version: string;
+  digest: string;
+}>;

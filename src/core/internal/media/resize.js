@@ -4,8 +4,8 @@
  *
  * IEEE 754 double-precision arithmetic is fully deterministic — the same
  * inputs always produce the same bit pattern on any conforming engine — so
- * this box filter (unlike a lossy codec's own pixel decode, which DEC-097
- * notes is implementation-dependent) is safe to use directly for the
+ * this box filter (unlike a lossy codec's own pixel decode, which is
+ * implementation-dependent) is safe to use directly for the
  * two-clean-build byte-equality requirement: the same source raster and the
  * same target width always produce the same resized raster, and therefore,
  * fed through this pipeline's own deterministic encoders, the same

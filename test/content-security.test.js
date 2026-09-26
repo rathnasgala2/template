@@ -13,6 +13,7 @@ import {
   assertRenderPolicyIdentity,
   computeRenderPolicyIdentity,
   contentSecurityPolicyBaseline,
+  contentSecurityPolicyHeaderOnlyDirectives,
   contentSecurityPolicyMetaTag,
 } from '../src/core/internal/content-security.js';
 import { HIGHLIGHT_GRAMMARS } from '../src/core/internal/render-policy-content.js';
@@ -22,9 +23,12 @@ import {
 } from './helpers/render-fixtures.js';
 import { loadCanonicalBuildInput } from './helpers/schema-fixtures.js';
 
+// TPL-H4 fix: frame-ancestors is excluded here (CSP ignores it inside
+// <meta http-equiv>) and covered separately below as a header-only
+// directive.
 const CSP_BASELINE_STRING =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
-  "frame-ancestors 'none'; form-action 'none'; script-src 'self'; " +
+  "form-action 'none'; script-src 'self'; " +
   "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; " +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
@@ -196,6 +200,28 @@ test('the per-artifact CSP baseline is byte-exact', () => {
     contentSecurityPolicyMetaTag(),
     `<meta http-equiv="Content-Security-Policy" content="${CSP_BASELINE_STRING}">`,
   );
+});
+
+test('TPL-H4 fix: frame-ancestors is a header-only directive, excluded from the <meta> baseline', () => {
+  assert.ok(
+    !contentSecurityPolicyBaseline().includes('frame-ancestors'),
+    'frame-ancestors must not appear in the meta-safe baseline (CSP ignores it there)',
+  );
+  assert.deepEqual(contentSecurityPolicyHeaderOnlyDirectives(), [
+    "frame-ancestors 'none'",
+  ]);
+});
+
+test('computeRenderPolicyIdentity is exported from the public entry point, and is the same function internal/content-security.js exports', async () => {
+  const publicEntry = await import('../src/core/index.js');
+  assert.equal(typeof publicEntry.computeRenderPolicyIdentity, 'function');
+  assert.equal(
+    publicEntry.computeRenderPolicyIdentity,
+    computeRenderPolicyIdentity,
+  );
+  const identity = await publicEntry.computeRenderPolicyIdentity();
+  assert.equal(identity.name, 'gala-render-policy');
+  assert.match(identity.digest, /^sha256:[0-9a-f]{64}$/);
 });
 
 test('computeRenderPolicyIdentity byte-equals a fresh domain-separated digest of the published contract file', async () => {
@@ -417,7 +443,7 @@ test('golden output: the canonical S2 fixture renders its content page byte-exac
     assert.equal(
       bytes,
       '<!doctype html>\n' +
-        '<html lang="en-US" dir="ltr" data-gala-publication-root>\n' +
+        '<html lang="en-US" dir="ltr" data-gala-publication-root data-gala-resolved-color-mode="light">\n' +
         '<head>\n' +
         '<meta charset="utf-8">\n' +
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
@@ -440,6 +466,7 @@ test('golden output: the canonical S2 fixture renders its content page byte-exac
         '\n' +
         '<link rel="alternate" type="application/atom+xml" href="https://fixture-1.example.com/fixture-1/feed/atom.xml" title="fixture-1">\n' +
         '<link rel="alternate" type="application/rss+xml" href="https://fixture-1.example.com/fixture-1/feed/rss.xml" title="fixture-1">\n' +
+        '<link rel="stylesheet" href="/fixture-1/assets/gala-base-v1.css">\n' +
         '<link rel="stylesheet" href="/fixture-1/assets/theme/print.css" media="print">\n' +
         '</head>\n' +
         '<body data-gala-page-kind="article">\n' +

@@ -1,15 +1,15 @@
 /**
- * The exact deterministic pre-paint appearance bootstrap script (brief S2
- * section 3: "a versioned deterministic pre-paint bootstrap owned by
- * `template`/`core` resolves local selection plus system preference and sets
+ * The exact deterministic pre-paint appearance bootstrap script: a versioned
+ * deterministic pre-paint bootstrap owned by `template`/`core` that resolves
+ * local selection plus system preference and sets
  * the root state before first themed paint. It is covered by the artifact
  * digest, is CSP-compatible under `script-src 'self'` (therefore an external
  * file, not inline), touches no network, account, content or unrelated
- * storage key, and cannot hide the document indefinitely").
+ * storage key, and cannot hide the document indefinitely.
  *
- * This is the one and only browser bootstrap S2 ever emits ("Module absence
- * and CSP equality": "the appearance controller is the only browser
- * bootstrap"). Every name and value it embeds is read from
+ * This is the one and only browser bootstrap this renderer ever emits: the
+ * appearance controller is the only browser
+ * bootstrap it ships. Every name and value it embeds is read from
  * `internal/appearance/contract.js`, the one module that owns them, so the
  * server-rendered control markup and this script can never drift apart on a
  * literal.
@@ -29,12 +29,12 @@
  *    any earlier: the control has not been parsed yet at phase 1's own
  *    execution point) and subscribes to live `prefers-color-scheme` changes,
  *    updating the resolved attribute only while the current selection is
- *    exactly `system` (brief: "an explicit `light`/`dark` choice is not
- *    overridden by later system changes").
+ *    exactly `system`: an explicit `light`/`dark` choice is not
+ *    overridden by later system changes.
  *
  * Deliberately absent: no `document.documentElement.style` mutation of any
- * kind (in particular, no hide-until-ready visibility toggle — brief:
- * "cannot hide the document indefinitely" — this script never needs one,
+ * kind (in particular, no hide-until-ready visibility toggle — this script
+ * must never hide the document indefinitely, and never needs to,
  * since it only ever sets attributes, never inline style), no network
  * request, no cookie, no account/tracking identifier, no storage key other
  * than {@link APPEARANCE_STORAGE_KEY}.

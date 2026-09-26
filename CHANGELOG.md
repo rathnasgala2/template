@@ -8,6 +8,130 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-09-26
+
+### Security
+
+- **TPL-C2**: theme-declared passive assets (`theme.json.assets[]`) are sniffed
+  against a closed raster/font/SVG allowlist, budget-capped
+  (`budgets.maximumFileBytes`/`maximumTotalBytes`/`maximumFiles`), and verified
+  against each row's own declared `sha256`/`byteLength` before being copied into
+  a published artifact; the manifest `mediaType` is derived from the sniff
+  result, never the declaration. A passive SVG is admitted only after
+  `internal/media/theme-svg-sanitizer.js` strips active content (`<script>`,
+  event-handler attributes, external `<use href>`, `<foreignObject>`).
+- **TPL-H1**: a consumed theme package's `theme.json` is schema-validated
+  against `urn:gala:schema:theme-contract:2.0.0` and its digest chain is now
+  load-bearing: `contractVersion`, `stylingContractDigest` and `templateRange`
+  are checked against this template's own published contract and version, and
+  every `assets[]` row's declared `sha256`/`byteLength` is checked against the
+  bytes actually read, before any theme file is copied.
+- **TPL-H4**: `frame-ancestors 'none'`, which the CSP specification ignores when
+  delivered via `<meta http-equiv>`, is split out of the `<meta>`-safe baseline
+  into a header-only directive set
+  (`contentSecurityPolicyHeaderOnlyDirectives()`), surfaced as a hosting
+  requirement rather than emitted where it has no effect.
+- **TPL-C1**: the server-rendered `<html>` element now carries
+  `data-gala-resolved-color-mode="light"` as the default, so a themed
+  publication is fully styled before and without the appearance bootstrap script
+  running.
+
+### Fixed
+
+- **TPL-H2**: removed `theme-assets.js`'s own `cssLayers`-projection check
+  (`assertCssLayersProjection`/`isOrderedSubsequence`) — its rejection branch
+  was unreachable, since `urn:gala:schema:theme-contract:2.0.0`'s `oneOf`
+  already closes the `stylesheets`/`cssLayers` pairing to the two admitted
+  combinations before this module ever runs. Schema validation
+  (`assertThemeContractIntegrity`, TPL-H1) is now the single enforcement point;
+  the existing reordered-`cssLayers` rejection test now asserts the
+  schema-validation reason code directly.
+- **TPL-M4**: added `test/readme-verify-description.test.js`, which parses
+  `package.json`'s `verify` script and README.md's `npm run verify` descriptive
+  paragraph and asserts every verify-chain gate is named there, in the same
+  order, so the two cannot drift apart silently again.
+- **TPL-L2**: `.github/workflows/release.yaml`'s version-already-published check
+  now only exits 0 (skips) for a `workflow_dispatch` re-run; a `push` run that
+  reaches a version already on the registry fails the job instead, so a real
+  content change merged with a forgotten version bump reports red rather than
+  reporting green while shipping nothing.
+- **TPL-M1**: theme stylesheet `<link>` elements carry `integrity="sha256-…"`
+  and `crossorigin="anonymous"`, derived from the same bytes the manifest digest
+  is computed from, so a mutated published stylesheet is rejected by the
+  browser, not only detectable by a later manifest re-verification.
+- **TPL-M2**: passive-asset partitioning keys on the theme's own validated
+  `stylesheets` list rather than an exact `mediaType === 'text/css'` string
+  comparison, so a stylesheet declared with the manifest's own
+  `text/css; charset=utf-8` spelling in `assets[]` is not classified as a
+  passive asset and copied a second time.
+- **TPL-M3**: `renderPrimaryNavigation`'s documentation matches its behaviour:
+  it always renders a labelled `<nav>` landmark, including when there are no
+  authored items.
+- **TPL-H5**: `package.json` `engines` is a supported range
+  (`>=24.0.0`/`>=11.0.0`) rather than an exact pin, so installing this package
+  under a different Node/npm patch version or `engine-strict=true` no longer
+  fails; `devEngines` keeps the exact toolchain pin for this repository's own
+  development.
+- **TPL-M5**: removed the internal `DEC-###`/`S2-T##`/"brief S2 section N"
+  shorthand from source comments and prose across `src/`, `scripts/`,
+  `types/index.d.ts` and `README.md` — these referenced orchestration documents
+  that do not exist in this public repository and were not resolvable by any
+  external reader. Each was either deleted, where the surrounding sentence
+  already stood alone, or rewritten as a self-contained descriptive sentence
+  carrying the actual rule or rationale, most notably the numeric resource
+  ceilings in `internal/media/limits.js`. The initial sweep missed
+  `src/core/manifest.js`, `src/core/internal/content-security.js`,
+  `src/core/internal/canonical-jcs.js`, `src/core/internal/media/jpeg-codec.js`
+  and `README.md` itself; `test/no-internal-identifiers.test.js` now gates every
+  file under `src/`, `scripts/`, `types/`, `contracts/`, `docs/` and `README.md`
+  against `DEC-\d{3}`/`S2-T\d+` returning (CHANGELOG.md is the one allowed
+  exception, as dated history).
+
+### Added
+
+- **TPL-H3 verification**: `test/focus-ring-cascade.test.js` resolves the
+  `:focus-visible` cascade for `<select>` and `<a>` under the rendered
+  `theme-fixture-full` theme and proves `gala-base`'s `outline-style: solid` is
+  the winning declaration for both, including against a synthetic
+  higher-specificity theme rule that sets only `outline-color`/ `outline-width`
+  — cascade-layer precedence resolves per property, not per rule, so a theme's
+  own rule only overrides what it actually declares. No shipped theme repository
+  (`theme-default`, `-amaze`, `-flashy`, `-minimal`, `-zebra`) currently
+  declares an `outline-*` longhand at all (verified by inspection); this test
+  guards the mechanism for if and when one does.
+- **Contract 2.1.0**: publishes a closed five-member pseudo-class catalog
+  (`:focus-visible`, `:hover`, `:visited`, `:active`, `:disabled`) so a theme
+  can style interaction states for the tokens that require them (`color-focus`,
+  `color-link-visited`) — **TPL-H2**.
+- **TPL-H3/TPL-M7**: a template-owned `gala-base` layer
+  (`assets/gala-base-v1.css`) is emitted before any theme stylesheet on every
+  page, carrying a normalization reset, the skip-link
+  visually-hidden-until-focused pattern, and a real, paintable `:focus-visible`
+  ring (`outline-style: solid`, not just colour/width). Cascade-layer precedence
+  is declared explicitly by `gala-base`'s own first line
+  (`@layer gala-base, gala-tokens, gala-components, gala-utilities, gala-print;`,
+  from the exported, frozen `ORDERED_LAYERS`) rather than implied by `<link>`
+  emission order.
+- **TPL-H6**: the absence of theme iconography is documented as a scoped
+  2.0.0/2.1.0 decision in the README's S2-T12 section and in
+  `styling-contract.js`'s module documentation, alongside the mechanism (passive
+  SVG assets, `::before`/`::after`, package-relative `url()`) that already
+  supports it.
+- `computeRenderPolicyIdentity` is exported from the package's public entry
+  point (`src/core/index.js`), so a consumer can compute/verify the current
+  render-policy identity without reaching into `src/core/internal/`.
+- **TPL-M6**: a theme-authoring path — `docs/theme-authoring.md` documents how a
+  theme is a delta over `gala-base`, the closed token/pseudo-class catalogs,
+  passive-asset/SVG admission, the `theme.json` digest chain and
+  `templateRange`, and the consume-time/release-time verify gates — plus
+  `scripts/scaffold-theme.mjs`, which writes a minimal `theme.json`/
+  `tokens.css`/`components.css`/`print.css` skeleton with correct digests that
+  already passes schema validation and `loadThemeAssets`.
+
+Recommended release: **2.1.0** (minor) — the pseudo-class catalog and
+`gala-base` layer are additive contract surface; every other change in this
+round is a bug fix or a hardening change with no removed public surface.
+
 ### Changed
 
 - **Contract re-pin: `@rathnasgala2/schemas` moved from the LOCAL-1 local

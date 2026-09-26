@@ -1,7 +1,7 @@
 /**
- * Font policy for `appearance.fontAssets` (brief S2 section 3: "Custom fonts
+ * Font policy for `appearance.fontAssets`: custom fonts
  * require licensing, glyph and language coverage plus fallback evidence, and
- * no remote font is ever retrieved").
+ * no remote font is ever retrieved.
  *
  * `build-input:2.0.0`'s `resolvedFile` shape (the only shape
  * `appearance.fontAssets` entries use) is `{path, sourceDigest}` — a
