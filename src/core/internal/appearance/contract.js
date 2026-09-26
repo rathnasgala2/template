@@ -101,6 +101,24 @@ export const APPEARANCE_RESOLVED_MODE_VALUES = Object.freeze([
 ]);
 
 /**
+ * TPL-C1 fix: the server-rendered default for
+ * {@link APPEARANCE_RESOLVED_MODE_ATTRIBUTE} on `<html>`, present on every
+ * page independent of JavaScript (`internal/eleventy-render.js`'s
+ * `SKELETON_LAYOUT_SOURCE`). `light` is chosen because it is the value the
+ * bootstrap script's own `resolveMode` already falls back to when
+ * `prefers-color-scheme` cannot be read (`internal/appearance/
+ * bootstrap-script.js`'s `systemPrefersDark` catch branch), so the
+ * server-rendered default and the script's own no-signal fallback agree.
+ * The bootstrap script's phase 1 always overwrites this attribute
+ * synchronously before first paint for a reader whose browser runs it, so
+ * this default is observed only by a reader (or crawler) that never runs
+ * script at all.
+ *
+ * @type {'light'}
+ */
+export const APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE = APPEARANCE_MODE_LIGHT;
+
+/**
  * The initial reader default (brief S2 section 3: "initial reader default is
  * `system`").
  *

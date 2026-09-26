@@ -34,7 +34,9 @@
 import Eleventy from '@11ty/eleventy';
 
 import {
+  APPEARANCE_RESOLVED_MODE_ATTRIBUTE,
   APPEARANCE_ROOT_ATTRIBUTE,
+  APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE,
   COLOR_SCHEME_META_CONTENT,
 } from './appearance/contract.js';
 import { contentSecurityPolicyMetaTag } from './content-security.js';
@@ -78,6 +80,16 @@ import { PAGE_KIND_ATTRIBUTE } from './page-kinds.js';
  * - the `data-gala-publication-root` presence attribute on `<html>`, always
  *   rendered independent of JavaScript, so a theme's own no-JS
  *   `prefers-color-scheme` fallback CSS has a stable root scope to key off;
+ * - (TPL-C1 fix) `data-gala-resolved-color-mode`, server-rendered as
+ *   {@link APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE} (`"light"`) on the same
+ *   `<html>` element, so `RESOLVED_PALETTE_SELECTORS.light` already matches
+ *   before any script runs and a page is never unstyled UA-default HTML for
+ *   a no-JS reader, a text-mode/archival crawler, or a load where the
+ *   blocking bootstrap `<script src>` fails. The bootstrap script's phase 1
+ *   ({@link ../appearance/bootstrap-script.js}) unconditionally overwrites
+ *   this attribute with the resolved value for the reader's actual stored
+ *   selection/system preference the instant it runs, so a scripted reader's
+ *   experience is unchanged;
  * - `<meta name="color-scheme" content="light dark">`, so user-agent styling
  *   (form controls, scrollbars) and the initial paint already follow
  *   `prefers-color-scheme` before any script runs;
@@ -119,7 +131,7 @@ import { PAGE_KIND_ATTRIBUTE } from './page-kinds.js';
  */
 const SKELETON_LAYOUT_SOURCE = [
   '<!doctype html>',
-  `<html lang="{{ lang }}" dir="{{ dir }}" ${APPEARANCE_ROOT_ATTRIBUTE}>`,
+  `<html lang="{{ lang }}" dir="{{ dir }}" ${APPEARANCE_ROOT_ATTRIBUTE} ${APPEARANCE_RESOLVED_MODE_ATTRIBUTE}="${APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE}">`,
   '<head>',
   '<meta charset="utf-8">',
   '<meta name="viewport" content="width=device-width, initial-scale=1">',
