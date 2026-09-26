@@ -211,9 +211,11 @@ function assertNoForbiddenSvgConstructs(source) {
       'theme SVG must not declare a DOCTYPE or an XML entity',
     );
   }
-  if (/<\s*(script|style|foreignobject|image|iframe|animate\w*|set)[\s>/]/i.test(
-    source,
-  )) {
+  if (
+    /<\s*(script|style|foreignobject|image|iframe|animate\w*|set)[\s>/]/i.test(
+      source,
+    )
+  ) {
     throw new ThemeAssetError(
       THEME_SVG_REJECTED_CODE,
       'theme SVG must not contain a <script>, <style>, <foreignObject>, ' +

@@ -68,13 +68,24 @@
 import { lstat, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { validateGalaDocument } from '@rathnasgala2/schemas';
+
 import { ThemeAssetError } from '../errors.js';
 import { digestBytes } from './canonical-jcs.js';
-import { ORDERED_LAYERS } from './appearance/styling-contract.js';
+import {
+  buildTemplateStylingContract,
+  ORDERED_LAYERS,
+  TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION,
+} from './appearance/styling-contract.js';
 import { MEDIA_TYPE_BY_FORMAT, sniffMediaFormat } from './media/sniff.js';
 import { sanitizeThemeSvg } from './media/theme-svg-sanitizer.js';
 import { projectFixedAssetPath } from './route.js';
+import { satisfiesTemplateRange } from './semver-range.js';
 import { escapeHtml } from './skeleton.js';
+
+/** @type {string} the `urn:gala:schema:theme-contract:2.0.0` schema id
+ * every consumed `theme.json` is validated against (TPL-H1). */
+const THEME_CONTRACT_SCHEMA_ID = 'urn:gala:schema:theme-contract:2.0.0';
 
 /** @type {number} the hard byte ceiling for one passive asset when a
  * theme's own `theme.json.budgets.maximumFileBytes` is absent or larger
@@ -175,7 +186,7 @@ const PATH_CONTAINMENT_CODE = 'THEME_ASSET_PATH_UNSAFE';
  * @returns {string} the same value, once it is known to be a syntactically
  *   safe relative path
  */
-function assertSafeThemeRelativePath(candidate) {
+export function assertSafeThemeRelativePath(candidate) {
   if (typeof candidate !== 'string' || candidate.length === 0) {
     throw new ThemeAssetError(
       PATH_CONTAINMENT_CODE,
@@ -231,7 +242,7 @@ function assertSafeThemeRelativePath(candidate) {
  *   (see {@link assertSafeThemeRelativePath})
  * @returns {Promise<string>} the absolute, verified-contained path
  */
-async function assertContainedThemePath(themeDirectory, relativePath) {
+export async function assertContainedThemePath(themeDirectory, relativePath) {
   const resolvedRoot = path.resolve(themeDirectory);
   let current = resolvedRoot;
   for (const segment of relativePath.split('/')) {
@@ -399,7 +410,8 @@ function admitPassiveAssetBytes(relativePath, bytes) {
       publishedBytes: sanitizeThemeSvg(bytes),
     };
   }
-  const mediaType = MEDIA_TYPE_BY_FORMAT[format];
+  const mediaType =
+    format === 'unknown' ? undefined : MEDIA_TYPE_BY_FORMAT[format];
   if (!mediaType) {
     throw new ThemeAssetError(
       'THEME_ASSET_FORMAT_INVALID',
@@ -407,6 +419,70 @@ function admitPassiveAssetBytes(relativePath, bytes) {
     );
   }
   return { mediaType, publishedBytes: bytes };
+}
+
+/**
+ * The full TPL-H1 fix: schema-validate the parsed `theme.json` against
+ * `urn:gala:schema:theme-contract:2.0.0` (the same validator this
+ * repository's own tests already use), then make the digest chain and
+ * version negotiation load-bearing rather than parsed-and-ignored:
+ * `contractVersion` must byte-equal this renderer's own published styling
+ * contract version, `stylingContractDigest` must byte-equal that contract's
+ * own `catalogDigest`, and `templateRange` must admit this renderer's own
+ * published version. Fails closed with a {@link ThemeAssetError} on the
+ * first violation.
+ *
+ * @param {Record<string, unknown>} themeJson the parsed `theme.json` document
+ * @returns {void}
+ */
+function assertThemeContractIntegrity(themeJson) {
+  const validation = validateGalaDocument(THEME_CONTRACT_SCHEMA_ID, themeJson);
+  if (!validation.valid) {
+    throw new ThemeAssetError(
+      'THEME_CONTRACT_SCHEMA_INVALID',
+      `theme.json failed urn:gala:schema:theme-contract:2.0.0 validation ` +
+        `(${validation.diagnostics.length} diagnostic(s)): ` +
+        JSON.stringify(validation.diagnostics),
+    );
+  }
+
+  const publishedContract = buildTemplateStylingContract();
+  if (themeJson.contractVersion !== publishedContract.contractVersion) {
+    throw new ThemeAssetError(
+      'THEME_CONTRACT_VERSION_MISMATCH',
+      `theme.json.contractVersion (${themeJson.contractVersion}) does not ` +
+        `byte-equal the published styling contract version ` +
+        `(${publishedContract.contractVersion})`,
+    );
+  }
+  if (themeJson.stylingContractDigest !== publishedContract.catalogDigest) {
+    throw new ThemeAssetError(
+      'THEME_CONTRACT_VERSION_MISMATCH',
+      `theme.json.stylingContractDigest does not byte-equal the published ` +
+        `styling contract's own catalogDigest (this theme was built ` +
+        `against a different template styling contract)`,
+    );
+  }
+  let templateRangeSatisfied;
+  try {
+    templateRangeSatisfied = satisfiesTemplateRange(
+      TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION,
+      /** @type {string} */ (themeJson.templateRange),
+    );
+  } catch (error) {
+    throw new ThemeAssetError(
+      'THEME_CONTRACT_VERSION_MISMATCH',
+      `theme.json.templateRange is not admitted: ${/** @type {Error} */ (error).message}`,
+    );
+  }
+  if (!templateRangeSatisfied) {
+    throw new ThemeAssetError(
+      'THEME_CONTRACT_VERSION_MISMATCH',
+      `theme.json.templateRange (${themeJson.templateRange}) does not admit ` +
+        `this renderer's own published version ` +
+        `(${TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION})`,
+    );
+  }
 }
 
 /**
@@ -433,8 +509,10 @@ export async function loadThemeAssets({ themeDirectory, basePath }) {
     themeDirectory,
     'theme.json',
   );
-  /** @type {{stylesheets: unknown, cssLayers: unknown, assets?: {path: string, mediaType: string}[]}} */
+  /** @type {Record<string, unknown> & {stylesheets: unknown, cssLayers: unknown, assets?: {path: string, mediaType: string, byteLength?: string, sha256?: string}[]}} */
   const themeJson = JSON.parse(themeJsonBytes.toString('utf8'));
+
+  assertThemeContractIntegrity(themeJson);
 
   if (!Array.isArray(themeJson.stylesheets)) {
     throw new ThemeAssetError(
@@ -452,11 +530,19 @@ export async function loadThemeAssets({ themeDirectory, basePath }) {
   /** @type {string[]} */
   const linkTags = [];
 
+  const declaredAssetsByPath = new Map(
+    (themeJson.assets ?? []).map((asset) => [asset.path, asset]),
+  );
   for (const filename of /** @type {string[]} */ (themeJson.stylesheets)) {
     const { relativePath, bytes } = await readDeclaredThemeFile(
       themeDirectory,
       filename,
     );
+    // TPL-H1: the schema requires every stylesheet to also carry its own
+    // `assets[]` digest row; verify it here rather than parsing and
+    // ignoring it.
+    const declaredRow = declaredAssetsByPath.get(relativePath);
+    if (declaredRow) assertPassiveAssetIntegrity(declaredRow, bytes);
     const outputPath = joinedThemeOutputPath(basePath, relativePath);
     files.push({ path: outputPath, bytes });
     assets.push({

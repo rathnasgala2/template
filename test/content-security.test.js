@@ -417,7 +417,7 @@ test('golden output: the canonical S2 fixture renders its content page byte-exac
     assert.equal(
       bytes,
       '<!doctype html>\n' +
-        '<html lang="en-US" dir="ltr" data-gala-publication-root>\n' +
+        '<html lang="en-US" dir="ltr" data-gala-publication-root data-gala-resolved-color-mode="light">\n' +
         '<head>\n' +
         '<meta charset="utf-8">\n' +
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +

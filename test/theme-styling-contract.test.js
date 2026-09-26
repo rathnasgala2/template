@@ -26,7 +26,10 @@ import { validateGalaDocument } from '@rathnasgala2/schemas';
 import { renderPublication } from '../src/core/index.js';
 import { appearanceBootstrapScriptHref } from '../src/core/internal/appearance/contract.js';
 import { ThemeAssetError } from '../src/core/errors.js';
-import { loadThemeAssets } from '../src/core/internal/theme-assets.js';
+import {
+  assertSafeThemeRelativePath,
+  loadThemeAssets,
+} from '../src/core/internal/theme-assets.js';
 import { projectFixedAssetPath } from '../src/core/internal/route.js';
 import {
   assertTemplateStylingContractShape,
@@ -44,6 +47,7 @@ import {
   loadCanonicalBuildInput,
 } from './helpers/schema-fixtures.js';
 import { buildRichFixture, stableId } from './helpers/page-kind-fixtures.js';
+import { buildValidThemeJson } from './helpers/theme-contract-fixtures.js';
 import { normalizeAuthoredMarkdown } from '../src/core/internal/content-security.js';
 import { HIGHLIGHT_GRAMMARS } from '../src/core/internal/render-policy-content.js';
 import { buildTestPng, sha256Of } from './helpers/media-fixtures.js';
@@ -471,29 +475,51 @@ test('drift gate: every published hook is actually rendered by the rich fixture,
 // --- Theme asset path containment (independent-review finding B1) ---
 
 /**
- * Build a fresh, minimal, otherwise-valid theme package directory (three
- * stylesheets, no `utilities.css`) with a caller-supplied `theme.json`
- * `assets` array, for exercising `loadThemeAssets`'s path-containment
- * checks directly (unit level, rather than through a full
- * `renderPublication` build).
+ * Build a fresh, minimal, otherwise fully `theme-contract:2.0.0`-conformant
+ * (TPL-H1) theme package directory (three stylesheets, no `utilities.css`)
+ * with a caller-supplied set of extra passive-asset files, for exercising
+ * `loadThemeAssets`'s path-containment checks directly (unit level, rather
+ * than through a full `renderPublication` build).
  *
- * @param {readonly {path: string, mediaType: string}[]} assetsField the
- *   `theme.json.assets` array to declare
+ * @param {readonly {path: string, mediaType: string, bytes: Buffer}[]} extraFiles
+ *   declared passive-asset files (already written to disk by the caller) to
+ *   add to `theme.json.assets`, each with an internally-consistent digest
  * @returns {Promise<string>} the fresh temporary theme directory
  */
-async function buildThemeFixtureDirectory(assetsField) {
+async function buildThemeFixtureDirectory(extraFiles) {
   const dir = await mkdtemp(path.join(tmpdir(), 'gala-theme-fixture-'));
-  await writeFile(path.join(dir, 'tokens.css'), '@layer gala-tokens {\n}\n');
-  await writeFile(
-    path.join(dir, 'components.css'),
-    '@layer gala-components {\n}\n',
-  );
-  await writeFile(path.join(dir, 'print.css'), '@layer gala-print {\n}\n');
-  const themeJson = {
-    stylesheets: ['tokens.css', 'components.css', 'print.css'],
+  const stylesheetFiles = [
+    {
+      path: 'tokens.css',
+      mediaType: 'text/css',
+      text: '@layer gala-tokens {\n}\n',
+    },
+    {
+      path: 'components.css',
+      mediaType: 'text/css',
+      text: '@layer gala-components {\n}\n',
+    },
+    {
+      path: 'print.css',
+      mediaType: 'text/css',
+      text: '@layer gala-print {\n}\n',
+    },
+  ];
+  for (const file of stylesheetFiles) {
+    await writeFile(path.join(dir, file.path), file.text);
+  }
+  const themeJson = buildValidThemeJson({
+    stylesheets: stylesheetFiles.map((f) => f.path),
     cssLayers: ['gala-tokens', 'gala-components', 'gala-print'],
-    assets: assetsField,
-  };
+    files: [
+      ...stylesheetFiles.map((f) => ({
+        path: f.path,
+        mediaType: f.mediaType,
+        bytes: Buffer.from(f.text, 'utf8'),
+      })),
+      ...extraFiles,
+    ],
+  });
   await writeFile(path.join(dir, 'theme.json'), JSON.stringify(themeJson));
   return dir;
 }
@@ -512,48 +538,49 @@ async function assertRejectsUnsafeThemePath(action) {
   );
 }
 
-test('theme asset path containment: a "../" traversal in a declared asset path is rejected', async () => {
-  const dir = await buildThemeFixtureDirectory([
-    { path: '../evil.svg', mediaType: 'image/svg+xml' },
-  ]);
-  try {
-    await assertRejectsUnsafeThemePath(() =>
-      loadThemeAssets({ themeDirectory: dir, basePath: '/' }),
-    );
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
+// The next three checks are syntactic and are now caught twice: once by
+// `urn:gala:schema:theme-contract:2.0.0`'s own `repoRelativePath` format
+// (TPL-H1 makes that load-bearing at consume time, so a malformed path never
+// even reaches `loadThemeAssets`'s own logic for a real theme package), and
+// independently by `assertSafeThemeRelativePath` itself. They are exercised
+// directly against that function so this suite keeps testing this module's
+// own containment logic instead of only re-proving the schema's format
+// check.
+
+test('theme asset path containment: a "../" traversal in a declared asset path is rejected', () => {
+  assert.throws(
+    () => assertSafeThemeRelativePath('../evil.svg'),
+    (error) =>
+      error instanceof ThemeAssetError &&
+      error.reasonCode === 'THEME_ASSET_PATH_UNSAFE',
+  );
 });
 
-test('theme asset path containment: an absolute declared asset path is rejected', async () => {
-  const dir = await buildThemeFixtureDirectory([
-    { path: '/etc/passwd', mediaType: 'text/plain' },
-  ]);
-  try {
-    await assertRejectsUnsafeThemePath(() =>
-      loadThemeAssets({ themeDirectory: dir, basePath: '/' }),
-    );
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
+test('theme asset path containment: an absolute declared asset path is rejected', () => {
+  assert.throws(
+    () => assertSafeThemeRelativePath('/etc/passwd'),
+    (error) =>
+      error instanceof ThemeAssetError &&
+      error.reasonCode === 'THEME_ASSET_PATH_UNSAFE',
+  );
 });
 
-test('theme asset path containment: a backslash-separated declared asset path is rejected', async () => {
-  const dir = await buildThemeFixtureDirectory([
-    { path: 'assets\\evil.svg', mediaType: 'image/svg+xml' },
-  ]);
-  try {
-    await assertRejectsUnsafeThemePath(() =>
-      loadThemeAssets({ themeDirectory: dir, basePath: '/' }),
-    );
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
+test('theme asset path containment: a backslash-separated declared asset path is rejected', () => {
+  assert.throws(
+    () => assertSafeThemeRelativePath('assets\\evil.svg'),
+    (error) =>
+      error instanceof ThemeAssetError &&
+      error.reasonCode === 'THEME_ASSET_PATH_UNSAFE',
+  );
 });
 
 test('theme asset path containment: a symlink component that escapes the theme directory is rejected', async () => {
   const dir = await buildThemeFixtureDirectory([
-    { path: 'assets/escape.svg', mediaType: 'image/svg+xml' },
+    {
+      path: 'assets/escape.svg',
+      mediaType: 'image/svg+xml',
+      bytes: Buffer.from('<svg></svg>', 'utf8'),
+    },
   ]);
   try {
     const secretDir = await mkdtemp(
