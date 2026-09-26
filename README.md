@@ -256,6 +256,14 @@ section 3, "Module absence and CSP equality"):
   `<meta name="color-scheme">` also carries `prefers-color-scheme` through to
   user-agent styling (form controls, scrollbars) independent of any script.
 
+**Authoring a theme (TPL-M6 fix):** see
+[`docs/theme-authoring.md`](docs/theme-authoring.md) for the full guide — how a
+theme is a delta over the template-owned `gala-base` layer, the closed 35-token
+catalog, the closed five-member pseudo-class catalog, passive-asset/SVG
+admission, the `theme.json` digest chain, and `templateRange`. Run
+`node scripts/scaffold-theme.mjs <directory>` to write a minimal,
+already-conformant theme package skeleton rather than hand-typing one.
+
 S2-T12 replaces `contracts/theme-styling-contract.jcs`'s S2-T02 scaffold
 placeholder with the real, closed `templateStylingContract` catalog DEC-097
 section 4 defines, and wires the selected theme package's stylesheets into every

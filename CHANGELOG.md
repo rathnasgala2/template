@@ -85,6 +85,13 @@ and this project adheres to
 - `computeRenderPolicyIdentity` is exported from the package's public entry
   point (`src/core/index.js`), so a consumer can compute/verify the current
   render-policy identity without reaching into `src/core/internal/`.
+- **TPL-M6**: a theme-authoring path — `docs/theme-authoring.md` documents how a
+  theme is a delta over `gala-base`, the closed token/pseudo-class catalogs,
+  passive-asset/SVG admission, the `theme.json` digest chain and
+  `templateRange`, and the consume-time/release-time verify gates — plus
+  `scripts/scaffold-theme.mjs`, which writes a minimal `theme.json`/
+  `tokens.css`/`components.css`/`print.css` skeleton with correct digests that
+  already passes schema validation and `loadThemeAssets`.
 
 Recommended release: **2.1.0** (minor) — the pseudo-class catalog and
 `gala-base` layer are additive contract surface; every other change in this
