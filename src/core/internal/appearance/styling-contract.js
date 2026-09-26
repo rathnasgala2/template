@@ -450,7 +450,7 @@ export const TEMPLATE_STYLING_CONTRACT_INVALID =
  * Structural self-validation of a `templateStylingContract` object against
  * DEC-097 section 4's closed shape (the checks this repository can run
  * without a published `urn:gala:schema:template-styling-contract` schema
- * entry — no such schema ID is registered in `@rathnasgala2/schemas@2.8.0`;
+ * entry — no such schema ID is registered in `@rathnasgala2/schemas@2.11.0`;
  * only `urn:gala:schema:theme-contract:2.0.0` is, which this module's sibling
  * theme fixtures are validated against with the schema package's own
  * exported `validateGalaDocument`, see `test/theme-styling-contract.test.js`).

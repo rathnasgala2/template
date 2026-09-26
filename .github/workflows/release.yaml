@@ -9,7 +9,6 @@ on:
       - contracts/**
       - types/**
       - LICENSE
-      - NOTICE
       - README.md
       - package.json
       - package-lock.json

@@ -490,11 +490,14 @@ npm install
 npm run verify
 ```
 
-`npm run verify` runs, in order: Prettier format check, ESLint,
-`tsc --checkJs --noEmit`, the dependency-cruiser
-architecture/module-tree-absence gate, `jscpd` duplication scan, the
-`contracts/*.jcs` canonical-form check, `node --test`, the license inventory
-check, and `cyclonedx-npm` SBOM generation plus presence check.
+`npm run verify` (TPL-M4 fix: this description is generated from
+`package.json`'s own `verify` script string, not hand-maintained) runs, in
+order: Prettier format check, ESLint, `tsc --checkJs --noEmit`, the
+dependency-cruiser architecture/module-tree-absence gate, `jscpd` duplication
+scan, the `contracts/*.jcs` canonical-form check, the no-local-schema-pin check,
+`node --test`, the license inventory check, the SBOM currency check
+(`sbom:check` compares `sbom.cdx.json` against the current lockfile — it is not
+a presence check), the workflow-pin check, and `npm audit --audit-level=high`.
 
 Individual gates:
 
@@ -505,13 +508,17 @@ npm run lint            # ESLint flat config
 npm run typecheck       # tsc --checkJs --noEmit against types/index.d.ts
 npm run architecture    # dependency-cruiser: no src/modules/, no circular deps
 npm run duplication     # jscpd, 3% / 50 tokens
-npm run contracts:generate  # (re)write contracts/*.jcs placeholders
+npm run contracts:generate  # (re)write contracts/*.jcs from their reviewed source modules
 npm run contracts:check     # fail if committed contracts drifted
+npm run schema-pin:check    # fail on a file: @rathnasgala2/schemas specifier
 npm test                # node --test
 npm run licenses:generate   # (re)write THIRD_PARTY_LICENSES.json
 npm run licenses:check      # fail if it drifted from package-lock.json
 npm run sbom:generate       # cyclonedx-npm -> sbom.cdx.json
-npm run sbom:check          # fail if sbom.cdx.json is missing
+npm run sbom:check          # fail if sbom.cdx.json is stale against package-lock.json
+npm run workflows:check     # fail if a GitHub Actions ref is not SHA-pinned
+npm run workflows:drift     # fail if workflow files diverge from their own baseline
+npm run audit               # npm audit --audit-level=high
 ```
 
 ## Package layout
@@ -555,8 +562,13 @@ and `artifact-manifest` are byte-identical from 2.6.1 to 2.8.0.
 
 ## Governing documents
 
-- [Slice brief S2: author-owned publication](../../orchestration/slice-briefs/S2-author-owned-publication.md),
-  section 3 (`@rathnasgala2/template`)
-- [DEC-094](../../orchestration/decisions/DEC-094-javascript-esm-public-packages.md):
-  JavaScript ESM for public packages
-- [WORKSPACE.md](../../orchestration/WORKSPACE.md), sections 4-8 and 13
+TPL-M5 fix: the internal specifications this package is built against live
+outside this repository and have no public URL, so they are named here as plain
+text rather than as dead links (the previous versions of these three lines
+resolved to 404s on both github.com and npmjs.com for every reader outside the
+workspace):
+
+- Slice brief S2: author-owned publication, section 3 (`@rathnasgala2/template`)
+  (internal)
+- DEC-094: JavaScript ESM for public packages (internal)
+- WORKSPACE.md, sections 4-8 and 13 (internal)
