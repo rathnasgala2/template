@@ -50,6 +50,19 @@
  * `<basePath>/assets/theme/<name>` matches the `<link href>` this module
  * also emits. `<link href>` and the physical/manifest path are derived from
  * the exact same joined value, so they cannot drift apart.
+ *
+ * Passive-asset admission (TPL-C2 fix): a declared `theme.json.assets[]` row
+ * is a lower-trust supply-chain input than the repository owner's own
+ * authored content, so it is held to at least the same bar as author media:
+ * its bytes are sniffed with `internal/media/sniff.js` (never trusted from
+ * the declared `mediaType` string), classified against a closed allowlist
+ * (raster formats, or SVG only after {@link sanitizeThemeSvg}'s closed
+ * admission grammar — see that module and TPL-H6's iconography decision),
+ * checked against `theme.json.budgets`'s per-file/total/count ceilings, and
+ * verified byte-for-byte against its own declared `byteLength`/`sha256`
+ * before it is ever copied into a published artifact. The manifest
+ * `mediaType` this module records is always the *sniffed* type, never the
+ * theme's own declaration.
  */
 
 import { lstat, readFile } from 'node:fs/promises';
@@ -58,8 +71,16 @@ import path from 'node:path';
 import { ThemeAssetError } from '../errors.js';
 import { digestBytes } from './canonical-jcs.js';
 import { ORDERED_LAYERS } from './appearance/styling-contract.js';
+import { MEDIA_TYPE_BY_FORMAT, sniffMediaFormat } from './media/sniff.js';
+import { sanitizeThemeSvg } from './media/theme-svg-sanitizer.js';
 import { projectFixedAssetPath } from './route.js';
 import { escapeHtml } from './skeleton.js';
+
+/** @type {number} the hard byte ceiling for one passive asset when a
+ * theme's own `theme.json.budgets.maximumFileBytes` is absent or larger
+ * (belt-and-suspenders; every real theme package declares a tighter budget
+ * of its own, enforced below). */
+const DEFAULT_MAXIMUM_PASSIVE_ASSET_BYTES = 262144;
 
 /** @type {string} the fixed, non-content-addressed output directory every
  * theme asset (stylesheet or passive file) is copied under, relative to
@@ -283,6 +304,111 @@ function joinedThemeOutputPath(basePath, themeRelativePath) {
   );
 }
 
+/** @type {{maximumFileBytes: number, maximumTotalBytes: number, maximumFiles: number}} */
+const FALLBACK_BUDGETS = Object.freeze({
+  maximumFileBytes: DEFAULT_MAXIMUM_PASSIVE_ASSET_BYTES,
+  maximumTotalBytes: DEFAULT_MAXIMUM_PASSIVE_ASSET_BYTES,
+  maximumFiles: 8,
+});
+
+/**
+ * Parse and validate `theme.json.budgets` (TPL-C2/THD-M3: the declared
+ * ceilings are now load-bearing, not decorative). An absent or malformed
+ * `budgets` object falls back to {@link FALLBACK_BUDGETS} rather than
+ * failing closed outright, since a missing budgets object is a shape defect
+ * TPL-H1's schema validation already rejects for a real theme package; this
+ * fallback only matters for this repository's own minimal test fixtures.
+ *
+ * @param {unknown} candidate the parsed `theme.json.budgets` value
+ * @returns {{maximumFileBytes: number, maximumTotalBytes: number, maximumFiles: number}}
+ *   the effective numeric budgets
+ */
+function assertThemeBudgetsShape(candidate) {
+  if (!candidate || typeof candidate !== 'object') {
+    return FALLBACK_BUDGETS;
+  }
+  const row = /** @type {Record<string, unknown>} */ (candidate);
+  const maximumFileBytes = Number(row.maximumFileBytes);
+  const maximumTotalBytes = Number(row.maximumTotalBytes);
+  const maximumFiles = Number(row.maximumFiles);
+  if (
+    !Number.isInteger(maximumFileBytes) ||
+    maximumFileBytes <= 0 ||
+    !Number.isInteger(maximumTotalBytes) ||
+    maximumTotalBytes <= 0 ||
+    !Number.isInteger(maximumFiles) ||
+    maximumFiles <= 0
+  ) {
+    throw new ThemeAssetError(
+      'THEME_ASSET_BUDGET_EXCEEDED',
+      'theme.json.budgets must declare positive integer maximumFileBytes, maximumTotalBytes and maximumFiles',
+    );
+  }
+  return { maximumFileBytes, maximumTotalBytes, maximumFiles };
+}
+
+/**
+ * Verify a declared passive-asset row's own `byteLength`/`sha256` against
+ * the bytes actually read (TPL-C2: the digest chain becomes load-bearing at
+ * consume time, not merely computed and republished).
+ *
+ * @param {{path: string, byteLength?: unknown, sha256?: unknown}} asset the
+ *   declared `theme.json.assets[]` row
+ * @param {Buffer} bytes the bytes actually read from disk
+ * @returns {void}
+ */
+function assertPassiveAssetIntegrity(asset, bytes) {
+  if (
+    asset.byteLength !== undefined &&
+    String(asset.byteLength) !== String(bytes.byteLength)
+  ) {
+    throw new ThemeAssetError(
+      'THEME_ASSET_DIGEST_MISMATCH',
+      `${asset.path}: declared byteLength ${asset.byteLength} does not match ${bytes.byteLength} actual bytes`,
+    );
+  }
+  const actualDigest = digestBytes(bytes);
+  if (asset.sha256 !== undefined && asset.sha256 !== actualDigest) {
+    throw new ThemeAssetError(
+      'THEME_ASSET_DIGEST_MISMATCH',
+      `${asset.path}: declared sha256 does not match its actual bytes (expected ${actualDigest}, got ${asset.sha256})`,
+    );
+  }
+}
+
+/**
+ * Sniff, allowlist and (for SVG) sanitize one passive asset's bytes,
+ * deriving its published `mediaType` from the sniffed format, never from the
+ * theme's own declaration (TPL-C2).
+ *
+ * @param {string} relativePath the declared, already-validated theme-relative
+ *   path (for error messages only)
+ * @param {Buffer} bytes the bytes actually read from disk
+ * @returns {{mediaType: string, publishedBytes: Buffer}} the manifest media
+ *   type and the exact bytes to publish (sanitized, for SVG)
+ */
+function admitPassiveAssetBytes(relativePath, bytes) {
+  const format = sniffMediaFormat(bytes);
+  if (format === 'svg') {
+    // Author SVG is unconditionally rejected (media/sniff.js's own module
+    // documentation); a theme-declared SVG is admitted only after it
+    // survives the closed sanitization grammar below (TPL-H6's iconography
+    // decision: this is the mechanism that makes icon assets safe to ship).
+    return {
+      mediaType: 'image/svg+xml',
+      publishedBytes: sanitizeThemeSvg(bytes),
+    };
+  }
+  const mediaType = MEDIA_TYPE_BY_FORMAT[format];
+  if (!mediaType) {
+    throw new ThemeAssetError(
+      'THEME_ASSET_FORMAT_INVALID',
+      `${relativePath}: bytes do not sniff as an admitted passive-asset format (png, jpeg, webp, avif, or sanitizable svg)`,
+    );
+  }
+  return { mediaType, publishedBytes: bytes };
+}
+
 /**
  * Load and validate a selected theme package's `theme.json`, copy its
  * stylesheets (and any declared non-CSS passive assets) into
@@ -346,21 +472,57 @@ export async function loadThemeAssets({ themeDirectory, basePath }) {
     );
   }
 
+  // TPL-M2 fix: partition by the already-shape-validated `stylesheets` list
+  // itself, not by comparing `asset.mediaType` against the literal string
+  // `'text/css'` — a theme declaring its own stylesheet rows with the same
+  // `'text/css; charset=utf-8'` spelling this function's own manifest rows
+  // above use would otherwise be classified as a passive asset and copied a
+  // second time under the same output path.
+  const declaredStylesheetPaths = new Set(themeJson.stylesheets);
   const passiveAssets = (themeJson.assets ?? []).filter(
-    (asset) => asset.mediaType !== 'text/css',
+    (asset) => !declaredStylesheetPaths.has(asset.path),
   );
+
+  const budgets = assertThemeBudgetsShape(themeJson.budgets);
+  let totalPassiveBytes = 0;
+  if (passiveAssets.length > budgets.maximumFiles) {
+    throw new ThemeAssetError(
+      'THEME_ASSET_BUDGET_EXCEEDED',
+      `theme declares ${passiveAssets.length} passive assets, exceeding budgets.maximumFiles (${budgets.maximumFiles})`,
+    );
+  }
+
   for (const asset of passiveAssets) {
     const { relativePath, bytes } = await readDeclaredThemeFile(
       themeDirectory,
       asset.path,
     );
+    assertPassiveAssetIntegrity(asset, bytes);
+    if (bytes.byteLength > budgets.maximumFileBytes) {
+      throw new ThemeAssetError(
+        'THEME_ASSET_BUDGET_EXCEEDED',
+        `${relativePath} is ${bytes.byteLength} bytes, exceeding budgets.maximumFileBytes (${budgets.maximumFileBytes})`,
+      );
+    }
+    totalPassiveBytes += bytes.byteLength;
+    if (totalPassiveBytes > budgets.maximumTotalBytes) {
+      throw new ThemeAssetError(
+        'THEME_ASSET_BUDGET_EXCEEDED',
+        `passive assets total ${totalPassiveBytes} bytes, exceeding budgets.maximumTotalBytes (${budgets.maximumTotalBytes})`,
+      );
+    }
+
+    const { mediaType, publishedBytes } = admitPassiveAssetBytes(
+      relativePath,
+      bytes,
+    );
     const outputPath = joinedThemeOutputPath(basePath, relativePath);
-    files.push({ path: outputPath, bytes });
+    files.push({ path: outputPath, bytes: publishedBytes });
     assets.push({
       path: outputPath,
-      mediaType: asset.mediaType,
-      byteLength: String(bytes.byteLength),
-      sha256: digestBytes(bytes),
+      mediaType,
+      byteLength: String(publishedBytes.byteLength),
+      sha256: digestBytes(publishedBytes),
       immutable: false,
     });
   }
