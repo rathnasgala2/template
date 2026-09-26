@@ -171,9 +171,15 @@ function renderNavItem(item, currentRoute) {
  *   route
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
  *   the resolved message catalog
- * @returns {string} the rendered primary navigation, or an empty string when
- *   there are no authored items (the landmark is still meaningful with no
- *   items for a publication with no authored navigation)
+ * @returns {string} the rendered primary navigation `<nav>`, always present
+ *   even when `items` is empty (TPL-M3 fix: this JSDoc previously claimed an
+ *   empty-string return for that case, which the implementation never
+ *   produced). This is deliberate, not the stale claim it replaces: every
+ *   page kind renders exactly one primary-navigation landmark
+ *   unconditionally (`internal/page-kinds.js`'s own module documentation),
+ *   so a reader navigating by landmark list sees the same, predictable
+ *   chrome structure on every page regardless of whether that publication
+ *   has authored any navigation items yet.
  */
 export function renderPrimaryNavigation({ items, currentRoute, messages }) {
   const label = escapeHtml(

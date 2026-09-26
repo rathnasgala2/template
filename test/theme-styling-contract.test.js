@@ -803,15 +803,16 @@ test('basePath fix: appearance script, theme stylesheet, media derivative and so
         '<script src="/blog/2024/assets/gala-appearance-bootstrap-v1.js"></script>',
       ),
     );
-    assert.ok(
-      html.includes(
-        '<link rel="stylesheet" href="/blog/2024/assets/theme/tokens.css">',
-      ),
+    // TPL-M1 fix: theme stylesheet <link>s now carry integrity/crossorigin;
+    // matched loosely here (both are content-derived) rather than
+    // hardcoding the digest.
+    assert.match(
+      html,
+      /<link rel="stylesheet" href="\/blog\/2024\/assets\/theme\/tokens\.css" integrity="sha256-[^"]+" crossorigin="anonymous">/,
     );
-    assert.ok(
-      html.includes(
-        '<link rel="stylesheet" href="/blog/2024/assets/theme/print.css" media="print">',
-      ),
+    assert.match(
+      html,
+      /<link rel="stylesheet" href="\/blog\/2024\/assets\/theme\/print\.css" integrity="sha256-[^"]+" crossorigin="anonymous" media="print">/,
     );
 
     // Physical existence, one file per asset class, at the exact

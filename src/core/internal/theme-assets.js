@@ -65,6 +65,7 @@
  * theme's own declaration.
  */
 
+import { createHash } from 'node:crypto';
 import { lstat, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -502,6 +503,18 @@ function assertThemeContractIntegrity(themeJson) {
 }
 
 /**
+ * TPL-M1 fix: compute a Subresource Integrity attribute value
+ * (`sha256-<base64>`) from exact file bytes, so a theme stylesheet `<link>`
+ * can be verified by the browser itself.
+ *
+ * @param {Buffer} bytes exact file bytes
+ * @returns {string} an `integrity` attribute value, e.g. `sha256-AAAA...`
+ */
+function subresourceIntegrityAttribute(bytes) {
+  return `sha256-${createHash('sha256').update(bytes).digest('base64')}`;
+}
+
+/**
  * Load and validate a selected theme package's `theme.json`, copy its
  * stylesheets (and any declared non-CSS passive assets) into
  * `<basePath>/assets/theme/`, and build the ordered `<link>` HTML fragment
@@ -569,8 +582,14 @@ export async function loadThemeAssets({ themeDirectory, basePath }) {
       immutable: false,
     });
     const mediaAttribute = filename === 'print.css' ? ' media="print"' : '';
+    // TPL-M1 fix: emit Subresource Integrity so a mutated stylesheet in a
+    // published artifact is detectable by the browser itself, not only by
+    // re-running manifest verification. `digestBytes` returns a hex-prefixed
+    // `sha256:` tag for the manifest; SRI needs the same digest re-encoded as
+    // base64, computed fresh from these exact bytes.
+    const integrity = subresourceIntegrityAttribute(bytes);
     linkTags.push(
-      `<link rel="stylesheet" href="${escapeHtml(`/${outputPath}`)}"${mediaAttribute}>`,
+      `<link rel="stylesheet" href="${escapeHtml(`/${outputPath}`)}" integrity="${integrity}" crossorigin="anonymous"${mediaAttribute}>`,
     );
   }
 
