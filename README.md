@@ -5,14 +5,14 @@ portable author repository format. It is one of the three author-facing S2
 artifacts, alongside one `@rathnasgala2/theme-*` package and
 `@rathnasgala2/publish-action`.
 
-This package is JavaScript ESM on Node 24, authored without TypeScript sources
-(DEC-094): every export carries JSDoc types, checked by `tsc --checkJs --noEmit`
-against a hand-maintained `.d.ts` surface.
+This package is JavaScript ESM on Node 24, authored without TypeScript sources:
+every export carries JSDoc types, checked by `tsc --checkJs --noEmit` against a
+hand-maintained `.d.ts` surface.
 
 ## Status
 
-S2-T02's repository scaffold (exact pins, `src/core/`-only layout, module-tree
-absence gate, quality-gate tooling) plus S2-T03's renderer adapter:
+This repository's scaffold (exact pins, `src/core/`-only layout, module-tree
+absence gate, quality-gate tooling) plus its renderer adapter:
 `renderPublication(buildInput, options)`, exported from `src/core/index.js`, is
 the package's one documented entry point. It:
 
@@ -29,7 +29,7 @@ the package's one documented entry point. It:
    `urn:gala:schema:artifact-manifest:2.0.0` instance describing the candidate
    output directory.
 
-S2-T05 adds the media pipeline under `src/core/internal/media/`, run from
+The media pipeline lives under `src/core/internal/media/`, run from
 `renderPublication` after the Eleventy route listing so its output is never
 mistaken for an HTML route:
 
@@ -40,8 +40,8 @@ mistaken for an HTML route:
   entropy decode (a documented scope decision — see
   `webp-probe.js`/`avif-probe.js`). Every format shares one set of resource
   ceilings in `limits.js` (raster dimension, pixel count, decoded-buffer and
-  source-byte caps reused from DEC-097's own closed binary-asset decoder bounds,
-  plus this renderer's own documented per-publication ceilings).
+  source-byte caps reused from the theme package's own closed binary-asset
+  decoder bounds, plus this renderer's own documented per-publication ceilings).
 - **Metadata strip, orientation.** PNG/JPEG derivatives are always re-encoded
   from decoded pixels, never byte-copied, so no ancillary/EXIF metadata survives
   into a derivative; JPEG's EXIF `Orientation` tag is read and applied
@@ -55,7 +55,7 @@ mistaken for an HTML route:
   unconditionally as an image reference (`MEDIA_SVG_REJECTED`) — SVG is never
   processed as author media.
 - **Font policy.** `appearance.fontAssets` entries must be bounded WOFF2 (exact
-  signature, DEC-097's 4,194,304-byte font cap); a remote font reference cannot
+  signature, a fixed 4,194,304-byte font cap); a remote font reference cannot
   enter `build-input` in the first place (`resolvedFile` is always a
   repository-relative path), so "no remote font is ever retrieved" holds
   structurally.
@@ -63,17 +63,16 @@ mistaken for an HTML route:
   mismatch, SVG, unrecognized format, invalid font — is a `MediaPipelineError`
   with a stable `reasonCode`, thrown before the manifest is assembled.
 
-`options.sourceDirectory` (new in S2-T05) is the caller-mounted, read-only
-repository source tree `build-input`'s `resolvedFile` references point into;
-every referenced file's bytes are read from there and verified against
-`build-input`'s declared `sourceDigest` before being decoded.
+`options.sourceDirectory` is the caller-mounted, read-only repository source
+tree `build-input`'s `resolvedFile` references point into; every referenced
+file's bytes are read from there and verified against `build-input`'s declared
+`sourceDigest` before being decoded.
 
-S2-T04 adds the complete output-security pipeline
-(`src/core/internal/content-security.js`) on top of that adapter. **Division of
-labour** (DEC-097 section 5: normalization replaces an authored body path with a
-`renderableBody` carrying "the deterministic policy output/digest";
-`build-input.schema.json` fixes `renderableBody.bodyMediaType` as
-`const: "text/html"`): a `renderableBody.body` inside a validated
+The complete output-security pipeline (`src/core/internal/content-security.js`)
+sits on top of that adapter. **Division of labour** (normalization replaces an
+authored body path with a `renderableBody` carrying "the deterministic policy
+output/digest"; `build-input.schema.json` fixes `renderableBody.bodyMediaType`
+as `const: "text/html"`): a `renderableBody.body` inside a validated
 `build-input:2.0.0` instance is **already** render-policy-conformant HTML,
 produced once upstream of this renderer. This package therefore exposes two
 distinct public entry points:
@@ -134,18 +133,18 @@ carried in `artifact-manifest:2.0.0`'s own `declarativeHeaders` field, which
 schema-repo change, out of this repository's scope.
 
 `img[src]` is restricted to repository-relative paths only in this pipeline;
-full manifest-coverage verification of media references is the S2-T05 media
-pipeline's job (immediately above). A handful of manifest fields (`builder`,
+full manifest-coverage verification of media references is the media pipeline's
+job (immediately above). A handful of manifest fields (`builder`,
 `sourceIdentity.repository`, `workflowIdentity`, `buildToolVersions`,
 `excludedInputs`) describe facts `build-input` does not itself carry;
 `renderPublication` accepts them as an explicit `options.provenance` bundle
 rather than fabricating them — see `src/core/manifest.js`'s module
-documentation. `contracts/theme-styling-contract.jcs` is S2-T12's real, closed
-`templateStylingContract` catalog (see the S2-T12 section below).
+documentation. `contracts/theme-styling-contract.jcs` is the real, closed
+`templateStylingContract` catalog (see the theme styling contract section
+below).
 
-S2-T06 adds the core semantic skeleton, page kinds and navigation renderer on
-top of the S2-T04 output-security pipeline every generated page still passes
-through:
+The core semantic skeleton, page kinds and navigation renderer sit on top of the
+output-security pipeline every generated page still passes through:
 
 - **`src/core/internal/skeleton.js`** renders the one landmark contract every
   page kind shares, through its one `renderPageBody` composition: a skip link
@@ -158,13 +157,13 @@ through:
   template attribution line). Core owns nine versioned semantic slots
   (`header-actions`, `article-preamble`, `article-end`, `footer-profile`,
   `footer-auxiliary`, `account-intent`, `conversation`, `newsletter`,
-  `edition-selector`) plus the collapsed `article-footer-ad` slot (DEC-060):
-  every slot is one `data-gala-slot="<name>"` attribute on an otherwise empty,
-  non-landmark `<div>`, and the collapsed slot additionally carries `hidden`. S2
+  `edition-selector`) plus the collapsed `article-footer-ad` slot: every slot is
+  one `data-gala-slot="<name>"` attribute on an otherwise empty, non-landmark
+  `<div>`, and the collapsed slot additionally carries `hidden`. This renderer
   has no module system, so every slot except `footer-profile` (which always
-  wraps the publication's own footer card) and `header-actions` (S2-T07's
-  appearance control, core content rather than a module) renders empty. This
-  module also renders breadcrumbs and deterministic pagination controls
+  wraps the publication's own footer card) and `header-actions` (the appearance
+  control, core content rather than a module) renders empty. This module also
+  renders breadcrumbs and deterministic pagination controls
   (`rel="prev"`/`rel="next"`, an `aria-current="page"` status).
 - **`src/core/internal/page-kinds.js`** builds every generated page kind from a
   validated `build-input:2.0.0`: `profile` (the optional publication profile),
@@ -176,10 +175,10 @@ through:
   page per distinct authored value, plus a `/tags`/`/series` root page linking
   to each), and `archive` (one listing page per UTC calendar year, plus a
   `/archive` root page). The `error` page kind (`renderErrorPageBody`) is
-  exported as a pure function for a future `404.html` caller (S2-T08, out of
-  this task's scope), not wired into any generated route here. Listing page size
-  (10), sort tie-break, and the tag/series/archive root pages are documented
-  scoped decisions the brief text this task read does not fix verbatim.
+  exported as a pure function for the `404.html` caller (see below), not wired
+  into any generated route here. Listing page size (10), sort tie-break, and the
+  tag/series/archive root pages are documented scoped decisions this renderer's
+  own governing brief does not fix verbatim.
 - **`src/core/internal/messages.js`** is the message catalog every user-visible
   chrome string above is looked up from (never an inline literal), keyed by
   BCP-47 tag with a fixed `en` fallback — the only catalog S2 authors;
@@ -200,19 +199,19 @@ every page (a scoped decision: navigation/footer text does not flip language
 page to page); each page's own `<html lang>`/`dir` still reflects that
 individual page's own content language.
 
-S2-T07 adds the Light/Dark/System appearance controller
-(`src/core/internal/appearance/`), the only browser bootstrap S2 emits (brief S2
-section 3, "Module absence and CSP equality"):
+The Light/Dark/System appearance controller (`src/core/internal/appearance/`) is
+the only browser bootstrap this renderer emits ("Module absence and CSP
+equality"):
 
 - **`contract.js`** is the one module every other appearance-related file
-  imports every name/value from: the two DEC-097-fixed root attributes
+  imports every name/value from: the two fixed root attributes
   (`data-gala-publication-root` presence, `data-gala-resolved-color-mode`
   exact-value `"light"`/`"dark"`), the template-internal
   `data-gala-color-mode-selection` bookkeeping attribute, the three canonical
   mode values (`light`/`dark`/`system`), the versioned local storage key
   (`gala:appearance:color-mode:v1`), the control's `id`, the bootstrap script's
   fixed output path/media type and the `color-scheme` meta content — the
-  contract S2-T12's published theme styling catalog targets.
+  contract the published theme styling catalog targets.
 - **`controller-markup.js`** renders a native `<select>` (a brief-admitted
   pattern; needs no `aria-pressed`/`aria-checked` bookkeeping of its own, unlike
   a custom button-group or radio-group would) bound to a visible `<label>`, with
@@ -239,20 +238,20 @@ section 3, "Module absence and CSP equality"):
   directory and enters it into the manifest as an ordinary `manifestAsset` row
   (`{path, byteLength, sha256}` plus its fixed
   `application/javascript; charset=utf-8` media type), after the Eleventy route
-  listing — exactly like an S2-T05 media derivative — so it is never mistaken
-  for an HTML route. `src/core/internal/eleventy-render.js`'s skeleton layout
-  carries the `data-gala-publication-root` attribute, the
+  listing — exactly like a media derivative — so it is never mistaken for an
+  HTML route. `src/core/internal/eleventy-render.js`'s skeleton layout carries
+  the `data-gala-publication-root` attribute, the
   `<meta name="color-scheme" content="light dark">` tag and the one
   `<script src>` reference, all fixed literals from `contract.js`, so every
-  route's `<head>` is still byte-identical (S2 materializes no module
+  route's `<head>` is still byte-identical (this renderer materializes no module
   package/configuration/output/runtime).
 - With JavaScript disabled, the control still renders (a native `<select>`,
   fully keyboard-operable and usable with no script at all). The resolved root
-  attribute is server-rendered as the fixed `light` default (TPL-C1 fix), so a
-  no-JS reader, an archival crawler, or a load where the bootstrap script fails
-  still gets a fully themed page instead of unstyled UA-default HTML; a scripted
-  reader's phase 1 bootstrap always overwrites this attribute with the reader's
-  real stored selection/system preference before first paint.
+  attribute is server-rendered as the fixed `light` default, so a no-JS reader,
+  an archival crawler, or a load where the bootstrap script fails still gets a
+  fully themed page instead of unstyled UA-default HTML; a scripted reader's
+  phase 1 bootstrap always overwrites this attribute with the reader's real
+  stored selection/system preference before first paint.
   `<meta name="color-scheme">` also carries `prefers-color-scheme` through to
   user-agent styling (form controls, scrollbars) independent of any script.
 
@@ -264,40 +263,40 @@ admission, the `theme.json` digest chain, and `templateRange`. Run
 `node scripts/scaffold-theme.mjs <directory>` to write a minimal,
 already-conformant theme package skeleton rather than hand-typing one.
 
-S2-T12 replaces `contracts/theme-styling-contract.jcs`'s S2-T02 scaffold
-placeholder with the real, closed `templateStylingContract` catalog DEC-097
-section 4 defines, and wires the selected theme package's stylesheets into every
-generated page:
+The theme styling contract replaces `contracts/theme-styling-contract.jcs`'s
+original scaffold placeholder with the real, closed `templateStylingContract`
+catalog this renderer's own internal styling decision defines, and wires the
+selected theme package's stylesheets into every generated page:
 
 - **`src/core/internal/appearance/styling-contract.js`** is the one reviewed
   source module `scripts/generate-contracts.mjs` emits the contract from: the
   ordered five-layer catalog (`gala-base`/`gala-tokens`/`gala-components`/
-  `gala-utilities`/`gala-print` — contract 2.1.0, TPL-H3/TPL-M7 fix: `gala-base`
-  is the template's own layer, carrying the reset/type-scale/focus-ring defaults
-  documented below `internal/appearance/base-layer.js`, always ordered first so
-  a theme's own layers can override it), the publication-root/ resolved-palette
-  selectors, the closed type/class/id/attribute leaf catalogs, a closed
-  five-member pseudo-class catalog (`hover`, `focus-visible`, `active`,
-  `visited`, `disabled` — contract 2.1.0, TPL-H2 fix; see that module's own
-  documentation for why each is admitted and why the token catalog's
-  `color-focus`/`color-link-visited` had no reachable application before it),
-  and exactly 64 `publicThemeSlotHooks` — one per catalog leaf, so every leaf a
-  theme could validly select is a named, documented hook and no catalog member
-  is orphaned. Every leaf is drawn from what this renderer actually renders: 28
-  type-selector hooks (every landmark/prose/code/control element
-  `internal/skeleton.js`, `internal/page-kinds.js` and the markdown-it
-  CommonMark pipeline can produce), 15 class-selector hooks (the base Prism
-  `.token` class plus one `.language-<grammar>` hook per admitted highlight
-  grammar — fine-grained per-token-kind classes are a documented S2 scope
-  exclusion), 2 id-selector hooks (`#main-content`, the appearance `<select>`'s
-  fixed id) and 19 attribute-value hooks (one per `data-gala-slot` value, one
-  per the new `data-gala-page-kind` value). `catalogDigest` is
+  `gala-utilities`/`gala-print` — contract 2.1.0: `gala-base` is the template's
+  own layer, carrying the reset/type-scale/focus-ring defaults documented below
+  `internal/appearance/base-layer.js`, always ordered first so a theme's own
+  layers can override it), the publication-root/ resolved-palette selectors, the
+  closed type/class/id/attribute leaf catalogs, a closed five-member
+  pseudo-class catalog (`hover`, `focus-visible`, `active`, `visited`,
+  `disabled` — contract 2.1.0; see that module's own documentation for why each
+  is admitted and why the token catalog's `color-focus`/`color-link-visited` had
+  no reachable application before it), and exactly 64 `publicThemeSlotHooks` —
+  one per catalog leaf, so every leaf a theme could validly select is a named,
+  documented hook and no catalog member is orphaned. Every leaf is drawn from
+  what this renderer actually renders: 28 type-selector hooks (every
+  landmark/prose/code/control element `internal/skeleton.js`,
+  `internal/page-kinds.js` and the markdown-it CommonMark pipeline can produce),
+  15 class-selector hooks (the base Prism `.token` class plus one
+  `.language-<grammar>` hook per admitted highlight grammar — fine-grained
+  per-token-kind classes are a documented scope exclusion), 2 id-selector hooks
+  (`#main-content`, the appearance `<select>`'s fixed id) and 19 attribute-value
+  hooks (one per `data-gala-slot` value, one per the `data-gala-page-kind`
+  value). `catalogDigest` is
   `SHA256(UTF8("GALA-TEMPLATE-STYLING-CONTRACT-V2\0") || JCS(...))`, matching
-  DEC-097 section 8 and the digest profile `@rathnasgala2/schemas`' own internal
-  `templateStylingContract` profile uses (that function is not exported through
-  the package's public API, so this module reimplements the same
-  domain-separated formula rather than importing it).
-  `assertTemplateStylingContractShape` is this repository's own structural
+  the same domain-separated digest construction and the digest profile
+  `@rathnasgala2/schemas`' own internal `templateStylingContract` profile uses
+  (that function is not exported through the package's public API, so this
+  module reimplements the same domain-separated formula rather than importing
+  it). `assertTemplateStylingContractShape` is this repository's own structural
   self-validator (root/palette attribute rows, fixed layer/selector/composition
   constants, hook count/uniqueness bound, `catalogDigest` recomputation); no
   `urn:gala:schema:template-styling-contract` schema ID is registered in
@@ -319,30 +318,30 @@ generated page:
   `@rathnasgala2/schemas`' own exported `validateGalaDocument`.
 - **`src/core/internal/theme-assets.js`** is the optional theme-asset
   integration layer: given `options.themeDirectory` (an extracted theme package
-  directory, shaped exactly like the S2-T13 package file set — `theme.json`,
-  `tokens.css`, `components.css`, an optional `utilities.css`, `print.css`,
-  `package.json`, `LICENSE`, `README.md`, `assets/*`), it copies the declared
-  stylesheets and any declared non-CSS passive assets into `assets/theme/`,
-  enters each as an ordinary `{path, byteLength, sha256}` `manifestAsset` row,
-  and renders the ordered `<link>` markup every generated page's `<head>`
-  inserts (`print.css` alone carries `media="print"`). It validates the theme's
-  own declared `stylesheets` list against the two admitted shapes (with or
-  without `utilities.css`) and that `cssLayers` byte-equals the corresponding
-  layer projection, but does **not** re-implement DEC-097's full CSS Syntax
-  Module admission grammar — that is the shared `theme-release.yml` conformance
-  runner's job (S2-T11), run once per theme release, never per publication
+  directory, shaped exactly like the theme package's own file set —
+  `theme.json`, `tokens.css`, `components.css`, an optional `utilities.css`,
+  `print.css`, `package.json`, `LICENSE`, `README.md`, `assets/*`), it copies
+  the declared stylesheets and any declared non-CSS passive assets into
+  `assets/theme/`, enters each as an ordinary `{path, byteLength, sha256}`
+  `manifestAsset` row, and renders the ordered `<link>` markup every generated
+  page's `<head>` inserts (`print.css` alone carries `media="print"`). It
+  validates the theme's own declared `stylesheets` list against the two admitted
+  shapes (with or without `utilities.css`) and that `cssLayers` byte-equals the
+  corresponding layer projection, but does **not** re-implement the full CSS
+  Syntax Module admission grammar — that is the shared `theme-release.yml`
+  conformance runner's job, run once per theme release, never per publication
   build. `renderPublication` falls back to the pre-existing fixed
   `assets/theme/print.css` link when no `options.themeDirectory` is supplied
-  (every caller before S2-T12, and this repository's own tests that do not
-  exercise theme integration). Minimal in-repo fixture theme packages for both
+  (every caller that predates theme integration, and this repository's own tests
+  that do not exercise it). Minimal in-repo fixture theme packages for both
   stylesheet-list shapes live under `test/fixtures/theme-fixture-full/` and
   `test/fixtures/theme-fixture-minimal/` — deliberately not real, conformant
-  theme CSS (authoring one is S2-T13's task); they exist only to exercise the
-  copy/link/manifest mechanism.
+  theme CSS (authoring one is a theme package's own task); they exist only to
+  exercise the copy/link/manifest mechanism.
 
-Hardening at consume time (TPL-C2/TPL-H1 fixes; a theme package is lower-trust
-supply-chain input than the repository owner's own authored content, so it is
-held to at least the same bar): `theme.json` is schema-validated against
+Hardening at consume time (a theme package is lower-trust supply-chain input
+than the repository owner's own authored content, so it is held to at least the
+same bar): `theme.json` is schema-validated against
 `urn:gala:schema:theme-contract:2.0.0` before anything else, and its
 `contractVersion`/`stylingContractDigest`/ `templateRange` are checked against
 this renderer's own published styling contract and version
@@ -357,29 +356,29 @@ in scope and expected** (TPL-H6 decision): this sanitizer is what makes a
 theme-declared SVG icon mark safe to publish.
 
 - **basePath fix (LOCAL-7 follow-up; independent-review finding B2).** Before
-  S2-T12, the appearance bootstrap script's `<script src>` and the social-image
-  `og:image`/`twitter:image` URL were both root-absolute, unprefixed by the
-  publication's own `basePath` — a non-root `basePath` publication would 404
-  them. `internal/appearance/contract.js`'s new
+  theme integration existed, the appearance bootstrap script's `<script src>`
+  and the social-image `og:image`/`twitter:image` URL were both root-absolute,
+  unprefixed by the publication's own `basePath` — a non-root `basePath`
+  publication would 404 them. `internal/appearance/contract.js`'s new
   `appearanceBootstrapScriptHref(basePath)` and `internal/seo.js`'s
   `resolveSocialImageUrl` (now taking `basePath`) both join through
   `internal/route.js`'s shared `joinBasePathAndRoute`/`projectFixedAssetPath`,
   exactly like the pre-existing print-stylesheet convention (now folded into
   `internal/theme-assets.js`) already did for _hrefs_. Independent review
   (finding B2) found that this was only half the fix: the _physical files_ this
-  renderer writes for every asset class — theme CSS/passive assets, every S2-T05
-  media derivative, and the S2-T07 appearance bootstrap script — were still
-  written, and entered into the manifest, at their bare **unprefixed** paths.
-  Since the local-directory adapter serves a `manifestAsset.path` verbatim, a
-  non-root `basePath` publication's `<link>`/`<script src>`/`og:image` href
-  would point at `<basePath>/assets/...` while the actual file sat at the
-  unprefixed `assets/...` — a 404 in practice, not just a theoretical href
-  mismatch. `src/core/index.js` now joins `basePath` into the physical
-  destination path and the `manifestAsset.path` for media derivatives
-  (`joinedMediaAssets`, computed with the same `projectFixedAssetPath` every
-  other fixed-name generated asset already uses) and the appearance bootstrap
-  script (`joinedAppearanceScriptPath`); `internal/theme-assets.js` computes its
-  joined output path once per file and derives both the `<link href>` and the
+  renderer writes for every asset class — theme CSS/passive assets, every media
+  derivative, and the appearance bootstrap script — were still written, and
+  entered into the manifest, at their bare **unprefixed** paths. Since the
+  local-directory adapter serves a `manifestAsset.path` verbatim, a non-root
+  `basePath` publication's `<link>`/`<script src>`/`og:image` href would point
+  at `<basePath>/assets/...` while the actual file sat at the unprefixed
+  `assets/...` — a 404 in practice, not just a theoretical href mismatch.
+  `src/core/index.js` now joins `basePath` into the physical destination path
+  and the `manifestAsset.path` for media derivatives (`joinedMediaAssets`,
+  computed with the same `projectFixedAssetPath` every other fixed-name
+  generated asset already uses) and the appearance bootstrap script
+  (`joinedAppearanceScriptPath`); `internal/theme-assets.js` computes its joined
+  output path once per file and derives both the `<link href>` and the
   file/manifest path from that exact same value, so they cannot drift apart.
   `test/theme-styling-contract.test.js` carries a dedicated non-root,
   multi-segment `basePath` (`/blog/2024`) fixture test asserting every one of
@@ -406,14 +405,15 @@ theme-declared SVG icon mark safe to publish.
 
 ### Media pipeline scope decisions (documented, not silently assumed)
 
-Neither the S2 brief nor DEC-097 fixes exact derivative widths, output
-formats/quality, or a per-publication media byte/count ceiling for _author_
-media (DEC-097's own numeric bounds are stated for the closed
-`gala-theme-binary-assets-v2` _theme passive-asset_ profile). This renderer
-therefore documents its own choices in `src/core/internal/media/limits.js`
-rather than inventing undocumented magic numbers:
+Neither this renderer's own governing brief nor its internal styling decision
+fixes exact derivative widths, output formats/quality, or a per-publication
+media byte/count ceiling for _author_ media (those numeric bounds are stated
+only for the closed `gala-theme-binary-assets-v2` _theme passive-asset_
+profile). This renderer therefore documents its own choices in
+`src/core/internal/media/limits.js` rather than inventing undocumented magic
+numbers:
 
-- decode/resource ceilings reuse DEC-097's theme binary-asset numbers
+- decode/resource ceilings reuse the theme binary-asset profile's numbers
   (dimension, pixel-count, decoded-buffer, source-byte caps), since the
   decode-bomb risk they defend against is identical regardless of asset class;
 - responsive derivative widths (`320/640/960/1280/1920`), JPEG derivative
@@ -425,8 +425,8 @@ rather than inventing undocumented magic numbers:
   proportion to this task, and is flagged as a follow-up rather than attempted
   partially.
 
-S2-T08 adds every remaining "Required generated output" from brief S2 section 3
-on top of S2-T06's page kinds:
+Every remaining "Required generated output" from this renderer's own governing
+brief sits on top of the page kinds above:
 
 - **Feeds** (`src/core/internal/feeds.js`): deterministic Atom 1.0
   (`/feed/atom.xml`) and RSS 2.0 (`/feed/rss.xml`) documents over the exact
@@ -434,7 +434,8 @@ on top of S2-T06's page kinds:
   `internal/page-kinds.js`'s `index` page kind paginates (the shared
   `selectPublishedArticles` export), every item URL absolute against
   `buildInput.baseUrl`, bounded to the most recent 50 entries (documented scoped
-  decision — neither the brief nor DEC-097 fixes a feed item count).
+  decision — neither the brief nor this renderer's own styling decision fixes a
+  feed item count).
 - **Sitemap** (`src/core/internal/sitemap.js`): `/sitemap.xml` over every page
   `internal/page-kinds.js` generated that this renderer did not itself mark
   `noindex` (unlisted content), deterministically sorted by each entry's own
@@ -444,9 +445,10 @@ on top of S2-T06's page kinds:
   `/search-index.json`, a deterministic JSON document indexing every published
   `article`/`page` record's title, description, a bounded plain-text excerpt,
   tags and timestamps. Its shape is a documented scoped decision (neither the
-  brief nor DEC-097 fixes one). **No runtime search JavaScript accompanies it**
-  — the Light/Dark/System appearance controller (S2-T07) remains the only
-  browser bootstrap this renderer ever emits in all of S2 (acceptance test C).
+  brief nor this renderer's own styling decision fixes one). **No runtime search
+  JavaScript accompanies it** — the Light/Dark/System appearance controller
+  remains the only browser bootstrap this renderer ever emits (acceptance test
+  C).
 - **SEO/Open-Graph/Twitter/localization metadata**: every generated page's
   `<head>` now carries a viewport meta, an optional description, an optional
   `robots` directive (`noindex, follow` for `status: "unlisted"` content and for
@@ -456,16 +458,15 @@ on top of S2-T06's page kinds:
   `<link>`s. **hreflang** is a documented scope decision, not a silent omission:
   `build-input:2.0.0` has no translation/locale-variant linkage between distinct
   `content[]` records (see `internal/seo.js`'s module documentation), so no
-  `<link rel="alternate" hreflang="...">` is ever emitted in S2.
-- **`404.html`**: the S2-T06 `error` page kind's pure `renderErrorPageBody`, now
-  actually wired into `renderPublication` at DEC-097's exact `errorDocumentKey`
+  `<link rel="alternate" hreflang="...">` is ever emitted by this renderer.
+- **`404.html`**: the `error` page kind's pure `renderErrorPageBody`, now
+  actually wired into `renderPublication` at the fixed `errorDocumentKey`
   (`internal/route.js#errorDocumentPath`) — `404.html` at the root, or
   `<basePath>/404.html` otherwise.
-- **Redirect documents**: unchanged from S2-T03
+- **Redirect documents**: unchanged from the renderer adapter
   (`internal/route.js#renderRedirectDocument`) — every authored redirect was
   already an ordinary generated artifact with manifest status fixed at `200`;
-  this task's own scope note is documenting that fact here, not re-implementing
-  it.
+  this is documenting that fact here, not re-implementing it.
 - **Print CSS hookup** (`src/core/internal/print-stylesheet.js`): every page's
   `<head>` carries a `<link rel="stylesheet" media="print">` at the documented
   conventional path `<basePath>/assets/theme/print.css`. A selected theme's own
@@ -533,8 +534,8 @@ npm run audit               # npm audit --audit-level=high
 
 ```text
 src/core/                                # the only source root
-contracts/render-policy.jcs              # normalized-body policy identity (S2-T04, real content)
-contracts/theme-styling-contract.jcs     # published styling catalog (S2-T12, real and closed)
+contracts/render-policy.jcs              # normalized-body policy identity (real content)
+contracts/theme-styling-contract.jcs     # published styling catalog (real and closed)
 ```
 
 No `src/modules/` tree, module import edge, registration stub, module
@@ -543,7 +544,7 @@ configuration, module output or module runtime is ever admitted beside
 `only-src-core-is-a-source-root` rule both enforce this; `interactions`,
 `whitelabel`, `newsletter` and `prism` have no module directory, package,
 configuration schema, stub, output, runtime code, network target or
-compatibility promise in this MVP (DEC-097 section 2).
+compatibility promise in this MVP.
 
 ## Consuming `@rathnasgala2/schemas`
 
@@ -570,13 +571,12 @@ and `artifact-manifest` are byte-identical from 2.6.1 to 2.8.0.
 
 ## Governing documents
 
-TPL-M5 fix: the internal specifications this package is built against live
-outside this repository and have no public URL, so they are named here as plain
-text rather than as dead links (the previous versions of these three lines
-resolved to 404s on both github.com and npmjs.com for every reader outside the
-workspace):
+The internal specifications this package is built against live outside this
+repository and have no public URL, so they are named here as plain text rather
+than as dead links:
 
 - Slice brief S2: author-owned publication, section 3 (`@rathnasgala2/template`)
   (internal)
-- DEC-094: JavaScript ESM for public packages (internal)
+- The internal decision record establishing JavaScript ESM for public packages
+  (internal)
 - WORKSPACE.md, sections 4-8 and 13 (internal)

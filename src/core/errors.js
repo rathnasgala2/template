@@ -4,7 +4,7 @@
  * bare `Error`, so a caller (eventually `publish-kernel`) can distinguish
  * "the supplied build input is not schema-valid" from "the caller's own
  * adapter options are incomplete or unsafe" without string-matching a
- * message (brief S2 section 3: "fails closed on invalid input").
+ * message: this renderer fails closed on invalid input.
  */
 
 /**
@@ -43,14 +43,14 @@ export class RenderOptionsError extends Error {
 }
 
 /**
- * The media pipeline (S2-T05) rejected an image or font reference: an
- * unrecognized or malformed format, a decompression or resource ceiling
- * crossing, an unconditionally-rejected SVG image input, a font that is not
- * bounded WOFF2, or a source file whose bytes do not match its declared
+ * The media pipeline rejected an image or font reference: an unrecognized or
+ * malformed format, a decompression or resource ceiling crossing, an
+ * unconditionally-rejected SVG image input, a font that is not bounded
+ * WOFF2, or a source file whose bytes do not match its declared
  * `build-input` digest. Every one of these fails closed — before any
  * derivative is written and before rendering completes — never as a warning
- * or silent fallback (brief S2 section 3: "Reject decompression or resource
- * excess"; "SVG is never processed as author media").
+ * or silent fallback: decompression or resource excess is always rejected,
+ * and SVG is never processed as author media.
  */
 export class MediaPipelineError extends Error {
   /**
@@ -78,8 +78,8 @@ export class MediaPipelineError extends Error {
  * byte-equal the published render-policy identity, a non-empty module or
  * placement value, or sanitized output that still matched a forbidden
  * pattern (an adapter defect, never expected of admitted content). Rendering
- * never completes for the affected build (brief S2 section 3: "fail-closed
- * behaviour on any content the policy rejects").
+ * never completes for the affected build: this renderer has fail-closed
+ * behaviour on any content the policy rejects.
  */
 export class RenderPolicyViolationError extends Error {
   /**
@@ -97,8 +97,7 @@ export class RenderPolicyViolationError extends Error {
  * its stylesheets/passive assets and render its `<link>` elements: an
  * invalid `stylesheets` list shape, a schema/contract-integrity violation
  * (which also covers an inadmissible `cssLayers` projection — see
- * `urn:gala:schema:theme-contract:2.0.0`), or a missing declared file (task
- * packet S2-T12).
+ * `urn:gala:schema:theme-contract:2.0.0`), or a missing declared file.
  */
 export class ThemeAssetError extends Error {
   /**

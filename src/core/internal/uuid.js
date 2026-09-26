@@ -1,9 +1,8 @@
 /**
- * A minimal RFC 9562 UUIDv7 generator for `artifactId`. DEC-097's
- * `stableId` pattern requires the version nibble `7` and an `8`/`9`/`a`/`b`
- * variant nibble; `node:crypto`'s `randomUUID()` only produces v4. The
- * decision text is explicit that "equal artifact bytes may have distinct
- * artifact IDs" (DEC-097 section 6), so this value is intentionally not
+ * A minimal RFC 9562 UUIDv7 generator for `artifactId`. The `stableId`
+ * pattern requires the version nibble `7` and an `8`/`9`/`a`/`b` variant
+ * nibble; `node:crypto`'s `randomUUID()` only produces v4. Equal artifact
+ * bytes may have distinct artifact IDs, so this value is intentionally not
  * required to be deterministic across two otherwise byte-identical builds.
  */
 

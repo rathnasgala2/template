@@ -70,6 +70,20 @@ and this project adheres to
   under a different Node/npm patch version or `engine-strict=true` no longer
   fails; `devEngines` keeps the exact toolchain pin for this repository's own
   development.
+- **TPL-M5**: removed the internal `DEC-###`/`S2-T##`/"brief S2 section N"
+  shorthand from source comments and prose across `src/`, `scripts/`,
+  `types/index.d.ts` and `README.md` — these referenced orchestration documents
+  that do not exist in this public repository and were not resolvable by any
+  external reader. Each was either deleted, where the surrounding sentence
+  already stood alone, or rewritten as a self-contained descriptive sentence
+  carrying the actual rule or rationale, most notably the numeric resource
+  ceilings in `internal/media/limits.js`. The initial sweep missed
+  `src/core/manifest.js`, `src/core/internal/content-security.js`,
+  `src/core/internal/canonical-jcs.js`, `src/core/internal/media/jpeg-codec.js`
+  and `README.md` itself; `test/no-internal-identifiers.test.js` now gates every
+  file under `src/`, `scripts/`, `types/`, `contracts/`, `docs/` and `README.md`
+  against `DEC-\d{3}`/`S2-T\d+` returning (CHANGELOG.md is the one allowed
+  exception, as dated history).
 
 ### Added
 

@@ -1,26 +1,26 @@
 /**
- * `contracts/theme-styling-contract.jcs` builder and structural validator
- * (task packet S2-T12; DEC-097 section 4 "Closed theme-package and
- * stylesheet admission": the `templateStylingContract` closed object).
+ * `contracts/theme-styling-contract.jcs` builder and structural validator:
+ * the `templateStylingContract` closed object governing closed
+ * theme-package and stylesheet admission.
  *
  * This is the one reviewed source module `scripts/generate-contracts.mjs`
  * reads from to emit the published contract file, and the one module
  * `test/theme-styling-contract.test.js` reads from to drift-check the
  * contract against what this renderer actually renders. Every catalog leaf
- * below is drawn from (or, for the two new S2-T12 hooks documented inline,
+ * below is drawn from (or, for the two hooks documented inline,
  * wired into) the actual rendering modules — `internal/skeleton.js`,
  * `internal/page-kinds.js`, `internal/render-policy-content.js` and
  * `internal/appearance/contract.js` — never a hand-typed literal
  * independent of what those modules emit.
  *
- * Public-hook budget (DEC-097: `publicThemeSlotHooks:[1..64] set`): every
- * catalog leaf below (28 type + 15 class + 2 id + 19 attribute-value) has
- * exactly one corresponding public hook, for exactly 64 entries — this
- * renderer's complete public theming surface for S2. A leaf with no
- * matching hook would be a catalog member no theme could ever validly
- * select (DEC-097: "a used-but-undeclared public slot hook rejects"), so
- * catalogs and hooks are generated from one shared list rather than two
- * independently maintained ones.
+ * Public-hook budget (`publicThemeSlotHooks` is a `[1..64]`-entry set):
+ * every catalog leaf below (28 type + 15 class + 2 id + 19 attribute-value)
+ * has exactly one corresponding public hook, for exactly 64 entries — this
+ * renderer's complete public theming surface. A leaf with no matching hook
+ * would be a catalog member no theme could ever validly select (a
+ * used-but-undeclared public slot hook rejects), so catalogs and hooks are
+ * generated from one shared list rather than two independently maintained
+ * ones.
  *
  * Deliberately out of the S2 public hook surface (documented scope
  * decisions, not omissions):
@@ -62,8 +62,8 @@
  * produces — `b`, `i`, `u`, `s`, `del`, `ins`, `sub`, `sup`, `mark`, `small`,
  * `wbr`, `table`, `thead`, `tbody`, `tr`, `th`, `td`, `dl`, `dt`, `dd`,
  * `figure`, `figcaption` — is likewise excluded from `typeSelectors`: this
- * catalog is "every hook the template actually renders" (task packet
- * S2-T12), not the sanitizer's own defence-in-depth superset.
+ * catalog is every hook the template actually renders, not the sanitizer's
+ * own defence-in-depth superset.
  */
 
 import { HIGHLIGHT_GRAMMARS } from '../render-policy-content.js';
@@ -142,8 +142,8 @@ export const FUNCTIONAL_PSEUDO_KEYWORD_ARGUMENTS = Object.freeze([
 ]);
 
 /**
- * TPL-H3/TPL-M7: the ordered `@layer` names DEC-097 fixes, including the
- * template-owned `gala-base` layer as the first (lowest-precedence)
+ * TPL-H3/TPL-M7: the ordered `@layer` names this renderer fixes, including
+ * the template-owned `gala-base` layer as the first (lowest-precedence)
  * entry. `gala-base` is emitted by this renderer itself, never by a theme
  * package (no `theme.json.cssLayers` entry ever names it —
  * `urn:gala:schema:theme-contract:2.0.0` only ever admits a theme's own
@@ -314,9 +314,9 @@ function sortedUniqueBytes(values) {
 
 /**
  * Build the complete `templateStylingContract` object, including
- * `catalogDigest` (DEC-097 section 8:
+ * `catalogDigest`:
  * `SHA256(UTF8("GALA-TEMPLATE-STYLING-CONTRACT-V2\0") || JCS(the catalog
- * with catalogDigest omitted))`).
+ * with catalogDigest omitted))`.
  *
  * @returns {Record<string, unknown>} the complete, digested contract object
  */
@@ -448,7 +448,7 @@ export const TEMPLATE_STYLING_CONTRACT_INVALID =
 
 /**
  * Structural self-validation of a `templateStylingContract` object against
- * DEC-097 section 4's closed shape (the checks this repository can run
+ * its closed shape (the checks this repository can run
  * without a published `urn:gala:schema:template-styling-contract` schema
  * entry — no such schema ID is registered in `@rathnasgala2/schemas@2.11.0`;
  * only `urn:gala:schema:theme-contract:2.0.0` is, which this module's sibling

@@ -1,24 +1,21 @@
 /**
- * RSS 2.0 and Atom 1.0 feed generation (task packet S2-T08; brief S2
- * section 3 "Required generated outputs": "RSS and Atom feeds").
+ * RSS 2.0 and Atom 1.0 feed generation.
  *
  * Both feeds are built from the exact same {@link selectPublishedArticles}
  * selection and ordering `internal/page-kinds.js`'s `index` page kind
  * paginates (most recently published first, `publishedAt` descending, tied
  * broken by ascending `id`), so a feed's item order can never drift from the
  * site's own index listing. Every URL is an absolute `https://` URL resolved
- * against `buildInput.baseUrl` (brief S2 section 3: "absolute URLs from the
- * build input's public origin"), never a relative path — a feed reader has
- * no notion of the publication's own base path to resolve a relative URL
- * against.
+ * against `buildInput.baseUrl` — always the build input's public origin,
+ * never a relative path — since a feed reader has no notion of the
+ * publication's own base path to resolve a relative URL against.
  *
- * Item count (documented scoped decision, not fixed by the brief or
- * DEC-097): neither source specifies a maximum feed item count. This module
- * bounds it at {@link FEED_ITEM_LIMIT} — a conservative, deterministic
- * default with no author-facing configuration surface in S2, matching this
- * renderer's own established style for an unspecified numeric bound (see
- * `internal/page-kinds.js`'s `LISTING_PAGE_SIZE` and the media pipeline
- * scope decisions in the package README).
+ * Item count: this renderer's build input carries no maximum feed item
+ * count. This module bounds it at {@link FEED_ITEM_LIMIT} — a conservative,
+ * deterministic default with no author-facing configuration surface,
+ * matching this renderer's own established style for an unspecified
+ * numeric bound (see `internal/page-kinds.js`'s `LISTING_PAGE_SIZE` and the
+ * media pipeline scope decisions in the package README).
  */
 
 import { escapeHtml } from './skeleton.js';

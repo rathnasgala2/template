@@ -1,11 +1,9 @@
 /**
  * `@rathnasgala2/template` public entry point.
  *
- * This is S2-T03's Eleventy-confined renderer adapter, extended by S2-T05's
- * media pipeline: it consumes one validated
+ * This is the Eleventy-confined renderer adapter: it consumes one validated
  * `urn:gala:schema:build-input:2.0.0` instance and emits a candidate output
- * directory plus one `urn:gala:schema:artifact-manifest:2.0.0` instance
- * (brief S2 section 3).
+ * directory plus one `urn:gala:schema:artifact-manifest:2.0.0` instance.
  *
  * `renderPublication` is the only documented *rendering* entry point. It
  * fails closed: an invalid `build-input` is rejected with
@@ -14,7 +12,7 @@
  * Eleventy ever runs, and a rejected image or font is rejected with
  * {@link MediaPipelineError} before the manifest is assembled.
  *
- * `normalizeAuthoredMarkdown` (re-exported here from S2-T04's
+ * `normalizeAuthoredMarkdown` (re-exported here from
  * `internal/content-security.js`) is this package's second public entry
  * point: the upstream normalization step a `build-input:2.0.0` producer
  * (`publish-kernel`/`publish-action`) calls once per authored Markdown
@@ -25,38 +23,36 @@
  * reaches this renderer, and how `renderPublication` verifies that instead
  * of re-deriving it.
  *
- * S2-T05 adds `options.sourceDirectory` (the caller-mounted, read-only
- * repository source tree `build-input`'s `resolvedFile` references point
- * into) and runs `processMedia` after the Eleventy route listing is already
- * computed, so generated derivative files under `assets/media/` are never
- * mistaken for an HTML route.
+ * `options.sourceDirectory` is the caller-mounted, read-only repository
+ * source tree `build-input`'s `resolvedFile` references point into.
+ * `processMedia` runs after the Eleventy route listing is already computed,
+ * so generated derivative files under `assets/media/` are never mistaken for
+ * an HTML route.
  *
- * Output-security (markdown/sanitizer/highlighter/CSP; S2-T04) and the media
- * pipeline (S2-T05) are layered on the same adapter. S2-T06 adds the core
- * semantic skeleton and navigation renderer (`internal/skeleton.js`) and
- * every generated page kind (`internal/page-kinds.js`): publication profile,
+ * Output-security (markdown/sanitizer/highlighter/CSP) and the media
+ * pipeline are layered on the same adapter, alongside the core semantic
+ * skeleton and navigation renderer (`internal/skeleton.js`) and every
+ * generated page kind (`internal/page-kinds.js`): publication profile,
  * author, article/page, index, tag, series and archive pages, each composed
- * with one shared header/primary-navigation/footer chrome and, where the
- * brief requires it, a breadcrumb trail. Feeds/search/sitemap remain
- * S2-T08. This adapter also emits every authored static redirect, shaped so
- * that later task extends the page-body pipeline without touching the
- * confinement, route-projection or manifest-assembly mechanics here.
+ * with one shared header/primary-navigation/footer chrome and, where
+ * required, a breadcrumb trail. This adapter also emits every authored
+ * static redirect and the feeds/search/sitemap outputs, shaped so that later
+ * work can extend the page-body pipeline without touching the confinement,
+ * route-projection or manifest-assembly mechanics here.
  *
- * S2-T07 adds the Light/Dark/System appearance controller
- * (`internal/appearance/`): the server-rendered control in the header's
- * `header-actions` slot (`controller-markup.js`), the one deterministic
- * pre-paint bootstrap script this renderer ever emits, written into the
- * candidate output directory and entered into the manifest as an ordinary
- * `manifestAsset` row exactly like an S2-T05 media derivative
- * (`bootstrap-script.js`), and the fixed `data-` attribute names, mode
- * values and storage key every one of those pieces shares
- * (`contract.js`) — the contract S2-T12's published theme styling catalog
+ * The Light/Dark/System appearance controller (`internal/appearance/`) adds:
+ * the server-rendered control in the header's `header-actions` slot
+ * (`controller-markup.js`), the one deterministic pre-paint bootstrap script
+ * this renderer ever emits, written into the candidate output directory and
+ * entered into the manifest as an ordinary `manifestAsset` row exactly like a
+ * media derivative (`bootstrap-script.js`), and the fixed `data-` attribute
+ * names, mode values and storage key every one of those pieces shares
+ * (`contract.js`) — the same contract the published theme styling catalog
  * targets.
  *
  * `src/core/` is the only admitted source root in this repository. No
  * `src/modules/` tree, module import edge, registration stub, module
  * configuration, module output or module runtime is ever added beside it
- * (brief S2 section 3; DEC-097 sections 2 and 5).
  */
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -185,10 +181,9 @@ function assertOptions(options) {
       throw new RenderOptionsError(`options.${key} must be an absolute path`);
     }
   }
-  // S2-T12: an optional caller-mounted, read-only extracted theme package
-  // directory (`internal/theme-assets.js`). Absent entirely by default
-  // (every pre-S2-T12 caller, including this repository's own test suite)
-  // so this addition is purely additive.
+  // An optional caller-mounted, read-only extracted theme package directory
+  // (`internal/theme-assets.js`). Absent entirely by default, so this
+  // addition is purely additive.
   if (options.themeDirectory !== undefined) {
     if (
       typeof options.themeDirectory !== 'string' ||
@@ -233,9 +228,9 @@ function assertOptions(options) {
  * render-policy identity, and that no module or placement value leaked
  * through (belt-and-suspenders on top of the `build-input:2.0.0` schema's
  * own `modules: {}` / `placements: []` closure). Fails closed before any
- * directory is created or Eleventy ever runs (DEC-097 section 5: "An absent
- * policy file, wrong path/name/version/digest, mixed identity between
- * records or body produced under a different policy rejects before build").
+ * directory is created or Eleventy ever runs: an absent policy file, wrong
+ * path/name/version/digest, mixed identity between records, or body
+ * produced under a different policy rejects before build.
  *
  * @param {import('../../types/index.d.ts').NormalizedBuildInput} validatedInput
  *   the schema-validated build input
@@ -325,7 +320,7 @@ export async function renderPublication(buildInput, options) {
   // `page.language` below); only the *chrome strings surrounding it* are
   // rendered in one consistent language, matching a reader's expectation
   // that navigation/footer text does not flip language from page to page
-  // (task packet S2-T06 scoped decision; see `internal/messages.js`).
+  // (see `internal/messages.js`).
   const siteMessages = getMessages(validatedInput.publication.defaultLanguage);
   const homeRoute = joinBasePathAndRoute(validatedInput.basePath, '/');
 
@@ -355,23 +350,22 @@ export async function renderPublication(buildInput, options) {
     messages: siteMessages,
   });
 
-  // Run before page assembly, not after (task packet S2-T08): resolving
-  // each page's own `og:image`/`twitter:image` needs the S2-T05 media
-  // pipeline's own finished `assets` list (only it knows which derivative
-  // file extension a given source image's `sourceDigest` produced — see
-  // `internal/seo.js`). This only moves the in-memory computation earlier;
-  // `mediaFiles`' actual bytes are still written to `outputDirectory` only
-  // after the route listing below (unchanged from S2-T05), so
-  // `outputDirectory/assets/media/` still can never be mistaken for an
-  // Eleventy-rendered HTML route.
+  // Run before page assembly, not after: resolving each page's own
+  // `og:image`/`twitter:image` needs the media pipeline's own finished
+  // `assets` list (only it knows which derivative file extension a given
+  // source image's `sourceDigest` produced — see `internal/seo.js`). This
+  // only moves the in-memory computation earlier; `mediaFiles`' actual
+  // bytes are still written to `outputDirectory` only after the route
+  // listing below, so `outputDirectory/assets/media/` still can never be
+  // mistaken for an Eleventy-rendered HTML route.
   const { assets: mediaAssets, files: mediaFiles } = await processMedia(
     validatedInput,
     { sourceDirectory: path.resolve(options.sourceDirectory) },
   );
 
-  // S2-T08: the site-wide feeds, resolved once so every page's feed-
-  // discovery `<link>` tags and the feed documents themselves agree on the
-  // exact same self URLs.
+  // The site-wide feeds, resolved once so every page's feed-discovery
+  // `<link>` tags and the feed documents themselves agree on the exact same
+  // self URLs.
   const feeds = buildFeeds(validatedInput);
   const siteName = validatedInput.publication.title;
   const appearanceScriptHrefValue = appearanceBootstrapScriptHref(
@@ -386,8 +380,8 @@ export async function renderPublication(buildInput, options) {
     `/${GALA_BASE_STYLESHEET_PATH}`,
   )}`;
 
-  // S2-T12: the selected theme package's copied stylesheets/passive assets
-  // and the ordered `<link>` markup every generated page's `<head>` inserts.
+  // The selected theme package's copied stylesheets/passive assets and the
+  // ordered `<link>` markup every generated page's `<head>` inserts.
   // Run before page assembly (same reasoning as the media pipeline above):
   // every page's `data.themeStylesheetLinksHtml` needs the same one
   // already-rendered fragment.
@@ -487,10 +481,10 @@ export async function renderPublication(buildInput, options) {
     );
   }
 
-  // S2-T08: the one ordinary generated `404.html` error page, using the
-  // S2-T06 `error` page kind's own pure body function. Pushed after the
-  // guard above so the guard's own "is there anything authored to render"
-  // check is unaffected by this always-present synthetic page.
+  // The one ordinary generated `404.html` error page, using the `error`
+  // page kind's own pure body function. Pushed after the guard above so the
+  // guard's own "is there anything authored to render" check is unaffected
+  // by this always-present synthetic page.
   const errorNavHtml = renderPrimaryNavigation({
     items: validatedInput.navigation.items,
     currentRoute: undefined,
@@ -528,7 +522,7 @@ export async function renderPublication(buildInput, options) {
     },
   });
 
-  // S2-T08: feeds, sitemap and the static search index. Each is a fixed,
+  // Feeds, sitemap and the static search index. Each is a fixed,
   // literal-extension file — never route-normalized like an ordinary
   // content route (`internal/route.js#projectFixedAssetPath`) — and each
   // bypasses the shared HTML skeleton layout entirely (no `layout` field,
@@ -585,10 +579,9 @@ export async function renderPublication(buildInput, options) {
     outputDirectory,
   });
 
-  // S2-T08: the exact `routeClass`/`mediaType` this renderer's own generated
+  // The exact `routeClass`/`mediaType` this renderer's own generated
   // non-HTML routes carry, keyed by their fixed output path. Every other
-  // route defaults to `'html'`/`text/html; charset=utf-8`, unchanged from
-  // S2-T03.
+  // route defaults to `'html'`/`text/html; charset=utf-8`.
   /** @type {Map<string, {routeClass: import('../../types/index.d.ts').ManifestRouteEntry['routeClass'], mediaType: string}>} */
   const specialRoutes = new Map([
     [
@@ -678,8 +671,8 @@ export async function renderPublication(buildInput, options) {
     await writeFile(destination, file.bytes);
   }
 
-  // S2-T12: the selected theme package's stylesheet/passive-asset bytes,
-  // written for the same reason and at the same point as the media pipeline
+  // The selected theme package's stylesheet/passive-asset bytes, written
+  // for the same reason and at the same point as the media pipeline
   // output immediately above (`themeAssetsResult` is `undefined` when no
   // `options.themeDirectory` was supplied, in which case there is nothing to
   // write — the fallback `defaultThemeStylesheetLinksHtml` link above points
@@ -692,10 +685,10 @@ export async function renderPublication(buildInput, options) {
     }
   }
 
-  // S2-T07's one deterministic pre-paint appearance-controller bootstrap
-  // script (brief S2 section 3: "the appearance controller is the only
-  // browser bootstrap"). Written after the routes listing above for the same
-  // reason as the media pipeline output immediately above: it must never be
+  // The one deterministic pre-paint appearance-controller bootstrap script:
+  // the appearance controller is the only browser bootstrap this renderer
+  // ever emits. Written after the routes listing above for the same reason
+  // as the media pipeline output immediately above: it must never be
   // mistaken for an Eleventy-rendered HTML route. Its bytes are a pure
   // function of `internal/appearance/contract.js`'s own fixed constants, so
   // this asset row is identical on every build regardless of build input.

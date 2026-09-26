@@ -6,11 +6,11 @@
  * (grayscale+alpha) and 6 (truecolor+alpha), bit depth 8 only, no
  * interlacing. Any other bit depth, interlace method, or PNG structure this
  * module does not recognize is a `MEDIA_FORMAT_INVALID` rejection — never a
- * best-effort guess — matching the fail-closed posture the brief and
- * DEC-097 both require of this pipeline. This is a deliberately smaller
- * surface than DEC-097's own closed `gala-theme-binary-assets-v2` PNG
- * grammar (which the theme packages use for passive presentation assets);
- * author media only needs a decode path sufficient to bound, re-derive
+ * best-effort guess — matching the fail-closed posture required throughout
+ * this pipeline. This is a deliberately smaller surface than this
+ * renderer's own closed passive-theme-asset PNG grammar (which the theme
+ * packages use for passive presentation assets); author media only needs a
+ * decode path sufficient to bound, re-derive
  * orientation-free pixels from, and re-encode ordinary photographic/graphic
  * uploads.
  *
@@ -371,8 +371,8 @@ function crc32(buffer) {
  * Deterministically encode an RGBA8 raster as a minimal truecolor+alpha PNG:
  * one `IHDR`, one "filter type 0 (none)" `IDAT` stream at a fixed zlib
  * level/strategy, one `IEND`. No ancillary chunk (no metadata) is ever
- * emitted, matching the brief's "strip nonessential metadata" requirement
- * for every output this renderer produces.
+ * emitted, stripping nonessential metadata
+ * from every output this renderer produces.
  *
  * @param {{width: number, height: number, rgba: Buffer}} raster the raster
  *   to encode

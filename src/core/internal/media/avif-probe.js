@@ -7,17 +7,17 @@
  * enough to confirm an `ftyp` box with major brand `avif`, locate the
  * `meta` box, and read the primary item's `ispe` (image spatial extents)
  * property for declared width/height, but it does not run a full AV1
- * bitstream decode. DEC-097's closed `gala-theme-binary-assets-v2` profile
+ * bitstream decode. This renderer's closed passive-theme-asset decoder
  * requires a complete single-frame AV1 decode for *passive theme assets*;
  * an equivalent from-scratch AV1 decoder for *author media* is out of
- * proportion to this task's scope, flagged to the orchestrator as a
+ * proportion to this module's scope, flagged to the orchestrator as a
  * follow-up. AVIF is therefore admitted as a *source* reference
  * (recorded, digest-verified, dimension-bounded) with no generated
  * responsive derivative; its original bytes pass through as the sole asset
  * entry, exactly like WebP.
  *
- * The box walk is bounded: at most 4,096 boxes are visited (matching
- * DEC-097's own "4,096 container structures" isolation bound for the binary
+ * The box walk is bounded: at most 4,096 boxes are visited (matching this
+ * renderer's own container-structure isolation bound for the binary
  * decoder family) and every box's declared size is checked against the
  * remaining buffer length before it is used to slice, so a malformed or
  * adversarial box table cannot cause an out-of-bounds read or an unbounded

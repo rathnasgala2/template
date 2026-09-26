@@ -1,17 +1,17 @@
 /**
- * Core-owned chrome message catalog (brief S2 section 3: the semantic
- * skeleton and navigation renderer; task packet S2-T06: "all user-visible
- * chrome strings coming from a message catalog (not inline literals) so
- * localization can find them").
+ * Core-owned chrome message catalog: every user-visible chrome string comes
+ * from a message catalog, not an inline literal, so localization can find
+ * them.
  *
  * Every user-visible string this package's own generated chrome (skip link,
  * navigation labels, breadcrumb labels, pagination controls, generated
- * listing-page headings, the error page kind, the S2-T07 Light/Dark/System
+ * listing-page headings, the error page kind, the Light/Dark/System
  * appearance control's label and its three option labels) emits is looked
  * up here by key
- * rather than written inline at its call site. S2 authors exactly one
- * catalog, `en` (the only language the golden fixture's own core chrome is
- * required to exercise); per-content localization of *authored* content is
+ * rather than written inline at its call site. This renderer authors
+ * exactly one catalog, `en` (the only language the golden fixture's own
+ * core chrome is required to exercise); per-content localization of
+ * *authored* content is
  * `publication`/`content` data, not core chrome, and full chrome
  * localization (additional catalogs, a locale-selection policy) is future
  * work this module is shaped to admit without changing any call site: every

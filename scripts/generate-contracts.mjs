@@ -23,7 +23,7 @@ async function main() {
   const check = process.argv.includes('--check');
   const themeStylingContract = buildTemplateStylingContract();
   // Self-check before ever writing: a generator defect must never publish a
-  // structurally invalid contract file (task packet S2-T12).
+  // structurally invalid contract file.
   assertTemplateStylingContractShape(themeStylingContract);
   /** @type {[string, Record<string, unknown>][]} */
   const targets = [

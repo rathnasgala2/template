@@ -1,16 +1,14 @@
 /**
  * Route-to-output-path projection and the byte-exact generated redirect
- * document (brief S2 section 3 "Required generated outputs"; DEC-097
- * section 6 artifact-manifest redirect subsection).
+ * document.
  *
  * This module implements the `directory-index` and `explicit-file` cases of
- * DEC-097 section 7's `gala-portable-v2` route projection only for routes
- * that are already valid `canonicalRoute` strings (schema-enforced before
- * this module ever runs). The full Unicode-17 percent-encoding/collision
- * engine DEC-097 section 8 describes is out of S2-T03's scope: it governs
- * arbitrary repository-relative source paths, which this renderer never
- * derives routes from (every route it projects comes from an
- * already-schema-validated `canonicalRoute` field in `build-input`).
+ * route projection only for routes that are already valid `canonicalRoute`
+ * strings (schema-enforced before this module ever runs). A full Unicode
+ * percent-encoding/collision engine for arbitrary repository-relative
+ * source paths is out of scope here: this renderer never derives routes
+ * from source paths — every route it projects comes from an
+ * already-schema-validated `canonicalRoute` field in `build-input`.
  */
 
 /**
@@ -75,16 +73,14 @@ export function projectFilePathToRoute(filePath, profile) {
 }
 
 /**
- * Project a `basePath` to the one fixed generated error-document output path
- * DEC-097's Spaces website-configuration subsection defines: `errorDocumentKey`
- * is exactly `404.html` when `basePath` is `/`; otherwise the base path with
- * its one leading and terminal slash removed, followed by `/404.html`. This
- * is deliberately independent of the selected `RouteNormalizationProfile`
- * (`directory-index` vs `explicit-file`): the generated error document is
- * always this one literal filename, never route-normalized like an ordinary
- * content route (brief S2 section 3: "one ordinary generated `404.html` at
- * the selected base path"; DEC-097's Spaces/Pages/local-directory adapters
- * all bind their provider error-document configuration to this exact key).
+ * Project a `basePath` to the one fixed generated error-document output
+ * path: exactly `404.html` when `basePath` is `/`; otherwise the base path
+ * with its one leading and terminal slash removed, followed by
+ * `/404.html`. This is deliberately independent of the selected
+ * `RouteNormalizationProfile` (`directory-index` vs `explicit-file`): the
+ * generated error document is always this one literal filename, never
+ * route-normalized like an ordinary content route — this fixed key is what
+ * each hosting adapter's provider error-document configuration binds to.
  *
  * @param {string} basePath the build input's `basePath` (`canonicalRoute`,
  *   always starts with `/`)
@@ -143,7 +139,7 @@ export function escapeRedirectTarget(targetRoute) {
 
 /**
  * Render the exact UTF-8, no-BOM, LF-terminated generated redirect document
- * DEC-097 section 6 and brief S2 section 3 specify byte-for-byte.
+ * this renderer must produce byte-for-byte.
  *
  * @param {string} targetRoute the route this redirect document points to
  * @returns {string} the complete document text

@@ -1,22 +1,20 @@
 /**
- * Sitemap generation (task packet S2-T08; brief S2 section 3 "Required
- * generated outputs": "sitemap"; task packet instructions: "published routes
- * only, deterministic order, `lastmod` from content timestamps not build
- * time").
+ * Sitemap generation: published routes only, deterministic order, with
+ * `lastmod` derived from content timestamps rather than build time.
  *
  * Every entry comes from `internal/page-kinds.js`'s own
  * {@link import('./page-kinds.js').GeneratedPage} list — the single source
  * of truth for which page kinds exist and what each one's own
  * `robotsContent`/`lastModified` is — filtered to exclude any page this
- * renderer itself marked `noindex` (task packet: "robots handling for
- * unlisted content"; `status: "unlisted"` content is exactly the case
+ * renderer itself marked `noindex` (robots handling for unlisted content:
+ * `status: "unlisted"` content is exactly the case
  * `internal/page-kinds.js` sets `robotsContent` for). The generated `404`
  * error page, the feeds, the sitemap document itself and the static search
  * index are never `GeneratedPage` entries, so they are structurally excluded
  * without a second exclusion list. A `manifestRedirect` route is likewise
  * never in this list; a redirect's fixed byte-for-byte document already
- * carries its own `<link rel="canonical">` to the real content page (brief
- * S2 section 3), which is what a crawler should index instead.
+ * carries its own `<link rel="canonical">` to the real content page, which
+ * is what a crawler should index instead.
  */
 
 import { escapeHtml } from './skeleton.js';

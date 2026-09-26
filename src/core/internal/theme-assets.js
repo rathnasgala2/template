@@ -1,5 +1,5 @@
 /**
- * Theme package asset integration (task packet S2-T12): copy the selected
+ * Theme package asset integration: copy the selected
  * theme package's stylesheets (and any declared passive assets) into the
  * candidate output directory's `<basePath>/assets/theme/`, produce their
  * `manifestAsset` rows, and render the ordered `<link>` elements every
@@ -15,20 +15,19 @@
  * admitted stylesheet lists, each with its own `const` `cssLayers`
  * projection), which `assertThemeContractIntegrity` validates before any
  * file is read, so this module does not re-check that projection itself.
- * It does **not** re-implement
- * DEC-097's full CSS Syntax Module admission grammar (selector/property/
- * at-rule closed catalogs, byte/token/rule ceilings, etc.) — that is the
- * shared `theme-release.yml` conformance runner's job (S2-T11), run once
- * per theme package release, not per publication build. Authoring real
- * theme CSS is S2-T13's task, forbidden here; this module only moves bytes
- * an already-conformant theme package supplies.
+ * It does **not** re-implement a full CSS Syntax Module admission grammar
+ * (selector/property/at-rule closed catalogs, byte/token/rule ceilings,
+ * etc.) — that is the shared `theme-release.yml` conformance runner's job,
+ * run once per theme package release, not per publication build. Authoring
+ * real theme CSS is out of scope and forbidden here; this module only moves
+ * bytes an already-conformant theme package supplies.
  *
  * The theme package directory this module reads from (`options.themeDirectory`
  * on `renderPublication`) is optional: a caller that does not yet resolve a
- * theme package (e.g. most of this repository's own S2-T02 through S2-T11
- * tests) gets the S2-T08 default — a `<link>` at the fixed conventional
- * `assets/theme/print.css` path, matching `internal/print-stylesheet.js`'s
- * pre-existing convention — so this task's addition is purely additive.
+ * theme package (e.g. most of this repository's own test suite) gets the
+ * default — a `<link>` at the fixed conventional `assets/theme/print.css`
+ * path, matching `internal/print-stylesheet.js`'s pre-existing convention —
+ * so this addition is purely additive.
  *
  * Path-containment hardening (independent-review finding B1): every
  * declared `theme.json` path this module reads — a `stylesheets` entry or a
@@ -597,7 +596,7 @@ export async function loadThemeAssets({ themeDirectory, basePath }) {
 }
 
 /**
- * The S2-T08 default theme stylesheet markup, used only when
+ * The default theme stylesheet markup, used only when
  * `renderPublication` is not given a resolved `options.themeDirectory`
  * (this repository's own tests, and any caller that has not yet resolved a
  * theme package): one `media="print"` `<link>` at the fixed conventional

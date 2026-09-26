@@ -1,7 +1,7 @@
 /**
- * The single source of truth for `contracts/render-policy.jcs`'s content
- * (brief S2 section 3 "Markdown, sanitizer, highlighter" and "Per-artifact
- * CSP baseline"; DEC-097 section 5 `renderPolicyIdentity`).
+ * The single source of truth for `contracts/render-policy.jcs`'s content:
+ * the markdown, sanitizer, highlighter and per-artifact CSP baseline, and
+ * the `renderPolicyIdentity` derived from them.
  *
  * `scripts/generate-contracts.mjs` emits this exact document as compact JCS
  * to `contracts/render-policy.jcs`; `src/core/internal/content-security.js`
@@ -17,9 +17,9 @@
 export const RENDER_POLICY_NAME = 'gala-render-policy';
 
 /**
- * Byte-equal to the template lock's `contractVersion` (DEC-097 section 5),
- * which every S2 `build-input:2.0.0` fixture carries as the literal string
- * `"2.0.0"` (matches `manifest.js`'s `buildInputContractVersion`).
+ * Byte-equal to the template lock's `contractVersion`, which every
+ * `build-input:2.0.0` fixture in this repository carries as the literal
+ * string `"2.0.0"` (matches `manifest.js`'s `buildInputContractVersion`).
  *
  * @type {string}
  */
@@ -31,7 +31,7 @@ export const MARKDOWN_IT_PACKAGE = 'markdown-it';
 export const MARKDOWN_IT_VERSION = '14.3.1';
 
 /**
- * The exact markdown-it construction options brief S2 section 3 requires.
+ * The exact markdown-it construction options this renderer requires.
  *
  * @type {{html: false, linkify: false, typographer: false}}
  */
@@ -56,7 +56,7 @@ export const ALLOWED_URL_SCHEMES = Object.freeze(['https', 'http', 'mailto']);
 
 /**
  * The closed allowlist of tags this renderer ever emits from author
- * markdown: "semantic text and content tags" only (brief S2 section 3).
+ * markdown: semantic text and content tags only.
  * No form, frame, SVG, MathML, script, style, object or template element is
  * ever admitted.
  *
@@ -110,8 +110,7 @@ export const ALLOWED_TAGS = Object.freeze([
 /**
  * The closed per-tag attribute allowlist. `id` is admitted only on headings
  * (this renderer's own generated heading IDs); `style`, every `on*` handler,
- * `srcdoc` and every other undeclared attribute is always stripped (brief S2
- * section 3).
+ * `srcdoc` and every other undeclared attribute is always stripped.
  *
  * @type {Readonly<Record<string, readonly string[]>>}
  */
@@ -138,7 +137,7 @@ export const HIGHLIGHTER_VERSION = '5.0.2';
 /**
  * The closed grammar-name catalog the owned highlighter accepts. A fence
  * language outside this list always falls back to escaped, unhighlighted
- * code (brief S2 section 3).
+ * code.
  *
  * @type {readonly string[]}
  */
@@ -167,8 +166,8 @@ export const HIGHLIGHT_GRAMMARS = Object.freeze(
  * can produce (Prism's documented generic token set plus this
  * repository's own empirical sample across every admitted grammar). `token`
  * itself is always the base class; every other admitted value is a
- * secondary token-class (brief S2 section 3: "`span` elements carrying
- * `token` and admitted token-class values").
+ * secondary token-class: `span` elements carry `token` plus admitted
+ * token-class values.
  *
  * @type {readonly string[]}
  */
@@ -260,13 +259,13 @@ export const CSP_HEADER_ONLY_DIRECTIVES = Object.freeze([
 
 /**
  * The exact per-artifact CSP baseline actually deliverable inside a
- * `<meta http-equiv="Content-Security-Policy">` tag (brief S2 section 3,
- * narrowed by the TPL-H4 fix above: {@link CSP_HEADER_ONLY_DIRECTIVES} is
- * excluded). Directive order is byte-exact as written in the brief, minus
+ * `<meta http-equiv="Content-Security-Policy">` tag, narrowed by the
+ * TPL-H4 fix above: {@link CSP_HEADER_ONLY_DIRECTIVES} is
+ * excluded. Directive order is byte-exact, minus
  * the excluded directive; every directive's value list is already sorted
- * bytewise and duplicate-free because S2 materializes no module package,
- * configuration, output or runtime, so this string is byte-identical on
- * every route.
+ * bytewise and duplicate-free because this renderer materializes no module
+ * package, configuration, output or runtime, so this string is
+ * byte-identical on every route.
  *
  * @type {string}
  */
@@ -277,9 +276,9 @@ export const CONTENT_SECURITY_POLICY_META_BASELINE =
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
 /**
- * The complete CSP baseline the brief originally specified as one string —
- * the meta-safe directives plus the header-only directive, in the brief's
- * own byte-exact order — kept only as the render-policy identity's own
+ * The complete CSP baseline this renderer originally specified as one
+ * string — the meta-safe directives plus the header-only directive, in
+ * this fixed byte-exact order — kept only as the render-policy identity's own
  * digest input (`renderPolicyDocument`'s `contentSecurityPolicy` field): a
  * hosting adapter that delivers this policy as a response header, rather
  * than a `<meta>` tag, may deliver this complete string unmodified.
@@ -295,8 +294,7 @@ export const CONTENT_SECURITY_POLICY_COMPLETE =
 /**
  * Build the exact plain-object document `contracts/render-policy.jcs`
  * publishes: `name`, `version` byte-equal to the template lock's
- * `contractVersion`, a closed sanitizer/parser catalog, and no self-digest
- * (DEC-097 section 5).
+ * `contractVersion`, a closed sanitizer/parser catalog, and no self-digest.
  *
  * @returns {Record<string, unknown>} the render-policy document
  */

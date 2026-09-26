@@ -5,11 +5,11 @@
  * the `RIFF`/`WEBP` container framing and the `VP8 `/`VP8L` chunk header
  * closely enough to reject a malformed or oversized file and to read the
  * format's own declared width/height, but it does not run a full VP8/VP8L
- * entropy decoder — DEC-097's own closed `gala-theme-binary-assets-v2`
- * profile requires a complete bounded VP8/VP8L bitstream decode for
+ * entropy decoder — this renderer's closed passive-theme-asset decoder
+ * requires a complete bounded VP8/VP8L bitstream decode for
  * *passive theme assets*; hand-authoring an equivalent, independently
  * verifiable decoder for *author media* was judged out of proportion to
- * this task's scope and is flagged to the orchestrator as a follow-up
+ * this module's scope and is flagged to the orchestrator as a follow-up
  * rather than attempted partially. What this module still enforces, fully:
  * exact container framing, a single recognized image chunk (any `VP8X`,
  * animation, or a second image chunk rejects), and the shared

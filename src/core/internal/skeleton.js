@@ -1,12 +1,11 @@
 /**
- * Core semantic HTML skeleton and navigation renderer (task packet S2-T06;
- * brief S2 section 3 "Semantic skeleton and appearance controller").
+ * Core semantic HTML skeleton and navigation renderer.
  *
  * This module renders only inert, static, CSP-`script-src 'self'`-compatible
  * markup: no inline `on*` attribute, no inline `<script>`, no `javascript:`
  * URL. Every user-visible chrome string it emits comes from
  * `internal/messages.js`'s catalog, never an inline literal, so localization
- * can find every string in one place (task packet S2-T06).
+ * can find every string in one place.
  *
  * Landmark contract every page kind in `internal/page-kinds.js` composes
  * through {@link renderPageBody}:
@@ -25,43 +24,43 @@
  *   `conversation`, `newsletter`, `edition-selector`).
  *
  * Core owns nine versioned semantic slots plus the collapsed
- * `article-footer-ad` slot (DEC-060): `header-actions`, `article-preamble`,
+ * `article-footer-ad` slot: `header-actions`, `article-preamble`,
  * `article-end`, `footer-profile`, `footer-auxiliary`, `account-intent`,
- * `conversation`, `newsletter` and `edition-selector`. S2 has no module
- * system (`build-input.modules` is always `{}`), so every slot renders empty
- * except `footer-profile`, which always wraps the publication's own
- * always-rendered footer card/author-profile content (there is no separate
- * module content to distinguish it from in S2). Each slot is one
- * `data-gala-slot="<name>"` attribute on an otherwise plain, non-landmark
- * `<div>` — an empty element with no accessible name contributes nothing to
- * the accessibility tree, so an empty slot is exactly as inert as one that
- * does not exist. The collapsed `article-footer-ad` slot additionally
- * carries the `hidden` attribute, so it produces no visible, accessibility,
- * layout, network or telemetry effect at all (DEC-060) until a later module
- * task (out of S2 scope) removes `hidden` for a selected placement — none
- * exist in S2 (`build-input.placements` is always `[]`).
+ * `conversation`, `newsletter` and `edition-selector`. This renderer has no
+ * module system (`build-input.modules` is always `{}`), so every slot
+ * renders empty except `footer-profile`, which always wraps the
+ * publication's own always-rendered footer card/author-profile content
+ * (there is no separate module content to distinguish it from here). Each
+ * slot is one `data-gala-slot="<name>"` attribute on an otherwise plain,
+ * non-landmark `<div>` — an empty element with no accessible name
+ * contributes nothing to the accessibility tree, so an empty slot is
+ * exactly as inert as one that does not exist. The collapsed
+ * `article-footer-ad` slot additionally carries the `hidden` attribute, so
+ * it produces no visible, accessibility, layout, network or telemetry
+ * effect at all until a later module (not built here) removes `hidden` for
+ * a selected placement — none exist here (`build-input.placements` is
+ * always `[]`).
  *
- * S2-T07 amendment: `header-actions` is no longer always-empty. It is core's
- * own home for the Light/Dark/System appearance control (brief S2 section 3:
- * "the three-mode appearance control in the header-actions slot") — core
- * content, not a module, so this slot's earlier "every slot ... renders
- * empty" description no longer covers it. Every other slot is unaffected.
+ * `header-actions` is not always-empty: it is core's own home for the
+ * Light/Dark/System appearance control (the three-mode appearance control
+ * in the header-actions slot) — core content, not a module, so this slot's
+ * earlier "every slot ... renders empty" description does not cover it.
+ * Every other slot is unaffected.
  *
  * The exact `selectorAtom`/hook-naming decisions here (`data-gala-slot`
- * attribute, one slot name per value) are S2-T06's own scoped proposal for
- * what S2-T12 later locks into the published
- * `contracts/theme-styling-contract.jcs` catalog; T12 has not run yet
- * (S2-T06 precedes it — S2-T07 then S2-T12), so this module documents the
- * decision here rather than pre-authoring that contract file itself.
+ * attribute, one slot name per value) are what
+ * `contracts/theme-styling-contract.jcs` later locks into its published
+ * catalog, so this module documents the decision here rather than
+ * pre-authoring that contract file itself.
  */
 
 /**
  * Every `data-gala-slot` value this renderer ever writes (the nine
- * versioned core slots plus the collapsed `article-footer-ad` slot,
- * DEC-060), sorted by UTF-8 bytes (S2-T12: `contracts/theme-styling-contract.jcs`
- * exposes one public theme hook per entry here, so this is the single
- * source of truth both `renderSlot` below and that contract builder read
- * from — never a second hand-typed literal list).
+ * versioned core slots plus the collapsed `article-footer-ad` slot), sorted
+ * by UTF-8 bytes. `contracts/theme-styling-contract.jcs` exposes one public
+ * theme hook per entry here, so this is the single source of truth both
+ * `renderSlot` below and that contract builder read from — never a second
+ * hand-typed literal list.
  *
  * @type {readonly string[]}
  */
@@ -111,8 +110,8 @@ export function escapeHtml(value) {
  *   collapsed `article-footer-ad` slot
  * @param {object} [options] rendering options
  * @param {boolean} [options.collapsed] when `true`, additionally sets
- *   `hidden` (DEC-060's collapsed `article-footer-ad` slot)
- * @param {string} [options.html] already-rendered inner markup (S2-T07: the
+ *   `hidden` (the collapsed `article-footer-ad` slot)
+ * @param {string} [options.html] already-rendered inner markup (the
  *   `header-actions` slot's appearance control); every other slot omits this
  *   and stays empty
  * @returns {string} the slot element
@@ -310,8 +309,8 @@ export function renderPagination({
  * @param {{route: string, alt: string} | undefined} options.logo an optional
  *   core logo image, always carrying alternative text
  * @param {string} [options.appearanceControlHtml] the already-rendered
- *   Light/Dark/System appearance control (S2-T07:
- *   `internal/appearance/controller-markup.js`'s `renderAppearanceControl`),
+ *   Light/Dark/System appearance control
+ *   (`internal/appearance/controller-markup.js`'s `renderAppearanceControl`),
  *   inserted into the `header-actions` slot
  * @returns {string} the rendered header
  */
