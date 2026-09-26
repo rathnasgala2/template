@@ -157,19 +157,35 @@ function assertCssLayersProjection(stylesheets, cssLayers) {
         'projection of its own stylesheets list',
     );
   }
-  if (
-    !expected.every(
-      (layer, index) =>
-        layer === ORDERED_LAYERS[index] ||
-        (layer === 'gala-print' && index === expected.length - 1),
-    )
-  ) {
+  if (!isOrderedSubsequence(expected, ORDERED_LAYERS)) {
     throw new ThemeAssetError(
       'THEME_CSS_LAYERS_INVALID',
       'theme.json cssLayers must be a subsequence of the published ' +
         'templateStylingContract.orderedLayers, in that exact relative order',
     );
   }
+}
+
+/**
+ * Whether every element of `candidate` appears in `reference`, in the same
+ * relative order, not necessarily contiguously (TPL-H3/TPL-M7: `reference`
+ * now also carries the template-owned `gala-base` layer, which a theme never
+ * declares itself, so a theme's own layer list is a strict, non-prefix
+ * subsequence rather than a prefix).
+ *
+ * @param {readonly string[]} candidate the theme's own projected layer list
+ * @param {readonly string[]} reference the published, fixed layer order
+ * @returns {boolean} whether `candidate` is an ordered subsequence of
+ *   `reference`
+ */
+function isOrderedSubsequence(candidate, reference) {
+  let searchFrom = 0;
+  for (const layer of candidate) {
+    const foundAt = reference.indexOf(layer, searchFrom);
+    if (foundAt === -1) return false;
+    searchFrom = foundAt + 1;
+  }
+  return true;
 }
 
 /** @type {string} the reason code every path-containment rejection below

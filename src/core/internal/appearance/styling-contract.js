@@ -29,11 +29,18 @@
  *   `.language-<grammar>` class are public, so a theme can style a
  *   highlighted code block's overall presentation but not recolor
  *   individual token kinds in S2;
- * - `html`/`body` type selectors and interactive pseudo-classes
- *   (`:hover`, `:focus`, `:visited`, ...): themes reach the document root
- *   only through {@link PUBLICATION_ROOT_SELECTOR}/
- *   {@link RESOLVED_PALETTE_SELECTORS}, and no pseudo-class hook is
- *   published in S2 (an empty `pseudoClasses` catalog is schema-valid: `[0..64]`).
+ * - `html`/`body` type selectors: themes reach the document root only
+ *   through {@link PUBLICATION_ROOT_SELECTOR}/{@link RESOLVED_PALETTE_SELECTORS}.
+ *
+ * Contract 2.1.0 (TPL-H2/TPL-H3/TPL-M7 fix): S2.0's empty `pseudoClasses`
+ * catalog made every interaction state unstylable while the closed 35-token
+ * catalog already required `color-focus` and `color-link-visited`, tokens
+ * only a pseudo-class can ever apply. {@link PSEUDO_CLASSES} publishes a
+ * small closed catalog instead of widening indefinitely; the module
+ * documentation on that constant records why each member is admitted and
+ * why the set stops there. This is a template-owned, backward-compatible
+ * *contract* addition (a theme still validates if it uses none of these), so
+ * it ships as a minor bump: 2.0.0 -> 2.1.0.
  *
  * Every tag in `internal/render-policy-content.js`'s `ALLOWED_TAGS` that
  * markdown-it's own CommonMark grammar (with `html:false`) never actually
@@ -57,15 +64,85 @@ import { canonicalizeJcs, domainDigest } from '../canonical-jcs.js';
 /** @type {string} */
 export const TEMPLATE_STYLING_CONTRACT_PACKAGE = '@rathnasgala2/template';
 /** @type {string} */
-export const TEMPLATE_STYLING_CONTRACT_VERSION = '2.0.0';
+export const TEMPLATE_STYLING_CONTRACT_VERSION = '2.1.0';
 /** @type {string} */
 export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '2.0.0';
 
 /** @type {string} the `main-content` landmark's fixed `id`. */
 const MAIN_CONTENT_ID = 'main-content';
 
-/** @type {readonly string[]} the ordered `@layer` names DEC-097 fixes. */
+/**
+ * The closed pseudo-class catalog (contract 2.1.0, TPL-H2 fix). Each member
+ * is admitted for a specific, already-published reason — this is a closed
+ * list, not a starting point:
+ *
+ * - `hover`: pointer affordance on links and the appearance control; the
+ *   only way any theme can differentiate a hovered interactive element.
+ * - `focus-visible`: the keyboard/assistive-technology focus indicator
+ *   (WCAG 2.2 SC 2.4.11/2.4.13 are about this indicator specifically).
+ *   `:focus` is deliberately *not* admitted instead: `:focus-visible` is
+ *   what lets a theme paint a ring for keyboard focus without also painting
+ *   one on every mouse click, which is why `internal/appearance/
+ *   base-layer.js`'s own template-owned default ring (unconstrained by this
+ *   catalog) uses it too.
+ * - `active`: pressed-state affordance, the pointer-down counterpart to
+ *   `hover`.
+ * - `visited`: the only way to consume the closed token catalog's own
+ *   `color-link-visited`, which had no reachable application before this.
+ * - `disabled`: the appearance `<select>` is a native form control, which
+ *   may legitimately be disabled by a later module; themes need a way to
+ *   style that state today so it is not a breaking addition later.
+ *
+ * Deliberately still excluded: `:target`, `:checked`, `:required`,
+ * `:invalid` and every other state this renderer's own markup can never
+ * produce (no form beyond the one native `<select>`, no fragment-target
+ * styling contract) — the same "every leaf has a matching hook" discipline
+ * {@link ALL_HOOKS} documents above applies to pseudo-classes too: a
+ * catalog member with nothing that can ever be in that state is a
+ * specification defect, not a convenience.
+ *
+ * @type {readonly string[]}
+ */
+export const PSEUDO_CLASSES = Object.freeze(
+  ['active', 'disabled', 'focus-visible', 'hover', 'visited'].sort(),
+);
+
+/**
+ * Contract 2.1.0 (TPL-H2 fix, alongside {@link PSEUDO_CLASSES}): the
+ * `nth-child`/`nth-last-child` functional pseudo-classes were already
+ * admitted (see `functionalPseudos` below) but only under
+ * `nthExpressionProfile: 'gala-positive-an-plus-b-v2'`, an arithmetic
+ * `an+b` grammar with no keyword form — so a theme could not express the
+ * conventional "every other row" zebra-striping pattern without a
+ * (legal but obscure) `2n`/`2n+1` expression. This publishes the two
+ * keyword arguments as an explicit, closed extension of that same
+ * profile, admitted only as the sole argument to `nth-child`/
+ * `nth-last-child`.
+ *
+ * @type {readonly string[]}
+ */
+export const FUNCTIONAL_PSEUDO_KEYWORD_ARGUMENTS = Object.freeze([
+  'even',
+  'odd',
+]);
+
+/**
+ * TPL-H3/TPL-M7 fix: the ordered `@layer` names DEC-097 fixes, now including
+ * the template-owned `gala-base` layer as the first (lowest-precedence)
+ * entry. `gala-base` is emitted by this renderer itself, never by a theme
+ * package (no `theme.json.cssLayers` entry ever names it —
+ * `internal/theme-assets.js`'s `assertCssLayersProjection` only ever
+ * projects a theme's own four-or-five-stylesheet subsequence of the layers
+ * *after* it), so it stays first in this list unconditionally: cascade-layer
+ * precedence is later-wins, and a theme's own `gala-tokens`/`gala-components`/
+ * `gala-utilities` declarations must always be able to override the
+ * template's own base defaults (its focus ring, its type scale, ...),
+ * never the reverse.
+ *
+ * @type {readonly string[]}
+ */
 export const ORDERED_LAYERS = Object.freeze([
+  'gala-base',
   'gala-tokens',
   'gala-components',
   'gala-utilities',
@@ -294,7 +371,7 @@ export function buildTemplateStylingContract() {
       ID_HOOKS.map((hook) => hook.selectorAtom.replace(/^#/, '')),
     ),
     attributes: attributesRows,
-    pseudoClasses: [],
+    pseudoClasses: [...PSEUDO_CLASSES],
     pseudoElements: ['after', 'before', 'marker', 'selection'],
     functionalPseudos: ['is', 'where', 'not', 'nth-child', 'nth-last-child'],
     combinators: [' ', ' > ', ' + ', ' ~ '],
@@ -312,6 +389,9 @@ export function buildTemplateStylingContract() {
       functionalSelectorArguments: 'compound-only',
       maximumFunctionalDepth: 1,
       nthExpressionProfile: 'gala-positive-an-plus-b-v2',
+      functionalPseudoKeywordArguments: [
+        ...FUNCTIONAL_PSEUDO_KEYWORD_ARGUMENTS,
+      ],
     },
   };
 
@@ -375,7 +455,7 @@ export function assertTemplateStylingContractShape(contract) {
   if (contract.profile !== 'gala-template-styling-contract-v2') {
     fail('profile');
   }
-  if (contract.contractVersion !== '2.0.0') fail('contractVersion');
+  if (contract.contractVersion !== '2.1.0') fail('contractVersion');
   if (contract.templatePackage !== '@rathnasgala2/template') {
     fail('templatePackage');
   }
@@ -439,6 +519,12 @@ export function assertTemplateStylingContractShape(contract) {
   if (paletteRows.length !== 1) fail('palette attribute row');
 
   if (
+    JSON.stringify(contract.pseudoClasses) !==
+    JSON.stringify([...PSEUDO_CLASSES])
+  ) {
+    fail('pseudoClasses');
+  }
+  if (
     JSON.stringify(contract.pseudoElements) !==
     JSON.stringify(['after', 'before', 'marker', 'selection'])
   ) {
@@ -474,7 +560,9 @@ export function assertTemplateStylingContractShape(contract) {
       ]) ||
     composition.functionalSelectorArguments !== 'compound-only' ||
     composition.maximumFunctionalDepth !== 1 ||
-    composition.nthExpressionProfile !== 'gala-positive-an-plus-b-v2'
+    composition.nthExpressionProfile !== 'gala-positive-an-plus-b-v2' ||
+    JSON.stringify(composition.functionalPseudoKeywordArguments) !==
+      JSON.stringify([...FUNCTIONAL_PSEUDO_KEYWORD_ARGUMENTS])
   ) {
     fail('composition');
   }

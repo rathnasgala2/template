@@ -233,10 +233,14 @@ section 3, "Module absence and CSP equality"):
   route's `<head>` is still byte-identical (S2 materializes no module
   package/configuration/output/runtime).
 - With JavaScript disabled, the control still renders (a native `<select>`,
-  fully keyboard-operable and usable with no script at all) and the resolved
-  root attribute is simply never set; `<meta name="color-scheme">` alone already
-  carries `prefers-color-scheme` through to user-agent styling and the initial
-  paint independent of any script.
+  fully keyboard-operable and usable with no script at all). The resolved root
+  attribute is server-rendered as the fixed `light` default (TPL-C1 fix), so a
+  no-JS reader, an archival crawler, or a load where the bootstrap script fails
+  still gets a fully themed page instead of unstyled UA-default HTML; a
+  scripted reader's phase 1 bootstrap always overwrites this attribute with the
+  reader's real stored selection/system preference before first paint.
+  `<meta name="color-scheme">` also carries `prefers-color-scheme` through to
+  user-agent styling (form controls, scrollbars) independent of any script.
 
 S2-T12 replaces `contracts/theme-styling-contract.jcs`'s S2-T02 scaffold
 placeholder with the real, closed `templateStylingContract` catalog DEC-097
@@ -245,9 +249,17 @@ generated page:
 
 - **`src/core/internal/appearance/styling-contract.js`** is the one reviewed
   source module `scripts/generate-contracts.mjs` emits the contract from: the
-  ordered four-layer catalog (`gala-tokens`/`gala-components`/`gala-utilities`/
-  `gala-print`), the publication-root/resolved-palette selectors, the closed
-  type/class/id/attribute leaf catalogs, and exactly 64 `publicThemeSlotHooks` —
+  ordered five-layer catalog (`gala-base`/`gala-tokens`/`gala-components`/
+  `gala-utilities`/`gala-print` — contract 2.1.0, TPL-H3/TPL-M7 fix: `gala-base`
+  is the template's own layer, carrying the reset/type-scale/focus-ring
+  defaults documented below `internal/appearance/base-layer.js`, always ordered
+  first so a theme's own layers can override it), the publication-root/
+  resolved-palette selectors, the closed type/class/id/attribute leaf catalogs,
+  a closed five-member pseudo-class catalog (`hover`, `focus-visible`,
+  `active`, `visited`, `disabled` — contract 2.1.0, TPL-H2 fix; see that
+  module's own documentation for why each is admitted and why the token
+  catalog's `color-focus`/`color-link-visited` had no reachable application
+  before it), and exactly 64 `publicThemeSlotHooks` —
   one per catalog leaf, so every leaf a theme could validly select is a named,
   documented hook and no catalog member is orphaned. Every leaf is drawn from
   what this renderer actually renders: 28 type-selector hooks (every

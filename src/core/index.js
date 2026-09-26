@@ -70,6 +70,11 @@ import {
   appearanceBootstrapScriptHref,
 } from './internal/appearance/contract.js';
 import { APPEARANCE_BOOTSTRAP_SCRIPT_SOURCE } from './internal/appearance/bootstrap-script.js';
+import {
+  GALA_BASE_STYLESHEET_MEDIA_TYPE,
+  GALA_BASE_STYLESHEET_PATH,
+  GALA_BASE_STYLESHEET_SOURCE,
+} from './internal/appearance/base-layer.js';
 import { renderAppearanceControl } from './internal/appearance/controller-markup.js';
 import {
   ArtifactManifestValidationError,
@@ -372,6 +377,14 @@ export async function renderPublication(buildInput, options) {
   const appearanceScriptHrefValue = appearanceBootstrapScriptHref(
     validatedInput.basePath,
   );
+  // TPL-H3/TPL-M7: the template-owned gala-base stylesheet's own basePath-
+  // joined href, computed the same way as the appearance script href above
+  // so it can never drift from the physical file/manifest path written
+  // below.
+  const baseStylesheetHrefValue = `/${projectFixedAssetPath(
+    validatedInput.basePath,
+    `/${GALA_BASE_STYLESHEET_PATH}`,
+  )}`;
 
   // S2-T12: the selected theme package's copied stylesheets/passive assets
   // and the ordered `<link>` markup every generated page's `<head>` inserts.
@@ -438,6 +451,7 @@ export async function renderPublication(buildInput, options) {
         atomFeedUrl: feeds.atomSelfUrl,
         rssFeedUrl: feeds.rssSelfUrl,
         appearanceScriptHref: appearanceScriptHrefValue,
+        baseStylesheetHref: baseStylesheetHrefValue,
         themeStylesheetLinksHtml,
       },
     });
@@ -509,6 +523,7 @@ export async function renderPublication(buildInput, options) {
       atomFeedUrl: feeds.atomSelfUrl,
       rssFeedUrl: feeds.rssSelfUrl,
       appearanceScriptHref: appearanceScriptHrefValue,
+      baseStylesheetHref: baseStylesheetHrefValue,
       themeStylesheetLinksHtml,
     },
   });
@@ -714,9 +729,36 @@ export async function renderPublication(buildInput, options) {
     immutable: false,
   };
 
+  // TPL-H3/TPL-M7: the template-owned gala-base stylesheet, written and
+  // manifested for the same reason and at the same point as the appearance
+  // bootstrap script immediately above. Always emitted, independent of
+  // whether a theme was selected (`baseStylesheetHrefValue` above is
+  // likewise unconditional), because it is what makes contract-mandated
+  // chrome presentable even with no theme at all.
+  const baseStylesheetBytes = Buffer.from(GALA_BASE_STYLESHEET_SOURCE, 'utf8');
+  const joinedBaseStylesheetPath = projectFixedAssetPath(
+    validatedInput.basePath,
+    `/${GALA_BASE_STYLESHEET_PATH}`,
+  );
+  const baseStylesheetDestination = path.join(
+    outputDirectory,
+    joinedBaseStylesheetPath,
+  );
+  await mkdir(path.dirname(baseStylesheetDestination), { recursive: true });
+  await writeFile(baseStylesheetDestination, baseStylesheetBytes);
+  /** @type {import('../../types/index.d.ts').ManifestAssetEntry} */
+  const baseStylesheetAsset = {
+    path: joinedBaseStylesheetPath,
+    mediaType: GALA_BASE_STYLESHEET_MEDIA_TYPE,
+    byteLength: String(baseStylesheetBytes.byteLength),
+    sha256: digestBytes(baseStylesheetBytes),
+    immutable: false,
+  };
+
   const assets = [
     ...joinedMediaAssets,
     appearanceScriptAsset,
+    baseStylesheetAsset,
     ...(themeAssetsResult ? themeAssetsResult.assets : []),
   ].sort((a, b) => compareUtf8Bytes(a.path, b.path));
 

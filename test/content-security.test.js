@@ -440,6 +440,7 @@ test('golden output: the canonical S2 fixture renders its content page byte-exac
         '\n' +
         '<link rel="alternate" type="application/atom+xml" href="https://fixture-1.example.com/fixture-1/feed/atom.xml" title="fixture-1">\n' +
         '<link rel="alternate" type="application/rss+xml" href="https://fixture-1.example.com/fixture-1/feed/rss.xml" title="fixture-1">\n' +
+        '<link rel="stylesheet" href="/fixture-1/assets/gala-base-v1.css">\n' +
         '<link rel="stylesheet" href="/fixture-1/assets/theme/print.css" media="print">\n' +
         '</head>\n' +
         '<body data-gala-page-kind="article">\n' +

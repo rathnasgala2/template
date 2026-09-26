@@ -154,6 +154,13 @@ const SKELETON_LAYOUT_SOURCE = [
   '{% if ogImage %}<meta name="twitter:image" content="{{ ogImage }}">{% endif %}',
   '<link rel="alternate" type="application/atom+xml" href="{{ atomFeedUrl }}" title="{{ siteName }}">',
   '<link rel="alternate" type="application/rss+xml" href="{{ rssFeedUrl }}" title="{{ siteName }}">',
+  // TPL-H3/TPL-M7: the template-owned gala-base layer's own `<link>`,
+  // always first among the stylesheets — before any theme `<link>` — so its
+  // own first-line `@layer` order statement (`internal/appearance/
+  // base-layer.js`) is the one every browser sees first, and so a theme's
+  // later-loaded gala-tokens/gala-components/gala-utilities layers can
+  // always override its defaults.
+  '<link rel="stylesheet" href="{{ baseStylesheetHref }}">',
   '{{ themeStylesheetLinksHtml | safe }}',
   '</head>',
   `<body ${PAGE_KIND_ATTRIBUTE}="{{ pageKind }}">`,

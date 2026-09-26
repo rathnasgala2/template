@@ -126,9 +126,10 @@ test('exactly 64 public theme-slot hooks, sorted by hookId, each atom appearing 
   assert.equal(hookIds.size, 64, 'every hookId must be unique');
 });
 
-test('cssLayers/stylesheet shapes: the contract fixes the ordered four-layer catalog', () => {
+test('cssLayers/stylesheet shapes: the contract fixes the ordered five-layer catalog including the template-owned gala-base layer', () => {
   const document = buildTemplateStylingContract();
   assert.deepEqual(document.orderedLayers, [
+    'gala-base',
     'gala-tokens',
     'gala-components',
     'gala-utilities',
