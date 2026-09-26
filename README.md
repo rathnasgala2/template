@@ -236,9 +236,9 @@ section 3, "Module absence and CSP equality"):
   fully keyboard-operable and usable with no script at all). The resolved root
   attribute is server-rendered as the fixed `light` default (TPL-C1 fix), so a
   no-JS reader, an archival crawler, or a load where the bootstrap script fails
-  still gets a fully themed page instead of unstyled UA-default HTML; a
-  scripted reader's phase 1 bootstrap always overwrites this attribute with the
-  reader's real stored selection/system preference before first paint.
+  still gets a fully themed page instead of unstyled UA-default HTML; a scripted
+  reader's phase 1 bootstrap always overwrites this attribute with the reader's
+  real stored selection/system preference before first paint.
   `<meta name="color-scheme">` also carries `prefers-color-scheme` through to
   user-agent styling (form controls, scrollbars) independent of any script.
 
@@ -251,26 +251,25 @@ generated page:
   source module `scripts/generate-contracts.mjs` emits the contract from: the
   ordered five-layer catalog (`gala-base`/`gala-tokens`/`gala-components`/
   `gala-utilities`/`gala-print` — contract 2.1.0, TPL-H3/TPL-M7 fix: `gala-base`
-  is the template's own layer, carrying the reset/type-scale/focus-ring
-  defaults documented below `internal/appearance/base-layer.js`, always ordered
-  first so a theme's own layers can override it), the publication-root/
-  resolved-palette selectors, the closed type/class/id/attribute leaf catalogs,
-  a closed five-member pseudo-class catalog (`hover`, `focus-visible`,
-  `active`, `visited`, `disabled` — contract 2.1.0, TPL-H2 fix; see that
-  module's own documentation for why each is admitted and why the token
-  catalog's `color-focus`/`color-link-visited` had no reachable application
-  before it), and exactly 64 `publicThemeSlotHooks` —
-  one per catalog leaf, so every leaf a theme could validly select is a named,
-  documented hook and no catalog member is orphaned. Every leaf is drawn from
-  what this renderer actually renders: 28 type-selector hooks (every
-  landmark/prose/code/control element `internal/skeleton.js`,
-  `internal/page-kinds.js` and the markdown-it CommonMark pipeline can produce),
-  15 class-selector hooks (the base Prism `.token` class plus one
-  `.language-<grammar>` hook per admitted highlight grammar — fine-grained
-  per-token-kind classes are a documented S2 scope exclusion), 2 id-selector
-  hooks (`#main-content`, the appearance `<select>`'s fixed id) and 19
-  attribute-value hooks (one per `data-gala-slot` value, one per the new
-  `data-gala-page-kind` value). `catalogDigest` is
+  is the template's own layer, carrying the reset/type-scale/focus-ring defaults
+  documented below `internal/appearance/base-layer.js`, always ordered first so
+  a theme's own layers can override it), the publication-root/ resolved-palette
+  selectors, the closed type/class/id/attribute leaf catalogs, a closed
+  five-member pseudo-class catalog (`hover`, `focus-visible`, `active`,
+  `visited`, `disabled` — contract 2.1.0, TPL-H2 fix; see that module's own
+  documentation for why each is admitted and why the token catalog's
+  `color-focus`/`color-link-visited` had no reachable application before it),
+  and exactly 64 `publicThemeSlotHooks` — one per catalog leaf, so every leaf a
+  theme could validly select is a named, documented hook and no catalog member
+  is orphaned. Every leaf is drawn from what this renderer actually renders: 28
+  type-selector hooks (every landmark/prose/code/control element
+  `internal/skeleton.js`, `internal/page-kinds.js` and the markdown-it
+  CommonMark pipeline can produce), 15 class-selector hooks (the base Prism
+  `.token` class plus one `.language-<grammar>` hook per admitted highlight
+  grammar — fine-grained per-token-kind classes are a documented S2 scope
+  exclusion), 2 id-selector hooks (`#main-content`, the appearance `<select>`'s
+  fixed id) and 19 attribute-value hooks (one per `data-gala-slot` value, one
+  per the new `data-gala-page-kind` value). `catalogDigest` is
   `SHA256(UTF8("GALA-TEMPLATE-STYLING-CONTRACT-V2\0") || JCS(...))`, matching
   DEC-097 section 8 and the digest profile `@rathnasgala2/schemas`' own internal
   `templateStylingContract` profile uses (that function is not exported through
@@ -318,6 +317,23 @@ generated page:
   `test/fixtures/theme-fixture-minimal/` — deliberately not real, conformant
   theme CSS (authoring one is S2-T13's task); they exist only to exercise the
   copy/link/manifest mechanism.
+
+Hardening at consume time (TPL-C2/TPL-H1 fixes; a theme package is lower-trust
+supply-chain input than the repository owner's own authored content, so it is
+held to at least the same bar): `theme.json` is schema-validated against
+`urn:gala:schema:theme-contract:2.0.0` before anything else, and its
+`contractVersion`/`stylingContractDigest`/ `templateRange` are checked against
+this renderer's own published styling contract and version
+(`internal/semver-range.js`: a deliberately closed exact-version/caret-range
+subset). Every declared file's `byteLength`/ `sha256` is verified against the
+bytes actually read, and `theme.json.budgets` is enforced. Every passive asset's
+bytes are sniffed (never trusted from the declared `mediaType`) against a closed
+allowlist: raster formats are admitted directly, and SVG is admitted only after
+`internal/media/theme-svg-sanitizer.js`'s closed grammar rejects any
+`<script>`/event-handler/external-reference construct outright. **Iconography is
+in scope and expected** (TPL-H6 decision): this sanitizer is what makes a
+theme-declared SVG icon mark safe to publish.
+
 - **basePath fix (LOCAL-7 follow-up; independent-review finding B2).** Before
   S2-T12, the appearance bootstrap script's `<script src>` and the social-image
   `og:image`/`twitter:image` URL were both root-absolute, unprefixed by the

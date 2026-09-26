@@ -32,6 +32,21 @@
  * - `html`/`body` type selectors: themes reach the document root only
  *   through {@link PUBLICATION_ROOT_SELECTOR}/{@link RESOLVED_PALETTE_SELECTORS}.
  *
+ * Iconography (TPL-H6 decision, recorded here rather than left as an
+ * accident of theme authorship): **in scope, and expected.** Nothing in this
+ * contract restricts it — `::before`/`::after` are public pseudo-elements, a
+ * theme package may declare non-CSS passive assets (`theme.json.assets[]`),
+ * and a package-relative `url()` is permitted in theme CSS (only an
+ * external-origin `url()` is a theme-tooling lint concern, not a template
+ * restriction). The only reason no theme shipped an icon before this
+ * decision was recorded is that the prerequisite — safe admission of a
+ * theme-declared SVG — did not exist yet. It does now:
+ * `internal/media/theme-svg-sanitizer.js`, wired into
+ * `internal/theme-assets.js`'s passive-asset pipeline (TPL-C2), is the
+ * mechanism that makes shipping an SVG icon mark safe. A theme is free to
+ * declare one and reference it from `::before`/`::after` `content: url(...)`
+ * or a `background-image`.
+ *
  * Contract 2.1.0 (TPL-H2/TPL-H3/TPL-M7 fix): S2.0's empty `pseudoClasses`
  * catalog made every interaction state unstylable while the closed 35-token
  * catalog already required `color-focus` and `color-link-visited`, tokens
