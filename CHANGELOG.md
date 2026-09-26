@@ -48,6 +48,11 @@ and this project adheres to
   `package.json`'s `verify` script and README.md's `npm run verify` descriptive
   paragraph and asserts every verify-chain gate is named there, in the same
   order, so the two cannot drift apart silently again.
+- **TPL-L2**: `.github/workflows/release.yaml`'s version-already-published check
+  now only exits 0 (skips) for a `workflow_dispatch` re-run; a `push` run that
+  reaches a version already on the registry fails the job instead, so a real
+  content change merged with a forgotten version bump reports red rather than
+  reporting green while shipping nothing.
 - **TPL-M1**: theme stylesheet `<link>` elements carry `integrity="sha256-…"`
   and `crossorigin="anonymous"`, derived from the same bytes the manifest digest
   is computed from, so a mutated published stylesheet is rejected by the

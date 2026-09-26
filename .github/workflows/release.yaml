@@ -67,7 +67,11 @@ jobs:
           package_name="$(node --input-type=module -e "import definition from './package.json' with {type: 'json'}; process.stdout.write(definition.name)")"
           package_version="$(node --input-type=module -e "import definition from './package.json' with {type: 'json'}; process.stdout.write(definition.version)")"
           if npm view "${package_name}@${package_version}" version >/dev/null 2>&1; then
-            echo "${package_name}@${package_version} is already published, skipping."
-            exit 0
+            if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+              echo "${package_name}@${package_version} is already published; skipping this manual re-run."
+              exit 0
+            fi
+            echo "::error::${package_name}@${package_version} is already published, but this run was triggered by a push that touched a packed path (src/core/, contracts/, types/, LICENSE, README.md, package.json or package-lock.json). Bump package.json's version before merging a real content change."
+            exit 1
           fi
           npm publish --access public --provenance
