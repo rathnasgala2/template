@@ -539,11 +539,12 @@ async function assertRejectsUnsafeThemePath(action) {
   );
 }
 
-// The next three checks are syntactic and are now caught twice: once by
+// The next three checks are syntactic and are caught twice: once by
 // `urn:gala:schema:theme-contract:2.0.0`'s own `repoRelativePath` format
-// (TPL-H1 makes that load-bearing at consume time, so a malformed path never
-// even reaches `loadThemeAssets`'s own logic for a real theme package), and
-// independently by `assertSafeThemeRelativePath` itself. They are exercised
+// (TPL-H1's schema validation is load-bearing at consume time, so a
+// malformed path never reaches `loadThemeAssets`'s own logic for a real
+// theme package), and independently by `assertSafeThemeRelativePath`
+// itself. They are exercised
 // directly against that function so this suite keeps testing this module's
 // own containment logic instead of only re-proving the schema's format
 // check.
@@ -619,6 +620,71 @@ test('theme asset path containment: a file physically present but never declared
     );
     assert.ok(
       !result.assets.some((asset) => asset.path.includes('undeclared.svg')),
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('TPL-M2: a stylesheet path re-declared in assets[] is not classified as a passive asset and copied a second time', async () => {
+  const tokensCssBytes = Buffer.from('@layer gala-tokens {\n}\n', 'utf8');
+  const dir = await buildThemeFixtureDirectory([
+    { path: 'tokens.css', mediaType: 'text/css', bytes: tokensCssBytes },
+  ]);
+  try {
+    const result = await loadThemeAssets({
+      themeDirectory: dir,
+      basePath: '/',
+    });
+    assert.equal(
+      result.files.length,
+      3,
+      'the three declared stylesheets, no duplicate passive copy of tokens.css',
+    );
+    const tokensRows = result.assets.filter((asset) =>
+      asset.path.endsWith('tokens.css'),
+    );
+    assert.equal(
+      tokensRows.length,
+      1,
+      'exactly one manifest row for tokens.css',
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('TPL-H2/TPL-H3/TPL-M7: a theme.json cssLayers projection that reorders the published layer catalog is rejected, not silently accepted', async () => {
+  const stylesheetFiles = [
+    { path: 'tokens.css', text: '@layer gala-tokens {\n}\n' },
+    { path: 'components.css', text: '@layer gala-components {\n}\n' },
+    { path: 'print.css', text: '@layer gala-print {\n}\n' },
+  ];
+  const dir = await mkdtemp(path.join(tmpdir(), 'gala-theme-layer-order-'));
+  for (const file of stylesheetFiles) {
+    await writeFile(path.join(dir, file.path), file.text);
+  }
+  const themeJson = buildValidThemeJson({
+    stylesheets: stylesheetFiles.map((f) => f.path),
+    // Same set of layers as the correct projection, but reordered: not an
+    // ordered subsequence of the published `ORDERED_LAYERS` catalog.
+    cssLayers: ['gala-components', 'gala-tokens', 'gala-print'],
+    files: stylesheetFiles.map((f) => ({
+      path: f.path,
+      mediaType: 'text/css',
+      bytes: Buffer.from(f.text, 'utf8'),
+    })),
+  });
+  await writeFile(path.join(dir, 'theme.json'), JSON.stringify(themeJson));
+  try {
+    // Schema validation (TPL-H1) rejects this shape before this module's
+    // own `assertCssLayersProjection` ever runs, since neither admitted
+    // `stylesheets`/`cssLayers` shape ever permits a reordering.
+    await assert.rejects(
+      () => loadThemeAssets({ themeDirectory: dir, basePath: '/' }),
+      (error) =>
+        error instanceof ThemeAssetError &&
+        error.reasonCode === 'THEME_CONTRACT_SCHEMA_INVALID',
     );
   } finally {
     await rm(dir, { recursive: true, force: true });
@@ -803,9 +869,9 @@ test('basePath fix: appearance script, theme stylesheet, media derivative and so
         '<script src="/blog/2024/assets/gala-appearance-bootstrap-v1.js"></script>',
       ),
     );
-    // TPL-M1 fix: theme stylesheet <link>s now carry integrity/crossorigin;
-    // matched loosely here (both are content-derived) rather than
-    // hardcoding the digest.
+    // TPL-M1: theme stylesheet <link>s carry integrity/crossorigin; matched
+    // loosely here (both are content-derived) rather than hardcoding the
+    // digest.
     assert.match(
       html,
       /<link rel="stylesheet" href="\/blog\/2024\/assets\/theme\/tokens\.css" integrity="sha256-[^"]+" crossorigin="anonymous">/,

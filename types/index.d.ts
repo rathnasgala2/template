@@ -345,3 +345,17 @@ export declare function normalizeAuthoredMarkdown(markdownSource: string): {
 
 /** A plain (not domain-separated) tagged SHA-256 digest of a body's exact UTF-8 bytes. */
 export declare function computeBodyDigest(html: string): string;
+
+/**
+ * The current published `renderPolicyIdentity`
+ * (`{name, version, digest}`) every `renderableBody.renderPolicy` must
+ * byte-equal, computed from the published `contracts/render-policy.jcs`
+ * file. A consumer that needs to construct or verify a `renderableBody`
+ * ahead of calling `renderPublication` can compute this identity without
+ * reaching into `src/core/internal/`.
+ */
+export declare function computeRenderPolicyIdentity(): Promise<{
+  name: string;
+  version: string;
+  digest: string;
+}>;

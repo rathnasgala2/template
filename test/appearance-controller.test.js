@@ -43,9 +43,9 @@ import {
 } from './helpers/render-fixtures.js';
 import { loadCanonicalBuildInput } from './helpers/schema-fixtures.js';
 
-// TPL-H4 fix: frame-ancestors is excluded from the meta-safe baseline (CSP
-// ignores it inside <meta http-equiv>); it is now a header-only directive
-// (see content-security.test.js's own dedicated coverage).
+// TPL-H4: frame-ancestors is excluded from the meta-safe baseline (CSP
+// ignores it inside <meta http-equiv>) and is a header-only directive (see
+// content-security.test.js's own dedicated coverage).
 const CSP_BASELINE_STRING =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
   "form-action 'none'; script-src 'self'; " +
@@ -422,8 +422,8 @@ test('S2-T07 acceptance: every rendered route carries the appearance control, th
       assert.ok(select, `${route.path}: appearance control select present`);
       assert.equal(attr(select, 'id'), APPEARANCE_SELECT_ID);
 
-      // TPL-C1 fix: the resolved-mode attribute is now server-rendered as
-      // the fixed light default, so a JS-free reader (or a load where the
+      // TPL-C1: the resolved-mode attribute is server-rendered as the
+      // fixed light default, so a JS-free reader (or a load where the
       // bootstrap script fails) still matches
       // `RESOLVED_PALETTE_SELECTORS.light` and sees a fully themed page,
       // never unstyled UA-default HTML. A scripted reader's phase 1 always

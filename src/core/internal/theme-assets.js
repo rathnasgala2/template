@@ -341,7 +341,7 @@ const FALLBACK_BUDGETS = Object.freeze({
 
 /**
  * Parse and validate `theme.json.budgets` (TPL-C2/THD-M3: the declared
- * ceilings are now load-bearing, not decorative). An absent or malformed
+ * ceilings are load-bearing, not decorative). An absent or malformed
  * `budgets` object falls back to {@link FALLBACK_BUDGETS} rather than
  * failing closed outright, since a missing budgets object is a shape defect
  * TPL-H1's schema validation already rejects for a real theme package; this

@@ -1,8 +1,7 @@
 /**
  * TPL-M3 acceptance test: `renderPrimaryNavigation`'s documented return
  * value matches its actual behaviour — it always renders a `<nav>` landmark,
- * even with no authored items, rather than the empty-string return its JSDoc
- * previously (incorrectly) claimed.
+ * even with no authored items.
  */
 
 import { strict as assert } from 'node:assert';

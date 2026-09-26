@@ -8,6 +8,80 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Security
+
+- **TPL-C2**: theme-declared passive assets (`theme.json.assets[]`) are sniffed
+  against a closed raster/font/SVG allowlist, budget-capped
+  (`budgets.maximumFileBytes`/`maximumTotalBytes`/`maximumFiles`), and verified
+  against each row's own declared `sha256`/`byteLength` before being copied into
+  a published artifact; the manifest `mediaType` is derived from the sniff
+  result, never the declaration. A passive SVG is admitted only after
+  `internal/media/theme-svg-sanitizer.js` strips active content (`<script>`,
+  event-handler attributes, external `<use href>`, `<foreignObject>`).
+- **TPL-H1**: a consumed theme package's `theme.json` is schema-validated
+  against `urn:gala:schema:theme-contract:2.0.0` and its digest chain is now
+  load-bearing: `contractVersion`, `stylingContractDigest` and `templateRange`
+  are checked against this template's own published contract and version, and
+  every `assets[]` row's declared `sha256`/`byteLength` is checked against the
+  bytes actually read, before any theme file is copied.
+- **TPL-H4**: `frame-ancestors 'none'`, which the CSP specification ignores when
+  delivered via `<meta http-equiv>`, is split out of the `<meta>`-safe baseline
+  into a header-only directive set
+  (`contentSecurityPolicyHeaderOnlyDirectives()`), surfaced as a hosting
+  requirement rather than emitted where it has no effect.
+- **TPL-C1**: the server-rendered `<html>` element now carries
+  `data-gala-resolved-color-mode="light"` as the default, so a themed
+  publication is fully styled before and without the appearance bootstrap script
+  running.
+
+### Fixed
+
+- **TPL-M1**: theme stylesheet `<link>` elements carry `integrity="sha256-…"`
+  and `crossorigin="anonymous"`, derived from the same bytes the manifest digest
+  is computed from, so a mutated published stylesheet is rejected by the
+  browser, not only detectable by a later manifest re-verification.
+- **TPL-M2**: passive-asset partitioning keys on the theme's own validated
+  `stylesheets` list rather than an exact `mediaType === 'text/css'` string
+  comparison, so a stylesheet declared with the manifest's own
+  `text/css; charset=utf-8` spelling in `assets[]` is not classified as a
+  passive asset and copied a second time.
+- **TPL-M3**: `renderPrimaryNavigation`'s documentation matches its behaviour:
+  it always renders a labelled `<nav>` landmark, including when there are no
+  authored items.
+- **TPL-H5**: `package.json` `engines` is a supported range
+  (`>=24.0.0`/`>=11.0.0`) rather than an exact pin, so installing this package
+  under a different Node/npm patch version or `engine-strict=true` no longer
+  fails; `devEngines` keeps the exact toolchain pin for this repository's own
+  development.
+
+### Added
+
+- **Contract 2.1.0**: publishes a closed five-member pseudo-class catalog
+  (`:focus-visible`, `:hover`, `:visited`, `:active`, `:disabled`) so a theme
+  can style interaction states for the tokens that require them (`color-focus`,
+  `color-link-visited`) — **TPL-H2**.
+- **TPL-H3/TPL-M7**: a template-owned `gala-base` layer
+  (`assets/gala-base-v1.css`) is emitted before any theme stylesheet on every
+  page, carrying a normalization reset, the skip-link
+  visually-hidden-until-focused pattern, and a real, paintable `:focus-visible`
+  ring (`outline-style: solid`, not just colour/width). Cascade-layer precedence
+  is declared explicitly by `gala-base`'s own first line
+  (`@layer gala-base, gala-tokens, gala-components, gala-utilities, gala-print;`,
+  from the exported, frozen `ORDERED_LAYERS`) rather than implied by `<link>`
+  emission order.
+- **TPL-H6**: the absence of theme iconography is documented as a scoped
+  2.0.0/2.1.0 decision in the README's S2-T12 section and in
+  `styling-contract.js`'s module documentation, alongside the mechanism (passive
+  SVG assets, `::before`/`::after`, package-relative `url()`) that already
+  supports it.
+- `computeRenderPolicyIdentity` is exported from the package's public entry
+  point (`src/core/index.js`), so a consumer can compute/verify the current
+  render-policy identity without reaching into `src/core/internal/`.
+
+Recommended release: **2.1.0** (minor) — the pseudo-class catalog and
+`gala-base` layer are additive contract surface; every other change in this
+round is a bug fix or a hardening change with no removed public surface.
+
 ### Changed
 
 - **Contract re-pin: `@rathnasgala2/schemas` moved from the LOCAL-1 local

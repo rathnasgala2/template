@@ -796,5 +796,6 @@ export {
 
 export {
   computeBodyDigest,
+  computeRenderPolicyIdentity,
   normalizeAuthoredMarkdown,
 } from './internal/content-security.js';

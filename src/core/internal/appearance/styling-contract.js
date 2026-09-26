@@ -142,8 +142,8 @@ export const FUNCTIONAL_PSEUDO_KEYWORD_ARGUMENTS = Object.freeze([
 ]);
 
 /**
- * TPL-H3/TPL-M7 fix: the ordered `@layer` names DEC-097 fixes, now including
- * the template-owned `gala-base` layer as the first (lowest-precedence)
+ * TPL-H3/TPL-M7: the ordered `@layer` names DEC-097 fixes, including the
+ * template-owned `gala-base` layer as the first (lowest-precedence)
  * entry. `gala-base` is emitted by this renderer itself, never by a theme
  * package (no `theme.json.cssLayers` entry ever names it —
  * `internal/theme-assets.js`'s `assertCssLayersProjection` only ever

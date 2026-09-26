@@ -212,6 +212,18 @@ test('TPL-H4 fix: frame-ancestors is a header-only directive, excluded from the 
   ]);
 });
 
+test('computeRenderPolicyIdentity is exported from the public entry point, and is the same function internal/content-security.js exports', async () => {
+  const publicEntry = await import('../src/core/index.js');
+  assert.equal(typeof publicEntry.computeRenderPolicyIdentity, 'function');
+  assert.equal(
+    publicEntry.computeRenderPolicyIdentity,
+    computeRenderPolicyIdentity,
+  );
+  const identity = await publicEntry.computeRenderPolicyIdentity();
+  assert.equal(identity.name, 'gala-render-policy');
+  assert.match(identity.digest, /^sha256:[0-9a-f]{64}$/);
+});
+
 test('computeRenderPolicyIdentity byte-equals a fresh domain-separated digest of the published contract file', async () => {
   const { createHash } = await import('node:crypto');
   const filePath = path.resolve('contracts/render-policy.jcs');

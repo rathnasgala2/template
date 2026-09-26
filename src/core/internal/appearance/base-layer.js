@@ -1,12 +1,11 @@
 /**
- * The template-owned `gala-base` cascade layer (TPL-H3/TPL-M7 fix): a
+ * The template-owned `gala-base` cascade layer (TPL-H3/TPL-M7): a
  * stylesheet this renderer itself writes on every build, independent of
  * whether a theme is selected, carrying sane defaults for every
- * contract-mandated chrome element a theme was previously left to
- * rediscover independently (`internal/skeleton.js`'s skip link, headings,
- * code/table overflow, image sizing, responsive spacing) plus the one rule
- * that makes the closed token catalog's `color-focus`/`focus-width` tokens
- * actually paint a ring (THD-H1's downstream fix): a real
+ * contract-mandated chrome element (`internal/skeleton.js`'s skip link,
+ * headings, code/table overflow, image sizing, responsive spacing) plus the
+ * one rule that makes the closed token catalog's
+ * `color-focus`/`focus-width` tokens actually paint a ring (THD-H1): a real
  * `outline-style: solid` under `:focus-visible`.
  *
  * This file is not admitted through, or generated from, the theme package
@@ -104,9 +103,8 @@ export const GALA_BASE_STYLESHEET_SOURCE = `@layer ${ORDERED_LAYERS.join(', ')};
     outline-offset: 2px;
   }
 
-  /* Type scale: every size a theme was previously left to set explicitly or
-     inherit as a bare UA default, expressed with clamp() so it scales
-     between a phone and a desktop viewport without a discrete breakpoint. */
+  /* Type scale, expressed with clamp() so it scales between a phone and a
+     desktop viewport without a discrete breakpoint; no theme sets this. */
   [data-gala-publication-root] h1 {
     font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
     line-height: 1.2;
@@ -137,9 +135,8 @@ export const GALA_BASE_STYLESHEET_SOURCE = `@layer ${ORDERED_LAYERS.join(', ')};
     font-size: 0.9em;
   }
 
-  /* Overflow/wrap containment: a fenced code block or an unbroken long
-     token in prose can no longer force horizontal scroll on the whole
-     page. */
+  /* Overflow/wrap containment: constrains a fenced code block or an
+     unbroken long token in prose to the viewport, never the whole page. */
   [data-gala-publication-root] pre {
     overflow-x: auto;
   }
