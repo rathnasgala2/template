@@ -87,6 +87,16 @@ and this project adheres to
 
 ### Added
 
+- **TPL-H3 verification**: `test/focus-ring-cascade.test.js` resolves the
+  `:focus-visible` cascade for `<select>` and `<a>` under the rendered
+  `theme-fixture-full` theme and proves `gala-base`'s `outline-style: solid` is
+  the winning declaration for both, including against a synthetic
+  higher-specificity theme rule that sets only `outline-color`/ `outline-width`
+  — cascade-layer precedence resolves per property, not per rule, so a theme's
+  own rule only overrides what it actually declares. No shipped theme repository
+  (`theme-default`, `-amaze`, `-flashy`, `-minimal`, `-zebra`) currently
+  declares an `outline-*` longhand at all (verified by inspection); this test
+  guards the mechanism for if and when one does.
 - **Contract 2.1.0**: publishes a closed five-member pseudo-class catalog
   (`:focus-visible`, `:hover`, `:visited`, `:active`, `:disabled`) so a theme
   can style interaction states for the tokens that require them (`color-focus`,
