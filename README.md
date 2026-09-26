@@ -458,11 +458,16 @@ by the route's own fixed output path.
 
 ## Prerequisites
 
-- Node.js 24.18.0
-- npm 11.16.0
+- Node.js >= 24.0.0 (this repository's own development/CI toolchain is Node.js
+  24.18.0)
+- npm >= 11.0.0 (this repository's own development/CI toolchain is npm 11.16.0)
 
-Both are enforced by `package.json` `engines`/`devEngines`; `.nvmrc` and
-`.node-version` carry the same pin.
+`package.json`'s published `engines` field declares the supported _range_
+(TPL-H5 fix: an exact pin published in the tarball rejects every consumer not on
+that precise patch version, including under a consumer's own `engine-strict`
+setting). This repository's own exact toolchain is pinned separately in
+`devEngines` (evaluated only for this project root, never for a consumer) and in
+`.nvmrc`/`.node-version`.
 
 ## Commands
 

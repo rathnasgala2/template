@@ -131,11 +131,11 @@
       "properties": [
         {
           "name": "cdx:npm:package:constraint:engine:node",
-          "value": "24.18.0"
+          "value": ">=24.0.0"
         },
         {
           "name": "cdx:npm:package:constraint:engine:npm",
-          "value": "11.16.0"
+          "value": ">=11.0.0"
         },
         {
           "name": "cdx:npm:package:path",
