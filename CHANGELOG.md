@@ -44,6 +44,10 @@ and this project adheres to
   (`assertThemeContractIntegrity`, TPL-H1) is now the single enforcement point;
   the existing reordered-`cssLayers` rejection test now asserts the
   schema-validation reason code directly.
+- **TPL-M4**: added `test/readme-verify-description.test.js`, which parses
+  `package.json`'s `verify` script and README.md's `npm run verify` descriptive
+  paragraph and asserts every verify-chain gate is named there, in the same
+  order, so the two cannot drift apart silently again.
 - **TPL-M1**: theme stylesheet `<link>` elements carry `integrity="sha256-…"`
   and `crossorigin="anonymous"`, derived from the same bytes the manifest digest
   is computed from, so a mutated published stylesheet is rejected by the
