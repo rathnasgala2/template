@@ -677,9 +677,9 @@ test('TPL-H2/TPL-H3/TPL-M7: a theme.json cssLayers projection that reorders the 
   });
   await writeFile(path.join(dir, 'theme.json'), JSON.stringify(themeJson));
   try {
-    // Schema validation (TPL-H1) rejects this shape before this module's
-    // own `assertCssLayersProjection` ever runs, since neither admitted
-    // `stylesheets`/`cssLayers` shape ever permits a reordering.
+    // Schema validation (TPL-H1) is the single enforcement point for the
+    // `stylesheets`/`cssLayers` pairing (TPL-H2): neither admitted shape in
+    // `urn:gala:schema:theme-contract:2.0.0` ever permits a reordering.
     await assert.rejects(
       () => loadThemeAssets({ themeDirectory: dir, basePath: '/' }),
       (error) =>

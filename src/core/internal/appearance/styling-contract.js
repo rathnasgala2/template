@@ -146,9 +146,9 @@ export const FUNCTIONAL_PSEUDO_KEYWORD_ARGUMENTS = Object.freeze([
  * template-owned `gala-base` layer as the first (lowest-precedence)
  * entry. `gala-base` is emitted by this renderer itself, never by a theme
  * package (no `theme.json.cssLayers` entry ever names it —
- * `internal/theme-assets.js`'s `assertCssLayersProjection` only ever
- * projects a theme's own four-or-five-stylesheet subsequence of the layers
- * *after* it), so it stays first in this list unconditionally: cascade-layer
+ * `urn:gala:schema:theme-contract:2.0.0` only ever admits a theme's own
+ * four-or-five-stylesheet subsequence of the layers *after* it), so it
+ * stays first in this list unconditionally: cascade-layer
  * precedence is later-wins, and a theme's own `gala-tokens`/`gala-components`/
  * `gala-utilities` declarations must always be able to override the
  * template's own base defaults (its focus ring, its type scale, ...),

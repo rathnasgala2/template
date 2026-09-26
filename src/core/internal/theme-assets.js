@@ -9,9 +9,13 @@
  * `internal/print-stylesheet.js`'s own module documentation): this module
  * trusts the theme package's own `theme.json` file-set/`cssLayers`/
  * `stylesheets` declarations to the extent needed to *consume* them —
- * closed stylesheet-list shape, `cssLayers` projection matching the
- * published `contracts/theme-styling-contract.jcs`'s `orderedLayers`, and
- * the declared files actually existing. It does **not** re-implement
+ * closed stylesheet-list shape and the declared files actually existing.
+ * The `cssLayers`/`stylesheets` pairing itself is fully closed by
+ * `urn:gala:schema:theme-contract:2.0.0`'s own `oneOf` (exactly the two
+ * admitted stylesheet lists, each with its own `const` `cssLayers`
+ * projection), which `assertThemeContractIntegrity` validates before any
+ * file is read, so this module does not re-check that projection itself.
+ * It does **not** re-implement
  * DEC-097's full CSS Syntax Module admission grammar (selector/property/
  * at-rule closed catalogs, byte/token/rule ceilings, etc.) — that is the
  * shared `theme-release.yml` conformance runner's job (S2-T11), run once
@@ -75,7 +79,6 @@ import { ThemeAssetError } from '../errors.js';
 import { digestBytes } from './canonical-jcs.js';
 import {
   buildTemplateStylingContract,
-  ORDERED_LAYERS,
   TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION,
 } from './appearance/styling-contract.js';
 import { MEDIA_TYPE_BY_FORMAT, sniffMediaFormat } from './media/sniff.js';
@@ -114,15 +117,6 @@ const STYLESHEETS_WITH_UTILITIES = Object.freeze([
   'print.css',
 ]);
 
-/** @type {Readonly<Record<string, string>>} theme stylesheet filename to its
- * fixed `@layer` name (DEC-097 section 4). */
-const LAYER_BY_STYLESHEET = Object.freeze({
-  'tokens.css': 'gala-tokens',
-  'components.css': 'gala-components',
-  'utilities.css': 'gala-utilities',
-  'print.css': 'gala-print',
-});
-
 /**
  * @param {readonly unknown[]} candidate
  * @returns {void}
@@ -139,54 +133,6 @@ function assertStylesheetListShape(candidate) {
         'or the same list with "utilities.css" inserted before "print.css"',
     );
   }
-}
-
-/**
- * @param {readonly unknown[]} stylesheets the already-shape-validated
- *   stylesheet list
- * @param {unknown} cssLayers the candidate `theme.json.cssLayers`
- * @returns {void}
- */
-function assertCssLayersProjection(stylesheets, cssLayers) {
-  const expected = /** @type {readonly string[]} */ (stylesheets).map(
-    (filename) => LAYER_BY_STYLESHEET[/** @type {string} */ (filename)],
-  );
-  if (JSON.stringify(cssLayers) !== JSON.stringify(expected)) {
-    throw new ThemeAssetError(
-      'THEME_CSS_LAYERS_INVALID',
-      'theme.json cssLayers must byte-equal the exact ordered layer ' +
-        'projection of its own stylesheets list',
-    );
-  }
-  if (!isOrderedSubsequence(expected, ORDERED_LAYERS)) {
-    throw new ThemeAssetError(
-      'THEME_CSS_LAYERS_INVALID',
-      'theme.json cssLayers must be a subsequence of the published ' +
-        'templateStylingContract.orderedLayers, in that exact relative order',
-    );
-  }
-}
-
-/**
- * Whether every element of `candidate` appears in `reference`, in the same
- * relative order, not necessarily contiguously (TPL-H3/TPL-M7: `reference`
- * now also carries the template-owned `gala-base` layer, which a theme never
- * declares itself, so a theme's own layer list is a strict, non-prefix
- * subsequence rather than a prefix).
- *
- * @param {readonly string[]} candidate the theme's own projected layer list
- * @param {readonly string[]} reference the published, fixed layer order
- * @returns {boolean} whether `candidate` is an ordered subsequence of
- *   `reference`
- */
-function isOrderedSubsequence(candidate, reference) {
-  let searchFrom = 0;
-  for (const layer of candidate) {
-    const foundAt = reference.indexOf(layer, searchFrom);
-    if (foundAt === -1) return false;
-    searchFrom = foundAt + 1;
-  }
-  return true;
 }
 
 /** @type {string} the reason code every path-containment rejection below
@@ -550,7 +496,6 @@ export async function loadThemeAssets({ themeDirectory, basePath }) {
     );
   }
   assertStylesheetListShape(themeJson.stylesheets);
-  assertCssLayersProjection(themeJson.stylesheets, themeJson.cssLayers);
 
   /** @type {{path: string, bytes: Buffer}[]} */
   const files = [];

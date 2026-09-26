@@ -95,14 +95,15 @@ export class RenderPolicyViolationError extends Error {
  * The selected theme package's `theme.json` (or its declared file set) did
  * not conform to the closed shape `internal/theme-assets.js` needs to copy
  * its stylesheets/passive assets and render its `<link>` elements: an
- * invalid `stylesheets` list shape, a `cssLayers` projection that does not
- * byte-equal the corresponding ordered layer names, or a missing declared
- * file (task packet S2-T12).
+ * invalid `stylesheets` list shape, a schema/contract-integrity violation
+ * (which also covers an inadmissible `cssLayers` projection — see
+ * `urn:gala:schema:theme-contract:2.0.0`), or a missing declared file (task
+ * packet S2-T12).
  */
 export class ThemeAssetError extends Error {
   /**
    * @param {string} reasonCode a stable, machine-checkable reason code (for
-   *   example `THEME_STYLESHEETS_INVALID`, `THEME_CSS_LAYERS_INVALID`)
+   *   example `THEME_STYLESHEETS_INVALID`, `THEME_CONTRACT_SCHEMA_INVALID`)
    * @param {string} message a human-readable description
    */
   constructor(reasonCode, message) {

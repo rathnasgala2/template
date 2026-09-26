@@ -36,6 +36,14 @@ and this project adheres to
 
 ### Fixed
 
+- **TPL-H2**: removed `theme-assets.js`'s own `cssLayers`-projection check
+  (`assertCssLayersProjection`/`isOrderedSubsequence`) — its rejection branch
+  was unreachable, since `urn:gala:schema:theme-contract:2.0.0`'s `oneOf`
+  already closes the `stylesheets`/`cssLayers` pairing to the two admitted
+  combinations before this module ever runs. Schema validation
+  (`assertThemeContractIntegrity`, TPL-H1) is now the single enforcement point;
+  the existing reordered-`cssLayers` rejection test now asserts the
+  schema-validation reason code directly.
 - **TPL-M1**: theme stylesheet `<link>` elements carry `integrity="sha256-…"`
   and `crossorigin="anonymous"`, derived from the same bytes the manifest digest
   is computed from, so a mutated published stylesheet is rejected by the
