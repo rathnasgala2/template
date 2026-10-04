@@ -14794,8 +14794,8 @@
     {
       "type": "library",
       "name": "http-cache-semantics",
-      "version": "4.2.0",
-      "bom-ref": "@rathnasgala2/template@2.2.0|http-cache-semantics@4.2.0",
+      "version": "4.3.0",
+      "bom-ref": "@rathnasgala2/template@2.2.0|http-cache-semantics@4.3.0",
       "scope": "optional",
       "licenses": [
         {
@@ -14805,15 +14805,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/http-cache-semantics@4.2.0",
+      "purl": "pkg:npm/http-cache-semantics@4.3.0",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/http-cache-semantics/-/http-cache-semantics-4.2.0.tgz",
+          "url": "https://registry.npmjs.org/http-cache-semantics/-/http-cache-semantics-4.3.0.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "753c5cbcf5ea3ef5c1429ab9754afa9843095f8a08105bfa6f0a26dc50f02910ecb888e324600daa106ea009fd73545024874029abf7dc40fae44db2b3ef3b41"
+              "content": "339b792e52694b5507323bf045055d147bcf21219e2c0c4d72b5ae2647868742b1b2a0876753b7357654ffcc7b703d010dc196f246a9c4c293bf096aacd90790"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -20779,7 +20779,7 @@
       "dependsOn": [
         "@rathnasgala2/template@2.2.0|@npmcli/agent@3.0.0",
         "@rathnasgala2/template@2.2.0|cacache@19.0.1",
-        "@rathnasgala2/template@2.2.0|http-cache-semantics@4.2.0",
+        "@rathnasgala2/template@2.2.0|http-cache-semantics@4.3.0",
         "@rathnasgala2/template@2.2.0|minipass-fetch@4.0.1",
         "@rathnasgala2/template@2.2.0|minipass-flush@1.0.7",
         "@rathnasgala2/template@2.2.0|minipass-pipeline@1.2.4",
@@ -21091,7 +21091,7 @@
       ]
     },
     {
-      "ref": "@rathnasgala2/template@2.2.0|http-cache-semantics@4.2.0"
+      "ref": "@rathnasgala2/template@2.2.0|http-cache-semantics@4.3.0"
     },
     {
       "ref": "@rathnasgala2/template@2.2.0|minipass-fetch@4.0.1",

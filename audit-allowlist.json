@@ -1,0 +1,14 @@
+[
+  {
+    "advisory": "GHSA-vfj7-8cjw-p6xm",
+    "packages": [
+      "braces",
+      "chokidar",
+      "nunjucks",
+      "@11ty/eleventy-dev-server",
+      "@11ty/eleventy"
+    ],
+    "reason": "braces regex stack exhaustion reached only through chokidar, the file watcher behind @11ty/eleventy-dev-server and nunjucks' watch mode; the renderer never watches files and runs in a network-disabled, time-bounded sandbox on author content it already size-limits. npm's only proposed fix is a major downgrade of @11ty/eleventy to 0.6.0, which is not a fix. Revisit when Eleventy 3.x ships a chokidar >=3.6.1 line.",
+    "expires": "2026-11-04"
+  }
+]
