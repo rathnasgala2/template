@@ -61,7 +61,7 @@ import {
 import { getMessages } from './messages.js';
 import { resolveTextDirection } from './text-direction.js';
 import { routeSegmentForLabel } from './route-labels.js';
-import { joinBasePathAndRoute } from './route.js';
+import { derivePublicBasePath, joinPublicRoute } from './route.js';
 
 /** Listing page size (index and per-year archive pages). Scoped decision:
  * this renderer has no externally fixed page size; 10 is a deterministic,
@@ -264,7 +264,8 @@ function latestContentTimestamp(records) {
  *   order
  */
 export function buildGeneratedPages(validatedInput) {
-  const { publication, authors, content, basePath } = validatedInput;
+  const { publication, authors, content, basePath, baseUrl } = validatedInput;
+  const publicBasePath = derivePublicBasePath(baseUrl, basePath);
   const messages = getMessages(publication.defaultLanguage);
   const authorsById = new Map(authors.map((author) => [author.id, author]));
 
@@ -272,7 +273,7 @@ export function buildGeneratedPages(validatedInput) {
    * @param {string} route an un-joined route
    * @returns {string} the `basePath`-joined absolute route
    */
-  const site = (route) => joinBasePathAndRoute(basePath, route);
+  const site = (route) => joinPublicRoute(publicBasePath, route);
 
   /**
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record

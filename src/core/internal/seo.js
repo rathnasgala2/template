@@ -78,8 +78,10 @@ export function resolveOriginalDerivativePath(mediaAssets, reference) {
  *   the media pipeline's own finished `assets` list
  * @param {{path: string, sourceDigest: string} | undefined} options.reference
  *   the candidate `resolvedFile` reference
- * @param {string} options.baseUrl the build input's origin-only `baseUrl`
- * @param {string} options.basePath the build input's `basePath` (the
+ * @param {string} options.baseUrl the build input's `baseUrl`
+ * @param {string} options.basePath the public base path
+ *   (`route.js#derivePublicBasePath`, the `baseUrl` path joined with the
+ *   build input's `basePath`; the
  *   derivative path is joined with this before being resolved against
  *   `baseUrl`, so a non-root publication's social-image URL is correct)
  * @returns {string | undefined} the absolute derivative image URL, or

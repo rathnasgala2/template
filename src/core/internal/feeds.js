@@ -19,7 +19,7 @@
  */
 
 import { escapeHtml } from './skeleton.js';
-import { joinBasePathAndRoute } from './route.js';
+import { derivePublicBasePath, joinPublicRoute } from './route.js';
 import {
   contentLastModified,
   contentRoute,
@@ -66,7 +66,10 @@ export function buildFeeds(validatedInput) {
    * @returns {string} the absolute `https://` URL
    */
   const absoluteUrl = (route) =>
-    new URL(joinBasePathAndRoute(basePath, route), baseUrl).toString();
+    new URL(
+      joinPublicRoute(derivePublicBasePath(baseUrl, basePath), route),
+      baseUrl,
+    ).toString();
 
   const siteUrl = absoluteUrl('/');
   const atomSelfUrl = absoluteUrl(ATOM_FEED_ROUTE);

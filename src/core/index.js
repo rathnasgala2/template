@@ -100,7 +100,9 @@ import {
 } from './internal/page-kinds.js';
 import { assertProvenance } from './internal/provenance.js';
 import {
+  derivePublicBasePath,
   errorDocumentPath,
+  joinPublicRoute,
   joinBasePathAndRoute,
   projectFixedAssetPath,
   projectRouteToFilePath,
@@ -322,7 +324,14 @@ export async function renderPublication(buildInput, options) {
   // that navigation/footer text does not flip language from page to page
   // (see `internal/messages.js`).
   const siteMessages = getMessages(validatedInput.publication.defaultLanguage);
-  const homeRoute = joinBasePathAndRoute(validatedInput.basePath, '/');
+  // Every emitted URL carries the `baseUrl` path (for example `/g9/` on a
+  // GitHub project site); output file paths keep using `basePath` alone.
+  const publicBasePath = derivePublicBasePath(
+    validatedInput.baseUrl,
+    validatedInput.basePath,
+  );
+  const urlPrefix = derivePublicBasePath(validatedInput.baseUrl, '/');
+  const homeRoute = joinPublicRoute(publicBasePath, '/');
 
   const appearanceControlHtml = renderAppearanceControl({
     messages: siteMessages,
@@ -336,6 +345,7 @@ export async function renderPublication(buildInput, options) {
   const footerNavHtml = renderFooterNavigation({
     items: validatedInput.navigation.footerItems,
     messages: siteMessages,
+    urlPrefix,
   });
   const footerCard = validatedInput.publication.footerCard;
   // Already verified render-policy-conformant HTML by
@@ -368,17 +378,16 @@ export async function renderPublication(buildInput, options) {
   // self URLs.
   const feeds = buildFeeds(validatedInput);
   const siteName = validatedInput.publication.title;
-  const appearanceScriptHrefValue = appearanceBootstrapScriptHref(
-    validatedInput.basePath,
-  );
+  const appearanceScriptHrefValue =
+    appearanceBootstrapScriptHref(publicBasePath);
   // TPL-H3/TPL-M7: the template-owned gala-base stylesheet's own basePath-
   // joined href, computed the same way as the appearance script href above
   // so it can never drift from the physical file/manifest path written
   // below.
-  const baseStylesheetHrefValue = `/${projectFixedAssetPath(
-    validatedInput.basePath,
+  const baseStylesheetHrefValue = joinBasePathAndRoute(
+    publicBasePath,
     `/${GALA_BASE_STYLESHEET_PATH}`,
-  )}`;
+  );
 
   // The selected theme package's copied stylesheets/passive assets and the
   // ordered `<link>` markup every generated page's `<head>` inserts.
@@ -389,15 +398,16 @@ export async function renderPublication(buildInput, options) {
     ? await loadThemeAssets({
         themeDirectory: path.resolve(options.themeDirectory),
         basePath: validatedInput.basePath,
+        publicBasePath,
       })
     : undefined;
   const themeStylesheetLinksHtml = themeAssetsResult
     ? themeAssetsResult.linkTagsHtml
-    : defaultThemeStylesheetLinksHtml(validatedInput.basePath);
+    : defaultThemeStylesheetLinksHtml(publicBasePath);
 
   /** @type {{virtualPath: string, content: string, permalink: string, layout?: string, data?: Record<string, unknown>}[]} */
   const contentPages = [];
-  /** @type {{joinedSource: string, joinedTarget: string, filePath: string}[]} */
+  /** @type {{joinedSource: string, joinedTarget: string, publicTarget: string, filePath: string}[]} */
   const redirectProjections = [];
 
   const generatedPages = buildGeneratedPages(validatedInput);
@@ -410,6 +420,7 @@ export async function renderPublication(buildInput, options) {
       items: validatedInput.navigation.items,
       currentRoute: joinedRoute,
       messages: siteMessages,
+      urlPrefix,
     });
     const bodyHtml = renderPageBody({
       messages: siteMessages,
@@ -423,7 +434,7 @@ export async function renderPublication(buildInput, options) {
       mediaAssets,
       reference: page.socialImageRef,
       baseUrl: validatedInput.baseUrl,
-      basePath: validatedInput.basePath,
+      basePath: publicBasePath,
     });
     contentPages.push({
       virtualPath: `pages/${page.kind}-${index}.html`,
@@ -437,7 +448,10 @@ export async function renderPublication(buildInput, options) {
         pageKind: page.kind,
         description: page.description,
         robotsContent: page.robotsContent,
-        canonicalUrl: new URL(joinedRoute, validatedInput.baseUrl).toString(),
+        canonicalUrl: new URL(
+          joinPublicRoute(publicBasePath, page.route),
+          validatedInput.baseUrl,
+        ).toString(),
         siteName,
         ogType: page.ogType ?? 'website',
         ogImage,
@@ -464,6 +478,10 @@ export async function renderPublication(buildInput, options) {
       redirectProjections.push({
         joinedSource,
         joinedTarget: joined,
+        publicTarget: joinPublicRoute(
+          publicBasePath,
+          contentRoute(record.frontmatter),
+        ),
         filePath: projectRouteToFilePath(joinedSource, routeProfile),
       });
     }
@@ -471,7 +489,7 @@ export async function renderPublication(buildInput, options) {
 
   const redirectPages = redirectProjections.map((projection, index) => ({
     virtualPath: `redirects/${index}.html`,
-    content: renderRedirectDocument(projection.joinedTarget),
+    content: renderRedirectDocument(projection.publicTarget),
     permalink: projection.filePath,
   }));
 
@@ -489,6 +507,7 @@ export async function renderPublication(buildInput, options) {
     items: validatedInput.navigation.items,
     currentRoute: undefined,
     messages: siteMessages,
+    urlPrefix,
   });
   const errorBodyHtml = renderPageBody({
     messages: siteMessages,
@@ -546,7 +565,7 @@ export async function renderPublication(buildInput, options) {
   );
   const sitemapXml = buildSitemap({
     generatedPages,
-    basePath: validatedInput.basePath,
+    basePath: publicBasePath,
     baseUrl: validatedInput.baseUrl,
   });
   const searchIndexJson = buildSearchIndex(validatedInput);

@@ -277,6 +277,19 @@ function joinedThemeOutputPath(basePath, themeRelativePath) {
   );
 }
 
+/**
+ * The public `<link href>` for one theme file: the same joined path as
+ * {@link joinedThemeOutputPath}, but under the public base path.
+ *
+ * @param {string} publicBasePath the public base path
+ * @param {string} themeRelativePath the file's path relative to
+ *   `THEME_ASSET_DIRECTORY`
+ * @returns {string} the root-absolute href
+ */
+function themeHref(publicBasePath, themeRelativePath) {
+  return `/${joinedThemeOutputPath(publicBasePath, themeRelativePath)}`;
+}
+
 /** @type {{maximumFileBytes: number, maximumTotalBytes: number, maximumFiles: number}} */
 const FALLBACK_BUDGETS = Object.freeze({
   maximumFileBytes: DEFAULT_MAXIMUM_PASSIVE_ASSET_BYTES,
@@ -471,6 +484,8 @@ function subresourceIntegrityAttribute(bytes) {
  *   file set `theme.json.stylesheets`/`assets` and `package.json.files`
  *   name)
  * @param {string} options.basePath the build input's `basePath`
+ * @param {string} [options.publicBasePath] the base path emitted `<link href>`
+ *   values use (`route.js#derivePublicBasePath`); defaults to `basePath`
  * @returns {Promise<{
  *   files: {path: string, bytes: Buffer}[],
  *   assets: import('../../../types/index.d.ts').ManifestAssetEntry[],
@@ -478,7 +493,11 @@ function subresourceIntegrityAttribute(bytes) {
  * }>} the files to write (already `basePath`-joined), their manifest rows
  *   (same joined paths), and the ready-to-insert `<link>` markup
  */
-export async function loadThemeAssets({ themeDirectory, basePath }) {
+export async function loadThemeAssets({
+  themeDirectory,
+  basePath,
+  publicBasePath = basePath,
+}) {
   const { bytes: themeJsonBytes } = await readDeclaredThemeFile(
     themeDirectory,
     'theme.json',
@@ -533,7 +552,7 @@ export async function loadThemeAssets({ themeDirectory, basePath }) {
     // base64, computed fresh from these exact bytes.
     const integrity = subresourceIntegrityAttribute(bytes);
     linkTags.push(
-      `<link rel="stylesheet" href="${escapeHtml(`/${outputPath}`)}" integrity="${integrity}" crossorigin="anonymous"${mediaAttribute}>`,
+      `<link rel="stylesheet" href="${escapeHtml(themeHref(publicBasePath, relativePath))}" integrity="${integrity}" crossorigin="anonymous"${mediaAttribute}>`,
     );
   }
 

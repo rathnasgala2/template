@@ -32,7 +32,7 @@
  * full-text search.
  */
 
-import { joinBasePathAndRoute } from './route.js';
+import { derivePublicBasePath, joinPublicRoute } from './route.js';
 import { compareUtf8Bytes } from './source-inventory.js';
 import { contentLastModified, contentRoute } from './page-kinds.js';
 
@@ -77,7 +77,10 @@ export function buildSearchIndex(validatedInput) {
    * @returns {string} the absolute `https://` URL
    */
   const absoluteUrl = (route) =>
-    new URL(joinBasePathAndRoute(basePath, route), baseUrl).toString();
+    new URL(
+      joinPublicRoute(derivePublicBasePath(baseUrl, basePath), route),
+      baseUrl,
+    ).toString();
 
   const documents = content
     .filter(

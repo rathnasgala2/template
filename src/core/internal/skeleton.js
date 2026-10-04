@@ -88,6 +88,8 @@ const HTML_ESCAPES = Object.freeze({
   "'": '&#39;',
 });
 
+import { joinPublicRoute } from './route.js';
+
 /**
  * Escape a string for safe insertion into HTML text or a quoted attribute
  * value.
@@ -142,19 +144,25 @@ export function renderSkipLink(messages) {
  *   `navigationItem` (or `navigationLeaf`, which never has children)
  * @param {string | undefined} currentRoute the current page's own joined
  *   route, so the matching link can carry `aria-current="page"`
+ * @param {string} urlPrefix the `baseUrl` path prefix prepended to an
+ *   internal route's href (`/` when `baseUrl` has no path)
  * @returns {string} the rendered `<li>`
  */
-function renderNavItem(item, currentRoute) {
+function renderNavItem(item, currentRoute, urlPrefix) {
   const label = escapeHtml(item.label);
   const href = escapeHtml(
-    /** @type {string} */ (item.type === 'internal' ? item.route : item.url),
+    /** @type {string} */ (
+      item.type === 'internal'
+        ? joinPublicRoute(urlPrefix, /** @type {string} */ (item.route))
+        : item.url
+    ),
   );
   const isCurrent = item.type === 'internal' && item.route === currentRoute;
   const currentAttribute = isCurrent ? ' aria-current="page"' : '';
   const children = item.children ?? [];
   const childList =
     children.length > 0
-      ? `<ul>${children.map((child) => renderNavItem(child, currentRoute)).join('')}</ul>`
+      ? `<ul>${children.map((child) => renderNavItem(child, currentRoute, urlPrefix)).join('')}</ul>`
       : '';
   return `<li><a href="${href}"${currentAttribute}>${label}</a>${childList}</li>`;
 }
@@ -170,6 +178,8 @@ function renderNavItem(item, currentRoute) {
  *   route
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
  *   the resolved message catalog
+ * @param {string} [options.urlPrefix] the `baseUrl` path prefix for internal
+ *   hrefs (default `/`)
  * @returns {string} the rendered primary navigation `<nav>`, always present
  *   even when `items` is empty (TPL-M3): every page kind renders exactly
  *   one primary-navigation landmark unconditionally
@@ -178,12 +188,17 @@ function renderNavItem(item, currentRoute) {
  *   on every page regardless of whether that publication has authored any
  *   navigation items yet.
  */
-export function renderPrimaryNavigation({ items, currentRoute, messages }) {
+export function renderPrimaryNavigation({
+  items,
+  currentRoute,
+  messages,
+  urlPrefix = '/',
+}) {
   const label = escapeHtml(
     /** @type {string} */ (messages.primaryNavigationLabel),
   );
   const itemsHtml = items
-    .map((item) => renderNavItem(item, currentRoute))
+    .map((item) => renderNavItem(item, currentRoute, urlPrefix))
     .join('');
   return `<nav aria-label="${label}"><ul>${itemsHtml}</ul></nav>`;
 }
@@ -196,14 +211,15 @@ export function renderPrimaryNavigation({ items, currentRoute, messages }) {
  *   `navigationNormalized.footerItems` (0..50 root items)
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
  *   the resolved message catalog
+ * @param {string} [options.urlPrefix] the `baseUrl` path prefix (default `/`)
  * @returns {string} the rendered footer navigation
  */
-export function renderFooterNavigation({ items, messages }) {
+export function renderFooterNavigation({ items, messages, urlPrefix = '/' }) {
   const label = escapeHtml(
     /** @type {string} */ (messages.footerNavigationLabel),
   );
   const itemsHtml = items
-    .map((item) => renderNavItem(item, undefined))
+    .map((item) => renderNavItem(item, undefined, urlPrefix))
     .join('');
   return `<nav aria-label="${label}"><ul>${itemsHtml}</ul></nav>`;
 }

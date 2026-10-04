@@ -18,7 +18,7 @@
  */
 
 import { escapeHtml } from './skeleton.js';
-import { joinBasePathAndRoute } from './route.js';
+import { joinPublicRoute } from './route.js';
 import { compareUtf8Bytes } from './source-inventory.js';
 
 /**
@@ -37,8 +37,9 @@ function isNoindex(page) {
  * @param {object} options build options
  * @param {readonly import('./page-kinds.js').GeneratedPage[]} options.generatedPages
  *   every page `internal/page-kinds.js` produced
- * @param {string} options.basePath the build input's `basePath`
- * @param {string} options.baseUrl the build input's origin-only `baseUrl`
+ * @param {string} options.basePath the public base path
+ *   (`route.js#derivePublicBasePath`)
+ * @param {string} options.baseUrl the build input's `baseUrl`
  * @returns {string} the exact UTF-8 `sitemap.xml` text
  */
 export function buildSitemap({ generatedPages, basePath, baseUrl }) {
@@ -47,7 +48,7 @@ export function buildSitemap({ generatedPages, basePath, baseUrl }) {
    * @returns {string} the absolute `https://` URL
    */
   const absoluteUrl = (route) =>
-    new URL(joinBasePathAndRoute(basePath, route), baseUrl).toString();
+    new URL(joinPublicRoute(basePath, route), baseUrl).toString();
 
   const entries = generatedPages
     .filter((page) => !isNoindex(page))

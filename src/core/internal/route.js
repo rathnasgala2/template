@@ -34,6 +34,48 @@ export function joinBasePathAndRoute(basePath, route) {
 }
 
 /**
+ * Derive the public base path every emitted URL must carry from the build
+ * input: the path component of `baseUrl` (for example `/g9/` for a GitHub
+ * project site published at `https://owner.github.io/g9/`) joined with the
+ * build input's own `basePath`. Only emitted URLs (hrefs, `src`, canonical,
+ * feed, sitemap and search-index URLs) use this value; candidate-directory
+ * output file paths keep using `basePath` alone, because the artifact is
+ * deployed at the root of the hosting site.
+ *
+ * @param {string} baseUrl the build input's validated `baseUrl`
+ * @param {string} basePath the build input's `basePath`
+ * @returns {string} the public base path with a leading slash and no double
+ *   slashes. When `baseUrl` carries a path it also has a trailing slash
+ *   (`/g9/`); with an origin-only `baseUrl` the result is exactly
+ *   `basePath`'s legacy joined form (`/` or `/blog`), so origin-only output
+ *   is byte-identical to earlier releases.
+ */
+export function derivePublicBasePath(baseUrl, basePath) {
+  const urlPath = new URL(baseUrl).pathname;
+  const joined = joinBasePathAndRoute(
+    joinBasePathAndRoute(urlPath, basePath),
+    '/',
+  );
+  return joined !== '/' && urlPath !== '/' ? `${joined}/` : joined;
+}
+
+/**
+ * Join a public base path (see {@link derivePublicBasePath}) and a route
+ * into one emitted URL path. The site root route is the public base path
+ * itself (`/site/` when `baseUrl` carries a path); every other route is
+ * joined exactly like {@link joinBasePathAndRoute}.
+ *
+ * @param {string} publicBasePath the public base path
+ * @param {string} route a `canonicalRoute`
+ * @returns {string} the emitted absolute URL path
+ */
+export function joinPublicRoute(publicBasePath, route) {
+  return route === '/'
+    ? publicBasePath
+    : joinBasePathAndRoute(publicBasePath, route);
+}
+
+/**
  * Project one already-joined absolute route to its candidate-directory-
  * relative output file path.
  *

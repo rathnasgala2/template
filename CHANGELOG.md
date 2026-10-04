@@ -8,6 +8,20 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-04
+
+### Fixed
+
+- A `baseUrl` that carries a path (for example `https://owner.github.io/g9/`, a
+  GitHub project site) is now honoured by every emitted URL. Previously the
+  renderer treated `baseUrl` as origin-only and emitted root-relative `/about`,
+  `/assets/...`, canonical, feed, sitemap and search-index URLs that 404 under a
+  sub-path. Route hrefs, theme and base stylesheet links, the appearance
+  bootstrap script, canonical/`og:url`, `og:image`, feed, sitemap, search-index
+  and redirect-document URLs now carry the `baseUrl` path via
+  `derivePublicBasePath` (`internal/route.js`). Output file paths on disk are
+  unchanged; origin-only `baseUrl` output is unchanged.
+
 ## [2.1.0] - 2026-09-26
 
 ### Security

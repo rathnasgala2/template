@@ -354,6 +354,13 @@ allowlist: raster formats are admitted directly, and SVG is admitted only after
 in scope and expected** (TPL-H6 decision): this sanitizer is what makes a
 theme-declared SVG icon mark safe to publish.
 
+- **`baseUrl` path prefix (2.2.0).** `buildInput.baseUrl` may carry a path (a
+  GitHub project site, `https://owner.github.io/g9/`); it is not origin-only.
+  `internal/route.js#derivePublicBasePath(baseUrl, basePath)` joins that path
+  with `basePath` into the one public base path every emitted URL uses (route
+  and asset hrefs, the appearance script, stylesheet links, canonical/`og:url`,
+  feed, sitemap and search-index URLs). Output file paths still use `basePath`
+  alone, because the artifact is deployed at the hosting site root.
 - **basePath fix (LOCAL-7 follow-up; independent-review finding B2).** Before
   theme integration existed, the appearance bootstrap script's `<script src>`
   and the social-image `og:image`/`twitter:image` URL were both root-absolute,
