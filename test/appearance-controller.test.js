@@ -28,7 +28,7 @@ import {
   APPEARANCE_ROOT_ATTRIBUTE,
   APPEARANCE_SELECTION_ATTRIBUTE,
   APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE,
-  APPEARANCE_SELECT_ID,
+  APPEARANCE_TOGGLE_ID,
   APPEARANCE_STORAGE_KEY,
   COLOR_SCHEME_META_CONTENT,
   appearanceBootstrapScriptHref,
@@ -49,7 +49,7 @@ import { loadCanonicalBuildInput } from './helpers/schema-fixtures.js';
 const CSP_BASELINE_STRING =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
   "form-action 'none'; script-src 'self'; " +
-  "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; " +
+  "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; " +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
 // --- contract.js: the fixed constants module ---
@@ -70,30 +70,25 @@ test('appearance/contract.js fixes the exact DEC-097 root/palette attribute name
 
 // --- controller-markup.js: the server-rendered control ---
 
-test('renderAppearanceControl renders a labelled native select with message-catalog option text, defaulting to system', () => {
+test('renderAppearanceControl renders one hidden toggle button carrying all three localized mode labels, defaulting to system', () => {
   const messages = getMessages('en');
   const html = renderAppearanceControl({ messages });
   const document = parse(`<!doctype html><html><body>${html}</body></html>`);
-  const select = findByTag(document, 'select');
-  assert.ok(select, 'a <select> must be rendered');
-  assert.equal(attr(select, 'id'), APPEARANCE_SELECT_ID);
-  const label = findByTag(document, 'label');
-  assert.ok(label, 'a <label> must be rendered');
-  assert.equal(attr(label, 'for'), APPEARANCE_SELECT_ID);
-  assert.equal(textContent(label).trim(), 'Appearance');
-
-  const options = collectByTag(select, 'option');
-  assert.deepEqual(
-    options.map((option) => attr(option, 'value')),
-    ['light', 'dark', 'system'],
+  const button = findByTag(document, 'button');
+  assert.ok(button, 'a <button> must be rendered');
+  assert.equal(attr(button, 'id'), APPEARANCE_TOGGLE_ID);
+  assert.equal(attr(button, 'type'), 'button');
+  assert.equal(
+    attr(button, 'hidden'),
+    '',
+    'hidden until the script reveals it',
   );
-  assert.deepEqual(
-    options.map((option) => textContent(option)),
-    ['Light', 'Dark', 'System'],
-  );
-  const selected = options.filter((option) => attr(option, 'selected') === '');
-  assert.equal(selected.length, 1, 'exactly one option is server-selected');
-  assert.equal(attr(selected[0], 'value'), 'system');
+  assert.equal(attr(button, 'data-action'), 'mode');
+  assert.equal(attr(button, 'aria-label'), 'Appearance: System');
+  assert.equal(attr(button, 'data-label-system'), 'Appearance: System');
+  assert.equal(attr(button, 'data-label-light'), 'Appearance: Light');
+  assert.equal(attr(button, 'data-label-dark'), 'Appearance: Dark');
+  assert.equal(collectByTag(document, 'select').length, 0);
 });
 
 test('renderAppearanceControl HTML-escapes catalog text', () => {
@@ -115,10 +110,19 @@ test('the bootstrap script is a plain classic script with no network/eval/cookie
   const source = APPEARANCE_BOOTSTRAP_SCRIPT_SOURCE;
   assert.ok(!/\beval\s*\(/.test(source));
   assert.ok(!/\bnew Function\b/.test(source));
-  assert.ok(!/\bfetch\s*\(/.test(source));
+  // Exactly one network call: the lazy search-index fetch.
+  assert.equal(source.match(/\bfetch\s*\(/g)?.length, 1);
+  assert.ok(source.includes('data-search-index'));
   assert.ok(!/XMLHttpRequest/.test(source));
   assert.ok(!/document\.cookie/.test(source));
-  assert.ok(!/\.style\s*[.[]/.test(source), 'never mutates inline style');
+  assert.ok(
+    !/documentElement\.style|root\.style/.test(source),
+    'never mutates the root inline style',
+  );
+  // innerHTML appears exactly once: the icon helper, fed constant paths.
+  assert.equal(source.match(/innerHTML/g)?.length, 1);
+  assert.ok(source.includes('node.innerHTML = paths;'));
+  assert.ok(!/insertAdjacentHTML|outerHTML|document\.write/.test(source));
   for (const key of ['localStorage', APPEARANCE_STORAGE_KEY]) {
     assert.ok(source.includes(key));
   }
@@ -273,40 +277,75 @@ test('an explicit choice is never overridden by a later system-preference change
   );
 });
 
-test('the select control is wired once the document exists, and its initial value reflects the stored selection', () => {
+test('the toggle is revealed once the document exists, and its label reflects the stored selection', () => {
   const { window } = createWindow({ initialPrefersDark: false });
   window.localStorage.setItem(APPEARANCE_STORAGE_KEY, 'dark');
   runBootstrapScript(window);
-  const select = window.document.getElementById(APPEARANCE_SELECT_ID);
-  assert.equal(select.value, 'dark');
+  const button = window.document.getElementById(APPEARANCE_TOGGLE_ID);
+  assert.equal(button.hidden, false);
+  assert.equal(button.getAttribute('aria-label'), 'Appearance: Dark');
 });
 
-test('changing the control persists the selection and updates the root attributes immediately, without reload', () => {
+test('clicking the toggle cycles system, light, dark, persists the selection and updates the root attributes without reload', () => {
   const { window } = createWindow({ initialPrefersDark: false });
   runBootstrapScript(window);
-  const select = window.document.getElementById(APPEARANCE_SELECT_ID);
-  select.value = 'dark';
-  select.dispatchEvent(new window.Event('change', { bubbles: true }));
-
+  const button = window.document.getElementById(APPEARANCE_TOGGLE_ID);
   const root = window.document.documentElement;
-  assert.equal(root.getAttribute(APPEARANCE_SELECTION_ATTRIBUTE), 'dark');
+  const seen = [];
+  for (let step = 0; step < 4; step += 1) {
+    button.click();
+    seen.push(root.getAttribute(APPEARANCE_SELECTION_ATTRIBUTE));
+  }
+  assert.deepEqual(seen, ['light', 'dark', 'system', 'light']);
+  button.click();
   assert.equal(root.getAttribute(APPEARANCE_RESOLVED_MODE_ATTRIBUTE), 'dark');
   assert.equal(window.localStorage.getItem(APPEARANCE_STORAGE_KEY), 'dark');
+  assert.equal(button.getAttribute('aria-label'), 'Appearance: Dark');
 });
 
-test('a storage write failure on change still updates the visible state (session stays usable)', () => {
+test('a storage write failure on click still updates the visible state (session stays usable)', () => {
   const { window } = createWindow({ initialPrefersDark: false });
   runBootstrapScript(window);
   window.localStorage.setItem = () => {
     throw new window.DOMException('blocked', 'SecurityError');
   };
-  const select = window.document.getElementById(APPEARANCE_SELECT_ID);
-  select.value = 'dark';
-  assert.doesNotThrow(() =>
-    select.dispatchEvent(new window.Event('change', { bubbles: true })),
-  );
+  const button = window.document.getElementById(APPEARANCE_TOGGLE_ID);
+  assert.doesNotThrow(() => button.click());
   const root = window.document.documentElement;
-  assert.equal(root.getAttribute(APPEARANCE_RESOLVED_MODE_ATTRIBUTE), 'dark');
+  assert.equal(root.getAttribute(APPEARANCE_RESOLVED_MODE_ATTRIBUTE), 'light');
+  assert.equal(root.getAttribute(APPEARANCE_SELECTION_ATTRIBUTE), 'light');
+});
+
+test('every enhancement is a no-op on a page without its markup', () => {
+  const dom = new JSDOM(
+    '<!doctype html><html><head></head><body><p>x</p></body></html>',
+    {
+      runScripts: 'dangerously',
+      url: 'https://fixture.example.test/',
+    },
+  );
+  assert.doesNotThrow(() =>
+    dom.window.eval(APPEARANCE_BOOTSTRAP_SCRIPT_SOURCE),
+  );
+  assert.equal(dom.window.document.body.children.length, 1);
+});
+
+test('the script wraps highlighted code with a language label and a copy button, and the contents highlight is wired', () => {
+  const dom = new JSDOM(
+    '<!doctype html><html><head></head><body><div class="g-toast" data-copy="Copy" data-copied="Copied"></div>' +
+      '<pre class="language-js"><code class="language-js">let a = 1;</code></pre></body></html>',
+    { runScripts: 'dangerously', url: 'https://fixture.example.test/' },
+  );
+  runBootstrapScript(dom.window);
+  const block = dom.window.document.querySelector('.g-codeblock');
+  assert.ok(block, 'the code block is wrapped');
+  assert.equal(block.querySelector('.g-codebar-lang').textContent, 'js');
+  assert.equal(block.querySelector('.g-copy-idle').textContent.trim(), 'Copy');
+  assert.equal(
+    block.querySelector('.g-copy-done').textContent.trim(),
+    'Copied',
+  );
+  assert.ok(block.querySelector('pre'));
 });
 
 // --- Integration through renderPublication ---
@@ -352,19 +391,6 @@ function collectByTag(node, tagName, out = []) {
  */
 function attr(element, name) {
   return element.attrs?.find((a) => a.name === name)?.value;
-}
-
-/**
- * @param {Parse5Node} element the element to read text content from
- * @returns {string} the concatenated text of every descendant text node
- */
-function textContent(element) {
-  let text = '';
-  for (const child of element.childNodes ?? []) {
-    if (child.nodeName === '#text') text += child.value ?? '';
-    else text += textContent(child);
-  }
-  return text;
 }
 
 test('S2-T07 acceptance: every rendered route carries the appearance control, the root attribute, the color-scheme meta and exactly one script tag', async () => {
@@ -418,9 +444,14 @@ test('S2-T07 acceptance: every rendered route carries the appearance control, th
       assert.ok(colorSchemeMeta, `${route.path}: color-scheme meta present`);
       assert.equal(attr(colorSchemeMeta, 'content'), COLOR_SCHEME_META_CONTENT);
 
-      const select = findByTag(document, 'select');
-      assert.ok(select, `${route.path}: appearance control select present`);
-      assert.equal(attr(select, 'id'), APPEARANCE_SELECT_ID);
+      const toggle = findByTag(document, 'button');
+      assert.ok(
+        collectByTag(document, 'button').some(
+          (b) => attr(b, 'id') === APPEARANCE_TOGGLE_ID,
+        ),
+        `${route.path}: appearance toggle button present`,
+      );
+      assert.ok(toggle);
 
       // TPL-C1: the resolved-mode attribute is server-rendered as the
       // fixed light default, so a JS-free reader (or a load where the
@@ -520,7 +551,7 @@ test('S2-T07 determinism: two clean builds emit byte-identical bootstrap script 
 // --- CSP consistency: the bootstrap script is external, never inline, so
 // the CSP baseline carries no hash, nonce or 'unsafe-inline' ---
 
-test('CSP consistency: the baseline is unchanged and carries no script hash, nonce or unsafe-inline (the bootstrap is external, not inline)', async () => {
+test('CSP consistency: the baseline carries no script hash, nonce or unsafe-inline (the bootstrap is external, not inline)', async () => {
   const buildInput = await loadCanonicalBuildInput();
   const { outputDirectory, workDirectory, sourceDirectory, cleanup } =
     await createRenderDirectories();

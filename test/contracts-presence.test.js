@@ -51,7 +51,7 @@ test("contracts/render-policy.jcs is S2-T04's real, closed sanitizer/parser cata
     document.contentSecurityPolicy,
     "default-src 'none'; base-uri 'none'; object-src 'none'; " +
       "frame-ancestors 'none'; form-action 'none'; script-src 'self'; " +
-      "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; " +
+      "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; " +
       "media-src 'self'; manifest-src 'self'; worker-src 'none'",
   );
   assert.deepEqual(document.markdownIt.options, {
@@ -100,6 +100,6 @@ test("contracts/theme-styling-contract.jcs is S2-T12's real, closed template sty
     '[data-gala-publication-root]',
   );
   assert.ok(document.catalogDigest.startsWith('sha256:'));
-  assert.ok(document.publicThemeSlotHooks.length <= 160);
+  assert.ok(document.publicThemeSlotHooks.length <= 256);
   assert.ok(document.publicThemeSlotHooks.length > 64);
 });

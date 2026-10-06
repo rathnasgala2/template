@@ -25,6 +25,7 @@ import { validateGalaDocument } from '@rathnasgala2/schemas';
 
 import { renderPublication } from '../src/core/index.js';
 import { appearanceBootstrapScriptHref } from '../src/core/internal/appearance/contract.js';
+import { APPEARANCE_BOOTSTRAP_SCRIPT_SOURCE } from '../src/core/internal/appearance/bootstrap-script.js';
 import { ThemeAssetError } from '../src/core/errors.js';
 import {
   assertSafeThemeRelativePath,
@@ -33,6 +34,7 @@ import {
 import { projectFixedAssetPath } from '../src/core/internal/route.js';
 import {
   COMPONENT_CLASS_GROUPS,
+  SCRIPT_CREATED_CLASSES,
   MAX_PUBLIC_HOOKS,
   assertTemplateStylingContractShape,
   buildTemplateStylingContract,
@@ -121,11 +123,11 @@ test('a mutated catalogDigest, layer order or attribute row is rejected', () => 
   );
 });
 
-test('public theme-slot hooks stay within the 160 cap, sorted by hookId, each atom and id appearing exactly once', () => {
+test('public theme-slot hooks stay within the 256 cap, sorted by hookId, each atom and id appearing exactly once', () => {
   const hooks = templateStylingContractHooks();
   assert.ok(hooks.length > 64, 'contract 3.0.0 publishes the component hooks');
   assert.ok(hooks.length <= MAX_PUBLIC_HOOKS);
-  assert.equal(MAX_PUBLIC_HOOKS, 160);
+  assert.equal(MAX_PUBLIC_HOOKS, 256);
   const atoms = new Set(hooks.map((hook) => hook.selectorAtom));
   assert.equal(atoms.size, hooks.length, 'every hook selectorAtom is unique');
   const hookIds = new Set(hooks.map((hook) => hook.hookId));
@@ -457,6 +459,18 @@ test('drift gate: every published hook is actually rendered by the rich fixture,
       let pattern;
       if (hook.kind === 'type') {
         pattern = new RegExp(`<${hook.selectorAtom}[ >]`);
+      } else if (
+        hook.kind === 'class' &&
+        SCRIPT_CREATED_CLASSES.includes(hook.selectorAtom.slice(1))
+      ) {
+        // Created at runtime by the site script: it must appear in the
+        // script source instead of the server-rendered HTML.
+        pattern = new RegExp(`'${hook.selectorAtom.slice(1)}[ ']`);
+        assert.ok(
+          pattern.test(APPEARANCE_BOOTSTRAP_SCRIPT_SOURCE),
+          `script-created hook ${hook.hookId} is never created by the site script`,
+        );
+        continue;
       } else if (hook.kind === 'class') {
         const className = hook.selectorAtom.slice(1);
         pattern = new RegExp(`class="(?:[^"]*\\s)?${className}(?:\\s[^"]*)?"`);

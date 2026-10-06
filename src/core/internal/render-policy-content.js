@@ -271,7 +271,7 @@ export const CSP_HEADER_ONLY_DIRECTIVES = Object.freeze([
 export const CONTENT_SECURITY_POLICY_META_BASELINE =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
   "form-action 'none'; script-src 'self'; " +
-  "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; " +
+  "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; " +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
 /**
@@ -287,7 +287,7 @@ export const CONTENT_SECURITY_POLICY_META_BASELINE =
 export const CONTENT_SECURITY_POLICY_COMPLETE =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
   "frame-ancestors 'none'; form-action 'none'; script-src 'self'; " +
-  "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; " +
+  "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; " +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
 /**

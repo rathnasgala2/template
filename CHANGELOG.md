@@ -8,6 +8,55 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-05
+
+Breaking. No migration shims: the template now owns layout, and themes supply
+tokens.
+
+### Changed
+
+- **Styling contract 3.0.0**: `templateVersion` is now `3.0.0` (a theme's
+  `templateRange` must admit it); `MAX_PUBLIC_HOOKS` is 256 (178 published); the
+  new `g-*` classes (`g-toast`, `g-progress`, the four `g-mode-*` classes) and a
+  `script` group (search dialog, code block chrome and `g-kbd`, created at
+  runtime by the script) are published; the `label`, `select` and `option` type
+  hooks and the `control-appearance-select` id hook are gone (the appearance
+  control is a button, id hook `control-appearance-toggle`).
+- **`gala-base` owns layout**: the layer is now the full component stylesheet
+  ported from the approved design (header, hero, cards and row cards, series,
+  newsletter panel, article, prose, code, tags, pager, pagination, listings,
+  search dialog, toast, footer, responsive breakpoints at 1100/960/640px,
+  scroll-driven header and reading progress under `@supports`, view-timeline
+  card reveals that never leave content invisible at rest, reduced-motion
+  handling, and `@view-transition { navigation: auto; }` inside
+  `prefers-reduced-motion: no-preference`). Every custom property it reads is a
+  contract-3 token (`--gala-<token-key>`), enforced by
+  `test/base-layer-tokens.test.js`, and the layer carries a default value for
+  every token, light and dark, so an unthemed publication is legible.
+- **Appearance control** is a hidden icon button (system, light, dark) revealed
+  by the script, replacing the `<select>`. With JavaScript off it is not shown
+  and the site stays on the server-rendered default palette.
+- **New markup**: a `.g-toast` status region on every page (it carries the
+  localized strings the script needs as `data-*` attributes) and a `.g-progress`
+  bar on articles.
+- **One script, more behaviour** (still exactly one `<script src>` per page,
+  same asset path): colour-mode toggle with circular-reveal view transition;
+  search dialog over `search-index.json` (lazy fetch, `/` and Ctrl/Cmd+K, arrows
+  and Enter, results built with `textContent`); code blocks gain a language
+  label and Copy button; contents highlighting; share group (copy link, bookmark
+  in `localStorage` under `gala:saved:v1`); reading-progress fallback;
+  cross-document cover morph (`pageswap`/`pagereveal`). Each is a no-op when its
+  markup is absent.
+- **CSP**: `connect-src 'none'` became `connect-src 'self'` (for the search
+  index). Every other directive is unchanged. The render-policy contract is
+  regenerated.
+
+### Notes
+
+- The `@rathnasgala2/schemas` pin is unchanged at 2.11.0; the schema's contract
+  3 (token list, `slotHooks.maxItems` 256, publication `newsletter`) is not yet
+  published, so `scripts/scaffold-theme.mjs` still writes the 35-token catalog.
+
 ## [2.2.0] - 2026-10-04
 
 ### Fixed

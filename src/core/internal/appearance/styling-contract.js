@@ -13,10 +13,10 @@
  * `internal/appearance/contract.js` — never a hand-typed literal
  * independent of what those modules emit.
  *
- * Public-hook budget (`publicThemeSlotHooks` is a `[1..160]`-entry set since
- * contract 3.0.0): every catalog leaf below (33 type + 105 class + 2 id + 19
+ * Public-hook budget (`publicThemeSlotHooks` is a `[1..256]`-entry set since
+ * contract 3.0.0): every catalog leaf below (30 type + 127 class + 2 id + 19
  * attribute-value) has exactly one corresponding public hook, for exactly
- * 159 entries — this
+ * 178 entries — this
  * renderer's complete public theming surface. A leaf with no matching hook
  * would be a catalog member no theme could ever validly select (a
  * used-but-undeclared public slot hook rejects), so catalogs and hooks are
@@ -71,7 +71,7 @@ import { HIGHLIGHT_GRAMMARS } from '../render-policy-content.js';
 import {
   APPEARANCE_RESOLVED_MODE_ATTRIBUTE,
   APPEARANCE_ROOT_ATTRIBUTE,
-  APPEARANCE_SELECT_ID,
+  APPEARANCE_TOGGLE_ID,
 } from './contract.js';
 import { PAGE_KIND_ATTRIBUTE, PAGE_KIND_VALUES } from '../page-kinds.js';
 import { SLOT_NAMES } from '../skeleton.js';
@@ -82,7 +82,7 @@ export const TEMPLATE_STYLING_CONTRACT_PACKAGE = '@rathnasgala2/template';
 /** @type {string} */
 export const TEMPLATE_STYLING_CONTRACT_VERSION = '3.0.0';
 /** @type {string} */
-export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '2.1.0';
+export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '3.0.0';
 
 /** @type {string} the `main-content` landmark's fixed `id`. */
 const MAIN_CONTENT_ID = 'main-content';
@@ -105,7 +105,7 @@ const MAIN_CONTENT_ID = 'main-content';
  *   `hover`.
  * - `visited`: the only way to consume the closed token catalog's own
  *   `color-link-visited`, which had no reachable application before this.
- * - `disabled`: the appearance `<select>` is a native form control, which
+ * - `disabled`: the appearance toggle is a native button control, which
  *   may legitimately be disabled by a later module; themes need a way to
  *   style that state today so it is not a breaking addition later.
  *
@@ -214,9 +214,6 @@ const TYPE_HOOKS = Object.freeze(
     ['prose-link', 'a'],
     ['media-image', 'img'],
     ['prose-divider', 'hr'],
-    ['control-label', 'label'],
-    ['control-select', 'select'],
-    ['control-option', 'option'],
     ['prose-span', 'span'],
     ['prose-time', 'time'],
     ['control-button', 'button'],
@@ -235,12 +232,12 @@ const TYPE_HOOKS = Object.freeze(
 
 /**
  * The most public hooks a theme contract may declare
- * (`theme-contract.slotHooks.maxItems`, raised from 64 to 160 in contract
+ * (`theme-contract.slotHooks.maxItems`, raised from 64 to 256 in contract
  * 3.0.0).
  *
  * @type {number}
  */
-export const MAX_PUBLIC_HOOKS = 160;
+export const MAX_PUBLIC_HOOKS = 256;
 
 /**
  * Contract 3.0.0: every `g-*` component class the template's own markup
@@ -253,7 +250,7 @@ export const MAX_PUBLIC_HOOKS = 160;
  * `g-*` class is missing here, or a class listed here is never rendered.
  * Pure-layout needs a component can meet with an element/descendant
  * selector (`.g-card h3`) deliberately get no class of their own, to stay
- * under the 160-hook cap.
+ * under the 256-hook cap.
  *
  * @type {Readonly<Record<string, readonly string[]>>}
  */
@@ -286,6 +283,7 @@ export const COMPONENT_CLASS_GROUPS = Object.freeze({
     'g-pill-count',
     'g-crumbs',
     'g-pagination',
+    'g-toast',
   ],
   header: [
     'g-header',
@@ -299,6 +297,10 @@ export const COMPONENT_CLASS_GROUPS = Object.freeze({
     'g-actions',
     'g-search-btn',
     'g-menu',
+    'g-mode-icon',
+    'g-mode-system',
+    'g-mode-light',
+    'g-mode-dark',
   ],
   footer: [
     'g-footer',
@@ -335,6 +337,7 @@ export const COMPONENT_CLASS_GROUPS = Object.freeze({
   ],
   article: [
     'g-article',
+    'g-progress',
     'g-article-head',
     'g-article-labels',
     'g-article-meta',
@@ -358,7 +361,39 @@ export const COMPONENT_CLASS_GROUPS = Object.freeze({
     'g-pager-next',
   ],
   listing: ['g-topic-hero', 'g-topic-head', 'g-topic-icon'],
+  // Created at runtime by the optional site script (never server-rendered):
+  // the search dialog and its results, and the code block chrome. Published
+  // all the same so a theme can restyle them.
+  script: [
+    'g-kbd',
+    'g-search',
+    'g-search-box',
+    'g-search-input',
+    'g-search-results',
+    'g-search-hit',
+    'g-search-hit-text',
+    'g-search-hit-title',
+    'g-search-hit-meta',
+    'g-search-empty',
+    'g-codeblock',
+    'g-codebar',
+    'g-codebar-lang',
+    'g-copy',
+    'g-copy-idle',
+    'g-copy-done',
+  ],
 });
+
+/**
+ * The classes only the site script creates (the `script` group of
+ * {@link COMPONENT_CLASS_GROUPS}); the drift test checks these against the
+ * script source instead of the server-rendered HTML.
+ *
+ * @type {readonly string[]}
+ */
+export const SCRIPT_CREATED_CLASSES = Object.freeze([
+  ...COMPONENT_CLASS_GROUPS.script,
+]);
 
 /**
  * Every class-selector hook: the `g-*` component classes
@@ -405,8 +440,8 @@ const ID_HOOKS = Object.freeze([
     kind: /** @type {const} */ ('id'),
   }),
   Object.freeze({
-    hookId: 'control-appearance-select',
-    selectorAtom: `#${APPEARANCE_SELECT_ID}`,
+    hookId: 'control-appearance-toggle',
+    selectorAtom: `#${APPEARANCE_TOGGLE_ID}`,
     kind: /** @type {const} */ ('id'),
   }),
 ]);

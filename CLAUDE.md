@@ -52,14 +52,18 @@ of truth both the published contract and the runtime output-security pipeline in
 `src/core/internal/appearance/styling-contract.js` — one reviewed source module
 enumerating every hook this renderer actually renders (landmarks,
 prose/code/control type selectors, the base Prism `.token`/`.language-*` class
-hooks, the `#main-content`/appearance-select id hooks, and one attribute-value
+hooks, the `#main-content`/appearance-toggle id hooks, and one attribute-value
 hook per `data-gala-slot`/`data-gala-page-kind` value, and (contract 3.0.0) one
 `ui-*` hook per `g-*` component class in `COMPONENT_CLASS_GROUPS`), capped at
-160 `publicThemeSlotHooks`. `test/theme-styling-contract.test.js` drift-checks
+256 `publicThemeSlotHooks`. `test/theme-styling-contract.test.js` drift-checks
 the published contract against a rich rendered-HTML fixture in both directions
 (every hook actually rendered; every rendered hook-like construct published) and
 validates `theme-contract:2.0.0` fixtures for both palettes with
-`@rathnasgala2/schemas`' own exported `validateGalaDocument`.
+`@rathnasgala2/schemas`' own exported `validateGalaDocument`. Classes only the
+site script creates (search dialog, code block chrome) live in the `script`
+group of `COMPONENT_CLASS_GROUPS`; the drift test checks them against the script
+source. The `gala-base` layer owns layout and component CSS and reads only
+contract-3 tokens (`test/base-layer-tokens.test.js`).
 `src/core/internal/theme-assets.js` is the optional theme-asset copy/link
 integration layer (`options.themeDirectory` on `renderPublication`); see the
 README's S2-T12 section for the full division of labour with S2-T11's

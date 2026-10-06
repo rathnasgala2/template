@@ -296,6 +296,40 @@ export function renderPagination({
 }
 
 /**
+ * Render the (initially invisible) status region the site script uses for
+ * short confirmations, and the carrier of every localized string the script
+ * needs: each one is a plain `data-*` attribute, so the script ships no
+ * language of its own. With JavaScript off it is an empty, inert live region.
+ *
+ * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} messages
+ *   the resolved message catalog
+ * @returns {string} the toast element
+ */
+export function renderToast(messages) {
+  /** @type {readonly [string, string][]} */
+  const strings = [
+    ['search-label', 'searchButtonAriaLabel'],
+    ['search-placeholder', 'searchPlaceholderLabel'],
+    ['search-empty', 'searchEmptyLabel'],
+    ['search-unavailable', 'searchUnavailableLabel'],
+    ['copy', 'copyCodeLabel'],
+    ['copied', 'copiedLabel'],
+    ['link-copied', 'linkCopiedLabel'],
+    ['copy-blocked', 'copyBlockedLabel'],
+    ['code-selected', 'codeSelectedLabel'],
+    ['saved', 'savedLabel'],
+    ['unsaved', 'unsavedLabel'],
+  ];
+  const attributes = strings
+    .map(
+      ([name, key]) =>
+        ` data-${name}="${escapeHtml(/** @type {string} */ (messages[key]))}"`,
+    )
+    .join('');
+  return `<div class="g-toast" role="status" aria-live="polite"${attributes}></div>`;
+}
+
+/**
  * Compose one complete page body (everything inside `<body>`) from its
  * pre-rendered landmark parts. Every page kind in `internal/page-kinds.js`
  * funnels through this one function, so the landmark order and count (one
@@ -315,6 +349,7 @@ export function renderPagination({
 export function renderPageBody({ messages, headerHtml, footerHtml, mainHtml }) {
   return (
     renderSkipLink(messages) +
+    renderToast(messages) +
     headerHtml +
     `<main id="main-content" class="g-main" tabindex="-1">${mainHtml}</main>` +
     footerHtml

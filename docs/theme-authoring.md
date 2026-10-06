@@ -25,11 +25,15 @@ already passes schema validation. Start from there rather than hand-typing a
 
 This renderer ships its own cascade layer, `gala-base`
 (`src/core/internal/appearance/base-layer.js`), on every build, whether or not a
-theme is selected. It carries the reset/normalization every publication needs
-regardless of theme (box-sizing, image sizing, code/table overflow, the
-skip-link visually-hidden-until-focused pattern) and the one rule that makes the
-`color-focus`/`focus-width` tokens do anything at all: a real `:focus-visible`
-outline.
+theme is selected. Since contract 3.0.0 it owns the whole layout and every
+component rule (header, cards, article, prose, code blocks, search dialog,
+footer, responsive breakpoints, scroll-driven and view-transition motion). Every
+rule reads design values through the token catalog only (`--gala-<token-key>`);
+none carries a literal colour, font or radius, so a theme normally ships tokens
+and little or no CSS. The layer also defaults every token (light and dark), so a
+publication with no theme is still legible, and keeps the one rule that makes
+the `color-focus`/`focus-width` tokens do anything at all: a real
+`:focus-visible` outline.
 
 The five layers are declared in one fixed, explicit order, independent of which
 stylesheets a theme happens to ship:
@@ -150,7 +154,7 @@ complete list, not a starting point:
 - **`:active`** — pressed-state affordance, the pointer-down counterpart to
   `:hover`.
 - **`:visited`** — the only way to consume `color-link-visited`.
-- **`:disabled`** — state styling for the appearance `<select>` control.
+- **`:disabled`** — state styling for the appearance toggle button.
 
 No other pseudo-class is admitted (no `:target`, `:checked`, `:required`, plain
 `:focus`, ...). `nth-child`/`nth-last-child` are admitted separately, either

@@ -199,9 +199,9 @@ every page (a scoped decision: navigation/footer text does not flip language
 page to page); each page's own `<html lang>`/`dir` still reflects that
 individual page's own content language.
 
-The Light/Dark/System appearance controller (`src/core/internal/appearance/`) is
-the only browser bootstrap this renderer emits ("Module absence and CSP
-equality"):
+The site script and appearance controller (`src/core/internal/appearance/`) are
+the only browser script this renderer emits ("Module absence and CSP equality").
+Every page is fully readable with JavaScript off; the script only enhances:
 
 - **`contract.js`** is the one module every other appearance-related file
   imports every name/value from: the two fixed root attributes
@@ -209,55 +209,56 @@ equality"):
   exact-value `"light"`/`"dark"`), the template-internal
   `data-gala-color-mode-selection` bookkeeping attribute, the three canonical
   mode values (`light`/`dark`/`system`), the versioned local storage key
-  (`gala:appearance:color-mode:v1`), the control's `id`, the bootstrap script's
-  fixed output path/media type and the `color-scheme` meta content — the
-  contract the published theme styling catalog targets.
-- **`controller-markup.js`** renders a native `<select>` (a brief-admitted
-  pattern; needs no `aria-pressed`/`aria-checked` bookkeeping of its own, unlike
-  a custom button-group or radio-group would) bound to a visible `<label>`, with
-  message-catalog labels, inserted into the header's `header-actions` slot. Its
-  default selected option is always `system`; the bootstrap script's own
-  `DOMContentLoaded` phase corrects `select.value` to the actual stored/resolved
-  value once `<body>` exists.
-- **`bootstrap-script.js`** is the exact deterministic pre-paint bootstrap
-  (every literal from `contract.js`, so it and the server-rendered control can
-  never drift): a synchronous phase, run the instant this blocking,
-  non-`defer`/non-`async`/non-`module` `<script src>` executes in `<head>` —
-  before `<body>` is even parsed — that reads the stored selection (falling back
-  to `system` on a missing/invalid/unreadable value; a `localStorage` read/write
-  failure is always caught, so a blocked or private-mode session stays fully
-  usable) and resolves it against `prefers-color-scheme` (`system` resolves to
-  `light` when unavailable), then applies both root attributes. It never touches
-  `document.documentElement.style` (no hide-until-ready trick of any kind), no
-  network, no cookie, no account/tracking identifier, and no storage key other
-  than its own. A `DOMContentLoaded`-deferred phase wires the control's `change`
-  event and a live `prefers-color-scheme` subscription that only updates the
-  resolved attribute while the current selection is still exactly `system` (an
-  explicit `light`/`dark` choice is never overridden by a later system change).
-- `src/core/index.js` writes the bootstrap script into the candidate output
-  directory and enters it into the manifest as an ordinary `manifestAsset` row
+  (`gala:appearance:color-mode:v1`), the toggle button's `id`, the script's
+  fixed output path/media type and the `color-scheme` meta content.
+- **`controller-markup.js`** renders one icon `<button>` (hidden until the
+  script reveals it) in the header's `header-actions` slot. Its accessible name
+  carries the current mode and the three localized labels travel as
+  `data-label-*` attributes; which of the three mode icons shows is pure CSS off
+  the root selection attribute.
+- **`bootstrap-script.js`** is the exact deterministic script (every literal
+  from `contract.js`). Phase 1 runs synchronously the instant this blocking,
+  non-`defer`/non-`async`/non-`module` `<script src>` executes in `<head>`: it
+  reads the stored selection (falling back to `system`; a `localStorage` failure
+  is always caught), resolves it against `prefers-color-scheme` and applies both
+  root attributes, subscribes to live system changes (applied only while the
+  selection is `system`) and registers the `pageswap`/`pagereveal` listeners
+  that name the cover image `gala-cover` so it morphs between a card and its
+  article. Phase 2 (`DOMContentLoaded`) runs independent, each-in-its-own-try
+  enhancements, every one a no-op when its markup is absent: the colour-mode
+  toggle (system, light, dark; a circular reveal through a same-document view
+  transition unless reduced motion is requested), the search dialog (lazy
+  `fetch` of the `data-search-index` URL, `/` and Ctrl/Cmd+K, arrow keys and
+  Enter), code blocks (language label and Copy button, select-text fallback),
+  contents highlighting (`IntersectionObserver` on `data-toc`), the share group
+  (copy link; bookmark stored under `gala:saved:v1`) and a reading-progress
+  fallback where scroll-driven animations are unsupported. It never mutates
+  `document.documentElement.style`, uses no cookie and no account identifier,
+  and builds all DOM text with `textContent`/`setAttribute`, never HTML from
+  fetched data. Localized strings are rendered by the server as `data-*`
+  attributes on the `.g-toast` element.
+- The CSP is `connect-src 'self'` (so the script can read the static search
+  index) and otherwise unchanged and strict.
+- `src/core/index.js` writes the script into the candidate output directory and
+  enters it into the manifest as an ordinary `manifestAsset` row
   (`{path, byteLength, sha256}` plus its fixed
   `application/javascript; charset=utf-8` media type), after the Eleventy route
-  listing — exactly like a media derivative — so it is never mistaken for an
-  HTML route. `src/core/internal/eleventy-render.js`'s skeleton layout carries
-  the `data-gala-publication-root` attribute, the
+  listing, so it is never mistaken for an HTML route.
+  `src/core/internal/eleventy-render.js`'s skeleton layout carries the
+  `data-gala-publication-root` attribute, the
   `<meta name="color-scheme" content="light dark">` tag and the one
-  `<script src>` reference, all fixed literals from `contract.js`, so every
-  route's `<head>` is still byte-identical (this renderer materializes no module
-  package/configuration/output/runtime).
-- With JavaScript disabled, the control still renders (a native `<select>`,
-  fully keyboard-operable and usable with no script at all). The resolved root
-  attribute is server-rendered as the fixed `light` default, so a no-JS reader,
-  an archival crawler, or a load where the bootstrap script fails still gets a
-  fully themed page instead of unstyled UA-default HTML; a scripted reader's
-  phase 1 bootstrap always overwrites this attribute with the reader's real
-  stored selection/system preference before first paint.
-  `<meta name="color-scheme">` also carries `prefers-color-scheme` through to
-  user-agent styling (form controls, scrollbars) independent of any script.
+  `<script src>` reference, so every route's `<head>` is still byte-identical.
+- With JavaScript disabled the toggle, search button and share group stay hidden
+  (they would do nothing), the contents list, menu and links are plain anchors
+  and `<details>`, and the resolved root attribute is server-rendered as the
+  fixed `light` default, so a no-JS reader, an archival crawler, or a load where
+  the script fails still gets a fully themed page. `<meta name="color-scheme">`
+  carries `prefers-color-scheme` through to user-agent styling independent of
+  any script.
 
 **Authoring a theme:** see [`docs/theme-authoring.md`](docs/theme-authoring.md)
 for the full guide — how a theme is a delta over the template-owned `gala-base`
-layer, the closed 35-token catalog, the closed five-member pseudo-class catalog,
+layer, the closed token catalog, the closed five-member pseudo-class catalog,
 passive-asset/SVG admission, the `theme.json` digest chain, and `templateRange`.
 Run `node scripts/scaffold-theme.mjs <directory>` to write a minimal,
 already-conformant theme package skeleton rather than hand-typing one.
@@ -278,19 +279,19 @@ selected theme package's stylesheets into every generated page:
   pseudo-class catalog (`hover`, `focus-visible`, `active`, `visited`,
   `disabled`; see that module's own documentation for why each is admitted and
   why the token catalog's `color-focus`/`color-link-visited` had no reachable
-  application before it), and up to 160 `publicThemeSlotHooks` (contract 3.0.0;
-  exactly 159 today) — one per catalog leaf, so every leaf a theme could validly
+  application before it), and up to 256 `publicThemeSlotHooks` (contract 3.0.0;
+  exactly 178 today) — one per catalog leaf, so every leaf a theme could validly
   select is a named, documented hook and no catalog member is orphaned. Every
-  leaf is drawn from what this renderer actually renders: 33 type-selector hooks
+  leaf is drawn from what this renderer actually renders: 30 type-selector hooks
   (every landmark/prose/code/control element `internal/skeleton.js`,
   `internal/page-kinds.js` and the markdown-it CommonMark pipeline can produce),
-  105 class-selector hooks (90 `g-*` component classes, grouped by component in
+  127 class-selector hooks (112 `g-*` component classes, grouped by component in
   `COMPONENT_CLASS_GROUPS`, plus the base Prism `.token` class and one
   `.language-<grammar>` hook per admitted highlight grammar — fine-grained
   per-token-kind classes are a documented scope exclusion), 2 id-selector hooks
-  (`#main-content`, the appearance `<select>`'s fixed id) and 19 attribute-value
-  hooks (one per `data-gala-slot` value, one per the `data-gala-page-kind`
-  value). `catalogDigest` is
+  (`#main-content`, the appearance toggle button's fixed id) and 19
+  attribute-value hooks (one per `data-gala-slot` value, one per the
+  `data-gala-page-kind` value). `catalogDigest` is
   `SHA256(UTF8("GALA-TEMPLATE-STYLING-CONTRACT-V2\0") || JCS(...))`, matching
   the same domain-separated digest construction and the digest profile
   `@rathnasgala2/schemas`' own internal `templateStylingContract` profile uses

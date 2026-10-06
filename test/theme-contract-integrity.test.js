@@ -83,7 +83,7 @@ test('a stylingContractDigest that does not match the published catalogDigest is
 });
 
 test("a templateRange that does not admit this renderer's own version is rejected", async () => {
-  const dir = await buildThemeDirectory({ templateRange: '^3.0.0' });
+  const dir = await buildThemeDirectory({ templateRange: '^4.0.0' });
   await assertRejectsWithReason(dir, 'THEME_CONTRACT_VERSION_MISMATCH');
 });
 

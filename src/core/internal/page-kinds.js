@@ -691,7 +691,7 @@ export function buildGeneratedPages(validatedInput, options = {}) {
         frontmatter.status === 'unlisted' ? 'noindex, follow' : undefined,
       lastModified: contentLastModified(frontmatter),
       bodyHtml:
-        `<article class="g-article">${head}${cover}` +
+        `<article class="g-article">${isArticle ? '<div class="g-progress" aria-hidden="true"></div>' : ''}${head}${cover}` +
         `<div class="g-wrap g-article-grid">${tocNav}${prose}</div>${foot}</article>` +
         after +
         (isArticle ? newsletterHtml : ''),

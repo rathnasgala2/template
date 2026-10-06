@@ -216,7 +216,11 @@ test('header, home, article, listings and footer render the redesigned structure
           /<button class="g-search-btn" type="button" hidden data-action="search" data-search-index="\/fixture-1\/search-index\.json" aria-label="Search articles">/,
         );
         assert.match(html, /<details class="g-menu"><summary>/);
-        assert.match(html, /<select id="gala-appearance-color-mode"/);
+        assert.match(
+          html,
+          /<button class="g-icon-btn" id="gala-appearance-color-mode" type="button" hidden data-action="mode"/,
+        );
+        assert.match(html, /<div class="g-toast" role="status"/);
       }
     },
   );

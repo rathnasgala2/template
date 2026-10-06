@@ -138,14 +138,15 @@ export const APPEARANCE_DEFAULT_MODE = APPEARANCE_MODE_SYSTEM;
 export const APPEARANCE_STORAGE_KEY = 'gala:appearance:color-mode:v1';
 
 /**
- * The `id` the server-rendered `<select>` control carries, so the bootstrap
- * script's post-`DOMContentLoaded` wiring can find it with a single
- * `document.getElementById` call. Also used as the paired `<label for>`
- * target.
+ * The `id` the server-rendered colour-mode toggle `<button>` carries, so
+ * the site script's wiring can find it with a single
+ * `document.getElementById` call. The button is rendered `hidden`; the
+ * script reveals it (with JavaScript off the site simply follows the
+ * server-rendered default palette).
  *
  * @type {string}
  */
-export const APPEARANCE_SELECT_ID = 'gala-appearance-color-mode';
+export const APPEARANCE_TOGGLE_ID = 'gala-appearance-color-mode';
 
 /**
  * The candidate-output-directory-relative path the deterministic pre-paint

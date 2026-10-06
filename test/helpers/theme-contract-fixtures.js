@@ -103,7 +103,7 @@ export function buildValidThemeJson({
     themeId: 'default',
     package: '@rathnasgala2/theme-default@2.0.0',
     contractVersion: publishedContract.contractVersion,
-    templateRange: '^2.0.0',
+    templateRange: '^3.0.0',
     stylesheets: [...stylesheets],
     cssLayers: [...cssLayers],
     slotHooks: ['landmark-header'],

@@ -4,7 +4,7 @@
   "themeId": "default",
   "package": "@rathnasgala2/theme-default@2.0.0",
   "contractVersion": "3.0.0",
-  "templateRange": "^2.0.0",
+  "templateRange": "^3.0.0",
   "stylesheets": ["tokens.css", "components.css", "print.css"],
   "cssLayers": ["gala-tokens", "gala-components", "gala-print"],
   "slotHooks": ["landmark-header"],
@@ -254,5 +254,5 @@
   },
   "fixtureDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
   "evidenceDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-  "stylingContractDigest": "sha256:c8195b185ee370ff3d6181213668d535d28935aaa43f48479132370b92b0406c"
+  "stylingContractDigest": "sha256:a10fecf6d43e4392312158f15b66d55a9e2bd3c7816a0747eb2084735d336de5"
 }
