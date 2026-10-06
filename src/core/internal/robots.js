@@ -3,10 +3,8 @@
  *
  * Every site allows all crawlers and names its sitemap by absolute URL. The
  * publication may additionally opt out of AI training and AI-assistant
- * crawlers through `publication.crawlers.ai` (`"allow"` | `"block"`, absent
- * means allow). The field is read defensively, exactly like
- * `publication.newsletter`: a build input that predates it, or carries any
- * other value, is treated as `"allow"`.
+ * crawlers through the validated `publication.crawlers.ai` (`"allow"` |
+ * `"block"`; absent means allow).
  *
  * Unlisted (`noindex`) pages are deliberately not disallowed here: a
  * crawler can only honour a `noindex` directive on a page it is allowed to
@@ -45,18 +43,12 @@ export const AI_CRAWLER_USER_AGENTS = Object.freeze([
 ]);
 
 /**
- * @param {unknown} publication `publication` (may predate `crawlers`)
+ * @param {{crawlers?: {ai: 'allow' | 'block'}}} publication the validated
+ *   `publication` (`crawlers` is optional; absent means allow)
  * @returns {'allow' | 'block'} the AI crawler policy
  */
 export function readAiCrawlerPolicy(publication) {
-  const crawlers = /** @type {{crawlers?: unknown} | undefined} */ (
-    publication && typeof publication === 'object' ? publication : undefined
-  )?.crawlers;
-  const ai =
-    crawlers && typeof crawlers === 'object'
-      ? /** @type {{ai?: unknown}} */ (crawlers).ai
-      : undefined;
-  return ai === 'block' ? 'block' : 'allow';
+  return publication.crawlers?.ai ?? 'allow';
 }
 
 /**

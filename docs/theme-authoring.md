@@ -94,9 +94,11 @@ controls.
 
 ## The token catalog
 
-Exactly 35 tokens, every one required, each declared as a `--gala-<key>` custom
-property. `scripts/scaffold-theme.mjs`'s `THEME_TOKEN_CATALOG` lists them with
-their type; the four types and their value grammar:
+Exactly 116 tokens (contract 3), every one required, each declared as a
+`--gala-<key>` custom property. `scripts/scaffold-theme.mjs`'s
+`THEME_TOKEN_CATALOG` lists them with their type; the value grammar of each type
+(the schema's `themeToken` definition is the authority; `gala-base` carries a
+default for every token, and the scaffold starts from those defaults):
 
 | Type          | Value grammar                                      | Example                 |
 | ------------- | -------------------------------------------------- | ----------------------- |
@@ -104,6 +106,14 @@ their type; the four types and their value grammar:
 | `length`      | a plain non-negative number in `px` or `rem`       | `0.5rem`                |
 | `font-family` | 1–8 comma-separated family names, no leading digit | `system-ui, sans-serif` |
 | `font-weight` | one of `100`–`900` in steps of 100, as a string    | `600`                   |
+| `border`      | `none`, or `<length> solid\|dashed #hex`           | `1px solid #e2e6ec`     |
+| `box`         | 1–4 space-separated lengths                        | `0.75rem 0.9rem`        |
+| `shadow`      | `none`, or offsets, blur and `#hex` (see schema)   | `none`                  |
+| `paint`       | `none`, `#hex` or a linear gradient (see schema)   | `#2b59ff`               |
+| `duration`    | whole milliseconds, `0ms`–`2000ms`                 | `200ms`                 |
+| `easing`      | `linear` or `cubic-bezier(a, b, c, d)`             | `linear`                |
+| `number`      | a decimal from `0` to `10`                         | `1.6`                   |
+| `keyword`     | one of the schema's listed keywords                | `none`                  |
 
 `light` and `dark` must both be present on every token row; for `length`,
 `font-family` and `font-weight` tokens they are conventionally byte-equal (the

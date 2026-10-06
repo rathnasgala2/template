@@ -49,7 +49,7 @@ export const GALA_BASE_STYLESHEET_MEDIA_TYPE = 'text/css; charset=utf-8';
  *
  * @type {Readonly<Record<string, string | string[]>>}
  */
-const DEFAULT_TOKENS = Object.freeze({
+export const GALA_BASE_DEFAULT_TOKENS = Object.freeze({
   'border-button': 'none',
   'border-card': ['1px solid #e2e6ec', '1px solid #232a34'],
   'border-chip': 'none',
@@ -195,7 +195,7 @@ const DEFAULT_TOKENS = Object.freeze({
 
 /** @type {readonly string[]} every token key this layer defaults, sorted. */
 export const GALA_BASE_DEFAULT_TOKEN_KEYS = Object.freeze(
-  Object.keys(DEFAULT_TOKENS),
+  Object.keys(GALA_BASE_DEFAULT_TOKENS),
 );
 
 /**
@@ -203,7 +203,7 @@ export const GALA_BASE_DEFAULT_TOKEN_KEYS = Object.freeze(
  * @returns {string} the declaration list for one palette
  */
 function defaultDeclarations(index) {
-  return Object.entries(DEFAULT_TOKENS)
+  return Object.entries(GALA_BASE_DEFAULT_TOKENS)
     .map(([key, value]) => {
       const resolved = typeof value === 'string' ? value : (value[index] ?? '');
       return `--gala-${key}:${resolved};`;

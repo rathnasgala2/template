@@ -486,14 +486,14 @@ brief sits on top of the page kinds above:
   collide).
 - **`robots.txt`, `llms.txt`, `llms-full.txt`** (`internal/robots.js`,
   `internal/llms.js`). `robots.txt` allows all crawlers and names the absolute
-  sitemap; `publication.crawlers.ai: "block"` (read defensively, absent means
-  allow) adds `Disallow: /` groups for the 15 known AI crawlers. It is always
-  written at the output root: **only a robots.txt at the host root is honoured
-  by crawlers**, so a site served from a path (for example a GitHub project
-  site) must have the same file at its host root. `llms.txt` follows llmstxt.org
-  (`# title`, `> description`, `## Articles`, `## Series`, `## Optional`);
-  `llms-full.txt` is every published article as plain text. Unlisted content is
-  excluded from both.
+  sitemap; `publication.crawlers.ai: "block"` (validated by the build-input
+  schema, absent means allow) adds `Disallow: /` groups for the 15 known AI
+  crawlers. It is always written at the output root: **only a robots.txt at the
+  host root is honoured by crawlers**, so a site served from a path (for example
+  a GitHub project site) must have the same file at its host root. `llms.txt`
+  follows llmstxt.org (`# title`, `> description`, `## Articles`, `## Series`,
+  `## Optional`); `llms-full.txt` is every published article as plain text.
+  Unlisted content is excluded from both.
 - **`404.html`**: the `error` page kind's pure `renderErrorPageBody`, now
   actually wired into `renderPublication` at the fixed `errorDocumentKey`
   (`internal/route.js#errorDocumentPath`) — `404.html` at the root, or
@@ -584,8 +584,8 @@ compatibility promise in this MVP.
 
 ## Consuming `@rathnasgala2/schemas`
 
-This repository consumes `@rathnasgala2/schemas@2.11.0` from the public npm
-registry, declared as `"@rathnasgala2/schemas": "2.11.0"` (exact pin, no range)
+This repository consumes `@rathnasgala2/schemas@3.0.0` from the public npm
+registry, declared as `"@rathnasgala2/schemas": "3.0.0"` (exact pin, no range)
 so `package-lock.json` records the resolved version and integrity hash. The
 LOCAL-1/LOCAL-39 local-tarball convention
 (`file:../../local-packages/rathnasgala2-schemas-*.tgz`) is retired for this

@@ -7,67 +7,23 @@
  * before TPL-H1 (schema validation at consume time was not yet load-bearing).
  */
 
+import {
+  STARTER_VALUES,
+  THEME_TOKEN_CATALOG,
+} from '../../scripts/scaffold-theme.mjs';
 import { digestBytes } from '../../src/core/internal/canonical-jcs.js';
 import { buildTemplateStylingContract } from '../../src/core/internal/appearance/styling-contract.js';
 
-const LENGTH_TOKEN_KEYS = [
-  'border-width',
-  'content-measure',
-  'focus-width',
-  'radius-medium',
-  'radius-small',
-  'space-1',
-  'space-2',
-  'space-3',
-  'space-4',
-  'space-6',
-  'space-8',
-];
-const FONT_FAMILY_TOKEN_KEYS = ['font-body', 'font-heading', 'font-mono'];
-const FONT_WEIGHT_TOKEN_KEYS = [
-  'weight-heading',
-  'weight-medium',
-  'weight-normal',
-  'weight-strong',
-];
-const COLOR_TOKEN_KEYS = [
-  'color-accent',
-  'color-border',
-  'color-canvas',
-  'color-code-canvas',
-  'color-code-text',
-  'color-danger',
-  'color-focus',
-  'color-link',
-  'color-link-visited',
-  'color-on-accent',
-  'color-selection',
-  'color-success',
-  'color-surface',
-  'color-surface-raised',
-  'color-text',
-  'color-text-muted',
-  'color-warning',
-];
-
 /** @returns {{key: string, type: string, light: string, dark: string}[]} the
- *   required, exactly-35-row `tokens` array, sorted by key. */
+ *   required, exactly-116-row (contract 3) `tokens` array, in the schema's own
+ *   key order, with the scaffold's starter values. */
 export function buildValidThemeTokens() {
-  /** @type {{key: string, type: string, light: string, dark: string}[]} */
-  const rows = [];
-  for (const key of LENGTH_TOKEN_KEYS) {
-    rows.push({ key, type: 'length', light: '0.25rem', dark: '0.25rem' });
-  }
-  for (const key of COLOR_TOKEN_KEYS) {
-    rows.push({ key, type: 'color', light: '#000000', dark: '#ffffff' });
-  }
-  for (const key of FONT_FAMILY_TOKEN_KEYS) {
-    rows.push({ key, type: 'font-family', light: 'Inter', dark: 'Inter' });
-  }
-  for (const key of FONT_WEIGHT_TOKEN_KEYS) {
-    rows.push({ key, type: 'font-weight', light: '600', dark: '600' });
-  }
-  return rows.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  return THEME_TOKEN_CATALOG.map(({ key, type }) => ({
+    key,
+    type,
+    light: STARTER_VALUES[key].light,
+    dark: STARTER_VALUES[key].dark,
+  }));
 }
 
 /**

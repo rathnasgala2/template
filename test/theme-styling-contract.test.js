@@ -51,9 +51,10 @@ import {
   loadCanonicalBuildInput,
 } from './helpers/schema-fixtures.js';
 import { buildRichFixture, stableId } from './helpers/page-kind-fixtures.js';
-import { buildValidThemeJson } from './helpers/theme-contract-fixtures.js';
-import { renderNewsletterPanel } from '../src/core/internal/components.js';
-import { getMessages } from '../src/core/internal/messages.js';
+import {
+  buildValidThemeJson,
+  buildValidThemeTokens,
+} from './helpers/theme-contract-fixtures.js';
 import { normalizeAuthoredMarkdown } from '../src/core/internal/content-security.js';
 import { HIGHLIGHT_GRAMMARS } from '../src/core/internal/render-policy-content.js';
 import { buildTestPng, sha256Of } from './helpers/media-fixtures.js';
@@ -173,7 +174,7 @@ test('cssLayers/stylesheet shapes: the contract fixes the ordered five-layer cat
 // schema package's own exported validator ---
 
 /**
- * Build the exact 35-row `theme-contract.tokens` array (borrowed shape from
+ * Build the exact 116-row `theme-contract.tokens` array (borrowed shape from
  * `@rathnasgala2/schemas`' own S2 digest-cycle fixture family; structurally
  * valid placeholder digests elsewhere — `validateGalaDocument` performs
  * ajv/JSON-Schema structural validation only, never digest recomputation).
@@ -184,60 +185,11 @@ test('cssLayers/stylesheet shapes: the contract fixes the ordered five-layer cat
  *   the sorted token rows
  */
 function baseThemeContractTokens(colors) {
-  const lengthTokens = [
-    'border-width',
-    'content-measure',
-    'focus-width',
-    'radius-medium',
-    'radius-small',
-    'space-1',
-    'space-2',
-    'space-3',
-    'space-4',
-    'space-6',
-    'space-8',
-  ];
-  const fontFamilyTokens = ['font-body', 'font-heading', 'font-mono'];
-  const fontWeightTokens = [
-    'weight-heading',
-    'weight-medium',
-    'weight-normal',
-    'weight-strong',
-  ];
-  const colorTokens = [
-    'color-accent',
-    'color-border',
-    'color-canvas',
-    'color-code-canvas',
-    'color-code-text',
-    'color-danger',
-    'color-focus',
-    'color-link',
-    'color-link-visited',
-    'color-on-accent',
-    'color-selection',
-    'color-success',
-    'color-surface',
-    'color-surface-raised',
-    'color-text',
-    'color-text-muted',
-    'color-warning',
-  ];
-  /** @type {{key: string, type: string, light: string, dark: string}[]} */
-  const rows = [];
-  for (const key of lengthTokens) {
-    rows.push({ key, type: 'length', light: '0.25rem', dark: '0.25rem' });
-  }
-  for (const key of colorTokens) {
-    rows.push({ key, type: 'color', light: colors.light, dark: colors.dark });
-  }
-  for (const key of fontFamilyTokens) {
-    rows.push({ key, type: 'font-family', light: 'Inter', dark: 'Inter' });
-  }
-  for (const key of fontWeightTokens) {
-    rows.push({ key, type: 'font-weight', light: '600', dark: '600' });
-  }
-  return rows.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  return buildValidThemeTokens().map((row) =>
+    row.type === 'color'
+      ? { ...row, light: colors.light, dark: colors.dark }
+      : row,
+  );
 }
 
 /**
@@ -408,6 +360,11 @@ async function buildCoverageFixture(sourceDirectory) {
   }
   buildInput.authors[0].avatar = image;
   buildInput.appearance.brandMark = image;
+  buildInput.publication.newsletter = {
+    url: 'https://example.test/subscribe',
+    title: 'Stay in touch',
+    text: 'One email a month.',
+  };
   await applyCurrentRenderPolicy(buildInput);
   return buildInput;
 }
@@ -437,21 +394,7 @@ test('drift gate: every published hook is actually rendered by the rich fixture,
       sourceDirectory,
       provenance: testProvenance(),
     });
-    // `publication.newsletter` is not yet a field of the pinned build-input
-    // schema, so the optional newsletter panel cannot appear in a validated
-    // render here; its own markup is rendered directly, exactly as the page
-    // kinds embed it once the field exists.
-    const newsletterPanel = renderNewsletterPanel({
-      newsletter: {
-        url: 'https://example.test/subscribe',
-        title: 'Stay in touch',
-        text: 'One email a month.',
-      },
-      messages: getMessages('en'),
-    });
-    const html =
-      (await readAllHtml(outputDirectory, manifest.routes)) +
-      `\n<body>${newsletterPanel}</body>`;
+    const html = await readAllHtml(outputDirectory, manifest.routes);
     const hooks = templateStylingContractHooks();
 
     // Direction 1: every declared hook must actually be rendered.

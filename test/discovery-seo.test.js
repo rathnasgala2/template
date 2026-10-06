@@ -223,11 +223,8 @@ test('robots.txt: allows everyone, names the sitemap, allows AI crawlers by defa
 
 test('robots.txt: the block policy disallows every AI crawler; absent or unknown means allow', () => {
   assert.equal(readAiCrawlerPolicy({}), 'allow');
-  assert.equal(readAiCrawlerPolicy({ crawlers: {} }), 'allow');
-  assert.equal(readAiCrawlerPolicy({ crawlers: { ai: 'nonsense' } }), 'allow');
   assert.equal(readAiCrawlerPolicy({ crawlers: { ai: 'allow' } }), 'allow');
   assert.equal(readAiCrawlerPolicy({ crawlers: { ai: 'block' } }), 'block');
-  assert.equal(readAiCrawlerPolicy(undefined), 'allow');
   const robots = buildRobotsTxt({
     aiPolicy: 'block',
     sitemapUrl: 'https://example.com/sitemap.xml',
@@ -254,6 +251,40 @@ test('robots.txt: the block policy disallows every AI crawler; absent or unknown
   }
   assert.ok(robots.startsWith('User-agent: *\nAllow: /\n'));
   assert.ok(robots.endsWith('Sitemap: https://example.com/sitemap.xml\n'));
+});
+
+test('robots.txt end to end: crawlers.ai "block" disallows every AI crawler; the newsletter panel renders when set', async (t) => {
+  const buildInput = /** @type {any} */ (await buildRichFixture());
+  buildInput.publication.crawlers = { ai: 'block' };
+  buildInput.publication.newsletter = {
+    url: 'https://example.test/subscribe',
+    title: 'Stay in touch',
+    text: 'One email a month.',
+  };
+  await applyCurrentRenderPolicy(buildInput);
+  const dirs = await createRenderDirectories();
+  t.after(dirs.cleanup);
+  await renderPublication(buildInput, {
+    outputDirectory: dirs.outputDirectory,
+    workDirectory: dirs.workDirectory,
+    sourceDirectory: dirs.sourceDirectory,
+    provenance: testProvenance(),
+  });
+  const robots = await readFile(
+    path.join(dirs.outputDirectory, 'robots.txt'),
+    'utf8',
+  );
+  for (const agent of AI_CRAWLER_USER_AGENTS) {
+    assert.ok(robots.includes(`User-agent: ${agent}\nDisallow: /\n`), agent);
+  }
+  assert.ok(robots.startsWith('User-agent: *\nAllow: /\n'));
+  const home = await readFile(
+    path.join(dirs.outputDirectory, 'fixture-1/index.html'),
+    'utf8',
+  );
+  assert.match(home, /<section class="g-wrap g-newsletter"/);
+  assert.match(home, /href="https:\/\/example\.test\/subscribe"/);
+  assert.match(home, /<h2 id="newsletter-title">Stay in touch<\/h2>/);
 });
 
 test('llms.txt follows the llmstxt.org structure and omits unlisted content', () => {

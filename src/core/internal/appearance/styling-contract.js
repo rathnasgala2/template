@@ -49,7 +49,7 @@
  * or a `background-image`.
  *
  * Contract 2.1.0 (TPL-H2/TPL-H3/TPL-M7 fix): S2.0's empty `pseudoClasses`
- * catalog made every interaction state unstylable while the closed 35-token
+ * catalog made every interaction state unstylable while the closed 116-token
  * catalog already required `color-focus` and `color-link-visited`, tokens
  * only a pseudo-class can ever apply. {@link PSEUDO_CLASSES} publishes a
  * small closed catalog instead of widening indefinitely; the module
@@ -628,7 +628,7 @@ export const TEMPLATE_STYLING_CONTRACT_INVALID =
  * Structural self-validation of a `templateStylingContract` object against
  * its closed shape (the checks this repository can run
  * without a published `urn:gala:schema:template-styling-contract` schema
- * entry — no such schema ID is registered in `@rathnasgala2/schemas@2.11.0`;
+ * entry — no such schema ID is registered in `@rathnasgala2/schemas@3.0.0`;
  * only `urn:gala:schema:theme-contract:2.0.0` is, which this module's sibling
  * theme fixtures are validated against with the schema package's own
  * exported `validateGalaDocument`, see `test/theme-styling-contract.test.js`).

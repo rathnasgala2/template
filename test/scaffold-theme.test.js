@@ -42,7 +42,7 @@ test('scaffoldTheme writes a theme.json/tokens.css/components.css/print.css set 
   }
 });
 
-test('scaffoldTheme declares every token in the closed 35-entry catalog, each with a light and dark value', async () => {
+test('scaffoldTheme declares every token in the closed 116-entry catalog, each with a light and dark value', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'gala-theme-scaffold-'));
   try {
     await scaffoldTheme({ destinationDirectory: dir });

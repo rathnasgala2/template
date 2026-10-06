@@ -611,7 +611,7 @@ export function buildGeneratedPages(validatedInput, options = {}) {
   });
 
   const newsletterHtml = renderNewsletterPanel({
-    newsletter: /** @type {{newsletter?: unknown}} */ (publication).newsletter,
+    newsletter: publication.newsletter,
     messages,
   });
 

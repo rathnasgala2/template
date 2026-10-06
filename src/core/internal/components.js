@@ -81,28 +81,20 @@ export function monogram(name) {
 
 /**
  * Render the optional newsletter panel: a call-to-action link to the
- * sign-up page the author configured in publication settings, never a form.
- * Reads `publication.newsletter` defensively: absent, or without an
- * `https:` `url`, renders nothing.
+ * sign-up page configured in `publication.newsletter` (validated by the
+ * build-input schema: an `https:` URL, a title and a short text), never a
+ * form. Renders nothing when the publication has no newsletter.
  *
  * @param {object} options rendering options
- * @param {unknown} options.newsletter `publication.newsletter` (may be
- *   undefined on a build input that predates the field)
+ * @param {{url: string, title: string, text: string} | undefined} options.newsletter
+ *   `publication.newsletter`
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
  *   the resolved message catalog
  * @returns {string} the panel markup, or an empty string
  */
 export function renderNewsletterPanel({ newsletter, messages }) {
-  const value = /** @type {Record<string, unknown> | undefined} */ (
-    newsletter && typeof newsletter === 'object' ? newsletter : undefined
-  );
-  if (!value || typeof value.url !== 'string' || !/^https:\/\//.test(value.url))
-    return '';
-  const title =
-    typeof value.title === 'string' && value.title !== ''
-      ? value.title
-      : /** @type {string} */ (messages.newsletterLabel);
-  const text = typeof value.text === 'string' ? value.text : '';
+  if (!newsletter) return '';
+  const { url, title, text } = newsletter;
   return (
     `<section class="g-wrap g-newsletter" aria-labelledby="newsletter-title">` +
     `<div class="g-panel">` +
@@ -111,7 +103,7 @@ export function renderNewsletterPanel({ newsletter, messages }) {
     `<h2 id="newsletter-title">${escapeHtml(title)}</h2>` +
     (text ? `<p>${escapeHtml(text)}</p>` : '') +
     `</div>` +
-    `<a class="g-btn" href="${escapeHtml(value.url)}" rel="noopener">${escapeHtml(/** @type {string} */ (messages.newsletterActionLabel))}${icon('arrow')}</a>` +
+    `<a class="g-btn" href="${escapeHtml(url)}" rel="noopener">${escapeHtml(/** @type {string} */ (messages.newsletterActionLabel))}${icon('arrow')}</a>` +
     `</div></section>`
   );
 }

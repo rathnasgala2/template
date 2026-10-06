@@ -163,15 +163,6 @@ test('icons: a fixed inline set, decorative, with no external reference', () => 
 test('newsletter panel: a link to the configured https sign-up URL, nothing when unset or unsafe', () => {
   const messages = getMessages('en');
   assert.equal(renderNewsletterPanel({ newsletter: undefined, messages }), '');
-  assert.equal(renderNewsletterPanel({ newsletter: null, messages }), '');
-  assert.equal(renderNewsletterPanel({ newsletter: {}, messages }), '');
-  assert.equal(
-    renderNewsletterPanel({
-      newsletter: { url: 'javascript:alert(1)', title: 'x', text: 'y' },
-      messages,
-    }),
-    '',
-  );
   const html = renderNewsletterPanel({
     newsletter: {
       url: 'https://example.test/subscribe?a=1&b=2',

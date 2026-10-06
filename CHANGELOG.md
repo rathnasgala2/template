@@ -8,6 +8,20 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-10-06
+
+### Changed
+
+- **Schemas pin 3.0.0** (exact, lockfile regenerated from the registry). The
+  validated build input now carries `publication.newsletter` and
+  `publication.crawlers`; the defensive reads are replaced by typed reads, and
+  the newsletter panel and `robots.txt` block mode are tested end to end through
+  `renderPublication`.
+- **Theme token catalog is the 116-entry contract 3 list.** The scaffold
+  (`scripts/scaffold-theme.mjs`) emits it, starting from the `gala-base`
+  defaults (with schema-valid font stacks); the theme fixtures and the
+  contract-fixture helper validate under schemas 3.0.0.
+
 ## [3.0.0] - 2026-10-05
 
 Breaking. No migration shims: the template now owns layout, and themes supply

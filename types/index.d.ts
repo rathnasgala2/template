@@ -130,6 +130,8 @@ export interface PublicationNormalized {
   contactAuthorId?: string;
   socialLinks: unknown[];
   defaultImage?: ResolvedFileRef;
+  newsletter?: { url: string; title: string; text: string };
+  crawlers?: { ai: 'allow' | 'block' };
   profile?: { route: string; body: RenderableBody };
   footerCard?: {
     enabled: boolean;
