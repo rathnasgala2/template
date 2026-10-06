@@ -10,5 +10,17 @@
     ],
     "reason": "braces regex stack exhaustion reached only through chokidar, the file watcher behind @11ty/eleventy-dev-server and nunjucks' watch mode; the renderer never watches files and runs in a network-disabled, time-bounded sandbox on author content it already size-limits. npm's only proposed fix is a major downgrade of @11ty/eleventy to 0.6.0, which is not a fix. Revisit when Eleventy 3.x ships a chokidar >=3.6.1 line.",
     "expires": "2026-11-04"
+  },
+  {
+    "advisory": "GHSA-hp3w-g68c-fv3c",
+    "packages": [
+      "sprintf-js",
+      "argparse",
+      "js-yaml",
+      "gray-matter",
+      "@11ty/eleventy"
+    ],
+    "reason": "sprintf-js precision-specifier denial of service reached only through argparse, the command-line parser of js-yaml's own CLI; gray-matter and Eleventy call js-yaml as a library and never parse arguments, and the renderer runs in a network-disabled, time-bounded sandbox. npm's only proposed fix is a major downgrade of @11ty/eleventy to 0.6.0, which is not a fix. Revisit when gray-matter or js-yaml drop argparse 1.x.",
+    "expires": "2026-11-04"
   }
 ]

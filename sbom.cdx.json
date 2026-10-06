@@ -11265,8 +11265,8 @@
     {
       "type": "library",
       "name": "source-map-js",
-      "version": "1.2.1",
-      "bom-ref": "@rathnasgala2/template@3.0.0|source-map-js@1.2.1",
+      "version": "1.2.2",
+      "bom-ref": "@rathnasgala2/template@3.0.0|source-map-js@1.2.2",
       "licenses": [
         {
           "license": {
@@ -11275,15 +11275,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/source-map-js@1.2.1",
+      "purl": "pkg:npm/source-map-js@1.2.2",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.1.tgz",
+          "url": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "51758c2a12cec1529bef6f0852d40f5f17d853ebac7726ed52b2bff2e184f0240cbeb84ea70bf30c1c23d108522fb31073bbc8b084811bc550f3e203431a5f40"
+              "content": "2868fff18e37c77e5a6550edb7e27898ad61a0b18750b3187d290e0c93508cd0c2de85b53ea3e8c4cc28d292d4b1633f5041b338dfcdc5e1f2c047cd5cd3f757"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -19952,7 +19952,7 @@
       "ref": "@rathnasgala2/template@3.0.0|css-tree@3.2.1",
       "dependsOn": [
         "@rathnasgala2/template@3.0.0|mdn-data@2.27.1",
-        "@rathnasgala2/template@3.0.0|source-map-js@1.2.1"
+        "@rathnasgala2/template@3.0.0|source-map-js@1.2.2"
       ]
     },
     {
@@ -20061,7 +20061,7 @@
       "dependsOn": [
         "@rathnasgala2/template@3.0.0|nanoid@3.3.19",
         "@rathnasgala2/template@3.0.0|picocolors@1.1.1",
-        "@rathnasgala2/template@3.0.0|source-map-js@1.2.1"
+        "@rathnasgala2/template@3.0.0|source-map-js@1.2.2"
       ]
     },
     {
@@ -20619,7 +20619,7 @@
       "ref": "@rathnasgala2/template@3.0.0|mdn-data@2.27.1"
     },
     {
-      "ref": "@rathnasgala2/template@3.0.0|source-map-js@1.2.1"
+      "ref": "@rathnasgala2/template@3.0.0|source-map-js@1.2.2"
     },
     {
       "ref": "@rathnasgala2/template@3.0.0|xmlchars@2.2.0"
