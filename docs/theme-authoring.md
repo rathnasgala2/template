@@ -59,7 +59,7 @@ obvious ones:
   schema closes this to exactly those two combinations — there is no other valid
   pairing.
 - **`contractVersion`** — must byte-equal this template's own published styling
-  contract version (currently `2.1.0`). A theme built against a different
+  contract version (currently `3.0.0`). A theme built against a different
   contract version fails to load, on purpose: the token/hook/ pseudo-class
   catalogs a theme was authored against are the catalogs it is checked against.
 - **`stylingContractDigest`** — must byte-equal the published contract's own
@@ -137,8 +137,8 @@ nothing ever reads.
 
 ## The pseudo-class catalog
 
-Contract 2.1.0 publishes a closed, five-member pseudo-class catalog — this is
-the complete list, not a starting point:
+The contract publishes a closed, five-member pseudo-class catalog — this is the
+complete list, not a starting point:
 
 - **`:hover`** — pointer affordance on links and the appearance control.
 - **`:focus-visible`** — the keyboard/assistive-technology focus indicator.

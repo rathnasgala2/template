@@ -12,6 +12,7 @@ import { test } from 'node:test';
 import { renderPublication } from '../src/core/index.js';
 import { getMessages } from '../src/core/internal/messages.js';
 import {
+  LATEST_CARD_COUNT,
   LISTING_PAGE_SIZE,
   renderErrorPageBody,
 } from '../src/core/internal/page-kinds.js';
@@ -61,7 +62,12 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
       );
       assert.match(
         html,
-        /<main id="main-content"><h1>fixture-1<\/h1><p>About this publication\.<\/p><\/main>/,
+        /<main id="main-content" class="g-main" tabindex="-1"><article class="g-article"><div class="g-wrap g-article-head"><h1>fixture-1<\/h1><\/div>/,
+      );
+      assert.ok(
+        html.includes(
+          '<div class="g-prose"><p>About this publication.</p></div>',
+        ),
       );
       assert.ok(!html.includes('aria-label="Breadcrumb"'));
     },
@@ -75,22 +81,26 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
         outputDirectory,
         `fixture-1/authors/${stableId(2)}/index.html`,
       );
-      assert.match(html, /<h1>About fixture-author-2<\/h1>/);
-      assert.match(html, /<p>they\/them<\/p>/);
-      assert.match(html, /<p>A second fixture author\.<\/p>/);
+      assert.match(html, /<h1>fixture-author-2<\/h1>/);
+      assert.match(html, /<title>About fixture-author-2<\/title>/);
+      assert.match(html, /<p class="g-label">they\/them<\/p>/);
+      assert.match(html, /<p class="g-dek">A second fixture author\.<\/p>/);
       assert.match(
         html,
-        /<a href="https:\/\/github\.com\/fixture-author-2">https:\/\/github\.com\/fixture-author-2<\/a>/,
+        /<a class="g-icon-btn" href="https:\/\/github\.com\/fixture-author-2"/,
       );
       assert.match(
         html,
         /aria-label="Breadcrumb"><ol><li><a href="\/fixture-1">Home<\/a><\/li><li>Authors<\/li><li aria-current="page">fixture-author-2<\/li>/,
       );
+      // The author page lists that author's own published articles.
+      assert.match(html, /Second article/);
+      assert.ok(!html.includes('First article'));
     },
   );
 
   await t.test(
-    'article page kind: breadcrumb includes the index, exactly one h1',
+    'article page kind: breadcrumb links the first tag, exactly one h1',
     async () => {
       const html = await readRoute(
         outputDirectory,
@@ -98,7 +108,7 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
       );
       assert.match(
         html,
-        /<li><a href="\/fixture-1">All articles<\/a><\/li><li aria-current="page">First article<\/li>/,
+        /<li><a href="\/fixture-1">Home<\/a><\/li><li><a href="\/fixture-1\/tags\/alpha-8ed3f6ad68">alpha<\/a><\/li><li aria-current="page">First article<\/li>/,
       );
       assert.equal((html.match(/<h1>/g) ?? []).length, 1);
     },
@@ -205,19 +215,28 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
           /^<!doctype html>\n<html lang="[^"]+" dir="(ltr|rtl)"[^>]*>/,
         );
         assert.equal(
-          (html.match(/<a href="#main-content">/g) ?? []).length,
+          (html.match(/<a class="g-skip" href="#main-content">/g) ?? []).length,
           1,
           `${routePath} must carry exactly one skip link`,
         );
-        assert.equal((html.match(/<header>/g) ?? []).length, 1, routePath);
         assert.equal(
-          (html.match(/<nav aria-label="Primary">/g) ?? []).length,
+          (html.match(/<header class="g-header">/g) ?? []).length,
           1,
           routePath,
         );
-        assert.equal((html.match(/<footer>/g) ?? []).length, 1, routePath);
         assert.equal(
-          (html.match(/<main id="main-content">/g) ?? []).length,
+          (html.match(/<nav class="g-nav" aria-label="Primary">/g) ?? [])
+            .length,
+          1,
+          routePath,
+        );
+        assert.equal(
+          (html.match(/<footer class="g-footer">/g) ?? []).length,
+          1,
+          routePath,
+        );
+        assert.equal(
+          (html.match(/<main id="main-content" class="g-main"/g) ?? []).length,
           1,
           routePath,
         );
@@ -228,24 +247,28 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
 
 test('S2-T06 acceptance: index pagination crosses the page-size boundary with correct controls', async (t) => {
   const buildInput = await buildRichFixture();
-  // Replace content with LISTING_PAGE_SIZE + 1 published articles so the
-  // index kind must paginate into exactly two pages.
+  // Replace content with enough published articles that the home page's
+  // featured + latest cards are followed by LISTING_PAGE_SIZE + 1 older
+  // ones, so the index kind must paginate into exactly two pages.
   const [template] = buildInput.content;
-  buildInput.content = Array.from({ length: LISTING_PAGE_SIZE + 1 }, (_, i) => {
-    const clone = JSON.parse(JSON.stringify(template));
-    clone.frontmatter.id = stableId(100 + i);
-    clone.frontmatter.kind = 'article';
-    clone.frontmatter.status = 'published';
-    clone.frontmatter.slug = `article-${i}`;
-    delete clone.frontmatter.route;
-    clone.frontmatter.tags = [];
-    delete clone.frontmatter.series;
-    delete clone.frontmatter.seriesOrder;
-    clone.frontmatter.publishedAt = `2025-01-${String(i + 1).padStart(2, '0')}T09:00:00.000Z`;
-    clone.frontmatter.createdAt = clone.frontmatter.publishedAt;
-    clone.resolvedAuthorIds = clone.frontmatter.authorIds;
-    return clone;
-  });
+  buildInput.content = Array.from(
+    { length: 1 + LATEST_CARD_COUNT + LISTING_PAGE_SIZE + 1 },
+    (_, i) => {
+      const clone = JSON.parse(JSON.stringify(template));
+      clone.frontmatter.id = stableId(100 + i);
+      clone.frontmatter.kind = 'article';
+      clone.frontmatter.status = 'published';
+      clone.frontmatter.slug = `article-${i}`;
+      delete clone.frontmatter.route;
+      clone.frontmatter.tags = [];
+      delete clone.frontmatter.series;
+      delete clone.frontmatter.seriesOrder;
+      clone.frontmatter.publishedAt = `2025-01-${String(i + 1).padStart(2, '0')}T09:00:00.000Z`;
+      clone.frontmatter.createdAt = clone.frontmatter.publishedAt;
+      clone.resolvedAuthorIds = clone.frontmatter.authorIds;
+      return clone;
+    },
+  );
   await applyCurrentRenderPolicy(buildInput);
 
   const { outputDirectory, workDirectory, sourceDirectory, cleanup } =
@@ -281,7 +304,10 @@ test('S2-T06 acceptance: the error page kind is a pure function with exactly one
   const body = renderErrorPageBody({ messages, homeRoute: '/fixture-1' });
   assert.equal((body.match(/<h1>/g) ?? []).length, 1);
   assert.match(body, /Page not found/);
-  assert.match(body, /<a href="\/fixture-1">Return to the home page<\/a>/);
+  assert.match(
+    body,
+    /<a class="g-btn" href="\/fixture-1">Return to the home page/,
+  );
 });
 
 test('S2-T06: every chrome string comes from the message catalog, not an inline literal', () => {

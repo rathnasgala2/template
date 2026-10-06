@@ -110,28 +110,23 @@ function assertSkeletonStructure(html, routePath) {
   );
   assert.equal(footers.length, 1, `${routePath}: exactly one <footer>`);
 
-  // Exactly one primary <nav aria-label="Primary">, direct child of <body>.
+  // Exactly one primary <nav aria-label="Primary">, inside the one <header>.
   const primaryNavs = collectElements(document).filter(
     (e) => e.tagName === 'nav' && attr(e, 'aria-label') === 'Primary',
   );
   assert.equal(primaryNavs.length, 1, routePath);
-
-  // Landmark order: header, then primary nav, then main, then footer.
-  const landmarkTags = bodyChildren.filter((e) =>
-    ['header', 'nav', 'main', 'footer'].includes(
-      /** @type {string} */ (e.tagName),
-    ),
-  );
-  const order = landmarkTags.map((e) => e.tagName);
-  assert.equal(order[0], 'header', routePath);
-  assert.equal(order[1], 'nav', routePath);
-  assert.ok(order.includes('main'), routePath);
-  assert.equal(order[order.length - 1], 'footer', routePath);
   assert.ok(
-    order.indexOf('main') > order.indexOf('nav') &&
-      order.indexOf('main') < order.indexOf('footer'),
-    `${routePath}: main must sit between the primary nav and the footer`,
+    collectElements(headers[0]).includes(primaryNavs[0]),
+    `${routePath}: the primary nav must sit inside the <header>`,
   );
+
+  // Landmark order: header, then main, then footer.
+  const order = bodyChildren
+    .filter((e) =>
+      ['header', 'main', 'footer'].includes(/** @type {string} */ (e.tagName)),
+    )
+    .map((e) => e.tagName);
+  assert.deepEqual(order, ['header', 'main', 'footer'], routePath);
 
   // Exactly one <h1> for the whole document, and it lives inside <main>.
   const headings = collectElements(document).filter((e) =>

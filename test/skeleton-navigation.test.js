@@ -17,5 +17,8 @@ test('renderPrimaryNavigation renders a labelled, empty <nav> landmark when ther
     messages: getMessages('en'),
   });
   assert.notEqual(html, '');
-  assert.match(html, /^<nav aria-label="[^"]+"><ul><\/ul><\/nav>$/);
+  assert.match(
+    html,
+    /^<nav class="g-nav" aria-label="[^"]+"><ul><\/ul><\/nav>$/,
+  );
 });

@@ -270,21 +270,22 @@ selected theme package's stylesheets into every generated page:
 - **`src/core/internal/appearance/styling-contract.js`** is the one reviewed
   source module `scripts/generate-contracts.mjs` emits the contract from: the
   ordered five-layer catalog (`gala-base`/`gala-tokens`/`gala-components`/
-  `gala-utilities`/`gala-print` — contract 2.1.0: `gala-base` is the template's
-  own layer, carrying the reset/type-scale/focus-ring defaults documented below
+  `gala-utilities`/`gala-print` — `gala-base` is the template's own layer,
+  carrying the reset/type-scale/focus-ring defaults documented below
   `internal/appearance/base-layer.js`, always ordered first so a theme's own
   layers can override it), the publication-root/ resolved-palette selectors, the
   closed type/class/id/attribute leaf catalogs, a closed five-member
   pseudo-class catalog (`hover`, `focus-visible`, `active`, `visited`,
-  `disabled` — contract 2.1.0; see that module's own documentation for why each
-  is admitted and why the token catalog's `color-focus`/`color-link-visited` had
-  no reachable application before it), and exactly 64 `publicThemeSlotHooks` —
-  one per catalog leaf, so every leaf a theme could validly select is a named,
-  documented hook and no catalog member is orphaned. Every leaf is drawn from
-  what this renderer actually renders: 28 type-selector hooks (every
-  landmark/prose/code/control element `internal/skeleton.js`,
+  `disabled`; see that module's own documentation for why each is admitted and
+  why the token catalog's `color-focus`/`color-link-visited` had no reachable
+  application before it), and up to 160 `publicThemeSlotHooks` (contract 3.0.0;
+  exactly 159 today) — one per catalog leaf, so every leaf a theme could validly
+  select is a named, documented hook and no catalog member is orphaned. Every
+  leaf is drawn from what this renderer actually renders: 33 type-selector hooks
+  (every landmark/prose/code/control element `internal/skeleton.js`,
   `internal/page-kinds.js` and the markdown-it CommonMark pipeline can produce),
-  15 class-selector hooks (the base Prism `.token` class plus one
+  105 class-selector hooks (90 `g-*` component classes, grouped by component in
+  `COMPONENT_CLASS_GROUPS`, plus the base Prism `.token` class and one
   `.language-<grammar>` hook per admitted highlight grammar — fine-grained
   per-token-kind classes are a documented scope exclusion), 2 id-selector hooks
   (`#main-content`, the appearance `<select>`'s fixed id) and 19 attribute-value

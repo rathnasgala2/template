@@ -53,9 +53,10 @@ of truth both the published contract and the runtime output-security pipeline in
 enumerating every hook this renderer actually renders (landmarks,
 prose/code/control type selectors, the base Prism `.token`/`.language-*` class
 hooks, the `#main-content`/appearance-select id hooks, and one attribute-value
-hook per `data-gala-slot`/`data-gala-page-kind` value), capped at exactly 64
-`publicThemeSlotHooks`. `test/theme-styling-contract.test.js` drift-checks the
-published contract against a rich rendered-HTML fixture in both directions
+hook per `data-gala-slot`/`data-gala-page-kind` value, and (contract 3.0.0) one
+`ui-*` hook per `g-*` component class in `COMPONENT_CLASS_GROUPS`), capped at
+160 `publicThemeSlotHooks`. `test/theme-styling-contract.test.js` drift-checks
+the published contract against a rich rendered-HTML fixture in both directions
 (every hook actually rendered; every rendered hook-like construct published) and
 validates `theme-contract:2.0.0` fixtures for both palettes with
 `@rathnasgala2/schemas`' own exported `validateGalaDocument`.

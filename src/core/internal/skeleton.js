@@ -11,17 +11,18 @@
  * through {@link renderPageBody}:
  *
  * - a skip link, the very first focusable element, targeting `#main-content`;
- * - exactly one `<header>` (home link with the validated publication name and
- *   an optional core logo carrying required alternative text, plus the
- *   always-present, currently-empty `header-actions` slot);
- * - exactly one primary `<nav>` built from `navigationNormalized.items`;
- * - exactly one `<main id="main-content">`, carrying an optional breadcrumb
- *   `<nav>` before the page's own single `<h1>`;
- * - exactly one `<footer>` with the publication name, resolved footer
- *   navigation, footer profile slot, copyright/license text and the
- *   template attribution line, plus the remaining always-present,
- *   currently-empty core slots (`footer-auxiliary`, `account-intent`,
- *   `conversation`, `newsletter`, `edition-selector`).
+ * - exactly one `<header>` (brand mark or monogram, publication name and
+ *   tagline, the one primary `<nav>` built from `navigationNormalized.items`,
+ *   a script-revealed search button, the `header-actions` slot carrying the
+ *   appearance control, and a `<details>` mobile menu), rendered by
+ *   `internal/chrome.js`;
+ * - exactly one `<main id="main-content">`; each page kind places its own
+ *   breadcrumb `<nav>` and single `<h1>` inside it;
+ * - exactly one `<footer>` (brand, description, social links, navigation
+ *   columns, author profile, copyright and the template attribution line),
+ *   plus the always-present, currently-empty core slots (`footer-auxiliary`,
+ *   `account-intent`, `conversation`, `newsletter`, `edition-selector`),
+ *   rendered by `internal/chrome.js`.
  *
  * Core owns nine versioned semantic slots plus the collapsed
  * `article-footer-ad` slot: `header-actions`, `article-preamble`,
@@ -133,7 +134,7 @@ export function renderSlot(slotName, options = {}) {
  */
 export function renderSkipLink(messages) {
   const label = escapeHtml(/** @type {string} */ (messages.skipToContent));
-  return `<a href="#main-content">${label}</a>`;
+  return `<a class="g-skip" href="#main-content">${label}</a>`;
 }
 
 /**
@@ -148,7 +149,7 @@ export function renderSkipLink(messages) {
  *   internal route's href (`/` when `baseUrl` has no path)
  * @returns {string} the rendered `<li>`
  */
-function renderNavItem(item, currentRoute, urlPrefix) {
+export function renderNavItem(item, currentRoute, urlPrefix) {
   const label = escapeHtml(item.label);
   const href = escapeHtml(
     /** @type {string} */ (
@@ -200,28 +201,7 @@ export function renderPrimaryNavigation({
   const itemsHtml = items
     .map((item) => renderNavItem(item, currentRoute, urlPrefix))
     .join('');
-  return `<nav aria-label="${label}"><ul>${itemsHtml}</ul></nav>`;
-}
-
-/**
- * Render the footer `<nav>` from `navigationNormalized.footerItems`.
- *
- * @param {object} options rendering options
- * @param {readonly import('../../../types/index.d.ts').NavigationItem[]} options.items
- *   `navigationNormalized.footerItems` (0..50 root items)
- * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
- *   the resolved message catalog
- * @param {string} [options.urlPrefix] the `baseUrl` path prefix (default `/`)
- * @returns {string} the rendered footer navigation
- */
-export function renderFooterNavigation({ items, messages, urlPrefix = '/' }) {
-  const label = escapeHtml(
-    /** @type {string} */ (messages.footerNavigationLabel),
-  );
-  const itemsHtml = items
-    .map((item) => renderNavItem(item, undefined, urlPrefix))
-    .join('');
-  return `<nav aria-label="${label}"><ul>${itemsHtml}</ul></nav>`;
+  return `<nav class="g-nav" aria-label="${label}"><ul>${itemsHtml}</ul></nav>`;
 }
 
 /**
@@ -262,7 +242,7 @@ export function renderBreadcrumbs({ trail, messages }) {
       return `<li><a href="${escapeHtml(step.route)}">${text}</a></li>`;
     })
     .join('');
-  return `<nav aria-label="${label}"><ol>${items}</ol></nav>`;
+  return `<nav class="g-crumbs" aria-label="${label}"><ol>${items}</ol></nav>`;
 }
 
 /**
@@ -307,7 +287,7 @@ export function renderPagination({
       ? `<a rel="next" href="${escapeHtml(routeForPage(currentPage + 1))}">${nextLabel}</a>`
       : `<span>${nextLabel}</span>`;
   return (
-    `<nav aria-label="${label}"><ul>` +
+    `<nav class="g-pagination" aria-label="${label}"><ul>` +
     `<li>${previous}</li>` +
     `<li aria-current="page">${statusLabel}</li>` +
     `<li>${next}</li>` +
@@ -316,117 +296,27 @@ export function renderPagination({
 }
 
 /**
- * Render the one `<header>` landmark.
- *
- * @param {object} options rendering options
- * @param {string} options.homeRoute the publication's own home route
- *   (`basePath`, joined)
- * @param {string} options.publicationName the validated publication title
- * @param {{route: string, alt: string} | undefined} options.logo an optional
- *   core logo image, always carrying alternative text
- * @param {string} [options.appearanceControlHtml] the already-rendered
- *   Light/Dark/System appearance control
- *   (`internal/appearance/controller-markup.js`'s `renderAppearanceControl`),
- *   inserted into the `header-actions` slot
- * @returns {string} the rendered header
- */
-export function renderHeader({
-  homeRoute,
-  publicationName,
-  logo,
-  appearanceControlHtml,
-}) {
-  const name = escapeHtml(publicationName);
-  const href = escapeHtml(homeRoute);
-  const logoHtml = logo
-    ? `<img src="${escapeHtml(logo.route)}" alt="${escapeHtml(logo.alt)}">`
-    : '';
-  return (
-    '<header>' +
-    `<a href="${href}">${logoHtml}<span>${name}</span></a>` +
-    renderSlot('header-actions', { html: appearanceControlHtml }) +
-    '</header>'
-  );
-}
-
-/**
- * Render the one `<footer>` landmark.
- *
- * @param {object} options rendering options
- * @param {string} options.publicationName the validated publication title
- * @param {string} options.footerNavHtml the already-rendered footer
- *   navigation (see {@link renderFooterNavigation})
- * @param {string} options.footerProfileHtml the already-rendered
- *   `footer-profile` slot content (footer card and/or author cards; may be
- *   empty when the publication authored neither)
- * @param {string | undefined} options.copyrightText an optional
- *   already-resolved copyright/license text line
- * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
- *   the resolved message catalog
- * @returns {string} the rendered footer
- */
-export function renderFooter({
-  publicationName,
-  footerNavHtml,
-  footerProfileHtml,
-  copyrightText,
-  messages,
-}) {
-  const name = escapeHtml(publicationName);
-  const copyrightHtml = copyrightText
-    ? `<p>${escapeHtml(copyrightText)}</p>`
-    : '';
-  const attribution = escapeHtml(
-    /** @type {string} */ (messages.footerAttributionLabel),
-  );
-  return (
-    '<footer>' +
-    `<p>${name}</p>` +
-    footerNavHtml +
-    `<div data-gala-slot="footer-profile">${footerProfileHtml}</div>` +
-    renderSlot('footer-auxiliary') +
-    renderSlot('account-intent') +
-    renderSlot('conversation') +
-    renderSlot('newsletter') +
-    renderSlot('edition-selector') +
-    copyrightHtml +
-    `<p>${attribution}</p>` +
-    '</footer>'
-  );
-}
-
-/**
  * Compose one complete page body (everything inside `<body>`) from its
  * pre-rendered landmark parts. Every page kind in `internal/page-kinds.js`
  * funnels through this one function, so the landmark order and count (one
- * skip link, one header, one primary nav, one main, one footer) can never
- * drift between page kinds.
+ * skip link, one header carrying the one primary nav, one main, one footer)
+ * can never drift between page kinds.
  *
  * @param {object} options rendering options
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
  *   the resolved message catalog
- * @param {string} options.headerHtml the already-rendered header
- * @param {string} options.navHtml the already-rendered primary navigation
+ * @param {string} options.headerHtml the already-rendered header (which
+ *   contains the primary navigation; see `internal/chrome.js`)
  * @param {string} options.footerHtml the already-rendered footer
- * @param {string} [options.breadcrumbHtml] an optional already-rendered
- *   breadcrumb, inserted before the page's own `<h1>`
- * @param {string} options.mainHtml the page kind's own inner markup, always
- *   starting with exactly one `<h1>`
+ * @param {string} options.mainHtml the page kind's own inner markup,
+ *   including its breadcrumb (when it has one) and exactly one `<h1>`
  * @returns {string} the complete `<body>` inner HTML
  */
-export function renderPageBody({
-  messages,
-  headerHtml,
-  navHtml,
-  footerHtml,
-  breadcrumbHtml,
-  mainHtml,
-}) {
+export function renderPageBody({ messages, headerHtml, footerHtml, mainHtml }) {
   return (
     renderSkipLink(messages) +
     headerHtml +
-    navHtml +
-    `<main id="main-content">${breadcrumbHtml ?? ''}${mainHtml}</main>` +
+    `<main id="main-content" class="g-main" tabindex="-1">${mainHtml}</main>` +
     footerHtml
   );
 }

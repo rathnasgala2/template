@@ -58,6 +58,13 @@ import {
   renderPagination,
   renderSlot,
 } from './skeleton.js';
+import {
+  createComponents,
+  createMediaUrl,
+  extractH2Headings,
+  renderNewsletterPanel,
+} from './components.js';
+import { icon } from './icons.js';
 import { getMessages } from './messages.js';
 import { resolveTextDirection } from './text-direction.js';
 import { routeSegmentForLabel } from './route-labels.js';
@@ -133,23 +140,6 @@ function paginate(items, pageSize) {
 }
 
 /**
- * Resolve an author's display name by ID, failing closed on a dangling
- * reference (an adapter defect: `resolvedAuthorIds` is schema-guaranteed to
- * resolve).
- *
- * @param {ReadonlyMap<string, import('../../../types/index.d.ts').AuthorNormalized>} authorsById
- * @param {string} authorId
- * @returns {import('../../../types/index.d.ts').AuthorNormalized}
- */
-function requireAuthor(authorsById, authorId) {
-  const author = authorsById.get(authorId);
-  if (!author) {
-    throw new Error(`internal: no author record for id ${authorId}`);
-  }
-  return author;
-}
-
-/**
  * @typedef {object} GeneratedPage
  * @property {'profile' | 'author' | 'article' | 'page' | 'index' | 'tag' | 'series' | 'archive'} kind
  * @property {string} route an un-joined `canonicalRoute` (caller joins with
@@ -157,9 +147,8 @@ function requireAuthor(authorsById, authorId) {
  * @property {string} title the page's `<title>` text
  * @property {string} language the page's BCP-47 language tag
  * @property {string} [direction] the page's resolved base text direction (assigned by buildGeneratedPages's own return mapping)
- * @property {string} bodyHtml the page's complete `<main>` inner HTML,
- *   starting with exactly one `<h1>`
- * @property {string} [breadcrumbHtml] an optional already-rendered breadcrumb
+ * @property {string} bodyHtml the page's complete `<main>` inner HTML
+ *   (breadcrumb included), containing exactly one `<h1>`
  * @property {string} [description] an optional plain-text
  *   description this page's SEO/Open-Graph/Twitter `<meta>` tags are built
  *   from (never HTML, never the sanitized body — a distinct authored or
@@ -256,14 +245,73 @@ function latestContentTimestamp(records) {
 }
 
 /**
+ * Group records by derived keys, preserving the input order within each
+ * bucket.
+ *
+ * @param {readonly import('../../../types/index.d.ts').ContentBuildRecord[]} records
+ * @param {(record: import('../../../types/index.d.ts').ContentBuildRecord) => readonly string[]} keysOf
+ * @returns {Map<string, import('../../../types/index.d.ts').ContentBuildRecord[]>}
+ */
+function groupBy(records, keysOf) {
+  /** @type {Map<string, import('../../../types/index.d.ts').ContentBuildRecord[]>} */
+  const groups = new Map();
+  for (const record of records) {
+    for (const key of keysOf(record)) {
+      const bucket = groups.get(key) ?? [];
+      bucket.push(record);
+      groups.set(key, bucket);
+    }
+  }
+  return groups;
+}
+
+/** Number of articles after the featured one shown as cards on the home page. */
+export const LATEST_CARD_COUNT = 6;
+/** Number of related articles shown in "Keep reading". */
+export const RELATED_COUNT = 3;
+/** Minimum h2 headings an article needs before a contents list renders. */
+export const CONTENTS_MIN_HEADINGS = 2;
+/** Maximum tag pills on the home page. */
+const HOME_TAG_PILL_LIMIT = 12;
+
+/**
+ * Select the "Keep reading" articles: other published articles ranked by
+ * the number of shared tags (most first), then by recency (the input order),
+ * at most {@link RELATED_COUNT}.
+ *
+ * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
+ * @param {readonly import('../../../types/index.d.ts').ContentBuildRecord[]} published
+ *   every published article, newest first
+ * @returns {import('../../../types/index.d.ts').ContentBuildRecord[]}
+ */
+export function selectRelatedArticles(record, published) {
+  const tags = new Set(record.frontmatter.tags);
+  return published
+    .filter((other) => other.frontmatter.id !== record.frontmatter.id)
+    .map((other, order) => ({
+      other,
+      order,
+      shared: other.frontmatter.tags.filter((tag) => tags.has(tag)).length,
+    }))
+    .sort((a, b) => b.shared - a.shared || a.order - b.order)
+    .slice(0, RELATED_COUNT)
+    .map((entry) => entry.other);
+}
+
+/**
  * Build every generated page (every kind except `error`) from a validated
  * `build-input:2.0.0` instance.
  *
  * @param {import('../../../types/index.d.ts').NormalizedBuildInput} validatedInput
+ * @param {object} [options] rendering options
+ * @param {readonly {path: string, mediaType: string}[]} [options.mediaAssets]
+ *   the media pipeline's finished `assets` list, used to resolve every
+ *   image reference (hero, avatar) to its emitted URL; an image with no
+ *   processed derivative renders as the placeholder/monogram fallback
  * @returns {GeneratedPage[]} every generated page, in a stable, deterministic
  *   order
  */
-export function buildGeneratedPages(validatedInput) {
+export function buildGeneratedPages(validatedInput, options = {}) {
   const { publication, authors, content, basePath, baseUrl } = validatedInput;
   const publicBasePath = derivePublicBasePath(baseUrl, basePath);
   const messages = getMessages(publication.defaultLanguage);
@@ -274,38 +322,161 @@ export function buildGeneratedPages(validatedInput) {
    * @returns {string} the `basePath`-joined absolute route
    */
   const site = (route) => joinPublicRoute(publicBasePath, route);
+  const tagHref = (/** @type {string} */ tag) =>
+    site(`/tags/${routeSegmentForLabel(tag)}`);
+  const seriesHref = (/** @type {string} */ series) =>
+    site(`/series/${routeSegmentForLabel(series)}`);
+  const recordHref = (
+    /** @type {import('../../../types/index.d.ts').ContentBuildRecord} */ record,
+  ) => site(contentRoute(record.frontmatter));
+  const mediaUrl = createMediaUrl({
+    mediaAssets: options.mediaAssets ?? [],
+    publicBasePath,
+  });
+  const ui = createComponents({
+    messages,
+    site,
+    mediaUrl,
+    authorsById,
+    recordHref,
+    tagHref,
+  });
+  const { text, call, chip, byline, card, avatar } = ui;
+
+  const homeStep = {
+    label: /** @type {string} */ (messages.homeLinkLabel),
+    route: site('/'),
+  };
+  const crumbs = (
+    /** @type {import('./skeleton.js').BreadcrumbStep[][]} */ ...groups
+  ) => renderBreadcrumbs({ trail: [homeStep, ...groups.flat()], messages });
+
+  const publishedArticles = selectPublishedArticles(content);
+  const byTag = groupBy(publishedArticles, (r) => r.frontmatter.tags);
+  const bySeries = groupBy(
+    content.filter((r) => r.frontmatter.status === 'published'),
+    (r) => (r.frontmatter.series ? [r.frontmatter.series] : []),
+  );
+  for (const bucket of bySeries.values()) {
+    bucket.sort(
+      (a, b) =>
+        (a.frontmatter.seriesOrder ?? 0) - (b.frontmatter.seriesOrder ?? 0),
+    );
+  }
+  const sortedTags = [...byTag.keys()].sort();
+  const sortedSeries = [...bySeries.keys()].sort();
+  const byYear = groupBy(publishedArticles, (r) => [
+    r.frontmatter.publishedAt.slice(0, 4),
+  ]);
+  const sortedYears = [...byYear.keys()].sort().reverse();
 
   /**
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
-   * @returns {string} one `<li>` summary
+   * @returns {string | undefined} "Part N of M" when the record is a
+   *   published member of its series
    */
-  const renderContentSummary = (record) => {
-    const { frontmatter } = record;
-    const route = escapeHtml(site(contentRoute(frontmatter)));
-    const title = escapeHtml(frontmatter.title);
-    const authorNames = frontmatter.authorIds
-      .map((id) => requireAuthor(authorsById, id).displayName)
-      .join(', ');
-    const byLine = escapeHtml(
-      /** @type {(displayName: string) => string} */ (messages.byLineLabel)(
-        authorNames,
-      ),
-    );
-    const time = `<time datetime="${escapeHtml(frontmatter.publishedAt)}">${escapeHtml(frontmatter.publishedAt)}</time>`;
-    const tags =
-      frontmatter.tags.length > 0
-        ? `<ul>${frontmatter.tags
-            .map(
-              (tag) =>
-                `<li><a href="${escapeHtml(site(`/tags/${routeSegmentForLabel(tag)}`))}">${escapeHtml(tag)}</a></li>`,
-            )
-            .join('')}</ul>`
-        : '';
-    return (
-      `<li><h2><a href="${route}">${title}</a></h2>` +
-      `<p>${byLine}</p>${time}${tags}</li>`
-    );
+  const partLabelOf = (record) => {
+    const series = record.frontmatter.series;
+    const members = series ? bySeries.get(series) : undefined;
+    const index = members ? members.indexOf(record) : -1;
+    return members && index >= 0
+      ? /** @type {(a: string, b: string) => string} */ (
+          messages.seriesPartLabel
+        )(String(index + 1), String(members.length))
+      : undefined;
   };
+  /**
+   * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
+   * @param {'grid' | 'row'} [variant]
+   * @param {number} [headingLevel] the title's heading level
+   * @returns {string}
+   */
+  const cardOf = (record, variant = 'grid', headingLevel = 3) =>
+    card(record, { partLabel: partLabelOf(record), headingLevel }, variant);
+
+  /**
+   * @param {string} href
+   * @param {string} label
+   * @param {number | undefined} count
+   * @param {string} iconName
+   * @param {boolean} [current]
+   * @returns {string}
+   */
+  const pill = (href, label, count, iconName, current = false) =>
+    `<li><a class="g-pill" href="${escapeHtml(href)}"${current ? ' aria-current="page"' : ''}>${icon(iconName)}` +
+    `<span>${escapeHtml(label)}</span>` +
+    (count === undefined ? '' : `<span class="g-pill-count">${count}</span>`) +
+    `</a></li>`;
+  /**
+   * @param {string} [currentTag]
+   * @returns {string}
+   */
+  const tagPills = (currentTag = '') =>
+    `<ul class="g-pills">${sortedTags
+      .map((tag) =>
+        pill(
+          tagHref(tag),
+          tag,
+          byTag.get(tag)?.length,
+          'hash',
+          tag === currentTag,
+        ),
+      )
+      .join('')}</ul>`;
+
+  /**
+   * The header block shared by tag, series, archive and author pages and
+   * their root listings.
+   *
+   * @param {object} head
+   * @param {string} head.breadcrumbHtml
+   * @param {string} head.kicker the label before the count
+   * @param {number | undefined} head.count article count
+   * @param {string} head.title the page's `<h1>` text
+   * @param {string} [head.descriptionHtml] already-rendered intro markup
+   * @param {string} [head.markHtml] a leading avatar instead of an icon
+   * @param {string} [head.iconName]
+   * @param {string} [head.extraHtml] markup after the intro (pills)
+   * @returns {string}
+   */
+  const listingHead = ({
+    breadcrumbHtml,
+    kicker,
+    count,
+    title,
+    descriptionHtml = '',
+    markHtml,
+    iconName = 'hash',
+    extraHtml = '',
+  }) =>
+    `<section class="g-wrap g-topic-hero">${breadcrumbHtml}` +
+    `<div class="g-topic-head"><span class="g-topic-icon">${markHtml ?? icon(iconName)}</span>` +
+    `<div><p class="g-label">${escapeHtml(kicker)}` +
+    (count === undefined
+      ? ''
+      : `<span class="g-dot" aria-hidden="true"></span>${call('articleCountLabel', String(count))}`) +
+    `</p><h1>${escapeHtml(title)}</h1></div></div>` +
+    descriptionHtml +
+    extraHtml +
+    `</section>`;
+
+  /**
+   * @param {readonly import('../../../types/index.d.ts').ContentBuildRecord[]} items
+   * @param {string} [afterHtml] markup after the list (pagination)
+   * @returns {string}
+   */
+  const rowList = (items, afterHtml = '') =>
+    `<section class="g-wrap g-section">` +
+    (items.length > 0
+      ? `<div class="g-list">${items.map((record) => cardOf(record, 'row', 2)).join('')}</div>`
+      : `<p>${text('emptyListingLabel')}</p>`) +
+    afterHtml +
+    `</section>`;
+
+  const newsletterHtml = renderNewsletterPanel({
+    newsletter: /** @type {{newsletter?: unknown}} */ (publication).newsletter,
+    messages,
+  });
 
   /** @type {GeneratedPage[]} */
   const pages = [];
@@ -319,29 +490,37 @@ export function buildGeneratedPages(validatedInput) {
       description: publication.description,
       ogType: 'website',
       socialImageRef: publication.defaultImage,
-      bodyHtml: `<h1>${escapeHtml(publication.title)}</h1>${publication.profile.body.body}`,
+      bodyHtml:
+        `<article class="g-article"><div class="g-wrap g-article-head">` +
+        `<h1>${escapeHtml(publication.title)}</h1></div>` +
+        `<div class="g-wrap g-article-grid"><div class="g-prose">${publication.profile.body.body}</div></div></article>`,
     });
   }
 
   for (const author of authors) {
-    const pronouns = author.pronouns
-      ? `<p>${escapeHtml(author.pronouns)}</p>`
-      : '';
-    const biography = author.biography
-      ? `<p>${escapeHtml(author.biography)}</p>`
-      : '';
-    const links =
-      author.links.length > 0
-        ? `<ul>${author.links
-            .map((link) => {
-              const label = escapeHtml(link.label ?? link.uri);
-              return `<li><a href="${escapeHtml(link.uri)}">${label}</a></li>`;
-            })
-            .join('')}</ul>`
-        : '';
+    const authored = publishedArticles.filter((record) =>
+      record.frontmatter.authorIds.includes(author.id),
+    );
     const heading = /** @type {(displayName: string) => string} */ (
       messages.aboutAuthorHeading
     )(author.displayName);
+    const links =
+      author.links.length > 0
+        ? `<ul class="g-social">${author.links
+            .map((link) => {
+              const label = escapeHtml(link.label ?? link.uri);
+              return `<li><a class="g-icon-btn" href="${escapeHtml(link.uri)}" aria-label="${label}" title="${label}">${icon('upright')}</a></li>`;
+            })
+            .join('')}</ul>`
+        : '';
+    const intro =
+      (author.pronouns
+        ? `<p class="g-label">${escapeHtml(author.pronouns)}</p>`
+        : '') +
+      (author.biography
+        ? `<p class="g-dek">${escapeHtml(author.biography)}</p>`
+        : '') +
+      links;
     pages.push({
       kind: 'author',
       route: `/authors/${author.id}`,
@@ -350,129 +529,291 @@ export function buildGeneratedPages(validatedInput) {
       description: author.biography || undefined,
       ogType: 'profile',
       socialImageRef: author.avatar,
-      breadcrumbHtml: renderBreadcrumbs({
-        trail: [
-          {
-            label: /** @type {string} */ (messages.homeLinkLabel),
-            route: site('/'),
-          },
-          { label: /** @type {string} */ (messages.authorsSectionLabel) },
-          { label: author.displayName },
-        ],
-        messages,
-      }),
       bodyHtml:
-        `<h1>${escapeHtml(heading)}</h1>` + pronouns + biography + links,
+        listingHead({
+          breadcrumbHtml: crumbs(
+            [{ label: /** @type {string} */ (messages.authorsSectionLabel) }],
+            [{ label: author.displayName }],
+          ),
+          kicker: /** @type {string} */ (messages.authorKickerLabel),
+          count: authored.length,
+          title: author.displayName,
+          descriptionHtml: intro,
+          markHtml: avatar(author),
+        }) + rowList(authored),
     });
   }
 
   for (const record of content) {
     const { frontmatter } = record;
-    const authorNames = frontmatter.authorIds
-      .map((id) => requireAuthor(authorsById, id).displayName)
-      .join(', ');
-    const byLine = `<p>${escapeHtml(
-      /** @type {(displayName: string) => string} */ (messages.byLineLabel)(
-        authorNames,
-      ),
-    )}</p>`;
-    const time = `<time datetime="${escapeHtml(frontmatter.publishedAt)}">${escapeHtml(frontmatter.publishedAt)}</time>`;
+    const isArticle = frontmatter.kind === 'article';
+    const heroUrl = mediaUrl(frontmatter.hero?.file);
+    const headings = extractH2Headings(record.body);
+    const contents =
+      headings.length >= CONTENTS_MIN_HEADINGS
+        ? `<ol class="g-toc-list">${headings
+            .map(
+              (heading) =>
+                `<li><a href="#${escapeHtml(heading.id)}" data-toc="${escapeHtml(heading.id)}">${escapeHtml(heading.text)}</a></li>`,
+            )
+            .join('')}</ol>`
+        : '';
+    const firstTag = frontmatter.tags[0];
+    const trail = [
+      ...(isArticle && firstTag
+        ? [{ label: firstTag, route: tagHref(firstTag) }]
+        : []),
+      { label: frontmatter.title },
+    ];
+    const partLabel = partLabelOf(record);
+    const series = frontmatter.series;
+    const seriesTag = series
+      ? `<a class="g-series-tag" href="${escapeHtml(seriesHref(series))}">${icon('book')}` +
+        (partLabel
+          ? `${escapeHtml(partLabel)}<span class="g-dot" aria-hidden="true"></span>`
+          : '') +
+        `${escapeHtml(series)}</a>`
+      : '';
+    const head =
+      `<div class="g-wrap g-article-head">${renderBreadcrumbs({ trail: [homeStep, ...trail], messages })}` +
+      (isArticle
+        ? `<div class="g-article-labels">${firstTag ? chip(firstTag) : ''}${seriesTag}</div>`
+        : '') +
+      `<h1>${escapeHtml(frontmatter.title)}</h1>` +
+      (frontmatter.description
+        ? `<p class="g-dek">${escapeHtml(frontmatter.description)}</p>`
+        : '') +
+      (isArticle
+        ? `<div class="g-article-meta">${byline(record)}` +
+          `<div class="g-share" role="group" aria-label="${text('shareLabel')}" hidden>` +
+          `<button class="g-icon-btn" type="button" data-action="copy-link" aria-label="${text('copyLinkLabel')}" title="${text('copyLinkLabel')}">${icon('link')}</button>` +
+          `<button class="g-icon-btn" type="button" data-action="bookmark" aria-pressed="false" aria-label="${text('saveForLaterLabel')}" title="${text('saveForLaterLabel')}">${icon('bookmark')}</button>` +
+          `</div></div>`
+        : '') +
+      `</div>`;
+    const cover = heroUrl
+      ? `<figure class="g-wrap g-article-cover"><img src="${escapeHtml(heroUrl)}" alt="${escapeHtml(frontmatter.hero?.role === 'decorative' ? '' : (frontmatter.hero?.alt ?? ''))}"></figure>`
+      : '';
+    const tocNav = contents
+      ? `<nav class="g-toc" aria-label="${text('onThisPageLabel')}"><p class="g-label">${icon('list')}${text('onThisPageLabel')}</p>${contents}</nav>`
+      : '';
+    const tocMobile = contents
+      ? `<details class="g-toc-mobile"><summary>${icon('list')}${text('onThisPageLabel')}</summary>${contents}</details>`
+      : '';
     const tags =
-      frontmatter.tags.length > 0
-        ? `<ul>${frontmatter.tags
+      isArticle && frontmatter.tags.length > 0
+        ? `<ul class="g-tags" aria-label="${text('tagListLabel')}">${frontmatter.tags
             .map(
               (tag) =>
-                `<li><a href="${escapeHtml(site(`/tags/${routeSegmentForLabel(tag)}`))}">${escapeHtml(tag)}</a></li>`,
+                `<li><a class="g-tag" href="${escapeHtml(tagHref(tag))}">${icon('hash')}${escapeHtml(tag)}</a></li>`,
             )
             .join('')}</ul>`
         : '';
-    const seriesHtml = frontmatter.series
-      ? `<p><a href="${escapeHtml(site(`/series/${routeSegmentForLabel(frontmatter.series)}`))}">${escapeHtml(frontmatter.series)}</a></p>`
-      : '';
-    const breadcrumbTrail =
-      frontmatter.kind === 'article'
-        ? [
-            {
-              label: /** @type {string} */ (messages.homeLinkLabel),
-              route: site('/'),
-            },
-            {
-              label: /** @type {string} */ (messages.indexHeading),
-              route: site('/'),
-            },
-            { label: frontmatter.title },
-          ]
-        : [
-            {
-              label: /** @type {string} */ (messages.homeLinkLabel),
-              route: site('/'),
-            },
-            { label: frontmatter.title },
-          ];
+    const prose =
+      `<div class="g-prose">${tocMobile}` +
+      renderSlot('article-preamble') +
+      record.body +
+      tags +
+      renderSlot('article-end') +
+      renderSlot('article-footer-ad', { collapsed: true }) +
+      `</div>`;
+
+    let foot = '';
+    let after = '';
+    if (isArticle) {
+      const authorCards = ui
+        .recordAuthors(record)
+        .map(
+          (author) =>
+            `<section class="g-author-card" aria-label="${text('aboutTheAuthorLabel')}">${avatar(author)}<div>` +
+            `<p class="g-label">${text('writtenByLabel')}</p>` +
+            `<p class="g-author-name"><a href="${escapeHtml(site(`/authors/${author.id}`))}">${escapeHtml(author.displayName)}</a></p>` +
+            (author.biography
+              ? `<p class="g-author-bio">${escapeHtml(author.biography)}</p>`
+              : '') +
+            `</div></section>`,
+        )
+        .join('');
+      const members = series ? bySeries.get(series) : undefined;
+      const seriesBox =
+        series && members && members.includes(record)
+          ? `<section class="g-series-box" aria-label="${escapeHtml(series)}"><p class="g-label">${icon('book')}${escapeHtml(series)}</p><ol class="g-series-list">` +
+            members
+              .map((member, index) => {
+                const here = member === record;
+                return (
+                  `<li${here ? ' aria-current="true"' : ''}><a href="${escapeHtml(recordHref(member))}">` +
+                  `<span class="g-series-n">${index + 1}</span><span>${escapeHtml(member.frontmatter.title)}</span>` +
+                  (here
+                    ? `<span class="g-series-here">${text('youAreHereLabel')}</span>`
+                    : '') +
+                  `</a></li>`
+                );
+              })
+              .join('') +
+            `</ol></section>`
+          : '';
+      const position = publishedArticles.indexOf(record);
+      const newer = position > 0 ? publishedArticles[position - 1] : undefined;
+      const older = position >= 0 ? publishedArticles[position + 1] : undefined;
+      const pagerLink = (
+        /** @type {import('../../../types/index.d.ts').ContentBuildRecord} */ target,
+        /** @type {boolean} */ isOlder,
+      ) =>
+        `<a class="g-pager-link${isOlder ? ' g-pager-next' : ''}" rel="${isOlder ? 'next' : 'prev'}" href="${escapeHtml(recordHref(target))}">` +
+        `<span class="g-label">${isOlder ? `${text('olderArticleLabel')}${icon('arrow')}` : `${icon('back')}${text('newerArticleLabel')}`}</span>` +
+        `<span>${escapeHtml(target.frontmatter.title)}</span></a>`;
+      const pager =
+        newer || older
+          ? `<nav class="g-pager" aria-label="${text('moreArticlesNavigationLabel')}">${newer ? pagerLink(newer, false) : ''}${older ? pagerLink(older, true) : ''}</nav>`
+          : '';
+      foot = `<div class="g-wrap g-article-foot">${authorCards}${seriesBox}${pager}</div>`;
+      const related = selectRelatedArticles(record, publishedArticles);
+      after =
+        related.length > 0
+          ? `<section class="g-wrap g-section" aria-labelledby="related-title"><div class="g-section-head">` +
+            `<h2 id="related-title">${text('keepReadingHeading')}</h2>` +
+            (firstTag
+              ? `<a class="g-more" href="${escapeHtml(tagHref(firstTag))}">${call('moreInTagLabel', firstTag)}${icon('arrow')}</a>`
+              : '') +
+            `</div><div class="g-grid">${related.map((r) => cardOf(r)).join('')}</div></section>`
+          : '';
+    }
     pages.push({
       kind: frontmatter.kind,
       route: contentRoute(frontmatter),
       title: frontmatter.title,
       language: frontmatter.language,
       description: frontmatter.description,
-      ogType: frontmatter.kind === 'article' ? 'article' : 'website',
+      ogType: isArticle ? 'article' : 'website',
       socialImageRef: frontmatter.socialImage ?? frontmatter.hero?.file,
       robotsContent:
         frontmatter.status === 'unlisted' ? 'noindex, follow' : undefined,
       lastModified: contentLastModified(frontmatter),
-      breadcrumbHtml: renderBreadcrumbs({ trail: breadcrumbTrail, messages }),
       bodyHtml:
-        `<article>` +
-        renderSlot('article-preamble') +
-        `<h1>${escapeHtml(frontmatter.title)}</h1>` +
-        byLine +
-        time +
-        seriesHtml +
-        tags +
-        record.body +
-        renderSlot('article-end') +
-        renderSlot('article-footer-ad', { collapsed: true }) +
-        `</article>`,
+        `<article class="g-article">${head}${cover}` +
+        `<div class="g-wrap g-article-grid">${tocNav}${prose}</div>${foot}</article>` +
+        after +
+        (isArticle ? newsletterHtml : ''),
     });
   }
 
-  const publishedArticles = selectPublishedArticles(content);
-
-  const indexPages = paginate(publishedArticles, LISTING_PAGE_SIZE);
+  // Index: page 1 is the home page (featured, tag pills, latest cards, series
+  // card, newsletter); every index page carries a slice of the older
+  // articles with pagination.
+  const [featured, ...rest] = publishedArticles;
+  const latest = rest.slice(0, LATEST_CARD_COUNT);
+  const older = rest.slice(LATEST_CARD_COUNT);
+  const indexPages = paginate(older, LISTING_PAGE_SIZE);
+  const indexRoute = (/** @type {number} */ n) =>
+    site(n === 1 ? '/' : `/page/${n}`);
+  const seriesName = publishedArticles.find((r) => r.frontmatter.series)
+    ?.frontmatter.series;
+  const seriesParts = (seriesName ? bySeries.get(seriesName) : undefined) ?? [];
+  const homeFeatured = featured
+    ? (() => {
+        const fm = featured.frontmatter;
+        const heroUrl = mediaUrl(fm.hero?.file);
+        const href = escapeHtml(recordHref(featured));
+        return (
+          `<section class="g-wrap g-hero" aria-labelledby="hero-title">` +
+          `<a class="g-hero-media" href="${href}" tabindex="-1" aria-hidden="true">` +
+          (heroUrl
+            ? `<img src="${escapeHtml(heroUrl)}" alt="" fetchpriority="high">`
+            : `<span class="g-card-placeholder">${icon('sparkle')}</span>`) +
+          `</a><div class="g-hero-body"><p class="g-eyebrow"><span class="g-badge">${icon('sparkle')}${text('featuredLabel')}</span>` +
+          (fm.tags[0] ? chip(fm.tags[0]) : '') +
+          `</p><h1 id="hero-title"><a href="${href}">${escapeHtml(fm.title)}</a></h1>` +
+          (fm.description
+            ? `<p class="g-dek">${escapeHtml(fm.description)}</p>`
+            : '') +
+          byline(featured) +
+          `<a class="g-btn" href="${href}">${text('readEssayLabel')}${icon('arrow')}</a></div></section>`
+        );
+      })()
+    : `<section class="g-wrap g-topic-hero"><h1>${text('indexHeading')}</h1><p>${text('emptyListingLabel')}</p></section>`;
+  const homeTags =
+    sortedTags.length > 0
+      ? `<section class="g-wrap g-topic-strip" aria-label="${text('browseByTagLabel')}"><ul class="g-pills">${[
+          ...sortedTags,
+        ]
+          .sort(
+            (a, b) =>
+              (byTag.get(b)?.length ?? 0) - (byTag.get(a)?.length ?? 0) ||
+              (a < b ? -1 : 1),
+          )
+          .slice(0, HOME_TAG_PILL_LIMIT)
+          .map((tag) => pill(tagHref(tag), tag, byTag.get(tag)?.length, 'hash'))
+          .join('')}</ul></section>`
+      : '';
+  const homeLatest =
+    latest.length > 0
+      ? `<section class="g-wrap g-section" aria-labelledby="latest-title"><div class="g-section-head"><h2 id="latest-title">${text('latestHeading')}</h2>` +
+        `<a class="g-more" href="${escapeHtml(site('/archive'))}">${text('archiveSectionLabel')}${icon('arrow')}</a></div>` +
+        `<div class="g-grid">${latest.map((r) => cardOf(r)).join('')}</div></section>`
+      : '';
+  const homeSeries =
+    seriesName && seriesParts.length > 0
+      ? `<section class="g-wrap g-section"><div class="g-series-card">` +
+        `<p class="g-label">${icon('book')}${text('seriesCardLabel')}<span class="g-dot" aria-hidden="true"></span>${call('partsCountLabel', String(seriesParts.length))}</p>` +
+        `<h2><a href="${escapeHtml(seriesHref(seriesName))}">${escapeHtml(seriesName)}</a></h2>` +
+        `<ol class="g-series-list">${seriesParts
+          .map(
+            (member, index) =>
+              `<li><a href="${escapeHtml(recordHref(member))}"><span class="g-series-n">${index + 1}</span><span>${escapeHtml(member.frontmatter.title)}</span></a></li>`,
+          )
+          .join('')}</ol>` +
+        `<a class="g-btn" href="${escapeHtml(recordHref(seriesParts[0]))}">${text('startSeriesLabel')}${icon('arrow')}</a></div></section>`
+      : '';
   indexPages.forEach((items, pageIndex) => {
     const pageNumber = pageIndex + 1;
-    const route = pageNumber === 1 ? '/' : `/page/${pageNumber}`;
+    const pagination = renderPagination({
+      currentPage: pageNumber,
+      totalPages: indexPages.length,
+      routeForPage: indexRoute,
+      messages,
+    });
+    const moreList =
+      items.length > 0
+        ? `<section class="g-wrap g-section"><div class="g-section-head"><h2>${text('moreArticlesHeading')}</h2></div>` +
+          `<div class="g-list">${items.map((r) => cardOf(r, 'row')).join('')}</div>${pagination}</section>`
+        : '';
+    const bodyHtml =
+      pageNumber === 1
+        ? homeFeatured +
+          homeTags +
+          homeLatest +
+          homeSeries +
+          moreList +
+          newsletterHtml
+        : listingHead({
+            breadcrumbHtml: crumbs([
+              { label: /** @type {string} */ (messages.indexHeading) },
+            ]),
+            kicker: /** @type {(c: string, t: string) => string} */ (
+              messages.pageStatusLabel
+            )(String(pageNumber), String(indexPages.length)),
+            count: undefined,
+            title: /** @type {string} */ (messages.indexHeading),
+            iconName: 'layers',
+          }) + rowList(items, pagination);
     pages.push({
       kind: 'index',
-      route,
+      route: pageNumber === 1 ? '/' : `/page/${pageNumber}`,
       title: /** @type {string} */ (messages.indexHeading),
       language: publication.defaultLanguage,
       description: publication.description,
       ogType: 'website',
       socialImageRef: publication.defaultImage,
-      lastModified: latestContentTimestamp(items),
-      bodyHtml:
-        `<h1>${escapeHtml(/** @type {string} */ (messages.indexHeading))}</h1>` +
-        `<ul>${items.map((record) => renderContentSummary(record)).join('')}</ul>` +
-        renderPagination({
-          currentPage: pageNumber,
-          totalPages: indexPages.length,
-          routeForPage: (n) => site(n === 1 ? '/' : `/page/${n}`),
-          messages,
-        }),
+      lastModified: latestContentTimestamp(
+        pageNumber === 1
+          ? publishedArticles.slice(0, 1 + LATEST_CARD_COUNT)
+          : items,
+      ),
+      bodyHtml,
     });
   });
 
-  /** @type {Map<string, import('../../../types/index.d.ts').ContentBuildRecord[]>} */
-  const byTag = new Map();
-  for (const record of publishedArticles) {
-    for (const tag of record.frontmatter.tags) {
-      const bucket = byTag.get(tag) ?? [];
-      bucket.push(record);
-      byTag.set(tag, bucket);
-    }
-  }
-  const sortedTags = [...byTag.keys()].sort();
   if (sortedTags.length > 0) {
     pages.push({
       kind: 'tag',
@@ -483,14 +824,15 @@ export function buildGeneratedPages(validatedInput) {
       ogType: 'website',
       socialImageRef: publication.defaultImage,
       lastModified: latestContentTimestamp(publishedArticles),
-      bodyHtml:
-        `<h1>${escapeHtml(/** @type {string} */ (messages.tagsSectionLabel))}</h1>` +
-        `<ul>${sortedTags
-          .map(
-            (tag) =>
-              `<li><a href="${escapeHtml(site(`/tags/${routeSegmentForLabel(tag)}`))}">${escapeHtml(tag)}</a></li>`,
-          )
-          .join('')}</ul>`,
+      bodyHtml: listingHead({
+        breadcrumbHtml: crumbs([
+          { label: /** @type {string} */ (messages.tagsSectionLabel) },
+        ]),
+        kicker: /** @type {string} */ (messages.tagKickerLabel),
+        count: undefined,
+        title: /** @type {string} */ (messages.tagsSectionLabel),
+        extraHtml: tagPills(),
+      }),
     });
   }
   for (const tag of sortedTags) {
@@ -498,45 +840,33 @@ export function buildGeneratedPages(validatedInput) {
       /** @type {import('../../../types/index.d.ts').ContentBuildRecord[]} */ (
         byTag.get(tag)
       );
-    const heading = `${/** @type {string} */ (messages.tagIndexLabelPrefix)} ${tag}`;
     pages.push({
       kind: 'tag',
       route: `/tags/${routeSegmentForLabel(tag)}`,
-      title: heading,
+      title: `${/** @type {string} */ (messages.tagIndexLabelPrefix)} ${tag}`,
       language: publication.defaultLanguage,
       ogType: 'website',
       socialImageRef: publication.defaultImage,
       lastModified: latestContentTimestamp(items),
-      breadcrumbHtml: renderBreadcrumbs({
-        trail: [
-          {
-            label: /** @type {string} */ (messages.homeLinkLabel),
-            route: site('/'),
-          },
-          {
-            label: /** @type {string} */ (messages.tagsSectionLabel),
-            route: site('/tags'),
-          },
-          { label: tag },
-        ],
-        messages,
-      }),
       bodyHtml:
-        `<h1>${escapeHtml(heading)}</h1>` +
-        `<ul>${items.map((record) => renderContentSummary(record)).join('')}</ul>`,
+        listingHead({
+          breadcrumbHtml: crumbs(
+            [
+              {
+                label: /** @type {string} */ (messages.tagsSectionLabel),
+                route: site('/tags'),
+              },
+            ],
+            [{ label: tag }],
+          ),
+          kicker: /** @type {string} */ (messages.tagKickerLabel),
+          count: items.length,
+          title: tag,
+          extraHtml: tagPills(tag),
+        }) + rowList(items),
     });
   }
 
-  /** @type {Map<string, import('../../../types/index.d.ts').ContentBuildRecord[]>} */
-  const bySeries = new Map();
-  for (const record of content) {
-    const series = record.frontmatter.series;
-    if (!series || record.frontmatter.status !== 'published') continue;
-    const bucket = bySeries.get(series) ?? [];
-    bucket.push(record);
-    bySeries.set(series, bucket);
-  }
-  const sortedSeries = [...bySeries.keys()].sort();
   if (sortedSeries.length > 0) {
     pages.push({
       kind: 'series',
@@ -547,64 +877,54 @@ export function buildGeneratedPages(validatedInput) {
       ogType: 'website',
       socialImageRef: publication.defaultImage,
       lastModified: latestContentTimestamp([...bySeries.values()].flat()),
-      bodyHtml:
-        `<h1>${escapeHtml(/** @type {string} */ (messages.seriesSectionLabel))}</h1>` +
-        `<ul>${sortedSeries
-          .map(
-            (series) =>
-              `<li><a href="${escapeHtml(site(`/series/${routeSegmentForLabel(series)}`))}">${escapeHtml(series)}</a></li>`,
+      bodyHtml: listingHead({
+        breadcrumbHtml: crumbs([
+          { label: /** @type {string} */ (messages.seriesSectionLabel) },
+        ]),
+        kicker: /** @type {string} */ (messages.seriesKickerLabel),
+        count: undefined,
+        title: /** @type {string} */ (messages.seriesSectionLabel),
+        iconName: 'book',
+        extraHtml: `<ul class="g-pills">${sortedSeries
+          .map((name) =>
+            pill(seriesHref(name), name, bySeries.get(name)?.length, 'book'),
           )
           .join('')}</ul>`,
+      }),
     });
   }
-  for (const series of sortedSeries) {
+  for (const name of sortedSeries) {
     const items =
       /** @type {import('../../../types/index.d.ts').ContentBuildRecord[]} */ (
-        bySeries.get(series)
-      )
-        .slice()
-        .sort(
-          (a, b) =>
-            (a.frontmatter.seriesOrder ?? 0) - (b.frontmatter.seriesOrder ?? 0),
-        );
-    const heading = `${/** @type {string} */ (messages.seriesIndexLabelPrefix)} ${series}`;
+        bySeries.get(name)
+      );
     pages.push({
       kind: 'series',
-      route: `/series/${routeSegmentForLabel(series)}`,
-      title: heading,
+      route: `/series/${routeSegmentForLabel(name)}`,
+      title: `${/** @type {string} */ (messages.seriesIndexLabelPrefix)} ${name}`,
       language: publication.defaultLanguage,
       ogType: 'website',
       socialImageRef: publication.defaultImage,
       lastModified: latestContentTimestamp(items),
-      breadcrumbHtml: renderBreadcrumbs({
-        trail: [
-          {
-            label: /** @type {string} */ (messages.homeLinkLabel),
-            route: site('/'),
-          },
-          {
-            label: /** @type {string} */ (messages.seriesSectionLabel),
-            route: site('/series'),
-          },
-          { label: series },
-        ],
-        messages,
-      }),
       bodyHtml:
-        `<h1>${escapeHtml(heading)}</h1>` +
-        `<ol>${items.map((record) => renderContentSummary(record)).join('')}</ol>`,
+        listingHead({
+          breadcrumbHtml: crumbs(
+            [
+              {
+                label: /** @type {string} */ (messages.seriesSectionLabel),
+                route: site('/series'),
+              },
+            ],
+            [{ label: name }],
+          ),
+          kicker: /** @type {string} */ (messages.seriesKickerLabel),
+          count: items.length,
+          title: name,
+          iconName: 'book',
+        }) + rowList(items),
     });
   }
 
-  /** @type {Map<string, import('../../../types/index.d.ts').ContentBuildRecord[]>} */
-  const byYear = new Map();
-  for (const record of publishedArticles) {
-    const year = record.frontmatter.publishedAt.slice(0, 4);
-    const bucket = byYear.get(year) ?? [];
-    bucket.push(record);
-    byYear.set(year, bucket);
-  }
-  const sortedYears = [...byYear.keys()].sort().reverse();
   if (sortedYears.length > 0) {
     pages.push({
       kind: 'archive',
@@ -615,14 +935,25 @@ export function buildGeneratedPages(validatedInput) {
       ogType: 'website',
       socialImageRef: publication.defaultImage,
       lastModified: latestContentTimestamp(publishedArticles),
-      bodyHtml:
-        `<h1>${escapeHtml(/** @type {string} */ (messages.archiveSectionLabel))}</h1>` +
-        `<ul>${sortedYears
-          .map(
-            (year) =>
-              `<li><a href="${escapeHtml(site(`/archive/${year}`))}">${escapeHtml(year)}</a></li>`,
+      bodyHtml: listingHead({
+        breadcrumbHtml: crumbs([
+          { label: /** @type {string} */ (messages.archiveSectionLabel) },
+        ]),
+        kicker: /** @type {string} */ (messages.archiveKickerLabel),
+        count: publishedArticles.length,
+        title: /** @type {string} */ (messages.archiveSectionLabel),
+        iconName: 'layers',
+        extraHtml: `<ul class="g-pills">${sortedYears
+          .map((year) =>
+            pill(
+              site(`/archive/${year}`),
+              year,
+              byYear.get(year)?.length,
+              'layers',
+            ),
           )
           .join('')}</ul>`,
+      }),
     });
   }
   for (const year of sortedYears) {
@@ -631,45 +962,43 @@ export function buildGeneratedPages(validatedInput) {
         byYear.get(year)
       );
     const yearPages = paginate(items, LISTING_PAGE_SIZE);
+    const yearRoute = (/** @type {number} */ n) =>
+      n === 1 ? `/archive/${year}` : `/archive/${year}/page/${n}`;
     yearPages.forEach((pageItems, pageIndex) => {
       const pageNumber = pageIndex + 1;
-      const route =
-        pageNumber === 1
-          ? `/archive/${year}`
-          : `/archive/${year}/page/${pageNumber}`;
-      const heading = `${/** @type {string} */ (messages.archiveYearLabelPrefix)} ${year}`;
       pages.push({
         kind: 'archive',
-        route,
-        title: heading,
+        route: yearRoute(pageNumber),
+        title: `${/** @type {string} */ (messages.archiveYearLabelPrefix)} ${year}`,
         language: publication.defaultLanguage,
         ogType: 'website',
         socialImageRef: publication.defaultImage,
         lastModified: latestContentTimestamp(pageItems),
-        breadcrumbHtml: renderBreadcrumbs({
-          trail: [
-            {
-              label: /** @type {string} */ (messages.homeLinkLabel),
-              route: site('/'),
-            },
-            {
-              label: /** @type {string} */ (messages.archiveSectionLabel),
-              route: site('/archive'),
-            },
-            { label: year },
-          ],
-          messages,
-        }),
         bodyHtml:
-          `<h1>${escapeHtml(heading)}</h1>` +
-          `<ul>${pageItems.map((record) => renderContentSummary(record)).join('')}</ul>` +
-          renderPagination({
-            currentPage: pageNumber,
-            totalPages: yearPages.length,
-            routeForPage: (n) =>
-              site(n === 1 ? `/archive/${year}` : `/archive/${year}/page/${n}`),
-            messages,
-          }),
+          listingHead({
+            breadcrumbHtml: crumbs(
+              [
+                {
+                  label: /** @type {string} */ (messages.archiveSectionLabel),
+                  route: site('/archive'),
+                },
+              ],
+              [{ label: year }],
+            ),
+            kicker: /** @type {string} */ (messages.archiveKickerLabel),
+            count: items.length,
+            title: year,
+            iconName: 'layers',
+          }) +
+          rowList(
+            pageItems,
+            renderPagination({
+              currentPage: pageNumber,
+              totalPages: yearPages.length,
+              routeForPage: (n) => site(yearRoute(n)),
+              messages,
+            }),
+          ),
       });
     });
   }
@@ -701,8 +1030,8 @@ export function renderErrorPageBody({ messages, homeRoute }) {
     /** @type {string} */ (messages.errorPageReturnHomeLabel),
   );
   return (
-    `<h1>${heading}</h1>` +
-    `<p>${body}</p>` +
-    `<p><a href="${escapeHtml(homeRoute)}">${returnLabel}</a></p>`
+    `<section class="g-wrap g-topic-hero"><h1>${heading}</h1>` +
+    `<p class="g-dek">${body}</p>` +
+    `<p><a class="g-btn" href="${escapeHtml(homeRoute)}">${returnLabel}${icon('arrow')}</a></p></section>`
   );
 }

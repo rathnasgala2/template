@@ -207,9 +207,12 @@ test('S2-T08 acceptance: feeds, sitemap, search index, 404 and print CSS are gen
       const html = await readRoute(outputDirectory, 'fixture-1/404.html');
       assert.match(html, /<meta name="robots" content="noindex, follow">/);
       assert.match(html, /<h1>Page not found<\/h1>/);
-      assert.match(html, /<a href="\/fixture-1">Return to the home page<\/a>/);
-      assert.equal((html.match(/<header>/g) ?? []).length, 1);
-      assert.equal((html.match(/<footer>/g) ?? []).length, 1);
+      assert.match(
+        html,
+        /<a class="g-btn" href="\/fixture-1">Return to the home page/,
+      );
+      assert.equal((html.match(/<header class="g-header">/g) ?? []).length, 1);
+      assert.equal((html.match(/<footer class="g-footer">/g) ?? []).length, 1);
       assert.ok(!html.includes('rel="canonical"'));
     },
   );

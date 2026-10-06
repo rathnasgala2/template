@@ -56,6 +56,68 @@ const CATALOGS = Object.freeze({
     appearanceModeLightLabel: 'Light',
     appearanceModeDarkLabel: 'Dark',
     appearanceModeSystemLabel: 'System',
+    searchButtonLabel: 'Search',
+    searchButtonAriaLabel: 'Search articles',
+    menuSummaryLabel: 'Menu',
+    featuredLabel: 'Featured',
+    readEssayLabel: 'Read the essay',
+    latestHeading: 'Latest',
+    moreArticlesHeading: 'More articles',
+    browseByTagLabel: 'Browse by tag',
+    seriesCardLabel: 'Series',
+    /** @type {(count: string) => string} */
+    partsCountLabel: (count) => `${count} parts`,
+    startSeriesLabel: 'Start with part 1',
+    newsletterLabel: 'Newsletter',
+    newsletterActionLabel: 'Subscribe',
+    /** @type {(minutes: string) => string} */
+    readingTimeLabel: (minutes) => `${minutes} min read`,
+    /** @type {(part: string, total: string) => string} */
+    seriesPartLabel: (part, total) => `Part ${part} of ${total}`,
+    onThisPageLabel: 'On this page',
+    writtenByLabel: 'Written by',
+    aboutTheAuthorLabel: 'About the author',
+    youAreHereLabel: 'You are here',
+    newerArticleLabel: 'Newer',
+    olderArticleLabel: 'Older',
+    moreArticlesNavigationLabel: 'More articles',
+    keepReadingHeading: 'Keep reading',
+    /** @type {(tag: string) => string} */
+    moreInTagLabel: (tag) => `More in ${tag}`,
+    shareLabel: 'Share',
+    copyLinkLabel: 'Copy link to this article',
+    saveForLaterLabel: 'Save for later',
+    tagListLabel: 'Tags',
+    tagKickerLabel: 'Tag',
+    seriesKickerLabel: 'Series',
+    archiveKickerLabel: 'Archive',
+    authorKickerLabel: 'Author',
+    /** @type {(count: string) => string} */
+    articleCountLabel: (count) =>
+      count === '1' ? '1 article' : `${count} articles`,
+    emptyListingLabel: 'No articles yet.',
+    exploreColumnLabel: 'Explore',
+    rssFeedLabel: 'RSS feed',
+    /** @type {(iso: string) => string} */
+    formatDate: (iso) => {
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+      if (!match) return iso;
+      return `${months[Number(match[2]) - 1]} ${Number(match[3])}, ${match[1]}`;
+    },
   }),
 });
 

@@ -13,9 +13,10 @@
  * `internal/appearance/contract.js` — never a hand-typed literal
  * independent of what those modules emit.
  *
- * Public-hook budget (`publicThemeSlotHooks` is a `[1..64]`-entry set):
- * every catalog leaf below (28 type + 15 class + 2 id + 19 attribute-value)
- * has exactly one corresponding public hook, for exactly 64 entries — this
+ * Public-hook budget (`publicThemeSlotHooks` is a `[1..160]`-entry set since
+ * contract 3.0.0): every catalog leaf below (33 type + 105 class + 2 id + 19
+ * attribute-value) has exactly one corresponding public hook, for exactly
+ * 159 entries — this
  * renderer's complete public theming surface. A leaf with no matching hook
  * would be a catalog member no theme could ever validly select (a
  * used-but-undeclared public slot hook rejects), so catalogs and hooks are
@@ -61,7 +62,7 @@
  * markdown-it's own CommonMark grammar (with `html:false`) never actually
  * produces — `b`, `i`, `u`, `s`, `del`, `ins`, `sub`, `sup`, `mark`, `small`,
  * `wbr`, `table`, `thead`, `tbody`, `tr`, `th`, `td`, `dl`, `dt`, `dd`,
- * `figure`, `figcaption` — is likewise excluded from `typeSelectors`: this
+ * `figcaption` — is likewise excluded from `typeSelectors`: this
  * catalog is every hook the template actually renders, not the sanitizer's
  * own defence-in-depth superset.
  */
@@ -79,7 +80,7 @@ import { canonicalizeJcs, domainDigest } from '../canonical-jcs.js';
 /** @type {string} */
 export const TEMPLATE_STYLING_CONTRACT_PACKAGE = '@rathnasgala2/template';
 /** @type {string} */
-export const TEMPLATE_STYLING_CONTRACT_VERSION = '2.1.0';
+export const TEMPLATE_STYLING_CONTRACT_VERSION = '3.0.0';
 /** @type {string} */
 export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '2.1.0';
 
@@ -218,6 +219,11 @@ const TYPE_HOOKS = Object.freeze(
     ['control-option', 'option'],
     ['prose-span', 'span'],
     ['prose-time', 'time'],
+    ['control-button', 'button'],
+    ['disclosure-details', 'details'],
+    ['disclosure-summary', 'summary'],
+    ['landmark-section', 'section'],
+    ['media-figure', 'figure'],
   ].map(([hookId, tag]) =>
     Object.freeze({
       hookId,
@@ -228,13 +234,150 @@ const TYPE_HOOKS = Object.freeze(
 );
 
 /**
- * Every class-selector hook: the base Prism `.token` class plus one
- * `.language-<grammar>` hook per admitted highlight grammar (S2 scope: no
+ * The most public hooks a theme contract may declare
+ * (`theme-contract.slotHooks.maxItems`, raised from 64 to 160 in contract
+ * 3.0.0).
+ *
+ * @type {number}
+ */
+export const MAX_PUBLIC_HOOKS = 160;
+
+/**
+ * Contract 3.0.0: every `g-*` component class the template's own markup
+ * (`internal/chrome.js`, `internal/components.js`, `internal/page-kinds.js`
+ * and `internal/skeleton.js`) emits, grouped by component. The naming
+ * convention is the approved design reference's: `g-<component>` for the
+ * block and `g-<component>-<part>` for its parts; a variant adds a second
+ * class (`g-card g-card-row`). One hook per class, published as
+ * `ui-<name>`; `test/theme-styling-contract.test.js` fails if a rendered
+ * `g-*` class is missing here, or a class listed here is never rendered.
+ * Pure-layout needs a component can meet with an element/descendant
+ * selector (`.g-card h3`) deliberately get no class of their own, to stay
+ * under the 160-hook cap.
+ *
+ * @type {Readonly<Record<string, readonly string[]>>}
+ */
+export const COMPONENT_CLASS_GROUPS = Object.freeze({
+  shared: [
+    'g-wrap',
+    'g-main',
+    'g-skip',
+    'g-sr',
+    'g-icon',
+    'g-dot',
+    'g-label',
+    'g-dek',
+    'g-btn',
+    'g-icon-btn',
+    'g-more',
+    'g-chip',
+    'g-badge',
+    'g-eyebrow',
+    'g-meta',
+    'g-avatar',
+    'g-byline',
+    'g-byline-text',
+    'g-section',
+    'g-section-head',
+    'g-grid',
+    'g-list',
+    'g-pills',
+    'g-pill',
+    'g-pill-count',
+    'g-crumbs',
+    'g-pagination',
+  ],
+  header: [
+    'g-header',
+    'g-header-row',
+    'g-brand',
+    'g-mark',
+    'g-brand-text',
+    'g-brand-name',
+    'g-brand-tag',
+    'g-nav',
+    'g-actions',
+    'g-search-btn',
+    'g-menu',
+  ],
+  footer: [
+    'g-footer',
+    'g-footer-grid',
+    'g-footer-brand',
+    'g-footer-about',
+    'g-footer-col',
+    'g-footer-base',
+    'g-social',
+  ],
+  card: [
+    'g-card',
+    'g-card-row',
+    'g-card-link',
+    'g-card-media',
+    'g-card-placeholder',
+    'g-card-body',
+    'g-card-top',
+    'g-card-excerpt',
+    'g-card-foot',
+    'g-series-tag',
+  ],
+  home: [
+    'g-hero',
+    'g-hero-media',
+    'g-hero-body',
+    'g-topic-strip',
+    'g-series-card',
+    'g-series-list',
+    'g-series-n',
+    'g-newsletter',
+    'g-panel',
+    'g-panel-copy',
+  ],
+  article: [
+    'g-article',
+    'g-article-head',
+    'g-article-labels',
+    'g-article-meta',
+    'g-share',
+    'g-article-cover',
+    'g-article-grid',
+    'g-toc',
+    'g-toc-list',
+    'g-toc-mobile',
+    'g-prose',
+    'g-tags',
+    'g-tag',
+    'g-article-foot',
+    'g-author-card',
+    'g-author-name',
+    'g-author-bio',
+    'g-series-box',
+    'g-series-here',
+    'g-pager',
+    'g-pager-link',
+    'g-pager-next',
+  ],
+  listing: ['g-topic-hero', 'g-topic-head', 'g-topic-icon'],
+});
+
+/**
+ * Every class-selector hook: the `g-*` component classes
+ * ({@link COMPONENT_CLASS_GROUPS}), the base Prism `.token` class and one
+ * `.language-<grammar>` hook per admitted highlight grammar (no
  * per-token-kind class is public — see module documentation).
  *
  * @type {readonly StyleHookDefinition[]}
  */
 const CLASS_HOOKS = Object.freeze([
+  ...Object.values(COMPONENT_CLASS_GROUPS)
+    .flat()
+    .map((className) =>
+      Object.freeze({
+        hookId: `ui-${className.slice(2)}`,
+        selectorAtom: `.${className}`,
+        kind: /** @type {const} */ ('class'),
+      }),
+    ),
   Object.freeze({
     hookId: 'code-token',
     selectorAtom: '.token',
@@ -470,7 +613,7 @@ export function assertTemplateStylingContractShape(contract) {
   if (contract.profile !== 'gala-template-styling-contract-v2') {
     fail('profile');
   }
-  if (contract.contractVersion !== '2.1.0') fail('contractVersion');
+  if (contract.contractVersion !== '3.0.0') fail('contractVersion');
   if (contract.templatePackage !== '@rathnasgala2/template') {
     fail('templatePackage');
   }
@@ -585,7 +728,11 @@ export function assertTemplateStylingContractShape(contract) {
   const hooks = /** @type {{hookId: string, selectorAtom: string}[]} */ (
     contract.publicThemeSlotHooks
   );
-  if (!Array.isArray(hooks) || hooks.length < 1 || hooks.length > 64) {
+  if (
+    !Array.isArray(hooks) ||
+    hooks.length < 1 ||
+    hooks.length > MAX_PUBLIC_HOOKS
+  ) {
     fail('publicThemeSlotHooks length');
   }
   const seenAtoms = new Set();

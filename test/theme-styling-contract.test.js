@@ -32,6 +32,8 @@ import {
 } from '../src/core/internal/theme-assets.js';
 import { projectFixedAssetPath } from '../src/core/internal/route.js';
 import {
+  COMPONENT_CLASS_GROUPS,
+  MAX_PUBLIC_HOOKS,
   assertTemplateStylingContractShape,
   buildTemplateStylingContract,
   templateStylingContractHooks,
@@ -48,6 +50,8 @@ import {
 } from './helpers/schema-fixtures.js';
 import { buildRichFixture, stableId } from './helpers/page-kind-fixtures.js';
 import { buildValidThemeJson } from './helpers/theme-contract-fixtures.js';
+import { renderNewsletterPanel } from '../src/core/internal/components.js';
+import { getMessages } from '../src/core/internal/messages.js';
 import { normalizeAuthoredMarkdown } from '../src/core/internal/content-security.js';
 import { HIGHLIGHT_GRAMMARS } from '../src/core/internal/render-policy-content.js';
 import { buildTestPng, sha256Of } from './helpers/media-fixtures.js';
@@ -117,13 +121,33 @@ test('a mutated catalogDigest, layer order or attribute row is rejected', () => 
   );
 });
 
-test('exactly 64 public theme-slot hooks, sorted by hookId, each atom appearing exactly once', () => {
+test('public theme-slot hooks stay within the 160 cap, sorted by hookId, each atom and id appearing exactly once', () => {
   const hooks = templateStylingContractHooks();
-  assert.equal(hooks.length, 64);
+  assert.ok(hooks.length > 64, 'contract 3.0.0 publishes the component hooks');
+  assert.ok(hooks.length <= MAX_PUBLIC_HOOKS);
+  assert.equal(MAX_PUBLIC_HOOKS, 160);
   const atoms = new Set(hooks.map((hook) => hook.selectorAtom));
-  assert.equal(atoms.size, 64, 'every hook selectorAtom must be unique');
+  assert.equal(atoms.size, hooks.length, 'every hook selectorAtom is unique');
   const hookIds = new Set(hooks.map((hook) => hook.hookId));
-  assert.equal(hookIds.size, 64, 'every hookId must be unique');
+  assert.equal(hookIds.size, hooks.length, 'every hookId is unique');
+  const published = buildTemplateStylingContract().publicThemeSlotHooks;
+  assert.equal(published.length, hooks.length);
+  assert.deepEqual(
+    published.map((hook) => hook.hookId),
+    [...published.map((hook) => hook.hookId)].sort(),
+  );
+});
+
+test('every g-* component class is published once, under one component group', () => {
+  const all = Object.values(COMPONENT_CLASS_GROUPS).flat();
+  assert.equal(new Set(all).size, all.length, 'no class in two groups');
+  for (const className of all) {
+    assert.match(className, /^g-[a-z0-9]+(?:-[a-z0-9]+)*$/);
+  }
+  const { classes } = templateStylingContractLeaves();
+  for (const className of all) {
+    assert.ok(classes.includes(className), `${className} must be published`);
+  }
 });
 
 test('cssLayers/stylesheet shapes: the contract fixes the ordered five-layer catalog including the template-owned gala-base layer', () => {
@@ -317,6 +341,8 @@ function richMarkdownSource() {
   ).join('\n');
   return (
     '## Section two\n\n' +
+    'Intro text.\n\n' +
+    '## Section two-b\n\n' +
     'Some **strong** and *emphasis* text with a [link](https://example.test/) ' +
     'and an image ![alt](photo.png).\n\n' +
     '> A blockquote.\n\n' +
@@ -332,24 +358,54 @@ function richMarkdownSource() {
 }
 
 /**
+ * @param {string} sourceDirectory the render's source directory, where the
+ *   fixture's images are staged
  * @returns {Promise<Record<string, unknown>>} the rich fixture with one
- *   additional article whose body exercises every markdown-derived hook
+ *   additional article whose body exercises every markdown-derived hook, a
+ *   hero, avatar and brand mark image (so the cover, card media and avatar
+ *   hooks render), and enough older articles that the home page paginates
  */
-async function buildCoverageFixture() {
+async function buildCoverageFixture(sourceDirectory) {
   const buildInput = /** @type {any} */ (await buildRichFixture());
   const { html, bodyDigest } = normalizeAuthoredMarkdown(richMarkdownSource());
   const [templateRecord] = buildInput.content;
+  const png = buildTestPng(640, 360);
+  const image = await stageMediaFile(sourceDirectory, 'assets/cover.png', png);
   const coverageRecord = JSON.parse(JSON.stringify(templateRecord));
   coverageRecord.frontmatter.id = stableId(99);
   coverageRecord.frontmatter.slug = 'coverage-article';
   coverageRecord.frontmatter.route = undefined;
   coverageRecord.frontmatter.title = 'Coverage article';
-  coverageRecord.frontmatter.tags = [];
+  coverageRecord.frontmatter.description =
+    'A summary used as the dek and card excerpt.';
+  coverageRecord.frontmatter.tags = ['alpha'];
   coverageRecord.frontmatter.series = undefined;
   coverageRecord.frontmatter.seriesOrder = undefined;
+  coverageRecord.frontmatter.publishedAt = '2025-12-01T09:00:00.000Z';
+  coverageRecord.frontmatter.hero = {
+    file: image,
+    alt: 'A cover',
+    role: 'informative',
+  };
   coverageRecord.body = html;
   coverageRecord.bodyDigest = bodyDigest;
   buildInput.content.push(coverageRecord);
+  for (let i = 0; i < 12; i += 1) {
+    const filler = JSON.parse(JSON.stringify(templateRecord));
+    filler.frontmatter.id = stableId(200 + i);
+    filler.frontmatter.slug = `filler-${i}`;
+    filler.frontmatter.route = undefined;
+    filler.frontmatter.title = `Filler ${i}`;
+    filler.frontmatter.tags = [];
+    filler.frontmatter.series = undefined;
+    filler.frontmatter.seriesOrder = undefined;
+    filler.frontmatter.status = 'published';
+    filler.frontmatter.kind = 'article';
+    filler.frontmatter.publishedAt = `2024-02-${String(i + 1).padStart(2, '0')}T09:00:00.000Z`;
+    buildInput.content.push(filler);
+  }
+  buildInput.authors[0].avatar = image;
+  buildInput.appearance.brandMark = image;
   await applyCurrentRenderPolicy(buildInput);
   return buildInput;
 }
@@ -369,17 +425,31 @@ async function readAllHtml(outputDirectory, routes) {
 }
 
 test('drift gate: every published hook is actually rendered by the rich fixture, and every rendered hook-like construct is published', async () => {
-  const buildInput = await buildCoverageFixture();
   const { outputDirectory, workDirectory, sourceDirectory, cleanup } =
     await createRenderDirectories();
   try {
+    const buildInput = await buildCoverageFixture(sourceDirectory);
     const { manifest } = await renderPublication(buildInput, {
       outputDirectory,
       workDirectory,
       sourceDirectory,
       provenance: testProvenance(),
     });
-    const html = await readAllHtml(outputDirectory, manifest.routes);
+    // `publication.newsletter` is not yet a field of the pinned build-input
+    // schema, so the optional newsletter panel cannot appear in a validated
+    // render here; its own markup is rendered directly, exactly as the page
+    // kinds embed it once the field exists.
+    const newsletterPanel = renderNewsletterPanel({
+      newsletter: {
+        url: 'https://example.test/subscribe',
+        title: 'Stay in touch',
+        text: 'One email a month.',
+      },
+      messages: getMessages('en'),
+    });
+    const html =
+      (await readAllHtml(outputDirectory, manifest.routes)) +
+      `\n<body>${newsletterPanel}</body>`;
     const hooks = templateStylingContractHooks();
 
     // Direction 1: every declared hook must actually be rendered.
@@ -389,7 +459,7 @@ test('drift gate: every published hook is actually rendered by the rich fixture,
         pattern = new RegExp(`<${hook.selectorAtom}[ >]`);
       } else if (hook.kind === 'class') {
         const className = hook.selectorAtom.slice(1);
-        pattern = new RegExp(`class="[^"]*\\b${className}\\b[^"]*"`);
+        pattern = new RegExp(`class="(?:[^"]*\\s)?${className}(?:\\s[^"]*)?"`);
       } else if (hook.kind === 'id') {
         const idValue = hook.selectorAtom.slice(1);
         pattern = new RegExp(`id="${idValue}"`);
@@ -446,6 +516,20 @@ test('drift gate: every published hook is actually rendered by the rich fixture,
       'the base Prism .token class must actually be rendered',
     );
 
+    // Direction 2b-2: every `g-*` class token anywhere in the rendered bodies
+    // is a published component class.
+    for (const bodyMatch of html.matchAll(/<body[^>]*>([\s\S]*?)<\/body>/g)) {
+      for (const match of bodyMatch[1].matchAll(/\bclass="([^"]*)"/g)) {
+        for (const token of match[1].split(/\s+/).filter(Boolean)) {
+          if (!token.startsWith('g-')) continue;
+          assert.ok(
+            declaredClassSet.has(token),
+            `rendered class ${token} is not part of the published contract`,
+          );
+        }
+      }
+    }
+
     // Direction 2c: every element tag inside <body>, other than the fixed,
     // documented, non-hook structural set, is a declared type-selector leaf
     // (headings' own dynamically-content-derived `id` values are excluded
@@ -457,7 +541,16 @@ test('drift gate: every published hook is actually rendered by the rich fixture,
     // (`internal/skeleton.js`'s `renderSlot`) carry no styling meaning of
     // their own — a theme targets a slot's `[data-gala-slot="..."]`
     // attribute-value hook instead, never the wrapping `div` by type.
-    const NON_HOOK_STRUCTURAL_TAGS = new Set(['body', 'div']);
+    // The template's own inline icons (`<svg>` and its drawing elements) are
+    // decorative chrome, themed through `.g-icon`, never by element.
+    const NON_HOOK_STRUCTURAL_TAGS = new Set([
+      'body',
+      'div',
+      'svg',
+      'path',
+      'circle',
+      'rect',
+    ]);
     for (const bodyMatch of html.matchAll(/<body[^>]*>([\s\S]*?)<\/body>/g)) {
       for (const tagMatch of bodyMatch[1].matchAll(/<([a-z][a-z0-9]*)[ >]/g)) {
         const tag = tagMatch[1];

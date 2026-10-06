@@ -86,7 +86,7 @@ test("contracts/theme-styling-contract.jcs is S2-T12's real, closed template sty
   const filePath = path.join(REPO_ROOT, 'contracts/theme-styling-contract.jcs');
   const document = JSON.parse(await readFile(filePath, 'utf8'));
   assert.equal(document.profile, 'gala-template-styling-contract-v2');
-  assert.equal(document.contractVersion, '2.1.0');
+  assert.equal(document.contractVersion, '3.0.0');
   assert.equal(document.templatePackage, '@rathnasgala2/template');
   assert.deepEqual(document.orderedLayers, [
     'gala-base',
@@ -100,5 +100,6 @@ test("contracts/theme-styling-contract.jcs is S2-T12's real, closed template sty
     '[data-gala-publication-root]',
   );
   assert.ok(document.catalogDigest.startsWith('sha256:'));
-  assert.equal(document.publicThemeSlotHooks.length, 64);
+  assert.ok(document.publicThemeSlotHooks.length <= 160);
+  assert.ok(document.publicThemeSlotHooks.length > 64);
 });

@@ -99,6 +99,7 @@ import {
   renderErrorPageBody,
 } from './internal/page-kinds.js';
 import { assertProvenance } from './internal/provenance.js';
+import { routeSegmentForLabel } from './internal/route-labels.js';
 import {
   derivePublicBasePath,
   errorDocumentPath,
@@ -117,12 +118,12 @@ import {
 } from './internal/theme-assets.js';
 import { resolveTextDirection } from './internal/text-direction.js';
 import {
-  renderFooter,
-  renderFooterNavigation,
-  renderHeader,
+  escapeHtml,
   renderPageBody,
   renderPrimaryNavigation,
 } from './internal/skeleton.js';
+import { renderFooter, renderHeader } from './internal/chrome.js';
+import { createComponents, createMediaUrl } from './internal/components.js';
 import {
   collectIncludedSources,
   compareUtf8Bytes,
@@ -336,35 +337,12 @@ export async function renderPublication(buildInput, options) {
   const appearanceControlHtml = renderAppearanceControl({
     messages: siteMessages,
   });
-  const headerHtml = renderHeader({
-    homeRoute,
-    publicationName: validatedInput.publication.title,
-    logo: undefined,
-    appearanceControlHtml,
-  });
-  const footerNavHtml = renderFooterNavigation({
-    items: validatedInput.navigation.footerItems,
-    messages: siteMessages,
-    urlPrefix,
-  });
-  const footerCard = validatedInput.publication.footerCard;
-  // Already verified render-policy-conformant HTML by
-  // assertRenderPolicyCompliance's assertPolicyConformantHtml call above —
-  // inserted as-is, never re-parsed as Markdown.
-  const footerProfileHtml = footerCard?.enabled ? footerCard.body.body : '';
-  const footerHtml = renderFooter({
-    publicationName: validatedInput.publication.title,
-    footerNavHtml,
-    footerProfileHtml,
-    copyrightText: undefined,
-    messages: siteMessages,
-  });
 
-  // Run before page assembly, not after: resolving each page's own
-  // `og:image`/`twitter:image` needs the media pipeline's own finished
-  // `assets` list (only it knows which derivative file extension a given
-  // source image's `sourceDigest` produced — see `internal/seo.js`). This
-  // only moves the in-memory computation earlier; `mediaFiles`' actual
+  // Run before page assembly, not after: resolving each page's own images
+  // (`og:image`, hero, avatar, brand mark) needs the media pipeline's own
+  // finished `assets` list (only it knows which derivative file extension a
+  // given source image's `sourceDigest` produced — see `internal/seo.js`).
+  // This only moves the in-memory computation earlier; `mediaFiles`' actual
   // bytes are still written to `outputDirectory` only after the route
   // listing below, so `outputDirectory/assets/media/` still can never be
   // mistaken for an Eleventy-rendered HTML route.
@@ -372,6 +350,87 @@ export async function renderPublication(buildInput, options) {
     validatedInput,
     { sourceDirectory: path.resolve(options.sourceDirectory) },
   );
+  const mediaUrl = createMediaUrl({ mediaAssets, publicBasePath });
+  const brandMarkUrl = mediaUrl(validatedInput.appearance.brandMark);
+  const searchIndexHref = joinBasePathAndRoute(
+    publicBasePath,
+    SEARCH_INDEX_ROUTE,
+  );
+  const rssHref = joinBasePathAndRoute(publicBasePath, RSS_FEED_ROUTE);
+  const publication = validatedInput.publication;
+  const footerCard = publication.footerCard;
+  // Already verified render-policy-conformant HTML by
+  // assertRenderPolicyCompliance's assertPolicyConformantHtml call above —
+  // inserted as-is, never re-parsed as Markdown.
+  const footerProfileHtml = footerCard?.enabled ? footerCard.body.body : '';
+  const authorsById = new Map(
+    validatedInput.authors.map((author) => [author.id, author]),
+  );
+  const footerAuthor =
+    authorsById.get(publication.contactAuthorId ?? '') ??
+    validatedInput.authors[0];
+  const footerComponents = createComponents({
+    messages: siteMessages,
+    site: (route) => joinPublicRoute(publicBasePath, route),
+    mediaUrl,
+    authorsById,
+    recordHref: (record) =>
+      joinPublicRoute(publicBasePath, contentRoute(record.frontmatter)),
+    tagHref: (tag) =>
+      joinPublicRoute(publicBasePath, `/tags/${routeSegmentForLabel(tag)}`),
+  });
+  const footerAuthorHtml = footerAuthor
+    ? `<p class="g-label">${footerComponents.text('writtenByLabel')}</p>` +
+      `<div class="g-byline">${footerComponents.avatar(footerAuthor)}<div class="g-byline-text">` +
+      `<a href="${escapeHtml(joinPublicRoute(publicBasePath, `/authors/${footerAuthor.id}`))}">${escapeHtml(footerAuthor.displayName)}</a>` +
+      `</div></div>`
+    : '';
+  const latestYear = validatedInput.content
+    .map((record) => record.frontmatter.publishedAt.slice(0, 4))
+    .sort()
+    .at(-1);
+  const footerHtml = renderFooter({
+    homeRoute,
+    publicationName: publication.title,
+    description: publication.description,
+    brandMarkUrl,
+    socialLinks: publication.socialLinks,
+    rssHref,
+    primaryItems: validatedInput.navigation.items,
+    footerItems: validatedInput.navigation.footerItems,
+    urlPrefix,
+    authorHtml: footerAuthorHtml,
+    footerProfileHtml,
+    copyrightText: `${siteMessages.footerCopyrightPrefix} ${latestYear ? `${latestYear} ` : ''}${publication.title}`,
+    messages: siteMessages,
+  });
+
+  /**
+   * One page's `<header>`, with the primary navigation marking that page's
+   * own route current.
+   *
+   * @param {string | undefined} currentRoute the page's joined route
+   * @returns {string}
+   */
+  const headerFor = (currentRoute) =>
+    renderHeader({
+      homeRoute,
+      publicationName: publication.title,
+      tagline: publication.description,
+      brandMarkUrl,
+      navHtml: renderPrimaryNavigation({
+        items: validatedInput.navigation.items,
+        currentRoute,
+        messages: siteMessages,
+        urlPrefix,
+      }),
+      navItems: validatedInput.navigation.items,
+      currentRoute,
+      urlPrefix,
+      searchIndexHref,
+      appearanceControlHtml,
+      messages: siteMessages,
+    });
 
   // The site-wide feeds, resolved once so every page's feed-discovery
   // `<link>` tags and the feed documents themselves agree on the exact same
@@ -410,24 +469,16 @@ export async function renderPublication(buildInput, options) {
   /** @type {{joinedSource: string, joinedTarget: string, publicTarget: string, filePath: string}[]} */
   const redirectProjections = [];
 
-  const generatedPages = buildGeneratedPages(validatedInput);
+  const generatedPages = buildGeneratedPages(validatedInput, { mediaAssets });
   generatedPages.forEach((page, index) => {
     const joinedRoute = joinBasePathAndRoute(
       validatedInput.basePath,
       page.route,
     );
-    const navHtml = renderPrimaryNavigation({
-      items: validatedInput.navigation.items,
-      currentRoute: joinedRoute,
-      messages: siteMessages,
-      urlPrefix,
-    });
     const bodyHtml = renderPageBody({
       messages: siteMessages,
-      headerHtml,
-      navHtml,
+      headerHtml: headerFor(joinedRoute),
       footerHtml,
-      breadcrumbHtml: page.breadcrumbHtml,
       mainHtml: page.bodyHtml,
     });
     const ogImage = resolveSocialImageUrl({
@@ -503,16 +554,9 @@ export async function renderPublication(buildInput, options) {
   // page kind's own pure body function. Pushed after the guard above so the
   // guard's own "is there anything authored to render" check is unaffected
   // by this always-present synthetic page.
-  const errorNavHtml = renderPrimaryNavigation({
-    items: validatedInput.navigation.items,
-    currentRoute: undefined,
-    messages: siteMessages,
-    urlPrefix,
-  });
   const errorBodyHtml = renderPageBody({
     messages: siteMessages,
-    headerHtml,
-    navHtml: errorNavHtml,
+    headerHtml: headerFor(undefined),
     footerHtml,
     mainHtml: renderErrorPageBody({ messages: siteMessages, homeRoute }),
   });

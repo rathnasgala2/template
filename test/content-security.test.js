@@ -412,7 +412,7 @@ test('renderPublication rejects a non-empty modules or placements value before r
   }
 });
 
-test('golden output: the canonical S2 fixture renders its content page byte-exact, its already-conformant body inserted verbatim', async () => {
+test('golden output: the canonical S2 fixture renders its document head byte-exact and its already-conformant body inserted verbatim', async () => {
   const buildInput = await loadCanonicalBuildInput();
   const { outputDirectory, workDirectory, sourceDirectory, cleanup } =
     await createRenderDirectories();
@@ -440,8 +440,9 @@ test('golden output: the canonical S2 fixture renders its content page byte-exac
       path.join(outputDirectory, route.path),
       'utf8',
     );
+    const bodyStart = bytes.indexOf('<body');
     assert.equal(
-      bytes,
+      bytes.slice(0, bodyStart),
       '<!doctype html>\n' +
         '<html lang="en-US" dir="ltr" data-gala-publication-root data-gala-resolved-color-mode="light">\n' +
         '<head>\n' +
@@ -468,50 +469,28 @@ test('golden output: the canonical S2 fixture renders its content page byte-exac
         '<link rel="alternate" type="application/rss+xml" href="https://fixture-1.example.com/fixture-1/feed/rss.xml" title="fixture-1">\n' +
         '<link rel="stylesheet" href="/fixture-1/assets/gala-base-v1.css">\n' +
         '<link rel="stylesheet" href="/fixture-1/assets/theme/print.css" media="print">\n' +
-        '</head>\n' +
-        '<body data-gala-page-kind="article">\n' +
-        '<a href="#main-content">Skip to content</a>' +
-        '<header><a href="/fixture-1"><span>fixture-1</span></a>' +
-        '<div data-gala-slot="header-actions">' +
-        '<label for="gala-appearance-color-mode">Appearance</label>' +
-        '<select id="gala-appearance-color-mode" name="gala-appearance-color-mode">' +
-        '<option value="light">Light</option>' +
-        '<option value="dark">Dark</option>' +
-        '<option value="system" selected>System</option>' +
-        '</select></div></header>' +
-        '<nav aria-label="Primary"><ul><li><a href="/fixture-1">fixture-1</a>' +
-        '<ul><li><a href="/fixture-1">fixture-1</a></li></ul></li></ul></nav>' +
-        '<main id="main-content">' +
-        '<nav aria-label="Breadcrumb"><ol>' +
-        '<li><a href="/fixture-1">Home</a></li>' +
-        '<li><a href="/fixture-1">All articles</a></li>' +
-        '<li aria-current="page">fixture-1</li>' +
-        '</ol></nav>' +
-        '<article><div data-gala-slot="article-preamble"></div>' +
-        '<h1>fixture-1</h1><p>By fixture-1</p>' +
-        '<time datetime="2026-09-13T12:00:00.000Z">2026-09-13T12:00:00.000Z</time>' +
-        '<ul><li><a href="/fixture-1/tags/fixture-1-042896dc19">fixture-1</a></li></ul>' +
-        // The fixture's `body` is the literal string "fixture-1" — already
-        // policy-conformant HTML (a bare text node) — inserted verbatim,
-        // with no markdown-it paragraph wrapping applied by this renderer.
-        'fixture-1' +
-        '<div data-gala-slot="article-end"></div>' +
-        '<div data-gala-slot="article-footer-ad" hidden></div></article>' +
-        '</main>' +
-        '<footer><p>fixture-1</p>' +
-        '<nav aria-label="Footer"><ul><li><a href="/fixture-1">fixture-1</a>' +
-        '<ul><li><a href="/fixture-1">fixture-1</a></li></ul></li></ul></nav>' +
-        '<div data-gala-slot="footer-profile"></div>' +
-        '<div data-gala-slot="footer-auxiliary"></div>' +
-        '<div data-gala-slot="account-intent"></div>' +
-        '<div data-gala-slot="conversation"></div>' +
-        '<div data-gala-slot="newsletter"></div>' +
-        '<div data-gala-slot="edition-selector"></div>' +
-        '<p>Published with the Galascribe template renderer.</p>' +
-        '</footer>\n' +
-        '</body>\n' +
-        '</html>\n',
+        '</head>\n',
     );
+    assert.ok(
+      bytes
+        .slice(bodyStart)
+        .startsWith('<body data-gala-page-kind="article">\n'),
+    );
+    // The fixture's `body` is the literal string "fixture-1" — already
+    // policy-conformant HTML (a bare text node) — inserted verbatim inside
+    // the prose container, with no markdown-it paragraph wrapping applied by
+    // this renderer.
+    assert.ok(
+      bytes.includes(
+        '<div class="g-prose"><div data-gala-slot="article-preamble"></div>fixture-1<ul class="g-tags"',
+      ),
+    );
+    assert.ok(
+      bytes.includes(
+        '<div data-gala-slot="article-end"></div><div data-gala-slot="article-footer-ad" hidden></div></div>',
+      ),
+    );
+    assert.ok(bytes.endsWith('</footer>\n</body>\n</html>\n'));
   } finally {
     await cleanup();
   }

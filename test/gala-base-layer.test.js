@@ -1,5 +1,5 @@
 /**
- * TPL-H2/TPL-H3/TPL-M7 acceptance tests: contract 2.1.0 publishes a closed
+ * TPL-H2/TPL-H3/TPL-M7 acceptance tests: contract 3.0.0 publishes a closed
  * pseudo-class catalog, and every rendered page carries a template-owned
  * `gala-base` stylesheet, linked before any theme stylesheet, whose own
  * first line declares the fixed cascade-layer order.
@@ -27,7 +27,7 @@ import {
 } from './helpers/render-fixtures.js';
 import { loadCanonicalBuildInput } from './helpers/schema-fixtures.js';
 
-test('contract 2.1.0 publishes the closed five-member pseudo-class catalog', () => {
+test('contract 3.0.0 publishes the closed five-member pseudo-class catalog', () => {
   const contract = buildTemplateStylingContract();
   assert.deepEqual(contract.pseudoClasses, [...PSEUDO_CLASSES]);
   assert.deepEqual(
@@ -37,7 +37,7 @@ test('contract 2.1.0 publishes the closed five-member pseudo-class catalog', () 
   assert.deepEqual(contract.composition.functionalPseudoKeywordArguments, [
     ...FUNCTIONAL_PSEUDO_KEYWORD_ARGUMENTS,
   ]);
-  assert.equal(contract.contractVersion, '2.1.0');
+  assert.equal(contract.contractVersion, '3.0.0');
 });
 
 test('the gala-base stylesheet source declares the fixed layer order as its own first line', () => {
