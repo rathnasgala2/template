@@ -8,7 +8,7 @@
 
 import { escapeHtml, renderNavItem, renderSlot } from './skeleton.js';
 import { icon } from './icons.js';
-import { monogram } from './components.js';
+import { monogram, renderImage } from './components.js';
 
 /** @type {Readonly<Record<string, string>>} */
 const SOCIAL_ICONS = Object.freeze({
@@ -19,14 +19,15 @@ const SOCIAL_ICONS = Object.freeze({
 
 /**
  * @param {string} name publication title
- * @param {string | undefined} markUrl the brand mark image URL, if any
+ * @param {{url: string, width?: number, height?: number} | undefined} mark
+ *   the brand mark image, if any
  * @returns {string} the brand mark element
  */
-function renderMark(name, markUrl) {
+function renderMark(name, mark) {
   return (
     `<span class="g-mark" aria-hidden="true">` +
-    (markUrl
-      ? `<img src="${escapeHtml(markUrl)}" alt="">`
+    (mark
+      ? renderImage({ image: mark, alt: '', eager: true })
       : escapeHtml(monogram(name))) +
     `</span>`
   );
@@ -39,8 +40,8 @@ function renderMark(name, markUrl) {
  * @param {string} options.homeRoute the publication's own home route
  * @param {string} options.publicationName the validated publication title
  * @param {string} options.tagline the publication description
- * @param {string | undefined} options.brandMarkUrl the appearance brand
- *   mark's image URL; the monogram is used when absent
+ * @param {{url: string, width?: number, height?: number} | undefined} options.brandMark
+ *   the appearance brand mark image; the monogram is used when absent
  * @param {string} options.navHtml the already-rendered primary navigation
  * @param {readonly import('../../../types/index.d.ts').NavigationItem[]} options.navItems
  *   the same items, rendered again as the mobile menu's link list
@@ -57,7 +58,7 @@ export function renderHeader({
   homeRoute,
   publicationName,
   tagline,
-  brandMarkUrl,
+  brandMark,
   navHtml,
   navItems,
   currentRoute,
@@ -75,7 +76,7 @@ export function renderHeader({
       : '';
   return (
     `<header class="g-header"><div class="g-wrap g-header-row">` +
-    `<a class="g-brand" href="${escapeHtml(homeRoute)}">${renderMark(publicationName, brandMarkUrl)}` +
+    `<a class="g-brand" href="${escapeHtml(homeRoute)}">${renderMark(publicationName, brandMark)}` +
     `<span class="g-brand-text"><span class="g-brand-name">${escapeHtml(publicationName)}</span>` +
     `<span class="g-brand-tag">${escapeHtml(tagline)}</span></span></a>` +
     navHtml +
@@ -128,7 +129,7 @@ function renderSocialLinks(socialLinks, rssHref, messages) {
  * @param {string} options.homeRoute the publication's own home route
  * @param {string} options.publicationName the validated publication title
  * @param {string} options.description the publication description
- * @param {string | undefined} options.brandMarkUrl the brand mark URL
+ * @param {{url: string, width?: number, height?: number} | undefined} options.brandMark the brand mark image
  * @param {readonly unknown[]} options.socialLinks `publication.socialLinks`
  * @param {string} options.rssHref the RSS feed URL
  * @param {readonly import('../../../types/index.d.ts').NavigationItem[]} options.primaryItems
@@ -148,7 +149,7 @@ export function renderFooter({
   homeRoute,
   publicationName,
   description,
-  brandMarkUrl,
+  brandMark,
   socialLinks,
   rssHref,
   primaryItems,
@@ -174,7 +175,7 @@ export function renderFooter({
   return (
     `<footer class="g-footer"><div class="g-wrap g-footer-grid">` +
     `<div class="g-footer-brand">` +
-    `<a class="g-brand" href="${escapeHtml(homeRoute)}">${renderMark(publicationName, brandMarkUrl)}` +
+    `<a class="g-brand" href="${escapeHtml(homeRoute)}">${renderMark(publicationName, brandMark)}` +
     `<span class="g-brand-name">${escapeHtml(publicationName)}</span></a>` +
     `<p class="g-footer-about">${escapeHtml(description)}</p>` +
     renderSocialLinks(socialLinks, rssHref, messages) +

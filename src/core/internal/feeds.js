@@ -20,6 +20,7 @@
 
 import { escapeHtml } from './skeleton.js';
 import { derivePublicBasePath, joinPublicRoute } from './route.js';
+import { deriveAuthorSlugs } from './route-labels.js';
 import {
   contentLastModified,
   contentRoute,
@@ -48,6 +49,52 @@ function toRfc822(rfc3339) {
 }
 
 /**
+ * @param {string} value an attribute value as it appears in HTML source
+ * @returns {string} the value with the five predefined entities decoded
+ */
+function decodeAttribute(value) {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+/**
+ * Make every `href`/`src` in an article body absolute against the article's
+ * own URL: a feed reader renders the body away from the site, so a relative
+ * link or image would otherwise point nowhere.
+ *
+ * @param {string} bodyHtml sanitized body HTML
+ * @param {string} pageUrl the article's absolute URL
+ * @returns {string} the body with absolute links and image sources
+ */
+export function absolutizeBodyLinks(bodyHtml, pageUrl) {
+  return bodyHtml.replace(
+    /\b(href|src)="([^"]*)"/g,
+    (match, attribute, value) => {
+      try {
+        return `${attribute}="${escapeHtml(new URL(decodeAttribute(value), pageUrl).toString())}"`;
+      } catch {
+        return match;
+      }
+    },
+  );
+}
+
+/**
+ * Wrap text in a CDATA section, splitting any `]]>` it contains so the
+ * section can never be closed early.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+function cdata(text) {
+  return `<![CDATA[${text.replaceAll(']]>', ']]]]><![CDATA[>')}]]>`;
+}
+
+/**
  * Build the deterministic Atom 1.0 and RSS 2.0 feed documents for one
  * validated `build-input:2.0.0` instance.
  *
@@ -59,6 +106,7 @@ function toRfc822(rfc3339) {
 export function buildFeeds(validatedInput) {
   const { publication, authors, content, basePath, baseUrl } = validatedInput;
   const authorsById = new Map(authors.map((author) => [author.id, author]));
+  const authorSlugs = deriveAuthorSlugs(authors);
   const articles = selectPublishedArticles(content).slice(0, FEED_ITEM_LIMIT);
 
   /**
@@ -84,12 +132,19 @@ export function buildFeeds(validatedInput) {
     .map((record) => {
       const { frontmatter } = record;
       const entryUrl = absoluteUrl(contentRoute(frontmatter));
-      const authorNames = frontmatter.authorIds.map(
-        (id) => authorsById.get(id)?.displayName ?? '',
-      );
-      const authorsXml = authorNames
-        .map((name) => `<author><name>${escapeHtml(name)}</name></author>`)
+      const authorsXml = frontmatter.authorIds
+        .map((id) => {
+          const author = authorsById.get(id);
+          const uri = author
+            ? `<uri>${escapeHtml(absoluteUrl(`/authors/${authorSlugs.get(id) ?? id}`))}</uri>`
+            : '';
+          return `<author><name>${escapeHtml(author?.displayName ?? '')}</name>${uri}</author>`;
+        })
         .join('');
+      const categoriesXml = frontmatter.tags
+        .map((tag) => `<category term="${escapeHtml(tag)}"/>`)
+        .join('');
+      const contentXml = `<content type="html">${escapeHtml(absolutizeBodyLinks(record.body, entryUrl))}</content>`;
       const summaryXml = frontmatter.description
         ? `<summary>${escapeHtml(frontmatter.description)}</summary>`
         : '';
@@ -101,7 +156,9 @@ export function buildFeeds(validatedInput) {
         `<published>${escapeHtml(frontmatter.publishedAt)}</published>` +
         `<link href="${escapeHtml(entryUrl)}" rel="alternate"/>` +
         authorsXml +
+        categoriesXml +
         summaryXml +
+        contentXml +
         `</entry>`
       );
     })
@@ -126,13 +183,24 @@ export function buildFeeds(validatedInput) {
       const descriptionXml = frontmatter.description
         ? `<description>${escapeHtml(frontmatter.description)}</description>`
         : '';
+      const creatorsXml = frontmatter.authorIds
+        .map((id) => authorsById.get(id)?.displayName)
+        .filter(Boolean)
+        .map((name) => `<dc:creator>${escapeHtml(String(name))}</dc:creator>`)
+        .join('');
+      const categoriesXml = frontmatter.tags
+        .map((tag) => `<category>${escapeHtml(tag)}</category>`)
+        .join('');
       return (
         `<item>` +
         `<title>${escapeHtml(frontmatter.title)}</title>` +
         `<link>${escapeHtml(itemUrl)}</link>` +
         `<guid isPermaLink="true">${escapeHtml(itemUrl)}</guid>` +
         `<pubDate>${escapeHtml(toRfc822(frontmatter.publishedAt))}</pubDate>` +
+        creatorsXml +
+        categoriesXml +
         descriptionXml +
+        `<content:encoded>${cdata(absolutizeBodyLinks(record.body, itemUrl))}</content:encoded>` +
         `</item>`
       );
     })
@@ -146,7 +214,7 @@ export function buildFeeds(validatedInput) {
   // review request).
   const rssXml =
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
-    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">' +
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">' +
     '<channel>' +
     `<title>${escapeHtml(publication.title)}</title>` +
     `<link>${escapeHtml(siteUrl)}</link>` +

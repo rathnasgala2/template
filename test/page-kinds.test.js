@@ -76,13 +76,13 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
   await t.test(
     'author page kind: one page per author, with breadcrumb and profile fields',
     async () => {
-      assert.ok(routePaths.has(`fixture-1/authors/${stableId(1)}/index.html`));
+      assert.ok(routePaths.has(`fixture-1/authors/fixture-1/index.html`));
       const html = await readRoute(
         outputDirectory,
-        `fixture-1/authors/${stableId(2)}/index.html`,
+        `fixture-1/authors/fixture-author-2/index.html`,
       );
       assert.match(html, /<h1>fixture-author-2<\/h1>/);
-      assert.match(html, /<title>About fixture-author-2<\/title>/);
+      assert.match(html, /<title>fixture-author-2 \| fixture-1<\/title>/);
       assert.match(html, /<p class="g-label">they\/them<\/p>/);
       assert.match(html, /<p class="g-dek">A second fixture author\.<\/p>/);
       assert.match(

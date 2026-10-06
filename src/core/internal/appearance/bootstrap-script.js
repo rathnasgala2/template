@@ -39,6 +39,7 @@
  * script can never drift apart on a literal.
  */
 
+import { minifyScript } from './minify-script.js';
 import {
   APPEARANCE_MODE_DARK,
   APPEARANCE_MODE_LIGHT,
@@ -58,7 +59,7 @@ export const SAVED_STORAGE_KEY = 'gala:saved:v1';
  *
  * @type {string}
  */
-export const APPEARANCE_BOOTSTRAP_SCRIPT_SOURCE = String.raw`(function () {
+const READABLE_SCRIPT_SOURCE = String.raw`(function () {
   'use strict';
   var STORAGE_KEY = ${JSON.stringify(APPEARANCE_STORAGE_KEY)};
   var SAVED_KEY = ${JSON.stringify(SAVED_STORAGE_KEY)};
@@ -632,3 +633,14 @@ export const APPEARANCE_BOOTSTRAP_SCRIPT_SOURCE = String.raw`(function () {
   }
 })();
 `;
+
+/**
+ * The shipped script: {@link READABLE_SCRIPT_SOURCE} minified
+ * (`minify-script.js`: comments, indentation and blank lines removed, nothing
+ * renamed or reordered).
+ *
+ * @type {string}
+ */
+export const APPEARANCE_BOOTSTRAP_SCRIPT_SOURCE = minifyScript(
+  READABLE_SCRIPT_SOURCE,
+);

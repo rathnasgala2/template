@@ -123,7 +123,7 @@ test('S2-T08 acceptance: feeds, sitemap, search index, 404 and print CSS are gen
       assertWellFormedXml(xml);
       assert.match(
         xml,
-        /<rss version="2\.0" xmlns:atom="http:\/\/www\.w3\.org\/2005\/Atom">/,
+        /<rss version="2\.0" xmlns:atom="http:\/\/www\.w3\.org\/2005\/Atom" xmlns:content="http:\/\/purl\.org\/rss\/1\.0\/modules\/content\/" xmlns:dc="http:\/\/purl\.org\/dc\/elements\/1\.1\/">/,
       );
       assert.match(
         xml,

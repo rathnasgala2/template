@@ -27,6 +27,7 @@ import {
   createRenderDirectories,
   testProvenance,
 } from './helpers/render-fixtures.js';
+import { executableScriptCount } from './helpers/html-facts.js';
 import { loadCanonicalBuildInput } from './helpers/schema-fixtures.js';
 
 // The theme-contract 3 token keys, hard-coded from the design document
@@ -267,9 +268,9 @@ test('every page carries exactly one script, the CSP allows connect-src self onl
         'utf8',
       );
       assert.equal(
-        html.match(/<script\b/g)?.length,
+        executableScriptCount(html),
         1,
-        `${route.path}: one script`,
+        `${route.path}: one executable script`,
       );
       assert.equal(html.match(/<script[^>]*\bsrc=/g)?.length, 1);
       assert.ok(

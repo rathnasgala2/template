@@ -278,14 +278,14 @@ export const GALA_BASE_COMPONENT_CSS = `
     font-family: var(--gala-font-label); font-size: .75rem; font-weight: var(--gala-weight-ui);
     text-transform: var(--gala-label-transform); letter-spacing: var(--gala-tracking-label); color: var(--gala-color-text-muted);
   }
-  .g-hero h1, .g-article-head h1, .g-topic-hero h1 {
+  .g-hero h2, .g-article-head h1, .g-topic-hero h1 {
     font-family: var(--gala-font-display); font-weight: var(--gala-weight-display); font-style: var(--gala-display-style);
     font-size: clamp(2.25rem, 1.2rem + 3.6vw, var(--gala-display-max)); line-height: 1.02;
     letter-spacing: var(--gala-tracking-display); text-transform: var(--gala-title-transform); text-wrap: balance;
   }
   .g-topic-hero h1 { font-size: clamp(2rem, 1.2rem + 2.8vw, calc(var(--gala-display-max) * .8)); }
-  .g-hero h1 a { background: linear-gradient(currentColor, currentColor) 0 100% / 0 .06em no-repeat; transition: background-size var(--gala-duration-slow) var(--gala-ease-standard); }
-  .g-hero h1 a:hover { background-size: 100% .06em; }
+  .g-hero h2 a { background: linear-gradient(currentColor, currentColor) 0 100% / 0 .06em no-repeat; transition: background-size var(--gala-duration-slow) var(--gala-ease-standard); }
+  .g-hero h2 a:hover { background-size: 100% .06em; }
   .g-dek { font-size: clamp(1.075rem, 1rem + .35vw, 1.3rem); line-height: 1.5; color: var(--gala-color-text-muted); text-wrap: pretty; max-width: 40rem; }
   .g-section-head h2, .g-series-card h2, .g-panel h2 {
     font-family: var(--gala-font-display); font-weight: var(--gala-weight-title); font-size: clamp(1.45rem, 1.2rem + .9vw, 2rem);
@@ -337,7 +337,7 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-chip:hover { filter: brightness(.96) saturate(1.2); }
   .g-badge { display: inline-flex; align-items: center; gap: .35em; font-family: var(--gala-font-label); font-size: .72rem; font-weight: var(--gala-weight-ui); text-transform: var(--gala-label-transform); letter-spacing: var(--gala-tracking-label); color: var(--gala-color-icon-accent); }
   .g-series-tag { display: inline-flex; align-items: center; gap: .35em; font-family: var(--gala-font-ui); font-size: .78rem; color: var(--gala-color-text-muted); }
-  .g-avatar { display: inline-grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: var(--gala-radius-avatar); object-fit: cover; flex: none; box-shadow: var(--gala-shadow-avatar-ring); background: var(--gala-paint-button); color: var(--gala-color-btn-text); font-family: var(--gala-font-display); font-weight: var(--gala-weight-display); font-size: .9rem; overflow: hidden; }
+  .g-avatar { display: inline-grid; place-items: center; width: 2.5rem; height: 2.5rem; aspect-ratio: 1 / 1; border-radius: var(--gala-radius-avatar); object-fit: cover; flex: none; box-shadow: var(--gala-shadow-avatar-ring); background: var(--gala-paint-button); color: var(--gala-color-btn-text); font-family: var(--gala-font-display); font-weight: var(--gala-weight-display); font-size: .9rem; overflow: hidden; }
   .g-byline { display: flex; align-items: center; gap: var(--gala-space-3); min-width: 0; }
   .g-byline-text { display: grid; gap: .1rem; min-width: 0; font-family: var(--gala-font-ui); font-weight: var(--gala-weight-ui); font-size: .9375rem; }
   .g-byline-text a:hover { text-decoration: underline; }
@@ -452,7 +452,9 @@ export const GALA_BASE_COMPONENT_CSS = `
     box-shadow: var(--gala-shadow-card);
     transition: transform var(--gala-duration-base) var(--gala-ease-standard), box-shadow var(--gala-duration-base) var(--gala-ease-standard), border-color var(--gala-duration-base) var(--gala-ease-standard);
   }
-  .g-card-link { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+  /* The title link stretches over the whole card through ::after, so the
+     card stays one click target while the link has a real accessible name. */
+  .g-card-link::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: var(--gala-radius-large); }
   .g-card:hover { transform: translate(var(--gala-lift-x), var(--gala-lift-y)); box-shadow: var(--gala-shadow-card-hover); }
   .g-card-media { margin: 0; aspect-ratio: 16 / 10; overflow: hidden; border-radius: var(--gala-radius-media); background: var(--gala-color-surface-raised); border-bottom: var(--gala-border-media-divider); max-width: 100%; }
   .g-card-media img { width: 100%; height: 100%; object-fit: cover; filter: var(--gala-media-filter); transition: transform 1s var(--gala-ease-standard), filter var(--gala-duration-slow) var(--gala-ease-standard); }
@@ -523,7 +525,7 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-article-meta { display: flex; align-items: center; justify-content: space-between; gap: var(--gala-space-4); width: 100%; padding-top: 1.1rem; border-top: var(--gala-border-width) solid var(--gala-color-border); flex-wrap: wrap; }
   .g-share { display: flex; gap: var(--gala-space-1); }
   .g-article-cover { margin-block: 0; }
-  .g-article-cover img { width: 100%; aspect-ratio: 21 / 9; object-fit: cover; border-radius: var(--gala-radius-large); border: var(--gala-border-card); box-shadow: var(--gala-shadow-card); filter: var(--gala-media-filter); }
+  .g-article-cover img { width: 100%; height: auto; aspect-ratio: 21 / 9; object-fit: cover; border-radius: var(--gala-radius-large); border: var(--gala-border-card); box-shadow: var(--gala-shadow-card); filter: var(--gala-media-filter); }
   .g-article-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, var(--gala-content-measure)) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3.5rem); padding-block: clamp(2rem, 5vw, 3.5rem) var(--gala-space-4); }
   .g-article-grid > .g-prose { grid-column: 2; }
   .g-toc { position: sticky; top: 6rem; align-self: start; justify-self: end; width: min(100%, 15rem); display: grid; gap: var(--gala-space-3); }

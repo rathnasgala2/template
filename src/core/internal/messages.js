@@ -107,6 +107,37 @@ const CATALOGS = Object.freeze({
     articleCountLabel: (count) =>
       count === '1' ? '1 article' : `${count} articles`,
     emptyListingLabel: 'No articles yet.',
+    aboutPageTitle: 'About',
+    /** @type {(date: string) => string} */
+    updatedLabel: (date) => `Updated ${date}`,
+    /** @type {(tag: string) => string} */
+    tagPageTitle: (tag) => `Posts tagged \u201c${tag}\u201d`,
+    /** @type {(count: string, tag: string, publication: string) => string} */
+    tagPageDescription: (count, tag, publication) =>
+      `${count === '1' ? '1 article' : `${count} articles`} tagged ${tag} on ${publication}.`,
+    /** @type {(count: string, name: string, publication: string) => string} */
+    seriesPageDescription: (count, name, publication) =>
+      `${name}, a series of ${count === '1' ? '1 part' : `${count} parts`} on ${publication}.`,
+    /** @type {(year: string) => string} */
+    archivePageTitle: (year) => `Archive ${year}`,
+    /** @type {(count: string, year: string, publication: string) => string} */
+    archivePageDescription: (count, year, publication) =>
+      `${count === '1' ? '1 article' : `${count} articles`} published in ${year} on ${publication}.`,
+    /** @type {(name: string, publication: string) => string} */
+    authorPageDescription: (name, publication) =>
+      `Articles written by ${name} on ${publication}.`,
+    /** @type {(count: string, publication: string) => string} */
+    tagsRootDescription: (count, publication) =>
+      `Browse the ${count} topics covered on ${publication}.`,
+    /** @type {(count: string, publication: string) => string} */
+    seriesRootDescription: (count, publication) =>
+      `Browse the ${count} series published on ${publication}.`,
+    /** @type {(count: string, publication: string) => string} */
+    archiveRootDescription: (count, publication) =>
+      `Every article on ${publication}, ${count} in all, by year.`,
+    /** @type {(publication: string) => string} */
+    indexPageDescription: (publication) =>
+      `All articles on ${publication}, newest first.`,
     exploreColumnLabel: 'Explore',
     rssFeedLabel: 'RSS feed',
     /** @type {(iso: string) => string} */

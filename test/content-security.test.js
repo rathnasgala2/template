@@ -429,8 +429,9 @@ test('golden output: the canonical S2 fixture renders its document head byte-exa
     // `internal/page-kinds.js`'s module documentation) — seven routes in
     // total, not just the content record's own page. S2-T08 adds five more:
     // the generated `404.html`, the Atom and RSS feeds, the sitemap and the
-    // static search index — twelve routes in total.
-    assert.equal(manifest.routes.length, 12);
+    // static search index; the discovery files add `robots.txt`, `llms.txt`
+    // and `llms-full.txt` — fifteen routes in total.
+    assert.equal(manifest.routes.length, 15);
     const route = manifest.routes.find(
       (candidate) => candidate.path === 'fixture-1/fixture-1/index.html',
     );
@@ -451,20 +452,25 @@ test('golden output: the canonical S2 fixture renders its document head byte-exa
         `<meta http-equiv="Content-Security-Policy" content="${CSP_BASELINE_STRING}">\n` +
         '<meta name="color-scheme" content="light dark">\n' +
         '<script src="/fixture-1/assets/gala-appearance-bootstrap-v1.js"></script>\n' +
-        '<title>fixture-1</title>\n' +
-        '\n' +
+        '<title>fixture-1 | fixture-1</title>\n' +
+        '<meta name="description" content="fixture-1">\n' +
         '\n' +
         '<link rel="canonical" href="https://fixture-1.example.com/fixture-1/fixture-1">\n' +
         '<meta property="og:site_name" content="fixture-1">\n' +
         '<meta property="og:url" content="https://fixture-1.example.com/fixture-1/fixture-1">\n' +
         '<meta property="og:type" content="article">\n' +
         '<meta property="og:title" content="fixture-1">\n' +
+        '<meta property="og:description" content="fixture-1">\n' +
         '\n' +
+        '<meta property="article:published_time" content="2026-09-13T12:00:00.000Z">\n' +
         '\n' +
+        '<meta property="article:author" content="https://fixture-1.example.com/fixture-1/authors/fixture-1">\n' +
+        '<meta property="article:tag" content="fixture-1">\n' +
         '<meta name="twitter:card" content="summary">\n' +
         '<meta name="twitter:title" content="fixture-1">\n' +
+        '<meta name="twitter:description" content="fixture-1">\n' +
         '\n' +
-        '\n' +
+        '<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BlogPosting","@id":"https://fixture-1.example.com/fixture-1/fixture-1#article","mainEntityOfPage":{"@type":"WebPage","@id":"https://fixture-1.example.com/fixture-1/fixture-1"},"url":"https://fixture-1.example.com/fixture-1/fixture-1","headline":"fixture-1","description":"fixture-1","datePublished":"2026-09-13T12:00:00.000Z","dateModified":"2026-09-13T12:00:00.000Z","inLanguage":"en-US","author":{"@type":"Person","name":"fixture-1","url":"https://fixture-1.example.com/fixture-1/authors/fixture-1","sameAs":["https://fixture-1.example.com/"]},"publisher":{"@type":"Organization","@id":"https://fixture-1.example.com/#organization","name":"fixture-1","url":"https://fixture-1.example.com/"},"keywords":"fixture-1"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://fixture-1.example.com/fixture-1"},{"@type":"ListItem","position":2,"name":"fixture-1","item":"https://fixture-1.example.com/fixture-1/tags/fixture-1-042896dc19"},{"@type":"ListItem","position":3,"name":"fixture-1","item":"https://fixture-1.example.com/fixture-1/fixture-1"}]}]}</script>\n' +
         '<link rel="alternate" type="application/atom+xml" href="https://fixture-1.example.com/fixture-1/feed/atom.xml" title="fixture-1">\n' +
         '<link rel="alternate" type="application/rss+xml" href="https://fixture-1.example.com/fixture-1/feed/rss.xml" title="fixture-1">\n' +
         '<link rel="stylesheet" href="/fixture-1/assets/gala-base-v1.css">\n' +

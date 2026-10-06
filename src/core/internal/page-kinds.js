@@ -60,14 +60,19 @@ import {
 } from './skeleton.js';
 import {
   createComponents,
-  createMediaUrl,
+  createMediaImage,
   extractH2Headings,
+  lazyBodyImages,
+  plainText,
+  renderImage,
   renderNewsletterPanel,
 } from './components.js';
+import { truncateAtWord } from './seo.js';
+import { createStructuredData } from './structured-data.js';
 import { icon } from './icons.js';
 import { getMessages } from './messages.js';
 import { resolveTextDirection } from './text-direction.js';
-import { routeSegmentForLabel } from './route-labels.js';
+import { deriveAuthorSlugs, routeSegmentForLabel } from './route-labels.js';
 import { derivePublicBasePath, joinPublicRoute } from './route.js';
 
 /** Listing page size (index and per-year archive pages). Scoped decision:
@@ -153,6 +158,15 @@ function paginate(items, pageSize) {
  *   description this page's SEO/Open-Graph/Twitter `<meta>` tags are built
  *   from (never HTML, never the sanitized body — a distinct authored or
  *   publication-level plain-text field)
+ * @property {string} [documentTitle] the `<title>` element text
+ *   (`<Page> | <Publication>`; the home page is
+ *   `<Publication> – <tagline>`); `title` stays the bare page name used for
+ *   `og:title` and structured data
+ * @property {string} [jsonLd] the page's one embed-safe JSON-LD document
+ *   (see `internal/structured-data.js`)
+ * @property {string} [socialImageAlt] alternative text for the social image
+ * @property {{publishedTime: string, modifiedTime?: string, authorUrls: string[], tags: string[]}} [articleMeta]
+ *   the `article:*` Open Graph facts of an article page
  * @property {'website' | 'article' | 'profile'} [ogType]
  *   the Open Graph `og:type` this page kind maps to; defaults to `'website'`
  *   when omitted
@@ -271,6 +285,10 @@ export const LATEST_CARD_COUNT = 6;
 export const RELATED_COUNT = 3;
 /** Minimum h2 headings an article needs before a contents list renders. */
 export const CONTENTS_MIN_HEADINGS = 2;
+/** Longest generated or truncated `<meta name="description">`. */
+export const DESCRIPTION_MAX = 155;
+/** Longest home-page `<title>` before the tagline is shortened. */
+export const HOME_TITLE_MAX = 60;
 /** Maximum tag pills on the home page. */
 const HOME_TAG_PILL_LIMIT = 12;
 
@@ -299,6 +317,30 @@ export function selectRelatedArticles(record, published) {
 }
 
 /**
+ * The home page `<title>`: `<Publication> – <tagline>`, with the tagline cut
+ * at a word boundary (and an ellipsis) so the whole stays within
+ * {@link HOME_TITLE_MAX} characters; the publication name alone when there is
+ * no tagline or too little room for a meaningful one.
+ *
+ * @param {string} name the publication title
+ * @param {string | undefined} tagline the publication description
+ * @returns {string} the home page title
+ */
+export function homeDocumentTitle(name, tagline) {
+  const separator = ' \u2013 ';
+  const line = (tagline ?? '').replace(/\s+/g, ' ').trim();
+  if (!line) return name;
+  if (Array.from(`${name}${separator}${line}`).length <= HOME_TITLE_MAX) {
+    return `${name}${separator}${line}`;
+  }
+  const room = HOME_TITLE_MAX - Array.from(`${name}${separator}`).length - 1;
+  if (room < 12) return name;
+  const clipped = Array.from(line).slice(0, room).join('');
+  const cut = /\s/.test(clipped) ? clipped.replace(/\s+\S*$/, '') : clipped;
+  return `${name}${separator}${cut.replace(/[\s,;:.\u2013-]+$/, '')}\u2026`;
+}
+
+/**
  * Build every generated page (every kind except `error`) from a validated
  * `build-input:2.0.0` instance.
  *
@@ -308,6 +350,8 @@ export function selectRelatedArticles(record, published) {
  *   the media pipeline's finished `assets` list, used to resolve every
  *   image reference (hero, avatar) to its emitted URL; an image with no
  *   processed derivative renders as the placeholder/monogram fallback
+ * @param {Readonly<Record<string, {width: number, height: number}>>} [options.mediaDimensions]
+ *   the media pipeline's pixel dimensions per derivative path
  * @returns {GeneratedPage[]} every generated page, in a stable, deterministic
  *   order
  */
@@ -329,20 +373,84 @@ export function buildGeneratedPages(validatedInput, options = {}) {
   const recordHref = (
     /** @type {import('../../../types/index.d.ts').ContentBuildRecord} */ record,
   ) => site(contentRoute(record.frontmatter));
-  const mediaUrl = createMediaUrl({
+  const authorSlugs = deriveAuthorSlugs(authors);
+  const authorRoute = (
+    /** @type {import('../../../types/index.d.ts').AuthorNormalized} */ author,
+  ) => `/authors/${authorSlugs.get(author.id) ?? author.id}`;
+  const authorHref = (
+    /** @type {import('../../../types/index.d.ts').AuthorNormalized} */ author,
+  ) => site(authorRoute(author));
+  const mediaImage = createMediaImage({
     mediaAssets: options.mediaAssets ?? [],
     publicBasePath,
+    mediaDimensions: options.mediaDimensions,
   });
   const ui = createComponents({
     messages,
     site,
-    mediaUrl,
+    mediaImage,
+    authorHref,
     authorsById,
     recordHref,
     tagHref,
   });
   const { text, call, chip, byline, card, avatar } = ui;
 
+  const msg = (/** @type {string} */ key, /** @type {string[]} */ ...args) =>
+    /** @type {(...a: string[]) => string} */ (messages[key])(...args);
+  const publicationTitle = publication.title;
+  /**
+   * @param {string} name a bare page name
+   * @returns {string} `<Page> | <Publication>`
+   */
+  const documentTitleOf = (name) => `${name} | ${publicationTitle}`;
+  const absolute = (/** @type {string} */ joinedRoute) =>
+    new URL(joinedRoute, baseUrl).toString();
+  const absoluteImage = (
+    /** @type {{path: string, sourceDigest: string} | undefined} */ ref,
+  ) => {
+    const image = mediaImage(ref);
+    return image ? { ...image, url: absolute(image.url) } : undefined;
+  };
+  const sd = createStructuredData({
+    publication,
+    absolute,
+    brandMark: absoluteImage(validatedInput.appearance.brandMark),
+  });
+  /** The publication-default social image and its alt, when one is set. */
+  const defaultSocial = publication.defaultImage
+    ? {
+        socialImageRef: publication.defaultImage,
+        socialImageAlt: publicationTitle,
+      }
+    : {};
+  /**
+   * @param {import('../../../types/index.d.ts').ContentFrontmatterNormalized} fm
+   * @returns {{socialImageRef?: {path: string, sourceDigest: string}, socialImageAlt?: string}}
+   */
+  const socialOfContent = (fm) =>
+    fm.socialImage
+      ? { socialImageRef: fm.socialImage, socialImageAlt: fm.title }
+      : fm.hero
+        ? {
+            socialImageRef: fm.hero.file,
+            socialImageAlt:
+              fm.hero.role === 'informative' && fm.hero.alt
+                ? fm.hero.alt
+                : fm.title,
+          }
+        : defaultSocial;
+  /**
+   * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
+   * @returns {string} the page description: authored, else the body's
+   *   opening words
+   */
+  const contentDescription = (record) =>
+    record.frontmatter.description ||
+    truncateAtWord(plainText(record.body), DESCRIPTION_MAX);
+
+  const text0 = (/** @type {string} */ key) =>
+    /** @type {string} */ (messages[key]);
   const homeStep = {
     label: /** @type {string} */ (messages.homeLinkLabel),
     route: site('/'),
@@ -473,6 +581,35 @@ export function buildGeneratedPages(validatedInput, options = {}) {
     afterHtml +
     `</section>`;
 
+  /**
+   * One listing page's metadata: bare title, `<title>`, description,
+   * social image and JSON-LD.
+   *
+   * @param {object} spec
+   * @param {string} spec.name the bare page name
+   * @param {string} spec.description the meta description
+   * @param {string} spec.route the un-joined route
+   * @param {readonly {label: string, route?: string}[]} [spec.parents]
+   *   breadcrumb steps between home and this page (joined routes)
+   * @returns {Pick<GeneratedPage, 'title' | 'documentTitle' | 'description' | 'ogType' | 'socialImageRef' | 'socialImageAlt' | 'jsonLd'>}
+   */
+  const listingMeta = ({ name, description, route, parents = [] }) => ({
+    title: name,
+    documentTitle: documentTitleOf(name),
+    description,
+    ogType: 'website',
+    ...defaultSocial,
+    jsonLd: sd.serialize(
+      sd.collection({
+        name,
+        description,
+        url: absolute(site(route)),
+        language: publication.defaultLanguage,
+        trail: [homeStep, ...parents, { label: name, route: site(route) }],
+      }),
+    ),
+  });
+
   const newsletterHtml = renderNewsletterPanel({
     newsletter: /** @type {{newsletter?: unknown}} */ (publication).newsletter,
     messages,
@@ -486,14 +623,30 @@ export function buildGeneratedPages(validatedInput, options = {}) {
       kind: 'profile',
       route: publication.profile.route,
       title: publication.title,
+      documentTitle: documentTitleOf(text0('aboutPageTitle')),
       language: publication.defaultLanguage,
       description: publication.description,
       ogType: 'website',
-      socialImageRef: publication.defaultImage,
+      ...defaultSocial,
+      jsonLd: sd.serialize(
+        sd.webPage({
+          name: publication.title,
+          description: publication.description,
+          url: absolute(site(publication.profile.route)),
+          language: publication.defaultLanguage,
+          trail: [
+            homeStep,
+            {
+              label: text0('aboutPageTitle'),
+              route: site(publication.profile.route),
+            },
+          ],
+        }),
+      ),
       bodyHtml:
         `<article class="g-article"><div class="g-wrap g-article-head">` +
         `<h1>${escapeHtml(publication.title)}</h1></div>` +
-        `<div class="g-wrap g-article-grid"><div class="g-prose">${publication.profile.body.body}</div></div></article>`,
+        `<div class="g-wrap g-article-grid"><div class="g-prose">${lazyBodyImages(publication.profile.body.body)}</div></div></article>`,
     });
   }
 
@@ -501,9 +654,6 @@ export function buildGeneratedPages(validatedInput, options = {}) {
     const authored = publishedArticles.filter((record) =>
       record.frontmatter.authorIds.includes(author.id),
     );
-    const heading = /** @type {(displayName: string) => string} */ (
-      messages.aboutAuthorHeading
-    )(author.displayName);
     const links =
       author.links.length > 0
         ? `<ul class="g-social">${author.links
@@ -523,12 +673,30 @@ export function buildGeneratedPages(validatedInput, options = {}) {
       links;
     pages.push({
       kind: 'author',
-      route: `/authors/${author.id}`,
-      title: heading,
+      route: authorRoute(author),
+      title: author.displayName,
+      documentTitle: documentTitleOf(author.displayName),
       language: publication.defaultLanguage,
-      description: author.biography || undefined,
+      description:
+        truncateAtWord(author.biography, DESCRIPTION_MAX) ||
+        msg('authorPageDescription', author.displayName, publicationTitle),
       ogType: 'profile',
-      socialImageRef: author.avatar,
+      ...(author.avatar
+        ? {
+            socialImageRef: author.avatar,
+            socialImageAlt: author.displayName,
+          }
+        : defaultSocial),
+      jsonLd: sd.serialize(
+        sd.profile({
+          name: author.displayName,
+          description: author.biography || undefined,
+          url: absolute(authorHref(author)),
+          language: publication.defaultLanguage,
+          image: absoluteImage(author.avatar),
+          sameAs: author.links.map((link) => link.uri),
+        }),
+      ),
       bodyHtml:
         listingHead({
           breadcrumbHtml: crumbs(
@@ -547,7 +715,7 @@ export function buildGeneratedPages(validatedInput, options = {}) {
   for (const record of content) {
     const { frontmatter } = record;
     const isArticle = frontmatter.kind === 'article';
-    const heroUrl = mediaUrl(frontmatter.hero?.file);
+    const hero = mediaImage(frontmatter.hero?.file);
     const headings = extractH2Headings(record.body);
     const contents =
       headings.length >= CONTENTS_MIN_HEADINGS
@@ -584,15 +752,15 @@ export function buildGeneratedPages(validatedInput, options = {}) {
         ? `<p class="g-dek">${escapeHtml(frontmatter.description)}</p>`
         : '') +
       (isArticle
-        ? `<div class="g-article-meta">${byline(record)}` +
+        ? `<div class="g-article-meta">${byline(record, true)}` +
           `<div class="g-share" role="group" aria-label="${text('shareLabel')}" hidden>` +
           `<button class="g-icon-btn" type="button" data-action="copy-link" aria-label="${text('copyLinkLabel')}" title="${text('copyLinkLabel')}">${icon('link')}</button>` +
           `<button class="g-icon-btn" type="button" data-action="bookmark" aria-pressed="false" aria-label="${text('saveForLaterLabel')}" title="${text('saveForLaterLabel')}">${icon('bookmark')}</button>` +
           `</div></div>`
         : '') +
       `</div>`;
-    const cover = heroUrl
-      ? `<figure class="g-wrap g-article-cover"><img src="${escapeHtml(heroUrl)}" alt="${escapeHtml(frontmatter.hero?.role === 'decorative' ? '' : (frontmatter.hero?.alt ?? ''))}"></figure>`
+    const cover = hero
+      ? `<figure class="g-wrap g-article-cover">${renderImage({ image: hero, alt: frontmatter.hero?.role === 'decorative' ? '' : (frontmatter.hero?.alt ?? ''), priority: true })}</figure>`
       : '';
     const tocNav = contents
       ? `<nav class="g-toc" aria-label="${text('onThisPageLabel')}"><p class="g-label">${icon('list')}${text('onThisPageLabel')}</p>${contents}</nav>`
@@ -612,7 +780,7 @@ export function buildGeneratedPages(validatedInput, options = {}) {
     const prose =
       `<div class="g-prose">${tocMobile}` +
       renderSlot('article-preamble') +
-      record.body +
+      lazyBodyImages(record.body) +
       tags +
       renderSlot('article-end') +
       renderSlot('article-footer-ad', { collapsed: true }) +
@@ -627,7 +795,7 @@ export function buildGeneratedPages(validatedInput, options = {}) {
           (author) =>
             `<section class="g-author-card" aria-label="${text('aboutTheAuthorLabel')}">${avatar(author)}<div>` +
             `<p class="g-label">${text('writtenByLabel')}</p>` +
-            `<p class="g-author-name"><a href="${escapeHtml(site(`/authors/${author.id}`))}">${escapeHtml(author.displayName)}</a></p>` +
+            `<p class="g-author-name"><a href="${escapeHtml(authorHref(author))}">${escapeHtml(author.displayName)}</a></p>` +
             (author.biography
               ? `<p class="g-author-bio">${escapeHtml(author.biography)}</p>`
               : '') +
@@ -679,14 +847,61 @@ export function buildGeneratedPages(validatedInput, options = {}) {
             `</div><div class="g-grid">${related.map((r) => cardOf(r)).join('')}</div></section>`
           : '';
     }
+    const ownUrl = absolute(recordHref(record));
+    const recordAuthors = ui.recordAuthors(record);
+    const articleTrail = [
+      homeStep,
+      ...trail.slice(0, -1),
+      { label: frontmatter.title, route: recordHref(record) },
+    ];
+    const articleGraph = isArticle
+      ? sd.article({
+          url: ownUrl,
+          headline: frontmatter.title,
+          description: contentDescription(record),
+          image: absoluteImage(socialOfContent(frontmatter).socialImageRef),
+          datePublished: frontmatter.publishedAt,
+          dateModified: contentLastModified(frontmatter),
+          language: frontmatter.language,
+          authors: recordAuthors.map((author) => ({
+            name: author.displayName,
+            url: absolute(authorHref(author)),
+            sameAs: author.links.map((link) => link.uri),
+          })),
+          tags: frontmatter.tags,
+          series: series
+            ? { name: series, url: absolute(seriesHref(series)) }
+            : undefined,
+          trail: articleTrail,
+        })
+      : sd.webPage({
+          name: frontmatter.title,
+          description: contentDescription(record),
+          url: ownUrl,
+          language: frontmatter.language,
+          trail: articleTrail,
+          dateModified: contentLastModified(frontmatter),
+        });
     pages.push({
       kind: frontmatter.kind,
       route: contentRoute(frontmatter),
       title: frontmatter.title,
+      documentTitle: documentTitleOf(frontmatter.title),
       language: frontmatter.language,
-      description: frontmatter.description,
+      description: contentDescription(record),
       ogType: isArticle ? 'article' : 'website',
-      socialImageRef: frontmatter.socialImage ?? frontmatter.hero?.file,
+      ...socialOfContent(frontmatter),
+      jsonLd: sd.serialize(articleGraph),
+      articleMeta: isArticle
+        ? {
+            publishedTime: frontmatter.publishedAt,
+            modifiedTime: frontmatter.updatedAt,
+            authorUrls: recordAuthors.map((author) =>
+              absolute(authorHref(author)),
+            ),
+            tags: [...frontmatter.tags],
+          }
+        : undefined,
       robotsContent:
         frontmatter.status === 'unlisted' ? 'noindex, follow' : undefined,
       lastModified: contentLastModified(frontmatter),
@@ -713,17 +928,21 @@ export function buildGeneratedPages(validatedInput, options = {}) {
   const homeFeatured = featured
     ? (() => {
         const fm = featured.frontmatter;
-        const heroUrl = mediaUrl(fm.hero?.file);
+        const hero = mediaImage(fm.hero?.file);
         const href = escapeHtml(recordHref(featured));
         return (
           `<section class="g-wrap g-hero" aria-labelledby="hero-title">` +
-          `<a class="g-hero-media" href="${href}" tabindex="-1" aria-hidden="true">` +
-          (heroUrl
-            ? `<img src="${escapeHtml(heroUrl)}" alt="" fetchpriority="high">`
+          `<div class="g-hero-media">` +
+          (hero
+            ? renderImage({
+                image: hero,
+                alt: fm.hero?.role === 'decorative' ? '' : (fm.hero?.alt ?? ''),
+                priority: true,
+              })
             : `<span class="g-card-placeholder">${icon('sparkle')}</span>`) +
-          `</a><div class="g-hero-body"><p class="g-eyebrow"><span class="g-badge">${icon('sparkle')}${text('featuredLabel')}</span>` +
+          `</div><div class="g-hero-body"><p class="g-eyebrow"><span class="g-badge">${icon('sparkle')}${text('featuredLabel')}</span>` +
           (fm.tags[0] ? chip(fm.tags[0]) : '') +
-          `</p><h1 id="hero-title"><a href="${href}">${escapeHtml(fm.title)}</a></h1>` +
+          `</p><h2 id="hero-title"><a href="${href}">${escapeHtml(fm.title)}</a></h2>` +
           (fm.description
             ? `<p class="g-dek">${escapeHtml(fm.description)}</p>`
             : '') +
@@ -731,7 +950,8 @@ export function buildGeneratedPages(validatedInput, options = {}) {
           `<a class="g-btn" href="${href}">${text('readEssayLabel')}${icon('arrow')}</a></div></section>`
         );
       })()
-    : `<section class="g-wrap g-topic-hero"><h1>${text('indexHeading')}</h1><p>${text('emptyListingLabel')}</p></section>`;
+    : `<section class="g-wrap g-topic-hero"><h2>${text('indexHeading')}</h2><p>${text('emptyListingLabel')}</p></section>`;
+  const homeHeading = `<h1 class="g-sr">${escapeHtml(publicationTitle)}</h1>`;
   const homeTags =
     sortedTags.length > 0
       ? `<section class="g-wrap g-topic-strip" aria-label="${text('browseByTagLabel')}"><ul class="g-pills">${[
@@ -780,7 +1000,8 @@ export function buildGeneratedPages(validatedInput, options = {}) {
         : '';
     const bodyHtml =
       pageNumber === 1
-        ? homeFeatured +
+        ? homeHeading +
+          homeFeatured +
           homeTags +
           homeLatest +
           homeSeries +
@@ -797,14 +1018,46 @@ export function buildGeneratedPages(validatedInput, options = {}) {
             title: /** @type {string} */ (messages.indexHeading),
             iconName: 'layers',
           }) + rowList(items, pagination);
+    const indexTitle =
+      pageNumber === 1
+        ? publicationTitle
+        : `${text0('indexHeading')} \u2013 ${msg('pageStatusLabel', String(pageNumber), String(indexPages.length))}`;
+    const indexUrl = absolute(indexRoute(pageNumber));
     pages.push({
       kind: 'index',
       route: pageNumber === 1 ? '/' : `/page/${pageNumber}`,
-      title: /** @type {string} */ (messages.indexHeading),
+      title: indexTitle,
+      documentTitle:
+        pageNumber === 1
+          ? homeDocumentTitle(publicationTitle, publication.description)
+          : documentTitleOf(indexTitle),
       language: publication.defaultLanguage,
-      description: publication.description,
+      description:
+        pageNumber === 1
+          ? publication.description
+          : msg('indexPageDescription', publicationTitle),
       ogType: 'website',
-      socialImageRef: publication.defaultImage,
+      ...defaultSocial,
+      jsonLd: sd.serialize(
+        pageNumber === 1
+          ? sd.home({
+              posts: publishedArticles.slice(0, 10).map((record) => ({
+                url: absolute(recordHref(record)),
+                headline: record.frontmatter.title,
+                datePublished: record.frontmatter.publishedAt,
+              })),
+            })
+          : sd.collection({
+              name: indexTitle,
+              description: msg('indexPageDescription', publicationTitle),
+              url: indexUrl,
+              language: publication.defaultLanguage,
+              trail: [
+                homeStep,
+                { label: indexTitle, route: indexRoute(pageNumber) },
+              ],
+            }),
+      ),
       lastModified: latestContentTimestamp(
         pageNumber === 1
           ? publishedArticles.slice(0, 1 + LATEST_CARD_COUNT)
@@ -818,11 +1071,16 @@ export function buildGeneratedPages(validatedInput, options = {}) {
     pages.push({
       kind: 'tag',
       route: '/tags',
-      title: /** @type {string} */ (messages.tagsSectionLabel),
+      ...listingMeta({
+        name: text0('tagsSectionLabel'),
+        description: msg(
+          'tagsRootDescription',
+          String(sortedTags.length),
+          publicationTitle,
+        ),
+        route: '/tags',
+      }),
       language: publication.defaultLanguage,
-      description: publication.description,
-      ogType: 'website',
-      socialImageRef: publication.defaultImage,
       lastModified: latestContentTimestamp(publishedArticles),
       bodyHtml: listingHead({
         breadcrumbHtml: crumbs([
@@ -843,10 +1101,18 @@ export function buildGeneratedPages(validatedInput, options = {}) {
     pages.push({
       kind: 'tag',
       route: `/tags/${routeSegmentForLabel(tag)}`,
-      title: `${/** @type {string} */ (messages.tagIndexLabelPrefix)} ${tag}`,
+      ...listingMeta({
+        name: msg('tagPageTitle', tag),
+        description: msg(
+          'tagPageDescription',
+          String(items.length),
+          tag,
+          publicationTitle,
+        ),
+        route: `/tags/${routeSegmentForLabel(tag)}`,
+        parents: [{ label: text0('tagsSectionLabel'), route: site('/tags') }],
+      }),
       language: publication.defaultLanguage,
-      ogType: 'website',
-      socialImageRef: publication.defaultImage,
       lastModified: latestContentTimestamp(items),
       bodyHtml:
         listingHead({
@@ -871,11 +1137,16 @@ export function buildGeneratedPages(validatedInput, options = {}) {
     pages.push({
       kind: 'series',
       route: '/series',
-      title: /** @type {string} */ (messages.seriesSectionLabel),
+      ...listingMeta({
+        name: text0('seriesSectionLabel'),
+        description: msg(
+          'seriesRootDescription',
+          String(sortedSeries.length),
+          publicationTitle,
+        ),
+        route: '/series',
+      }),
       language: publication.defaultLanguage,
-      description: publication.description,
-      ogType: 'website',
-      socialImageRef: publication.defaultImage,
       lastModified: latestContentTimestamp([...bySeries.values()].flat()),
       bodyHtml: listingHead({
         breadcrumbHtml: crumbs([
@@ -901,10 +1172,20 @@ export function buildGeneratedPages(validatedInput, options = {}) {
     pages.push({
       kind: 'series',
       route: `/series/${routeSegmentForLabel(name)}`,
-      title: `${/** @type {string} */ (messages.seriesIndexLabelPrefix)} ${name}`,
+      ...listingMeta({
+        name,
+        description: msg(
+          'seriesPageDescription',
+          String(items.length),
+          name,
+          publicationTitle,
+        ),
+        route: `/series/${routeSegmentForLabel(name)}`,
+        parents: [
+          { label: text0('seriesSectionLabel'), route: site('/series') },
+        ],
+      }),
       language: publication.defaultLanguage,
-      ogType: 'website',
-      socialImageRef: publication.defaultImage,
       lastModified: latestContentTimestamp(items),
       bodyHtml:
         listingHead({
@@ -929,11 +1210,16 @@ export function buildGeneratedPages(validatedInput, options = {}) {
     pages.push({
       kind: 'archive',
       route: '/archive',
-      title: /** @type {string} */ (messages.archiveSectionLabel),
+      ...listingMeta({
+        name: text0('archiveSectionLabel'),
+        description: msg(
+          'archiveRootDescription',
+          String(publishedArticles.length),
+          publicationTitle,
+        ),
+        route: '/archive',
+      }),
       language: publication.defaultLanguage,
-      description: publication.description,
-      ogType: 'website',
-      socialImageRef: publication.defaultImage,
       lastModified: latestContentTimestamp(publishedArticles),
       bodyHtml: listingHead({
         breadcrumbHtml: crumbs([
@@ -969,10 +1255,23 @@ export function buildGeneratedPages(validatedInput, options = {}) {
       pages.push({
         kind: 'archive',
         route: yearRoute(pageNumber),
-        title: `${/** @type {string} */ (messages.archiveYearLabelPrefix)} ${year}`,
+        ...listingMeta({
+          name:
+            pageNumber === 1
+              ? msg('archivePageTitle', year)
+              : `${msg('archivePageTitle', year)} \u2013 ${msg('pageStatusLabel', String(pageNumber), String(yearPages.length))}`,
+          description: msg(
+            'archivePageDescription',
+            String(items.length),
+            year,
+            publicationTitle,
+          ),
+          route: yearRoute(pageNumber),
+          parents: [
+            { label: text0('archiveSectionLabel'), route: site('/archive') },
+          ],
+        }),
         language: publication.defaultLanguage,
-        ogType: 'website',
-        socialImageRef: publication.defaultImage,
         lastModified: latestContentTimestamp(pageItems),
         bodyHtml:
           listingHead({

@@ -137,12 +137,97 @@ export function createMediaUrl({ mediaAssets, publicBasePath }) {
 }
 
 /**
+ * Build the resolver for a processed image's URL plus its pixel dimensions
+ * (from the media pipeline's own `dimensions` map), so every `<img>` can
+ * carry `width`/`height` and reserve its space before the file loads.
+ *
+ * @param {object} options
+ * @param {readonly {path: string, mediaType: string}[]} options.mediaAssets
+ * @param {string} options.publicBasePath the public base path
+ * @param {Readonly<Record<string, {width: number, height: number}>>} [options.mediaDimensions]
+ *   the pipeline's dimensions, keyed by derivative path
+ * @returns {(ref: {path: string, sourceDigest: string} | undefined) => ({url: string, width?: number, height?: number}) | undefined}
+ */
+export function createMediaImage({
+  mediaAssets,
+  publicBasePath,
+  mediaDimensions = {},
+}) {
+  return (ref) => {
+    const derivative = resolveOriginalDerivativePath(mediaAssets, ref);
+    if (!derivative) return undefined;
+    const size = mediaDimensions[derivative];
+    return {
+      url: joinBasePathAndRoute(publicBasePath, `/${derivative}`),
+      width: size?.width,
+      height: size?.height,
+    };
+  };
+}
+
+/**
+ * Render one `<img>` with intrinsic `width`/`height` (when known) and the
+ * right loading hints: a priority image (the page's largest above-the-fold
+ * image) is `fetchpriority="high"` and never lazy; every other image is
+ * `loading="lazy" decoding="async"`.
+ *
+ * @param {object} options
+ * @param {{url: string, width?: number, height?: number}} options.image
+ * @param {string} options.alt the alternative text (empty when decorative)
+ * @param {string} [options.className]
+ * @param {boolean} [options.priority]
+ * @param {boolean} [options.eager] above-the-fold but not the page's main
+ *   image (the header brand mark): no `loading="lazy"`
+ * @param {{width: number, height: number}} [options.fallbackSize] used when
+ *   the pipeline reported no dimensions
+ * @returns {string} the `<img>` element
+ */
+export function renderImage({
+  image,
+  alt,
+  className,
+  priority = false,
+  eager = false,
+  fallbackSize,
+}) {
+  const width = image.width ?? fallbackSize?.width;
+  const height = image.height ?? fallbackSize?.height;
+  return (
+    `<img${className ? ` class="${className}"` : ''} src="${escapeHtml(image.url)}" alt="${escapeHtml(alt)}"` +
+    (width && height ? ` width="${width}" height="${height}"` : '') +
+    (priority
+      ? ' fetchpriority="high" decoding="async"'
+      : eager
+        ? ' decoding="async"'
+        : ' loading="lazy" decoding="async"') +
+    `>`
+  );
+}
+
+/**
+ * Add `loading="lazy" decoding="async"` to every `<img>` in an
+ * already-sanitized body. Applied at render time only: the body's own
+ * digest is over the stored bytes and is never recomputed.
+ *
+ * @param {string} bodyHtml sanitized body HTML
+ * @returns {string} the body with loading hints on its images
+ */
+export function lazyBodyImages(bodyHtml) {
+  return bodyHtml.replace(
+    /<img\b(?![^>]*\bloading=)/g,
+    '<img loading="lazy" decoding="async"',
+  );
+}
+
+/**
  * @typedef {object} ComponentContext
  * @property {Readonly<Record<string, string | ((...args: string[]) => string)>>} messages
  * @property {(route: string) => string} site joins a canonical route with
  *   the public base path
- * @property {(ref: {path: string, sourceDigest: string} | undefined) => string | undefined} mediaUrl
- *   the emitted URL of an image reference's processed derivative
+ * @property {(ref: {path: string, sourceDigest: string} | undefined) => ({url: string, width?: number, height?: number}) | undefined} mediaImage
+ *   the emitted URL and dimensions of an image reference's processed derivative
+ * @property {(author: import('../../../types/index.d.ts').AuthorNormalized) => string} authorHref
+ *   the author page's joined route
  * @property {ReadonlyMap<string, import('../../../types/index.d.ts').AuthorNormalized>} authorsById
  * @property {(record: import('../../../types/index.d.ts').ContentBuildRecord) => string} recordHref
  *   the record's own joined route
@@ -153,11 +238,11 @@ export function createMediaUrl({ mediaAssets, publicBasePath }) {
  * Build the component renderers bound to one build's context.
  *
  * @param {ComponentContext} context
- * @returns {{text: (key: string) => string, call: (key: string, ...args: string[]) => string, chip: (tag: string) => string, meta: (record: import('../../../types/index.d.ts').ContentBuildRecord) => string, avatar: (author: import('../../../types/index.d.ts').AuthorNormalized | undefined) => string, byline: (record: import('../../../types/index.d.ts').ContentBuildRecord) => string, card: (record: import('../../../types/index.d.ts').ContentBuildRecord, options?: {partLabel?: string, headingLevel?: number}, variant?: 'grid' | 'row') => string, recordAuthors: (record: import('../../../types/index.d.ts').ContentBuildRecord) => import('../../../types/index.d.ts').AuthorNormalized[]}}
+ * @returns {{text: (key: string) => string, call: (key: string, ...args: string[]) => string, chip: (tag: string) => string, meta: (record: import('../../../types/index.d.ts').ContentBuildRecord, showUpdated?: boolean) => string, avatar: (author: import('../../../types/index.d.ts').AuthorNormalized | undefined) => string, byline: (record: import('../../../types/index.d.ts').ContentBuildRecord, showUpdated?: boolean) => string, card: (record: import('../../../types/index.d.ts').ContentBuildRecord, options?: {partLabel?: string, headingLevel?: number}, variant?: 'grid' | 'row') => string, recordAuthors: (record: import('../../../types/index.d.ts').ContentBuildRecord) => import('../../../types/index.d.ts').AuthorNormalized[]}}
  *   the bound renderers
  */
 export function createComponents(context) {
-  const { messages, mediaUrl, authorsById, recordHref, tagHref } = context;
+  const { messages, mediaImage, authorsById, recordHref, tagHref } = context;
   /**
    * @param {string} key a plain message key
    * @returns {string} the escaped message text
@@ -182,22 +267,41 @@ export function createComponents(context) {
 
   /**
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
+   * @param {boolean} [showUpdated] append the "Updated" date when the
+   *   record was modified after publication
    * @returns {string}
    */
-  const meta = (record) =>
-    `<span class="g-meta"><time datetime="${escapeHtml(record.frontmatter.publishedAt)}">` +
-    `${call('formatDate', record.frontmatter.publishedAt)}</time>` +
-    `<span class="g-dot" aria-hidden="true"></span>` +
-    `<span>${icon('clock')}${call('readingTimeLabel', String(readingMinutes(record.body)))}</span></span>`;
+  const meta = (record, showUpdated = false) => {
+    const { publishedAt, updatedAt } = record.frontmatter;
+    const formatDate = /** @type {(iso: string) => string} */ (
+      messages.formatDate
+    );
+    const updated =
+      showUpdated && updatedAt && updatedAt !== publishedAt
+        ? `<span class="g-dot" aria-hidden="true"></span><time datetime="${escapeHtml(updatedAt)}">` +
+          `${call('updatedLabel', formatDate(updatedAt))}</time>`
+        : '';
+    return (
+      `<span class="g-meta"><time datetime="${escapeHtml(publishedAt)}">` +
+      `${call('formatDate', publishedAt)}</time>` +
+      `<span class="g-dot" aria-hidden="true"></span>` +
+      `<span>${icon('clock')}${call('readingTimeLabel', String(readingMinutes(record.body)))}</span>${updated}</span>`
+    );
+  };
 
   /**
    * @param {import('../../../types/index.d.ts').AuthorNormalized | undefined} author
    * @returns {string}
    */
   const avatar = (author) => {
-    const url = mediaUrl(author?.avatar);
-    return url
-      ? `<img class="g-avatar" src="${escapeHtml(url)}" alt="" width="40" height="40" loading="lazy">`
+    const image = mediaImage(author?.avatar);
+    return image
+      ? renderImage({
+          image,
+          alt: '',
+          className: 'g-avatar',
+          fallbackSize: { width: 40, height: 40 },
+        })
       : `<span class="g-avatar" aria-hidden="true">${escapeHtml(monogram(author?.displayName ?? ''))}</span>`;
   };
 
@@ -213,19 +317,20 @@ export function createComponents(context) {
 
   /**
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
+   * @param {boolean} [showUpdated] show the "Updated" date (article head)
    * @returns {string}
    */
-  const byline = (record) => {
+  const byline = (record, showUpdated = false) => {
     const authors = recordAuthors(record);
     const names = authors
       .map(
         (author) =>
-          `<a href="${escapeHtml(context.site(`/authors/${author.id}`))}">${escapeHtml(author.displayName)}</a>`,
+          `<a href="${escapeHtml(context.authorHref(author))}">${escapeHtml(author.displayName)}</a>`,
       )
       .join(', ');
     return (
       `<div class="g-byline">${avatar(authors[0])}` +
-      `<div class="g-byline-text"><span>${names}</span>${meta(record)}</div></div>`
+      `<div class="g-byline-text"><span>${names}</span>${meta(record, showUpdated)}</div></div>`
     );
   };
 
@@ -239,9 +344,9 @@ export function createComponents(context) {
   const card = (record, options = {}, variant = 'grid') => {
     const fm = record.frontmatter;
     const href = escapeHtml(recordHref(record));
-    const heroUrl = mediaUrl(fm.hero?.file);
-    const media = heroUrl
-      ? `<figure class="g-card-media"><img src="${escapeHtml(heroUrl)}" alt="${escapeHtml(fm.hero?.role === 'decorative' ? '' : (fm.hero?.alt ?? ''))}" loading="lazy"></figure>`
+    const hero = mediaImage(fm.hero?.file);
+    const media = hero
+      ? `<figure class="g-card-media">${renderImage({ image: hero, alt: fm.hero?.role === 'decorative' ? '' : (fm.hero?.alt ?? '') })}</figure>`
       : `<div class="g-card-placeholder" aria-hidden="true">${icon('sparkle')}</div>`;
     const seriesTag = options.partLabel
       ? `<span class="g-series-tag">${icon('book')}${escapeHtml(options.partLabel)}</span>`
@@ -249,11 +354,10 @@ export function createComponents(context) {
     const firstTag = fm.tags[0];
     return (
       `<article class="g-card${variant === 'row' ? ' g-card-row' : ''}">` +
-      `<a class="g-card-link" href="${href}" aria-label="${escapeHtml(fm.title)}"></a>` +
       media +
       `<div class="g-card-body">` +
       `<div class="g-card-top">${firstTag ? chip(firstTag) : ''}${seriesTag}</div>` +
-      `<h${options.headingLevel ?? 3}>${escapeHtml(fm.title)}</h${options.headingLevel ?? 3}>` +
+      `<h${options.headingLevel ?? 3}><a class="g-card-link" href="${href}">${escapeHtml(fm.title)}</a></h${options.headingLevel ?? 3}>` +
       (fm.description
         ? `<p class="g-card-excerpt">${escapeHtml(fm.description)}</p>`
         : '') +

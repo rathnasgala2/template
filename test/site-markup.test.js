@@ -34,6 +34,7 @@ import {
 } from './helpers/render-fixtures.js';
 import { buildRichFixture, stableId } from './helpers/page-kind-fixtures.js';
 import { applyCurrentRenderPolicy } from './helpers/schema-fixtures.js';
+import { executableScriptCount } from './helpers/html-facts.js';
 import { buildTestPng, sha256Of } from './helpers/media-fixtures.js';
 
 /**
@@ -228,7 +229,7 @@ test('header, home, article, listings and footer render the redesigned structure
   await t.test('home: featured is the newest published article', () => {
     assert.match(
       home,
-      /<h1 id="hero-title"><a href="\/fixture-1\/second-article">Second article<\/a><\/h1>/,
+      /<h2 id="hero-title"><a href="\/fixture-1\/second-article">Second article<\/a><\/h2>/,
     );
     assert.match(home, /Read the essay/);
     assert.match(
@@ -301,7 +302,7 @@ test('header, home, article, listings and footer render the redesigned structure
       );
       assert.match(
         article,
-        /<a href="\/fixture-1\/authors\/[0-9a-f-]+">fixture-1<\/a>/,
+        /<a href="\/fixture-1\/authors\/fixture-1">fixture-1<\/a>/,
       );
       assert.match(
         article,
@@ -407,7 +408,7 @@ test('header, home, article, listings and footer render the redesigned structure
           );
           assert.ok(!/^javascript:/i.test(href[1]));
         }
-        assert.equal(count(html, /<script\b/g), 1, route);
+        assert.equal(executableScriptCount(html), 1, route);
         assert.ok(!/\son[a-z]+=/i.test(html), `${route}: no inline handler`);
         for (const match of html.matchAll(/<button\b([^>]*)>/g)) {
           assert.match(match[1], /\btype="button"/, route);
@@ -474,7 +475,7 @@ test('hero images: cover figure with alt on the article, media on cards; decorat
   assert.match(
     first,
     new RegExp(
-      `<figure class="g-wrap g-article-cover"><img src="/fixture-1/assets/media/${hex}/original\\.[a-z]+" alt="A red square"></figure>`,
+      `<figure class="g-wrap g-article-cover"><img src="/fixture-1/assets/media/${hex}/original\\.[a-z]+" alt="A red square" width="640" height="360" fetchpriority="high" decoding="async"></figure>`,
     ),
   );
   const second = /** @type {string} */ (
@@ -482,12 +483,12 @@ test('hero images: cover figure with alt on the article, media on cards; decorat
   );
   assert.match(
     second,
-    /<figure class="g-wrap g-article-cover"><img [^>]*alt=""><\/figure>/,
+    /<figure class="g-wrap g-article-cover"><img [^>]*alt=""[^>]*><\/figure>/,
   );
   // Cards for those articles use the image, not the placeholder.
   assert.match(
     second,
-    /<figure class="g-card-media"><img src="\/fixture-1\/assets\/media\/[0-9a-f]+\/original\.[a-z]+" alt="A red square" loading="lazy"><\/figure>/,
+    /<figure class="g-card-media"><img src="\/fixture-1\/assets\/media\/[0-9a-f]+\/original\.[a-z]+" alt="A red square" width="640" height="360" loading="lazy" decoding="async"><\/figure>/,
   );
   assert.ok(stableId(1));
 });

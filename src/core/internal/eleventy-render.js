@@ -143,13 +143,22 @@ const SKELETON_LAYOUT_SOURCE = [
   '<meta property="og:site_name" content="{{ siteName }}">',
   '{% if canonicalUrl %}<meta property="og:url" content="{{ canonicalUrl }}">{% endif %}',
   '<meta property="og:type" content="{{ ogType }}">',
-  '<meta property="og:title" content="{{ title }}">',
+  '<meta property="og:title" content="{{ ogTitle }}">',
   '{% if description %}<meta property="og:description" content="{{ description }}">{% endif %}',
-  '{% if ogImage %}<meta property="og:image" content="{{ ogImage }}">{% endif %}',
+  '{% if ogImage %}<meta property="og:image" content="{{ ogImage }}">{% if ogImageWidth %}<meta property="og:image:width" content="{{ ogImageWidth }}">{% endif %}{% if ogImageHeight %}<meta property="og:image:height" content="{{ ogImageHeight }}">{% endif %}{% if ogImageAlt %}<meta property="og:image:alt" content="{{ ogImageAlt }}">{% endif %}{% endif %}',
+  '{% if articlePublished %}<meta property="article:published_time" content="{{ articlePublished }}">{% endif %}',
+  '{% if articleModified %}<meta property="article:modified_time" content="{{ articleModified }}">{% endif %}',
+  '{% for authorUrl in articleAuthors %}<meta property="article:author" content="{{ authorUrl }}">{% endfor %}',
+  '{% for articleTag in articleTags %}<meta property="article:tag" content="{{ articleTag }}">{% endfor %}',
   '<meta name="twitter:card" content="{{ twitterCard }}">',
-  '<meta name="twitter:title" content="{{ title }}">',
+  '<meta name="twitter:title" content="{{ ogTitle }}">',
   '{% if description %}<meta name="twitter:description" content="{{ description }}">{% endif %}',
-  '{% if ogImage %}<meta name="twitter:image" content="{{ ogImage }}">{% endif %}',
+  '{% if ogImage %}<meta name="twitter:image" content="{{ ogImage }}">{% if ogImageAlt %}<meta name="twitter:image:alt" content="{{ ogImageAlt }}">{% endif %}{% endif %}',
+  // One JSON-LD data block per page (`internal/structured-data.js`). Its
+  // `type` is not a JavaScript type, so a browser never executes it and the
+  // CSP `script-src` does not govern it; `jsonLd` is already escaped for
+  // embedding (`<`, `>`, `&`, U+2028/9 as \uXXXX).
+  '{% if jsonLd %}<script type="application/ld+json">{{ jsonLd | safe }}</script>{% endif %}',
   '<link rel="alternate" type="application/atom+xml" href="{{ atomFeedUrl }}" title="{{ siteName }}">',
   '<link rel="alternate" type="application/rss+xml" href="{{ rssFeedUrl }}" title="{{ siteName }}">',
   // TPL-H3/TPL-M7: the template-owned gala-base layer's own `<link>`,

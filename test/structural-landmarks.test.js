@@ -172,7 +172,7 @@ test('S2-T06 structural test: one golden page per kind has correct landmarks and
   /** @type {Record<string, string>} one representative route per page kind */
   const goldenRouteByKind = {
     profile: 'fixture-1/about/index.html',
-    author: 'fixture-1/authors/019c0000-0000-7000-8000-000000000002/index.html',
+    author: 'fixture-1/authors/fixture-author-2/index.html',
     article: 'fixture-1/first-article/index.html',
     page: 'fixture-1/contact/index.html',
     index: 'fixture-1/index.html',

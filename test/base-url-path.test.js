@@ -130,6 +130,19 @@ test('baseUrl with a path: stylesheet, script and internal hrefs, canonical, fee
       }
     }
   }
+  // robots.txt is written at the output root (only a host-root file is
+  // honoured) and still names the absolute sitemap URL under the base path.
+  assert.ok(paths.includes('robots.txt'));
+  assert.ok(
+    files['robots.txt'].includes(
+      'Sitemap: https://example.test/site/sitemap.xml\n',
+    ),
+  );
+  assert.ok(
+    Object.values(files).some((text) =>
+      text.includes('https://example.test/site/llms-full.txt'),
+    ),
+  );
   assert.ok(
     Object.keys(files).some((f) => f.endsWith('sitemap.xml')),
     'sitemap.xml generated',

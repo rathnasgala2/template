@@ -192,7 +192,9 @@ function derivativePath(sourceDigest, variant, extension) {
  *
  * @param {Buffer} bytes verified source bytes
  * @param {ImageReference} reference the reference these bytes back
- * @returns {PipelineOutputFile[]} the output files this reference produces
+ * @returns {{files: PipelineOutputFile[], width: number, height: number}}
+ *   the output files this reference produces and the canonical original's
+ *   pixel dimensions
  */
 function processImage(bytes, reference) {
   const format = sniffMediaFormat(bytes);
@@ -214,18 +216,21 @@ function processImage(bytes, reference) {
   if (format === 'webp' || format === 'avif') {
     // Bounded container/dimension validation only; see webp-probe.js and
     // avif-probe.js module documentation for the documented scope decision.
-    if (format === 'webp') {
-      probeWebp(bytes, reference.path);
-    } else {
-      probeAvif(bytes, reference.path);
-    }
+    const size =
+      format === 'webp'
+        ? probeWebp(bytes, reference.path)
+        : probeAvif(bytes, reference.path);
     const extension = EXTENSION_BY_MEDIA_TYPE[MEDIA_TYPE_BY_FORMAT[format]];
-    return [
-      {
-        path: derivativePath(reference.sourceDigest, 'original', extension),
-        bytes,
-      },
-    ];
+    return {
+      files: [
+        {
+          path: derivativePath(reference.sourceDigest, 'original', extension),
+          bytes,
+        },
+      ],
+      width: size.width,
+      height: size.height,
+    };
   }
 
   /** @type {{width: number, height: number, rgba: Buffer}} */
@@ -261,7 +266,7 @@ function processImage(bytes, reference) {
       bytes: encode(resized),
     });
   }
-  return outputs;
+  return { files: outputs, width: oriented.width, height: oriented.height };
 }
 
 /**
@@ -272,8 +277,11 @@ function processImage(bytes, reference) {
  *   the validated build input
  * @param {{sourceDirectory: string}} options the media pipeline's own
  *   options
- * @returns {Promise<{assets: import('../../../../types/index.d.ts').ManifestAssetEntry[], files: PipelineOutputFile[]}>}
- *   the asset manifest rows and the output files backing them
+ * @returns {Promise<{assets: import('../../../../types/index.d.ts').ManifestAssetEntry[], files: PipelineOutputFile[], dimensions: Record<string, {width: number, height: number}>}>}
+ *   the asset manifest rows, the output files backing them, and the pixel
+ *   dimensions of each image's canonical original keyed by its output path
+ *   (`manifestAsset` has no width/height field, so this is the one place the
+ *   renderer learns them, for `<img width height>` and structured data)
  */
 export async function processMedia(buildInput, { sourceDirectory }) {
   const imageReferences = collectImageReferences(buildInput);
@@ -295,14 +303,21 @@ export async function processMedia(buildInput, { sourceDirectory }) {
 
   /** @type {PipelineOutputFile[]} */
   const files = [];
+  /** @type {Record<string, {width: number, height: number}>} */
+  const dimensions = {};
   let totalBytes = 0;
 
   for (const reference of imageReferences) {
     const bytes = await readAndVerify(sourceDirectory, reference);
-    for (const output of processImage(bytes, reference)) {
+    const processed = processImage(bytes, reference);
+    for (const output of processed.files) {
       totalBytes += output.bytes.byteLength;
       files.push(output);
     }
+    dimensions[processed.files[0].path] = {
+      width: processed.width,
+      height: processed.height,
+    };
   }
 
   for (const reference of fontReferences) {
@@ -349,5 +364,5 @@ export async function processMedia(buildInput, { sourceDirectory }) {
     });
   });
 
-  return { assets, files };
+  return { assets, files, dimensions };
 }

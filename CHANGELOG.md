@@ -51,6 +51,43 @@ tokens.
   index). Every other directive is unchanged. The render-policy contract is
   regenerated.
 
+### Added (search and assistant discovery)
+
+- **JSON-LD** on every page (one `application/ld+json` block, `@graph`): home
+  `WebSite` + `Blog`, article `BlogPosting` + `BreadcrumbList`, tag, series and
+  archive `CollectionPage` + `BreadcrumbList`, author `ProfilePage` with a
+  `Person`. Serialized with `<`, `>`, `&`, U+2028 and U+2029 escaped.
+  Distinguished from the one executable script by its `type`.
+- **`robots.txt`** (output root; AI-crawler blocking from
+  `publication.crawlers.ai`, default allow), **`llms.txt`** and
+  **`llms-full.txt`**; unlisted content excluded.
+- **Article meta**: `article:published_time`, `article:modified_time`,
+  `article:author`, `article:tag`, `og:image:width/height/alt`,
+  `twitter:image:alt`; every page falls back to the publication default image.
+- **Image dimensions**: the media pipeline reports pixel dimensions, and every
+  `<img>` carries `width`/`height`; cover and home hero are
+  `fetchpriority="high"`, all others `loading="lazy" decoding="async"` (body
+  images too, applied at render time).
+- **Titles and descriptions**: `<Page> | <Publication>` titles, a bounded home
+  title, generated descriptions for tag, series, archive, author and index
+  pages.
+- **Feeds** carry the full sanitized body (absolute links), author and category.
+- **Updated date** shown on an article when `updatedAt` differs from
+  `publishedAt`.
+- **Home** has a screen-reader-only `h1` naming the publication; the featured
+  title is an `h2`.
+
+### Changed (search and assistant discovery)
+
+- **Author URLs** are `/authors/<slug of display name>` (the id on collision),
+  replacing `/authors/<id>`.
+- **Card links**: the empty overlay anchor is replaced by the title link
+  (`g-card-link`), stretched over the card by `::after`; the home hero image is
+  no longer a separate link. No hook was added or removed.
+- **The site script is minified** (comments, indentation and blank lines
+  removed; nothing renamed): 20725 to 16897 bytes.
+- `RSS` declares the `content` and `dc` namespaces.
+
 ### Notes
 
 - The `@rathnasgala2/schemas` pin is unchanged at 2.11.0; the schema's contract

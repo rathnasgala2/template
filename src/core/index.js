@@ -99,7 +99,10 @@ import {
   renderErrorPageBody,
 } from './internal/page-kinds.js';
 import { assertProvenance } from './internal/provenance.js';
-import { routeSegmentForLabel } from './internal/route-labels.js';
+import {
+  deriveAuthorSlugs,
+  routeSegmentForLabel,
+} from './internal/route-labels.js';
 import {
   derivePublicBasePath,
   errorDocumentPath,
@@ -110,7 +113,9 @@ import {
   renderRedirectDocument,
 } from './internal/route.js';
 import { buildSearchIndex } from './internal/search-index.js';
-import { resolveSocialImageUrl, twitterCardType } from './internal/seo.js';
+import { resolveSocialImage, twitterCardType } from './internal/seo.js';
+import { buildLlmsDocuments } from './internal/llms.js';
+import { buildRobotsTxt, readAiCrawlerPolicy } from './internal/robots.js';
 import { buildSitemap } from './internal/sitemap.js';
 import {
   defaultThemeStylesheetLinksHtml,
@@ -123,7 +128,7 @@ import {
   renderPrimaryNavigation,
 } from './internal/skeleton.js';
 import { renderFooter, renderHeader } from './internal/chrome.js';
-import { createComponents, createMediaUrl } from './internal/components.js';
+import { createComponents, createMediaImage } from './internal/components.js';
 import {
   collectIncludedSources,
   compareUtf8Bytes,
@@ -136,6 +141,13 @@ const SITEMAP_ROUTE = '/sitemap.xml';
 /** @type {string} the un-joined route the static search index is published
  * at. */
 const SEARCH_INDEX_ROUTE = '/search-index.json';
+/** @type {string} the output-root path of `robots.txt` (never `basePath`-
+ * joined: only a host-root robots file is honoured by crawlers). */
+const ROBOTS_PATH = 'robots.txt';
+/** @type {string} the un-joined route of the llmstxt.org index. */
+const LLMS_ROUTE = '/llms.txt';
+/** @type {string} the un-joined route of the full-text companion. */
+const LLMS_FULL_ROUTE = '/llms-full.txt';
 
 /** @type {string} */
 const BUILD_INPUT_SCHEMA_ID = 'urn:gala:schema:build-input:2.0.0';
@@ -346,12 +358,19 @@ export async function renderPublication(buildInput, options) {
   // bytes are still written to `outputDirectory` only after the route
   // listing below, so `outputDirectory/assets/media/` still can never be
   // mistaken for an Eleventy-rendered HTML route.
-  const { assets: mediaAssets, files: mediaFiles } = await processMedia(
-    validatedInput,
-    { sourceDirectory: path.resolve(options.sourceDirectory) },
-  );
-  const mediaUrl = createMediaUrl({ mediaAssets, publicBasePath });
-  const brandMarkUrl = mediaUrl(validatedInput.appearance.brandMark);
+  const {
+    assets: mediaAssets,
+    files: mediaFiles,
+    dimensions: mediaDimensions,
+  } = await processMedia(validatedInput, {
+    sourceDirectory: path.resolve(options.sourceDirectory),
+  });
+  const mediaImage = createMediaImage({
+    mediaAssets,
+    publicBasePath,
+    mediaDimensions,
+  });
+  const brandMark = mediaImage(validatedInput.appearance.brandMark);
   const searchIndexHref = joinBasePathAndRoute(
     publicBasePath,
     SEARCH_INDEX_ROUTE,
@@ -369,10 +388,19 @@ export async function renderPublication(buildInput, options) {
   const footerAuthor =
     authorsById.get(publication.contactAuthorId ?? '') ??
     validatedInput.authors[0];
+  const authorSlugs = deriveAuthorSlugs(validatedInput.authors);
+  const authorHref = (
+    /** @type {import('../../types/index.d.ts').AuthorNormalized} */ author,
+  ) =>
+    joinPublicRoute(
+      publicBasePath,
+      `/authors/${authorSlugs.get(author.id) ?? author.id}`,
+    );
   const footerComponents = createComponents({
     messages: siteMessages,
     site: (route) => joinPublicRoute(publicBasePath, route),
-    mediaUrl,
+    mediaImage,
+    authorHref,
     authorsById,
     recordHref: (record) =>
       joinPublicRoute(publicBasePath, contentRoute(record.frontmatter)),
@@ -382,7 +410,7 @@ export async function renderPublication(buildInput, options) {
   const footerAuthorHtml = footerAuthor
     ? `<p class="g-label">${footerComponents.text('writtenByLabel')}</p>` +
       `<div class="g-byline">${footerComponents.avatar(footerAuthor)}<div class="g-byline-text">` +
-      `<a href="${escapeHtml(joinPublicRoute(publicBasePath, `/authors/${footerAuthor.id}`))}">${escapeHtml(footerAuthor.displayName)}</a>` +
+      `<a href="${escapeHtml(authorHref(footerAuthor))}">${escapeHtml(footerAuthor.displayName)}</a>` +
       `</div></div>`
     : '';
   const latestYear = validatedInput.content
@@ -393,7 +421,7 @@ export async function renderPublication(buildInput, options) {
     homeRoute,
     publicationName: publication.title,
     description: publication.description,
-    brandMarkUrl,
+    brandMark,
     socialLinks: publication.socialLinks,
     rssHref,
     primaryItems: validatedInput.navigation.items,
@@ -417,7 +445,7 @@ export async function renderPublication(buildInput, options) {
       homeRoute,
       publicationName: publication.title,
       tagline: publication.description,
-      brandMarkUrl,
+      brandMark,
       navHtml: renderPrimaryNavigation({
         items: validatedInput.navigation.items,
         currentRoute,
@@ -469,7 +497,10 @@ export async function renderPublication(buildInput, options) {
   /** @type {{joinedSource: string, joinedTarget: string, publicTarget: string, filePath: string}[]} */
   const redirectProjections = [];
 
-  const generatedPages = buildGeneratedPages(validatedInput, { mediaAssets });
+  const generatedPages = buildGeneratedPages(validatedInput, {
+    mediaAssets,
+    mediaDimensions,
+  });
   generatedPages.forEach((page, index) => {
     const joinedRoute = joinBasePathAndRoute(
       validatedInput.basePath,
@@ -481,19 +512,22 @@ export async function renderPublication(buildInput, options) {
       footerHtml,
       mainHtml: page.bodyHtml,
     });
-    const ogImage = resolveSocialImageUrl({
+    const ogImageInfo = resolveSocialImage({
       mediaAssets,
+      mediaDimensions,
       reference: page.socialImageRef,
       baseUrl: validatedInput.baseUrl,
       basePath: publicBasePath,
     });
+    const ogImage = ogImageInfo?.url;
     contentPages.push({
       virtualPath: `pages/${page.kind}-${index}.html`,
       content: bodyHtml,
       permalink: projectRouteToFilePath(joinedRoute, routeProfile),
       layout: 'skeleton.njk',
       data: {
-        title: page.title,
+        title: page.documentTitle ?? page.title,
+        ogTitle: page.title,
         lang: page.language,
         dir: page.direction,
         pageKind: page.kind,
@@ -506,6 +540,14 @@ export async function renderPublication(buildInput, options) {
         siteName,
         ogType: page.ogType ?? 'website',
         ogImage,
+        ogImageWidth: ogImageInfo?.width,
+        ogImageHeight: ogImageInfo?.height,
+        ogImageAlt: ogImage ? page.socialImageAlt : undefined,
+        articlePublished: page.articleMeta?.publishedTime,
+        articleModified: page.articleMeta?.modifiedTime,
+        articleAuthors: page.articleMeta?.authorUrls ?? [],
+        articleTags: page.articleMeta?.tags ?? [],
+        jsonLd: page.jsonLd,
         twitterCard: twitterCardType(Boolean(ogImage)),
         atomFeedUrl: feeds.atomSelfUrl,
         rssFeedUrl: feeds.rssSelfUrl,
@@ -567,7 +609,8 @@ export async function renderPublication(buildInput, options) {
     permalink: errorFilePath,
     layout: 'skeleton.njk',
     data: {
-      title: /** @type {string} */ (siteMessages.errorPageHeading),
+      title: `${/** @type {string} */ (siteMessages.errorPageHeading)} | ${siteName}`,
+      ogTitle: /** @type {string} */ (siteMessages.errorPageHeading),
       lang: validatedInput.publication.defaultLanguage,
       dir: resolveTextDirection(validatedInput.publication.defaultLanguage),
       pageKind: 'error',
@@ -613,7 +656,38 @@ export async function renderPublication(buildInput, options) {
     baseUrl: validatedInput.baseUrl,
   });
   const searchIndexJson = buildSearchIndex(validatedInput);
+  const absoluteSiteUrl = (/** @type {string} */ route) =>
+    new URL(
+      joinPublicRoute(publicBasePath, route),
+      validatedInput.baseUrl,
+    ).toString();
+  const robotsTxt = buildRobotsTxt({
+    aiPolicy: readAiCrawlerPolicy(validatedInput.publication),
+    sitemapUrl: absoluteSiteUrl(SITEMAP_ROUTE),
+  });
+  const llmsFilePath = projectFixedAssetPath(
+    validatedInput.basePath,
+    LLMS_ROUTE,
+  );
+  const llmsFullFilePath = projectFixedAssetPath(
+    validatedInput.basePath,
+    LLMS_FULL_ROUTE,
+  );
+  const { llmsTxt, llmsFullTxt } = buildLlmsDocuments(validatedInput, {
+    rss: feeds.rssSelfUrl,
+    atom: feeds.atomSelfUrl,
+    sitemap: absoluteSiteUrl(SITEMAP_ROUTE),
+    searchIndex: absoluteSiteUrl(SEARCH_INDEX_ROUTE),
+    full: absoluteSiteUrl(LLMS_FULL_ROUTE),
+  });
   const assetPages = [
+    { virtualPath: 'robots.html', content: robotsTxt, permalink: ROBOTS_PATH },
+    { virtualPath: 'llms.html', content: llmsTxt, permalink: llmsFilePath },
+    {
+      virtualPath: 'llms-full.html',
+      content: llmsFullTxt,
+      permalink: llmsFullFilePath,
+    },
     {
       virtualPath: 'feeds/atom.html',
       content: feeds.atomXml,
@@ -666,6 +740,18 @@ export async function renderPublication(buildInput, options) {
     [
       searchIndexFilePath,
       { routeClass: 'asset', mediaType: 'application/json; charset=utf-8' },
+    ],
+    [
+      ROBOTS_PATH,
+      { routeClass: 'asset', mediaType: 'text/plain; charset=utf-8' },
+    ],
+    [
+      llmsFilePath,
+      { routeClass: 'asset', mediaType: 'text/plain; charset=utf-8' },
+    ],
+    [
+      llmsFullFilePath,
+      { routeClass: 'asset', mediaType: 'text/plain; charset=utf-8' },
     ],
   ]);
 

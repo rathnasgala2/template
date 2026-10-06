@@ -426,7 +426,9 @@ test('S2-T07 acceptance: every rendered route carries the appearance control, th
       );
       // The bootstrap script is the only browser bootstrap this renderer
       // ever emits (brief S2 section 3, "Module absence and CSP equality").
-      const scripts = collectByTag(document, 'script');
+      const scripts = collectByTag(document, 'script').filter(
+        (script) => attr(script, 'type') !== 'application/ld+json',
+      );
       assert.equal(scripts.length, 1, `${route.path}: exactly one <script>`);
       assert.equal(
         attr(scripts[0], 'src'),

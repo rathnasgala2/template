@@ -112,3 +112,56 @@ export function resolveSocialImageUrl({
 export function twitterCardType(hasImage) {
   return hasImage ? 'summary_large_image' : 'summary';
 }
+
+/**
+ * Shorten plain text to at most `max` characters at a word boundary,
+ * appending an ellipsis when anything was cut (a `<meta name="description">`
+ * is read as a short snippet, so a clean cut beats a mid-word one).
+ *
+ * @param {string} text plain text
+ * @param {number} max the longest result, ellipsis included
+ * @returns {string} the original text when it fits, else the shortened text
+ */
+export function truncateAtWord(text, max) {
+  const collapsed = text.replace(/\s+/g, ' ').trim();
+  const characters = Array.from(collapsed);
+  if (characters.length <= max) return collapsed;
+  const clipped = characters.slice(0, max - 1).join('');
+  const cut = /\s/.test(clipped) ? clipped.replace(/\s+\S*$/, '') : clipped;
+  return `${cut.replace(/[\s,;:.–-]+$/, '')}…`;
+}
+
+/**
+ * Resolve one social image to its absolute URL and pixel dimensions.
+ *
+ * @param {object} options
+ * @param {readonly {path: string, mediaType: string}[]} options.mediaAssets
+ * @param {Readonly<Record<string, {width: number, height: number}>>} [options.mediaDimensions]
+ *   the media pipeline's pixel dimensions per derivative path
+ * @param {{path: string, sourceDigest: string} | undefined} options.reference
+ * @param {string} options.baseUrl
+ * @param {string} options.basePath the public base path
+ * @returns {{url: string, width?: number, height?: number} | undefined}
+ */
+export function resolveSocialImage({
+  mediaAssets,
+  mediaDimensions = {},
+  reference,
+  baseUrl,
+  basePath,
+}) {
+  const url = resolveSocialImageUrl({
+    mediaAssets,
+    reference,
+    baseUrl,
+    basePath,
+  });
+  if (!url) return undefined;
+  const size =
+    mediaDimensions[
+      /** @type {string} */ (
+        resolveOriginalDerivativePath(mediaAssets, reference)
+      )
+    ];
+  return { url, width: size?.width, height: size?.height };
+}

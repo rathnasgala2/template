@@ -467,6 +467,33 @@ brief sits on top of the page kinds above:
   `build-input:2.0.0` has no translation/locale-variant linkage between distinct
   `content[]` records (see `internal/seo.js`'s module documentation), so no
   `<link rel="alternate" hreflang="...">` is ever emitted by this renderer.
+- **Search and assistant discovery** (3.0.0, unpublished). Every page carries
+  one `<script type="application/ld+json">` data block
+  (`internal/ structured-data.js`: `WebSite` + `Blog` on the home page,
+  `BlogPosting` + `BreadcrumbList` on articles, `CollectionPage` on tag, series
+  and archive pages, `ProfilePage` on authors; no `SearchAction`, because the
+  site search has no results URL). It is data, never executed, so "exactly one
+  executable script per page" still holds. Article pages add
+  `article:published_time`, `article:modified_time`, `article:author`,
+  `article:tag`, and every `og:image` carries width, height and alt. `<title>`
+  is `<Page> | <Publication>` (home: `<Publication> – <tagline>`, at most 60
+  characters); every indexable page has a meta description. Every `<img>` has
+  `width` and `height` from the media pipeline; the article cover and the home
+  hero are `fetchpriority="high"`, all other images
+  `loading="lazy" decoding="async"`. Feeds carry the full sanitized body
+  (`content:encoded` in RSS, `<content type="html">` in Atom), authors and
+  categories. Author pages live at `/authors/<name-slug>` (the id when two names
+  collide).
+- **`robots.txt`, `llms.txt`, `llms-full.txt`** (`internal/robots.js`,
+  `internal/llms.js`). `robots.txt` allows all crawlers and names the absolute
+  sitemap; `publication.crawlers.ai: "block"` (read defensively, absent means
+  allow) adds `Disallow: /` groups for the 15 known AI crawlers. It is always
+  written at the output root: **only a robots.txt at the host root is honoured
+  by crawlers**, so a site served from a path (for example a GitHub project
+  site) must have the same file at its host root. `llms.txt` follows llmstxt.org
+  (`# title`, `> description`, `## Articles`, `## Series`, `## Optional`);
+  `llms-full.txt` is every published article as plain text. Unlisted content is
+  excluded from both.
 - **`404.html`**: the `error` page kind's pure `renderErrorPageBody`, now
   actually wired into `renderPublication` at the fixed `errorDocumentKey`
   (`internal/route.js#errorDocumentPath`) — `404.html` at the root, or

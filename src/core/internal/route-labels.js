@@ -65,3 +65,34 @@ export function routeSegmentForLabel(label) {
   const prefix = asciiReadablePrefix(label);
   return prefix.length > 0 ? `${prefix}-${hash}` : hash;
 }
+
+/**
+ * Derive each author's URL segment: a readable slug of the display name
+ * (lowercase ASCII, at most 48 characters), stable for a given name. When a
+ * name yields no ASCII characters or two authors yield the same slug, the
+ * author with the lower id keeps the slug and every other one falls back to
+ * its id, so a segment is always unique and a later colliding author never
+ * moves an existing author's URL.
+ *
+ * @param {readonly {id: string, displayName: string}[]} authors
+ * @returns {Map<string, string>} author id to URL segment
+ */
+export function deriveAuthorSlugs(authors) {
+  /** @type {Map<string, string>} */
+  const slugs = new Map();
+  const taken = new Set(authors.map((author) => author.id));
+  const ordered = authors.slice().sort((a, b) => (a.id < b.id ? -1 : 1));
+  for (const author of ordered) {
+    const slug = asciiReadablePrefix(author.displayName);
+    if (
+      slug !== '' &&
+      !taken.has(slug) &&
+      ![...slugs.values()].includes(slug)
+    ) {
+      slugs.set(author.id, slug);
+    } else {
+      slugs.set(author.id, author.id);
+    }
+  }
+  return slugs;
+}
