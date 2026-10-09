@@ -1,6 +1,6 @@
 {
   "name": "@rathnasgala2/template",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "Deterministic Eleventy-backed static publication renderer for Galascribe portable repositories.",
   "type": "module",
   "license": "Apache-2.0",

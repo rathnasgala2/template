@@ -8,6 +8,30 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-08
+
+### Added
+
+- **Reader interactions module.** When `build-input.modules.interactions` is
+  present and valid, article pages carry a server-rendered reactions and
+  comments section, the deferred `gala-interactions.js` browser script is
+  emitted as a content-hashed asset, and the manifest records the module flags.
+  With the module off nothing is rendered or emitted.
+
+### Changed
+
+- **The API origin is always in `connect-src`.** The content security policy now
+  always allows `https://api.galascribe.com` (and a configured local API origin
+  when the module supplies one) on every HTML route, whether or not the module
+  is on.
+- **Render-policy digest changes** because the policy text changed; the render
+  policy identity of every build input must be recomputed against 3.1.0.
+- **Schemas pin 3.1.0** (exact), which admits `modules.interactions`. The
+  empty-modules fixture family now rejects `modules.newsletter` and adds a valid
+  interactions-module case.
+- Strict type checking is enabled for `src/modules`, including the browser
+  script.
+
 ## [3.0.1] - 2026-10-06
 
 ### Changed
