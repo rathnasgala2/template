@@ -240,6 +240,14 @@ export const ADMITTED_LANGUAGE_CLASSES = Object.freeze(
 );
 
 /**
+ * The production Galascribe API origin. The blog CSP always allows it in
+ * `connect-src` (reader interactions design D8), interactions on or off.
+ *
+ * @type {string}
+ */
+export const PRODUCTION_API_ORIGIN = 'https://api.galascribe.com';
+
+/**
  * The CSP specification explicitly ignores `frame-ancestors`
  * (and `report-uri`/`sandbox`, neither used here) when a policy is
  * delivered via `<meta http-equiv>` — browsers drop the directive and log a
@@ -262,16 +270,19 @@ export const CSP_HEADER_ONLY_DIRECTIVES = Object.freeze([
  * `<meta http-equiv="Content-Security-Policy">` tag: {@link CSP_HEADER_ONLY_DIRECTIVES}
  * is excluded. Directive order is byte-exact, minus
  * the excluded directive; every directive's value list is already sorted
- * bytewise and duplicate-free because this renderer materializes no module
- * package, configuration, output or runtime, so this string is
- * byte-identical on every route.
+ * bytewise and duplicate-free. `connect-src` always admits the production
+ * Galascribe API origin (reader interactions, whether or not the module is
+ * on), so this string is byte-identical on every route of every production
+ * build. Only the local stack's differing interactions `apiOrigin` is
+ * appended per build ({@link contentSecurityPolicyMeta}).
  *
  * @type {string}
  */
 export const CONTENT_SECURITY_POLICY_META_BASELINE =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
   "form-action 'none'; script-src 'self'; " +
-  "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; " +
+  "style-src 'self'; img-src 'self'; font-src 'self'; " +
+  `connect-src 'self' ${PRODUCTION_API_ORIGIN}; ` +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
 /**
@@ -287,8 +298,32 @@ export const CONTENT_SECURITY_POLICY_META_BASELINE =
 export const CONTENT_SECURITY_POLICY_COMPLETE =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
   "frame-ancestors 'none'; form-action 'none'; script-src 'self'; " +
-  "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; " +
+  "style-src 'self'; img-src 'self'; font-src 'self'; " +
+  `connect-src 'self' ${PRODUCTION_API_ORIGIN}; ` +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
+
+/**
+ * The meta-safe CSP for one build. Identical to
+ * {@link CONTENT_SECURITY_POLICY_META_BASELINE} unless the interactions
+ * module names a different API origin (local stack only), in which case that
+ * origin is added to `connect-src`, sorted bytewise with the other sources
+ * and de-duplicated.
+ *
+ * @param {string | undefined} [apiOrigin] the interactions module's
+ *   `apiOrigin`, when the module is on
+ * @returns {string} the CSP directive string for the `<meta>` tag
+ */
+export function contentSecurityPolicyMeta(apiOrigin) {
+  if (apiOrigin === undefined || apiOrigin === PRODUCTION_API_ORIGIN) {
+    return CONTENT_SECURITY_POLICY_META_BASELINE;
+  }
+  const sources = [...new Set(["'self'", PRODUCTION_API_ORIGIN, apiOrigin])];
+  sources.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  return CONTENT_SECURITY_POLICY_META_BASELINE.replace(
+    `connect-src 'self' ${PRODUCTION_API_ORIGIN};`,
+    `connect-src ${sources.join(' ')};`,
+  );
+}
 
 /**
  * Build the exact plain-object document `contracts/render-policy.jcs`

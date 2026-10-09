@@ -38,7 +38,6 @@ import {
   APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE,
   COLOR_SCHEME_META_CONTENT,
 } from './appearance/contract.js';
-import { contentSecurityPolicyMetaTag } from './content-security.js';
 import { PAGE_KIND_ATTRIBUTE } from './page-kinds.js';
 
 /**
@@ -133,9 +132,12 @@ const SKELETON_LAYOUT_SOURCE = [
   '<head>',
   '<meta charset="utf-8">',
   '<meta name="viewport" content="width=device-width, initial-scale=1">',
-  contentSecurityPolicyMetaTag(),
+  '{{ cspMetaTag | safe }}',
   `<meta name="color-scheme" content="${COLOR_SCHEME_META_CONTENT}">`,
-  '<script src="{{ appearanceScriptHref }}"></script>',
+  // The interactions script (article pages, module on) is deferred and sits
+  // on the appearance script's line, so a page without it is byte-identical
+  // to before.
+  '<script src="{{ appearanceScriptHref }}"></script>{% if interactionsScriptHref %}<script src="{{ interactionsScriptHref }}" defer></script>{% endif %}',
   '<title>{{ title }}</title>',
   '{% if description %}<meta name="description" content="{{ description }}">{% endif %}',
   '{% if robotsContent %}<meta name="robots" content="{{ robotsContent }}">{% endif %}',

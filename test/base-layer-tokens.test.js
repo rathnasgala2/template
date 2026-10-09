@@ -290,13 +290,16 @@ test('every page carries exactly one script, the CSP allows connect-src self onl
   }
 });
 
-test('the CSP baseline differs from the strict baseline only by connect-src self', () => {
+test('the CSP baseline allows connect-src self and the production API origin only', () => {
   const csp = CONTENT_SECURITY_POLICY_META_BASELINE;
   assert.match(csp, /default-src 'none'/);
-  assert.match(csp, /connect-src 'self'/);
+  assert.match(csp, /connect-src 'self' https:\/\/api\.galascribe\.com;/);
   assert.match(csp, /script-src 'self'/);
   assert.match(csp, /style-src 'self'/);
-  assert.ok(!/unsafe-inline|unsafe-eval|https?:|data:/.test(csp));
+  assert.ok(!/unsafe-inline|unsafe-eval|data:/.test(csp));
+  assert.deepEqual(csp.match(/https?:\/\/[^\s;]+/g), [
+    'https://api.galascribe.com',
+  ]);
   assert.match(csp, /worker-src 'none'/);
   assert.match(csp, /form-action 'none'/);
 });

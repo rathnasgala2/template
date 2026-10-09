@@ -23,29 +23,44 @@ async function listFiles(root) {
   return files.flat();
 }
 
-test('src/ contains no src/modules/ directory', async () => {
-  await assert.rejects(() => stat(path.join(REPO_ROOT, 'src', 'modules')), {
-    code: 'ENOENT',
-  });
+/** The one file admitted under src/modules/: the interactions browser script. */
+const ADMITTED_MODULE_FILE = path.join(
+  'src',
+  'modules',
+  'interactions',
+  'browser',
+  'gala-interactions.js',
+);
+
+test('src/modules/ holds exactly the interactions browser script', async () => {
+  const files = await listFiles(path.join(REPO_ROOT, 'src', 'modules'));
+  assert.deepEqual(files, [ADMITTED_MODULE_FILE]);
 });
 
-test('src/ has exactly one source root, src/core/', async () => {
+test('src/ has the source root src/core/ and the data-only src/modules/', async () => {
   const srcEntries = await readdir(path.join(REPO_ROOT, 'src'), {
     withFileTypes: true,
   });
   const directories = srcEntries
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
-  assert.deepEqual(directories, ['core']);
+  assert.deepEqual(directories, ['core', 'modules']);
+  assert.ok((await stat(path.join(REPO_ROOT, ADMITTED_MODULE_FILE))).isFile());
 });
 
-test('no file under src/ or package.json mentions a module-tree path', async () => {
-  const files = await listFiles(path.join(REPO_ROOT, 'src'));
+test('no file under src/core/ is a module-tree path, and nothing imports src/modules/', async () => {
+  const files = await listFiles(path.join(REPO_ROOT, 'src', 'core'));
   for (const relativePath of files) {
     assert.ok(
       !/[\\/]modules[\\/]/.test(relativePath) &&
         !relativePath.startsWith('modules/'),
       `${relativePath}: looks like it belongs to an admitted module tree`,
+    );
+    if (!relativePath.endsWith('.js')) continue;
+    const source = await readFile(path.join(REPO_ROOT, relativePath), 'utf8');
+    assert.ok(
+      !/^\s*(?:import|export)\b[^;]*['"][^'"]*\/modules\//m.test(source),
+      `${relativePath}: imports from src/modules/ (the browser script is read as data only)`,
     );
   }
 });

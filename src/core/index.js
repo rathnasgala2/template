@@ -83,8 +83,16 @@ import {
   assertPolicyConformantHtml,
   assertRenderPolicyIdentity,
   computeRenderPolicyIdentity,
+  contentSecurityPolicyMetaTag,
 } from './internal/content-security.js';
 import { renderPagesWithEleventy } from './internal/eleventy-render.js';
+import {
+  INTERACTIONS_SCRIPT_MEDIA_TYPE,
+  INTERACTIONS_SCRIPT_PATH,
+  interactionsActive,
+  loadInteractionsScript,
+  validateInteractionsModule,
+} from './internal/interactions.js';
 import {
   ATOM_FEED_ROUTE,
   RSS_FEED_ROUTE,
@@ -241,8 +249,9 @@ function assertOptions(options) {
  * Verify every `renderableBody.renderPolicy` in the publication profile,
  * footer card and every content record byte-equals the currently published
  * render-policy identity, and that no module or placement value leaked
- * through (belt-and-suspenders on top of the `build-input:2.0.0` schema's
- * own `modules: {}` / `placements: []` closure). Fails closed before any
+ * through (belt-and-suspenders on top of the `build-input` schema's module
+ * closure: only a valid `interactions` module is admitted, `placements` stays
+ * empty). Fails closed before any
  * directory is created or Eleventy ever runs: an absent policy file, wrong
  * path/name/version/digest, mixed identity between records, or body
  * produced under a different policy rejects before build.
@@ -252,13 +261,19 @@ function assertOptions(options) {
  * @returns {Promise<void>} resolves once every reference is verified
  */
 async function assertRenderPolicyCompliance(validatedInput) {
-  if (
-    Object.keys(validatedInput.modules).length !== 0 ||
-    validatedInput.placements.length !== 0
-  ) {
+  const moduleKeys = Object.keys(validatedInput.modules);
+  if (moduleKeys.some((key) => key !== 'interactions')) {
     throw new RenderPolicyViolationError(
-      'build-input.modules and build-input.placements must both be empty in S2',
+      'build-input.modules may only carry interactions',
     );
+  }
+  if (validatedInput.placements.length !== 0) {
+    throw new RenderPolicyViolationError(
+      'build-input.placements must be empty',
+    );
+  }
+  if (validatedInput.modules.interactions !== undefined) {
+    validateInteractionsModule(validatedInput.modules.interactions);
   }
 
   const identity = await computeRenderPolicyIdentity();
@@ -342,6 +357,17 @@ export async function renderPublication(buildInput, options) {
   const publicBasePath = derivePublicBasePath(
     validatedInput.baseUrl,
     validatedInput.basePath,
+  );
+  const interactionsModule = validatedInput.modules.interactions;
+  const interactionsOn = interactionsActive(interactionsModule);
+  // One CSP per build: the production policy, plus (local stack only) the
+  // interactions module's differing API origin in `connect-src`.
+  const cspMetaTag = contentSecurityPolicyMetaTag(
+    interactionsModule?.apiOrigin,
+  );
+  const interactionsScriptHref = joinBasePathAndRoute(
+    publicBasePath,
+    `/${INTERACTIONS_SCRIPT_PATH}`,
   );
   const urlPrefix = derivePublicBasePath(validatedInput.baseUrl, '/');
   const homeRoute = joinPublicRoute(publicBasePath, '/');
@@ -500,7 +526,10 @@ export async function renderPublication(buildInput, options) {
   const generatedPages = buildGeneratedPages(validatedInput, {
     mediaAssets,
     mediaDimensions,
+    interactions: interactionsOn ? interactionsModule : undefined,
   });
+  /** @type {Set<string>} output paths of the interaction-bearing routes */
+  const interactionBearingPaths = new Set();
   generatedPages.forEach((page, index) => {
     const joinedRoute = joinBasePathAndRoute(
       validatedInput.basePath,
@@ -520,10 +549,12 @@ export async function renderPublication(buildInput, options) {
       basePath: publicBasePath,
     });
     const ogImage = ogImageInfo?.url;
+    const pagePermalink = projectRouteToFilePath(joinedRoute, routeProfile);
+    if (page.interactionBearing) interactionBearingPaths.add(pagePermalink);
     contentPages.push({
       virtualPath: `pages/${page.kind}-${index}.html`,
       content: bodyHtml,
-      permalink: projectRouteToFilePath(joinedRoute, routeProfile),
+      permalink: pagePermalink,
       layout: 'skeleton.njk',
       data: {
         title: page.documentTitle ?? page.title,
@@ -552,6 +583,10 @@ export async function renderPublication(buildInput, options) {
         atomFeedUrl: feeds.atomSelfUrl,
         rssFeedUrl: feeds.rssSelfUrl,
         appearanceScriptHref: appearanceScriptHrefValue,
+        interactionsScriptHref: page.interactionBearing
+          ? interactionsScriptHref
+          : undefined,
+        cspMetaTag,
         baseStylesheetHref: baseStylesheetHrefValue,
         themeStylesheetLinksHtml,
       },
@@ -623,6 +658,7 @@ export async function renderPublication(buildInput, options) {
       atomFeedUrl: feeds.atomSelfUrl,
       rssFeedUrl: feeds.rssSelfUrl,
       appearanceScriptHref: appearanceScriptHrefValue,
+      cspMetaTag,
       baseStylesheetHref: baseStylesheetHrefValue,
       themeStylesheetLinksHtml,
     },
@@ -767,7 +803,7 @@ export async function renderPublication(buildInput, options) {
       byteLength: String(bytes.byteLength),
       sha256: digestBytes(bytes),
       routeClass: special?.routeClass ?? 'html',
-      interactionBearing: false,
+      interactionBearing: interactionBearingPaths.has(filePath),
     });
   }
   routes.sort((a, b) => compareUtf8Bytes(a.path, b.path));
@@ -897,10 +933,39 @@ export async function renderPublication(buildInput, options) {
     immutable: false,
   };
 
+  // The reader-interactions browser script, only when the module is on. Its
+  // bytes are the template package's own file, so the asset row is a pure
+  // function of the template version.
+  /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
+  const interactionsAssets = [];
+  if (interactionsOn) {
+    const interactionsScriptBytes = await loadInteractionsScript();
+    const joinedInteractionsScriptPath = projectFixedAssetPath(
+      validatedInput.basePath,
+      `/${INTERACTIONS_SCRIPT_PATH}`,
+    );
+    const interactionsScriptDestination = path.join(
+      outputDirectory,
+      joinedInteractionsScriptPath,
+    );
+    await mkdir(path.dirname(interactionsScriptDestination), {
+      recursive: true,
+    });
+    await writeFile(interactionsScriptDestination, interactionsScriptBytes);
+    interactionsAssets.push({
+      path: joinedInteractionsScriptPath,
+      mediaType: INTERACTIONS_SCRIPT_MEDIA_TYPE,
+      byteLength: String(interactionsScriptBytes.byteLength),
+      sha256: digestBytes(interactionsScriptBytes),
+      immutable: false,
+    });
+  }
+
   const assets = [
     ...joinedMediaAssets,
     appearanceScriptAsset,
     baseStylesheetAsset,
+    ...interactionsAssets,
     ...(themeAssetsResult ? themeAssetsResult.assets : []),
   ].sort((a, b) => compareUtf8Bytes(a.path, b.path));
 

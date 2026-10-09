@@ -29,7 +29,8 @@ import { loadCanonicalBuildInput } from './helpers/schema-fixtures.js';
 const CSP_BASELINE_STRING =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
   "form-action 'none'; script-src 'self'; " +
-  "style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; " +
+  "style-src 'self'; img-src 'self'; font-src 'self'; " +
+  "connect-src 'self' https://api.galascribe.com; " +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
 /**

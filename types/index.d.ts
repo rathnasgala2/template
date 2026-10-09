@@ -177,6 +177,34 @@ export interface AppearanceNormalized {
 }
 
 /** The subset of `build-input:2.0.0` this renderer reads. */
+/** One author-defined reaction (`interactions-config:2.0.0`). */
+export interface InteractionsReactionDefinition {
+  key: string;
+  label: string;
+  visual: { kind: 'emoji'; token: string };
+  order: number;
+  enabled: boolean;
+}
+
+/** The repository's `gala/modules/interactions.json` (`interactions-config:2.0.0`). */
+export interface InteractionsConfig {
+  schemaId: 'urn:gala:schema:interactions-config:2.0.0';
+  schemaVersion: '2.0.0';
+  reactions: {
+    enabled: boolean;
+    definitions: InteractionsReactionDefinition[];
+  };
+  comments: { enabled: boolean; allowReplies: boolean; maxDepth: number };
+  publicCounts: { reactions: boolean; comments: boolean };
+}
+
+/** `build-input.modules.interactions`: the config plus the two origins. */
+export interface InteractionsModule {
+  config: InteractionsConfig;
+  apiOrigin: string;
+  appOrigin: string;
+}
+
 export interface NormalizedBuildInput {
   schemaId: string;
   schemaVersion: string;
@@ -200,7 +228,7 @@ export interface NormalizedBuildInput {
   content: ContentBuildRecord[];
   navigation: NavigationNormalized;
   appearance: AppearanceNormalized;
-  modules: Record<string, never>;
+  modules: { interactions?: InteractionsModule };
   buildEpoch: string;
   baseUrl: string;
   basePath: string;
@@ -221,7 +249,7 @@ export interface ManifestRouteEntry {
   byteLength: string;
   sha256: string;
   routeClass: 'html' | 'feed' | 'sitemap' | 'asset' | 'error';
-  interactionBearing: false;
+  interactionBearing: boolean;
 }
 
 /** A `manifestAsset`-shaped entry (the media pipeline emits one per generated file). */

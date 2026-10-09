@@ -95,6 +95,12 @@ const CATALOGS = Object.freeze({
     keepReadingHeading: 'Keep reading',
     /** @type {(tag: string) => string} */
     moreInTagLabel: (tag) => `More in ${tag}`,
+    interactionsHeading: 'Responses',
+    reactionsGroupLabel: 'Reactions',
+    likeLabel: 'Like',
+    commentsHeading: 'Conversation',
+    interactionsNeedScriptNotice: 'Reactions and comments need JavaScript.',
+    showMoreCommentsLabel: 'Show more comments',
     shareLabel: 'Share',
     copyLinkLabel: 'Copy link to this article',
     saveForLaterLabel: 'Save for later',

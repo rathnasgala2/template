@@ -10,9 +10,9 @@ module.exports = {
     {
       name: 'only-src-core-is-a-source-root',
       comment:
-        'S2-T02 module-tree absence gate: the renderer has exactly one source root, src/core/. ' +
-        'No src/modules/ tree, module import edge or module registration path is admitted ' +
-        '(brief S2 section 3, DEC-097 section 2).',
+        'The renderer has exactly one source root, src/core/. The only file under src/modules/ ' +
+        'is the interactions browser script, which is read as data (never imported); no module ' +
+        'import edge or registration path is admitted (reader interactions design, section 5).',
       severity: 'error',
       from: {},
       to: { path: '^src/modules' },

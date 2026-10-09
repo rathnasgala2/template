@@ -70,6 +70,10 @@ import {
 import { truncateAtWord } from './seo.js';
 import { createStructuredData } from './structured-data.js';
 import { icon } from './icons.js';
+import {
+  interactionsActive,
+  renderInteractionsSection,
+} from './interactions.js';
 import { getMessages } from './messages.js';
 import { resolveTextDirection } from './text-direction.js';
 import { deriveAuthorSlugs, routeSegmentForLabel } from './route-labels.js';
@@ -176,6 +180,8 @@ function paginate(items, pageSize) {
  *   one place that can turn this into an absolute derivative URL, because
  *   only it has run the media pipeline and knows the derivative
  *   output path a given `sourceDigest` produced)
+ * @property {boolean} [interactionBearing] whether this page carries the
+ *   reader-interactions section (article pages when the module is on)
  * @property {string} [robotsContent] an optional
  *   `<meta name="robots">` content value (e.g. `'noindex, follow'` for
  *   `status: "unlisted"` content); omitted entirely for ordinarily indexable
@@ -352,11 +358,17 @@ export function homeDocumentTitle(name, tagline) {
  *   processed derivative renders as the placeholder/monogram fallback
  * @param {Readonly<Record<string, {width: number, height: number}>>} [options.mediaDimensions]
  *   the media pipeline's pixel dimensions per derivative path
+ * @param {import('../../../types/index.d.ts').InteractionsModule} [options.interactions]
+ *   the validated interactions module; when set, every article page carries
+ *   the interactions section and is interaction-bearing
  * @returns {GeneratedPage[]} every generated page, in a stable, deterministic
  *   order
  */
 export function buildGeneratedPages(validatedInput, options = {}) {
   const { publication, authors, content, basePath, baseUrl } = validatedInput;
+  const interactionsModule = interactionsActive(options.interactions)
+    ? options.interactions
+    : undefined;
   const publicBasePath = derivePublicBasePath(baseUrl, basePath);
   const messages = getMessages(publication.defaultLanguage);
   const authorsById = new Map(authors.map((author) => [author.id, author]));
@@ -788,6 +800,7 @@ export function buildGeneratedPages(validatedInput, options = {}) {
 
     let foot = '';
     let after = '';
+    let interactions = '';
     if (isArticle) {
       const authorCards = ui
         .recordAuthors(record)
@@ -835,7 +848,16 @@ export function buildGeneratedPages(validatedInput, options = {}) {
         newer || older
           ? `<nav class="g-pager" aria-label="${text('moreArticlesNavigationLabel')}">${newer ? pagerLink(newer, false) : ''}${older ? pagerLink(older, true) : ''}</nav>`
           : '';
-      foot = `<div class="g-wrap g-article-foot">${authorCards}${seriesBox}${pager}</div>`;
+      interactions = interactionsModule
+        ? renderInteractionsSection({
+            module: interactionsModule,
+            messages,
+            publicationId: publication.id,
+            contentId: frontmatter.id,
+            canonicalUrl: absolute(recordHref(record)),
+          })
+        : '';
+      foot = `<div class="g-wrap g-article-foot">${authorCards}${interactions}${seriesBox}${pager}</div>`;
       const related = selectRelatedArticles(record, publishedArticles);
       after =
         related.length > 0
@@ -904,6 +926,7 @@ export function buildGeneratedPages(validatedInput, options = {}) {
         : undefined,
       robotsContent:
         frontmatter.status === 'unlisted' ? 'noindex, follow' : undefined,
+      interactionBearing: Boolean(interactions),
       lastModified: contentLastModified(frontmatter),
       bodyHtml:
         `<article class="g-article">${isArticle ? '<div class="g-progress" aria-hidden="true"></div>' : ''}${head}${cover}` +
