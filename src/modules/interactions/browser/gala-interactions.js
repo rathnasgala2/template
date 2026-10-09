@@ -34,11 +34,16 @@
  * removed or held comments, each with an `own` object (`state` REMOVED or HELD,
  * the `appeal` so far or null, and `canAppeal`) and no body. Such a comment is
  * shown as "Removed by the site's moderators" (held: "Hidden while the
- * moderators review it"); when `canAppeal` is true it offers an Appeal button
- * that opens a note field (up to 1,000 characters) and posts
- * `{note}` to `/v2/public/comments/{commentId}/appeals` with the bearer token.
- * The appeal's state (pending, restored, kept removed) is written under the
- * comment. There is one appeal per removal; the moderators decide, never the
+ * moderators review it"), headed by a one-line context, "Your comment from
+ * <relative date>" (from `createdAt`), that tells the reader which comment it
+ * is; when `canAppeal` is true it offers an Appeal button that opens a note
+ * field (up to 1,000 characters) and posts `{note}` to
+ * `/v2/public/comments/{commentId}/appeals` with the bearer token. The
+ * appeal's state (pending, restored, kept removed) is written under the
+ * comment, and only there: sending an appeal updates the comment's state and
+ * redraws it, it never adds a sentence of its own, so "Appeal sent. ..." shows
+ * once, from the state, whether the reader has just sent it or the thread was
+ * read again. There is one appeal per removal; the moderators decide, never the
  * script.
  *
  * Not used, by design: iframes, popups (`window.open`), `postMessage`,
@@ -127,6 +132,7 @@
     showMoreReplies: 'Show more replies',
     deletedTombstone: 'This comment was deleted.',
     removedTombstone: 'This comment was removed.',
+    ownFrom: 'Your comment from ',
     removedOwn: "Removed by the site's moderators",
     heldOwn: 'Hidden while the moderators review it',
     appeal: 'Appeal',
@@ -1034,6 +1040,22 @@
     }
   }
 
+  /**
+   * A comment's `<time>` element: the given text, the machine-readable date
+   * and the full date as its tooltip.
+   *
+   * @param {string} iso
+   * @param {string} text
+   * @returns {HTMLElement}
+   */
+  function timeElement(iso, text) {
+    const time = make('time', 'g-comment__time', text);
+    time.setAttribute('datetime', iso);
+    const title = fullDate(iso);
+    if (title) time.setAttribute('title', title);
+    return time;
+  }
+
   // ------------------------------------------------------------------ comments
   /**
    * @param {PublicCount|null|undefined} count
@@ -1065,6 +1087,22 @@
       (own.state === 'REMOVED' || own.state === 'HELD')
       ? own
       : null;
+  }
+
+  /**
+   * The one-line context of the reader's own removed or held comment, which
+   * arrives with no body: "Your comment from <relative date>". Null when the
+   * comment has no usable `createdAt`.
+   *
+   * @param {CommentView} comment
+   * @returns {HTMLElement | null}
+   */
+  function ownContext(comment) {
+    if (!Number.isFinite(Date.parse(comment.createdAt))) return null;
+    return timeElement(
+      comment.createdAt,
+      MESSAGES.ownFrom + timeLabel(comment.createdAt, false),
+    );
   }
 
   /**
@@ -1137,6 +1175,9 @@
 
     const head = make('div', 'g-comment__head');
     if (own) {
+      // No body comes back for these, so say which comment it is by its date.
+      const context = ownContext(comment);
+      if (context) item.appendChild(context);
       item.appendChild(
         make(
           'p',
@@ -1154,15 +1195,12 @@
       head.appendChild(
         make('span', 'g-comment__author', comment.author.displayName),
       );
-      const time = make(
-        'time',
-        'g-comment__time',
-        timeLabel(comment.createdAt, !!comment.editedAt),
+      head.appendChild(
+        timeElement(
+          comment.createdAt,
+          timeLabel(comment.createdAt, !!comment.editedAt),
+        ),
       );
-      time.setAttribute('datetime', comment.createdAt);
-      const title = fullDate(comment.createdAt);
-      if (title) time.setAttribute('title', title);
-      head.appendChild(time);
       item.appendChild(head);
       item.appendChild(renderBody(comment.body || ''));
       // A comment restored on appeal says so.
@@ -1932,9 +1970,10 @@
             '/appeals',
           { body: { note } },
         );
+        // "Appeal sent" is drawn by the redraw alone, under the comment where
+        // focus lands; the status line does not repeat it.
         close();
         applyAppeal(item, { state: 'PENDING' });
-        announce(MESSAGES.appealSent);
       } catch (failure) {
         const message = appealFailureMessage(failure);
         if (

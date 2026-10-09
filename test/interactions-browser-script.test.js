@@ -988,6 +988,30 @@ function thread(items) {
   };
 }
 
+const APPEAL_SENT = 'Appeal sent. The moderators will look again.';
+
+/**
+ * How often a sentence is drawn anywhere in the interactions section, the
+ * status line included.
+ *
+ * @param {any} h the harness
+ * @param {string} sentence the sentence
+ * @returns {number} the number of occurrences
+ */
+function occurrences(h, sentence) {
+  return h.$('[data-gala-interactions]').textContent.split(sentence).length - 1;
+}
+
+/**
+ * Wait out the status line's announcement delay (30 ms), so that an
+ * announcement the script was going to make has landed.
+ *
+ * @returns {Promise<void>} resolves once the delay has passed
+ */
+function pastAnnouncements() {
+  return new Promise((resolve) => setTimeout(resolve, 80));
+}
+
 test("own removed and held comments: the moderators' wording, no author or body, Appeal only when allowed, replies kept", async () => {
   const reply = comment('r1', { parentId: 'o1', depth: 1 });
   const h = await boot({
@@ -1060,6 +1084,73 @@ test("own removed and held comments: the moderators' wording, no author or body,
   // Others' removed comments keep the plain wording and no Appeal.
   assert.equal(text('x1'), 'This comment was removed.');
   assert.deepEqual(appealButtons('x1'), []);
+});
+
+test('own removed and held comments say which comment they are: "Your comment from <relative date>", from createdAt', async () => {
+  const ago = (ms) => new Date(Date.now() - ms).toISOString();
+  const recent = ago(3 * 60_000);
+  const h = await boot({
+    session: SIGNED_IN,
+    handler: api({
+      'GET /comments': thread([
+        ownComment('o1', {}, { createdAt: recent }),
+        ownComment(
+          'o2',
+          { state: 'HELD' },
+          { state: 'HELD', createdAt: ago(86_400_000 + 60_000) },
+        ),
+        ownComment(
+          'o3',
+          { canAppeal: false, appeal: { state: 'PENDING' } },
+          { createdAt: ago(20 * 86_400_000) },
+        ),
+        ownComment('o4', {}, { createdAt: 'not a date' }),
+        comment('x1', { state: 'REMOVED', author: null, body: null }),
+        comment('c1'),
+      ]),
+    }),
+  });
+  await h.ready();
+  const context = (id) => h.$$(`#g-comment-${id} > time.g-comment__time`);
+  const wording = (id) =>
+    h.$(`#g-comment-${id} > .g-comment__body`).textContent;
+
+  assert.equal(context('o1').length, 1);
+  const [first] = context('o1');
+  assert.match(first.textContent, /^Your comment from 3 min\.? ago$/);
+  assert.equal(first.getAttribute('datetime'), recent);
+  assert.match(first.getAttribute('title'), /\d{4}/);
+  // It leads the comment, ahead of the moderators' wording.
+  assert.equal(h.$('#g-comment-o1').firstElementChild, first);
+  assert.equal(first.nextElementSibling.textContent, wording('o1'));
+  assert.equal(wording('o1'), "Removed by the site's moderators");
+
+  assert.deepEqual(
+    context('o2').map((node) => node.textContent),
+    ['Your comment from yesterday'],
+  );
+  assert.equal(wording('o2'), 'Hidden while the moderators review it');
+  assert.equal(context('o3').length, 1);
+  assert.match(
+    context('o3')[0].textContent,
+    /^Your comment from [A-Z][a-z]{2} \d{1,2}, \d{4}$/,
+  );
+
+  // A date that cannot be read leaves the line out; the wording stays.
+  assert.deepEqual(context('o4'), []);
+  assert.equal(wording('o4'), "Removed by the site's moderators");
+  assert.doesNotMatch(h.$('#g-comment-o4').textContent, /not a date/);
+
+  // Only the reader's own removed or held comments get it.
+  assert.deepEqual(context('x1'), []);
+  assert.equal(wording('x1'), 'This comment was removed.');
+  assert.equal(context('c1').length, 0);
+  assert.match(h.$('#g-comment-c1 time').textContent, /^3 min\.? ago$/);
+  assert.equal(
+    h.$$('time').filter((node) => /^Your comment from /.test(node.textContent))
+      .length,
+    3,
+  );
 });
 
 test('a comment restored on appeal says so under its text', async () => {
@@ -1141,11 +1232,65 @@ test('appeal: the note is posted with the bearer token, the state appears under 
     h.$$('#g-comment-o1 .g-comment__replies > .g-comment').length,
     1,
   );
-  await h.waitFor(
-    () => h.status() === 'Appeal sent. The moderators will look again.',
-    'announcement',
-  );
+  // The comment's state draws the sentence; the status line does not repeat it.
+  await pastAnnouncements();
+  assert.equal(h.status(), '');
+  assert.equal(occurrences(h, APPEAL_SENT), 1);
   assert.equal(h.window.document.activeElement, h.$('#g-comment-o1'));
+});
+
+test('appeal: the sent sentence is drawn once, from the comment state, after the send and after the thread is read again', async () => {
+  // The fake server remembers the appeal, as the real one does.
+  let appealed = false;
+  const handler = api({
+    'GET /comments': () =>
+      thread([
+        appealed
+          ? ownComment('o1', {
+              canAppeal: false,
+              appeal: { state: 'PENDING' },
+            })
+          : ownComment('o1'),
+      ]),
+    'POST /appeals': () => {
+      appealed = true;
+      return { status: 202, body: { status: 'RECEIVED' } };
+    },
+  });
+  const noticesOf = (page) =>
+    page
+      .$$('#g-comment-o1 > .g-interactions__notice')
+      .map((node) => node.textContent);
+
+  const h = await boot({ session: SIGNED_IN, handler });
+  await h.ready();
+  assert.equal(occurrences(h, APPEAL_SENT), 0, 'nothing is sent yet');
+  h.$('#g-comment-o1 .g-comment__action').click();
+  h.$('#g-comment-o1 textarea').value = 'He was quoting a book.';
+  h.$('#g-comment-o1 .g-composer__submit').click();
+  await h.waitFor(() => !h.$('#g-comment-o1 textarea'), 'form closed');
+  await pastAnnouncements();
+  // Once, under the comment, from its state; not again in the status line.
+  assert.equal(occurrences(h, APPEAL_SENT), 1);
+  assert.deepEqual(noticesOf(h), [APPEAL_SENT]);
+  assert.equal(h.status(), '');
+  assert.match(
+    h.$('#g-comment-o1 > time.g-comment__time').textContent,
+    /^Your comment from 3 min\.? ago$/,
+  );
+
+  // Read the thread again: the server's state draws the same one sentence.
+  const again = await boot({ session: SIGNED_IN, handler });
+  await again.ready();
+  await pastAnnouncements();
+  assert.equal(occurrences(again, APPEAL_SENT), 1);
+  assert.deepEqual(noticesOf(again), [APPEAL_SENT]);
+  assert.equal(again.status(), '');
+  assert.equal(again.$('#g-comment-o1 > .g-comment__actions'), null);
+  assert.match(
+    again.$('#g-comment-o1 > time.g-comment__time').textContent,
+    /^Your comment from 3 min\.? ago$/,
+  );
 });
 
 test('appeal problems: each code has its sentence; rate limit and network keep the note, a settled one stops offering the appeal', async () => {

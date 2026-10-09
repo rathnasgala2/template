@@ -47,8 +47,10 @@ and this project adheres to
   object (`state` `REMOVED` or `HELD`, the `appeal` so far or null,
   `canAppeal`). Such a comment reads "Removed by the site's moderators" (held:
   "Hidden while the moderators review it"), with no author or body and its
-  replies kept. When `canAppeal` is true an Appeal button opens a note field (up
-  to 1,000 characters) and Send posts `{note}` to
+  replies kept, and headed by a one-line "Your comment from <relative date>"
+  (from its `createdAt`, since no body comes back) so the reader knows which
+  comment it is. When `canAppeal` is true an Appeal button opens a note field
+  (up to 1,000 characters) and Send posts `{note}` to
   `/v2/public/comments/{commentId}/appeals` with the bearer token. The appeal's
   state reads under the comment: "Appeal sent. The moderators will look again.",
   "Restored after review" or "Kept removed after review". `APPEAL_EXISTS`,
