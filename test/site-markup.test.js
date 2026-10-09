@@ -487,6 +487,7 @@ test('hero images: cover figure with alt on the article, media on cards; decorat
 
 test('the footer attribution follows appearance.attribution.showMadeWith; absent shows it', async (t) => {
   const attribution = `<span>${getMessages('en').footerAttributionLabel}</span>`;
+  assert.equal(attribution, '<span>Made with Galascribe</span>');
   const footer = (/** @type {boolean} */ showAttribution) =>
     renderFooter({
       homeRoute: '/',

@@ -46,7 +46,7 @@ const CATALOGS = Object.freeze({
     /** @type {(displayName: string) => string} */
     byLineLabel: (displayName) => `By ${displayName}`,
     footerCopyrightPrefix: '©',
-    footerAttributionLabel: 'Published with the Galascribe template renderer.',
+    footerAttributionLabel: 'Made with Galascribe',
     errorPageHeading: 'Page not found',
     errorPageBody:
       'The page you were looking for could not be found. It may have been ' +

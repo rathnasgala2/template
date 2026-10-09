@@ -42,6 +42,9 @@ and this project adheres to
   font, so a rejected reference leaves nothing behind.
 - **Identical image bytes under two paths are processed once** (outputs are
   content-addressed; a second copy previously produced duplicate asset rows).
+- **The footer attribution reads "Made with Galascribe"** (it read "Published
+  with the Galascribe template renderer."), matching the switch that shows or
+  hides it.
 
 ## [3.1.0] - 2026-10-08
 
