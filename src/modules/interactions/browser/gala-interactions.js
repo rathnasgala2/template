@@ -189,27 +189,58 @@
   );
 
   // --------------------------------------------------------------------- state
+
+  /**
+   * @typedef {'localStorage' | 'sessionStorage'} StorageKind
+   * @typedef {{displayName: string, initials: string}} ReaderView
+   * @typedef {{accessToken: string, expiresAt: string, reader: ReaderView}} Session
+   * @typedef {{lowerBound: number, display: string, label: string}} PublicCount
+   * @typedef {{isAuthor: boolean, canEdit: boolean, canDelete: boolean, canReply: boolean}} CommentViewer
+   * @typedef {{id: string, parentId: string | null, depth: number, state: 'VISIBLE' | 'REMOVED' | 'DELETED', author: ReaderView | null, body: string | null, createdAt: string, editedAt: string | null, replies: CommentView[], moreReplies: boolean, viewer: CommentViewer}} CommentView
+   * @typedef {{items: CommentView[], nextCursor: string | null, count: PublicCount | null}} CommentPage
+   * @typedef {{key: string, label: string, visual: {kind: string, token: string}, count: PublicCount | null, viewerActive: boolean}} ReactionItem
+   * @typedef {{enabled: boolean, items: ReactionItem[]}} ReactionsBlock
+   * @typedef {{reactions: ReactionsBlock, comments: {enabled: boolean, open: boolean, allowReplies: boolean, maxDepth: number}, viewer: ReaderView | null, asOf: string}} InteractionsView
+   * @typedef {{kind: 'reaction', key: string} | {kind: 'comment', parentId: string | null, body: string} | {kind: 'signin'}} Intent
+   * @typedef {{auth?: boolean, body?: unknown, idempotencyKey?: string}} ApiOptions
+   * @typedef {HTMLLIElement & {_comment: CommentView}} CommentItem
+   * @typedef {{mode: string, parentId: string | null, commentId: string | null, draft: {body: string, parentId: string | null, key: string} | null, busy: boolean, update: () => void, element: HTMLElement, input: HTMLTextAreaElement, close: () => void}} Composer
+   * @typedef {{mode: 'new' | 'reply' | 'edit', parentId?: string | null, commentId?: string | null, body?: string, onDone?: (result: any) => void, onCancel?: () => void}} ComposerOptions
+   */
   /** @type {{accessToken: string, expiresAt: string, reader: {displayName: string, initials: string}} | null} */
-  let session = null;
-  let memorySession = null;
+  let session = /** @type {Session | null} */ (null);
+  let memorySession = /** @type {Session | null} */ (null);
   const live = {
     allowReplies: config.allowReplies,
     maxDepth: config.maxDepth,
     commentsOpen: config.commentsEnabled,
-    nextCursor: null,
+    nextCursor: /** @type {string | null} */ (null),
     loadedIds: new Set(),
   };
   const composers = new Set();
-  let rootComposer = null;
-  let inline = null;
+  let rootComposer = /** @type {Composer | null} */ (null);
+  let inline = /** @type {{composer: Composer, item: CommentItem} | null} */ (
+    null
+  );
   let loadToken = 0;
 
   // ------------------------------------------------------------------- helpers
+  /**
+   * @param {number} value
+   * @returns {number}
+   */
   function clampDepth(value) {
     if (!Number.isFinite(value)) return 3;
     return Math.min(4, Math.max(1, value));
   }
 
+  /**
+   * @template {keyof HTMLElementTagNameMap} K
+   * @param {K} tag
+   * @param {string} [className]
+   * @param {string} [text]
+   * @returns {HTMLElementTagNameMap[K]}
+   */
   function make(tag, className, text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
@@ -217,6 +248,12 @@
     return node;
   }
 
+  /**
+   * @param {string} className
+   * @param {string} text
+   * @param {string} [label]
+   * @returns {HTMLButtonElement}
+   */
   function button(className, text, label) {
     const node = make('button', className, text);
     node.type = 'button';
@@ -225,11 +262,18 @@
   }
 
   let idCounter = 0;
+  /**
+   * @param {string} prefix
+   * @returns {string}
+   */
   function uniqueId(prefix) {
     idCounter += 1;
     return 'g-' + prefix + '-' + idCounter;
   }
 
+  /**
+   * @param {string} message
+   */
   function announce(message) {
     if (!statusEl) return;
     // Clear first so repeating the same text is announced again.
@@ -239,16 +283,27 @@
     }, 30);
   }
 
+  /**
+   * @param {string} message
+   */
   function announceNow(message) {
     if (statusEl) statusEl.textContent = message;
   }
 
+  /**
+   * @param {string} text
+   * @returns {number}
+   */
   function codePoints(text) {
     let n = 0;
     for (const ch of text) n += ch ? 1 : 0;
     return n;
   }
 
+  /**
+   * @param {Uint8Array} bytes
+   * @returns {string}
+   */
   function base64url(bytes) {
     let binary = '';
     for (let i = 0; i < bytes.length; i += 1) {
@@ -260,6 +315,10 @@
       .replace(/=+$/, '');
   }
 
+  /**
+   * @param {number} byteLength
+   * @returns {string}
+   */
   function randomToken(byteLength) {
     const bytes = new Uint8Array(byteLength);
     crypto.getRandomValues(bytes);
@@ -277,6 +336,9 @@
     }
   }
 
+  /**
+   * @param {HTMLElement|null|undefined} node
+   */
   function focusNode(node) {
     if (!node) return;
     try {
@@ -297,11 +359,20 @@
   }
 
   // ------------------------------------------------------------------- storage
+  /**
+   * @param {StorageKind} kind
+   * @returns {Storage}
+   */
   function store(kind) {
     return kind === 'localStorage'
       ? window.localStorage
       : window.sessionStorage;
   }
+  /**
+   * @param {StorageKind} kind
+   * @param {string} key
+   * @returns {string|null}
+   */
   function storageGet(kind, key) {
     try {
       return store(kind).getItem(key);
@@ -309,6 +380,12 @@
       return null;
     }
   }
+  /**
+   * @param {StorageKind} kind
+   * @param {string} key
+   * @param {string} value
+   * @returns {boolean}
+   */
   function storageSet(kind, key, value) {
     try {
       store(kind).setItem(key, value);
@@ -317,6 +394,10 @@
       return false;
     }
   }
+  /**
+   * @param {StorageKind} kind
+   * @param {string} key
+   */
   function storageRemove(kind, key) {
     try {
       store(kind).removeItem(key);
@@ -324,6 +405,10 @@
       // Nothing to remove if storage is unavailable.
     }
   }
+  /**
+   * @param {StorageKind} kind
+   * @returns {boolean}
+   */
   function storageWorks(kind) {
     const probe = 'gala.reader.probe';
     if (!storageSet(kind, probe, '1')) return false;
@@ -331,6 +416,11 @@
     return true;
   }
 
+  /**
+   * @param {StorageKind} kind
+   * @param {string} key
+   * @returns {Record<string, any>|null}
+   */
   function readJson(kind, key) {
     const raw = storageGet(kind, key);
     if (!raw) return null;
@@ -342,6 +432,9 @@
     }
   }
 
+  /**
+   * @returns {Session | null}
+   */
   function loadSession() {
     const stored = readJson('localStorage', SESSION_KEY) || memorySession;
     if (
@@ -360,9 +453,12 @@
       memorySession = null;
       return null;
     }
-    return stored;
+    return /** @type {Session} */ (stored);
   }
 
+  /**
+   * @param {Session} value
+   */
   function saveSession(value) {
     memorySession = value;
     storageSet('localStorage', SESSION_KEY, JSON.stringify(value));
@@ -380,6 +476,12 @@
 
   // ------------------------------------------------------------------- network
   class ApiError extends Error {
+    /**
+     * @param {string} kind
+     * @param {number} status
+     * @param {string} code
+     * @param {string} reason
+     */
     constructor(kind, status, code, reason) {
       super(kind);
       this.kind = kind;
@@ -389,10 +491,17 @@
     }
   }
 
+  /**
+   * @param {string} method
+   * @param {string} path
+   * @param {ApiOptions} [options]
+   * @returns {Promise<any>}
+   */
   async function api(method, path, options) {
     const opts = options || {};
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    /** @type {Record<string, string>} */
     const headers = { Accept: 'application/json' };
     if (opts.auth !== false && session) {
       headers.Authorization = 'Bearer ' + session.accessToken;
@@ -428,6 +537,10 @@
     throw new ApiError('problem', response.status, code, reasonOf(payload));
   }
 
+  /**
+   * @param {any} payload
+   * @returns {string}
+   */
   function reasonOf(payload) {
     if (!payload || typeof payload !== 'object') return '';
     if (typeof payload.reason === 'string') return payload.reason;
@@ -443,6 +556,10 @@
 
   // Turn a failed call into the reader-facing sentence. A 401 (or a token for
   // another publication) also drops the stored session.
+  /**
+   * @param {unknown} error
+   * @returns {string}
+   */
   function failureMessage(error) {
     if (!(error instanceof ApiError)) return MESSAGES.generic;
     if (error.kind === 'network') return MESSAGES.network;
@@ -490,6 +607,10 @@
   }
 
   // ----------------------------------------------------------- sign-in (PKCE)
+  /**
+   * @param {Intent} intent
+   * @returns {Promise<void>}
+   */
   async function startSignIn(intent) {
     if (!storageWorks('sessionStorage') || !storageWorks('localStorage')) {
       announceNow(MESSAGES.storageBlocked);
@@ -541,6 +662,9 @@
     navigate(target);
   }
 
+  /**
+   * @param {string} url
+   */
   function navigate(url) {
     const event = new CustomEvent('gala:navigate', {
       detail: { url },
@@ -629,6 +753,9 @@
   // ------------------------------------------------------------------- notices
   let noticeNode = noticeEl;
 
+  /**
+   * @param {string} text
+   */
   function showNotice(text) {
     const node = noticeNode || make('p', 'g-interactions__notice');
     if (!noticeNode) {
@@ -656,11 +783,20 @@
       : [];
   }
 
+  /**
+   * @param {HTMLElement} node
+   * @param {boolean} active
+   */
   function setPressed(node, active) {
     node.setAttribute('aria-pressed', active ? 'true' : 'false');
     node.classList.toggle('g-reaction--active', !!active);
   }
 
+  /**
+   * @param {HTMLElement} node
+   * @param {PublicCount|null|undefined} count
+   * @param {string} noun
+   */
   function setCount(node, count, noun) {
     const target = node.querySelector('[data-gala-count]');
     if (!target) return;
@@ -678,6 +814,9 @@
     }
   }
 
+  /**
+   * @param {ReactionsBlock|null|undefined} block
+   */
   function applyReactions(block) {
     if (!reactionsEl) return;
     if (!block || block.enabled === false) {
@@ -700,6 +839,11 @@
     }
   }
 
+  /**
+   * @param {HTMLElement} node
+   * @param {boolean} wantActive
+   * @returns {Promise<void>}
+   */
   async function setReaction(node, wantActive) {
     const key = node.getAttribute('data-reaction-key');
     if (!key || reactionBusy.has(key)) return;
@@ -730,12 +874,15 @@
     }
   }
 
+  /**
+   * @param {Event} event
+   */
   function onReactionClick(event) {
-    const node = event.currentTarget;
+    const node = /** @type {HTMLElement} */ (event.currentTarget);
     if (!session) {
       startSignIn({
         kind: 'reaction',
-        key: node.getAttribute('data-reaction-key'),
+        key: node.getAttribute('data-reaction-key') || '',
       });
       return;
     }
@@ -743,6 +890,10 @@
   }
 
   // ------------------------------------------------------------------- linkify
+  /**
+   * @param {HTMLElement} parent
+   * @param {string} text
+   */
   function appendLinkified(parent, text) {
     let last = 0;
     URL_PATTERN.lastIndex = 0;
@@ -780,6 +931,10 @@
     }
   }
 
+  /**
+   * @param {string} text
+   * @returns {HTMLElement}
+   */
   function renderBody(text) {
     const body = make('div', 'g-comment__body');
     const lines = String(text).split('\n');
@@ -796,6 +951,11 @@
     return lang || undefined;
   }
 
+  /**
+   * @param {string} iso
+   * @param {boolean} edited
+   * @returns {string}
+   */
   function timeLabel(iso, edited) {
     const when = Date.parse(iso);
     let label = iso;
@@ -829,6 +989,10 @@
     return edited ? label + MESSAGES.edited : label;
   }
 
+  /**
+   * @param {string} iso
+   * @returns {string}
+   */
   function fullDate(iso) {
     const when = Date.parse(iso);
     if (!Number.isFinite(when)) return '';
@@ -843,6 +1007,9 @@
   }
 
   // ------------------------------------------------------------------ comments
+  /**
+   * @param {PublicCount|null|undefined} count
+   */
   function setCommentCount(count) {
     if (!countEl) return;
     if (count && config.countComments && typeof count.display === 'string') {
@@ -856,6 +1023,10 @@
     }
   }
 
+  /**
+   * @param {CommentView} comment
+   * @returns {boolean}
+   */
   function canReplyTo(comment) {
     if (!live.commentsOpen || !live.allowReplies) return false;
     if (comment.state !== 'VISIBLE') return false;
@@ -866,6 +1037,10 @@
     return true;
   }
 
+  /**
+   * @param {CommentView} comment
+   * @returns {CommentItem}
+   */
   function renderComment(comment) {
     const item = /** @type {any} */ (make('li', 'g-comment'));
     item.id = 'g-comment-' + comment.id;
@@ -878,6 +1053,10 @@
     return item;
   }
 
+  /**
+   * @param {CommentItem} item
+   * @param {CommentView} comment
+   */
   function fillComment(item, comment) {
     const existingReplies = item.querySelector(':scope > .g-comment__replies');
     while (item.firstChild) item.removeChild(item.firstChild);
@@ -927,6 +1106,10 @@
     if (comment.moreReplies) addMoreReplies(item, comment);
   }
 
+  /**
+   * @param {CommentView} comment
+   * @returns {HTMLElement}
+   */
   function renderReplies(comment) {
     const list = make('ol', 'g-comment__replies');
     for (const reply of comment.replies || []) {
@@ -935,8 +1118,14 @@
     return list;
   }
 
+  /**
+   * @param {HTMLElement} item
+   * @returns {HTMLElement}
+   */
   function ensureReplies(item) {
-    let list = item.querySelector(':scope > .g-comment__replies');
+    let list = /** @type {HTMLElement | null} */ (
+      item.querySelector(':scope > .g-comment__replies')
+    );
     if (!list) {
       list = make('ol', 'g-comment__replies');
       const more = item.querySelector(':scope > .g-comment__more-replies');
@@ -946,12 +1135,16 @@
     return list;
   }
 
+  /**
+   * @param {CommentItem} item
+   * @param {CommentView} comment
+   */
   function addMoreReplies(item, comment) {
     const more = button(
       'g-comment__action g-comment__more-replies',
       MESSAGES.showMoreReplies,
     );
-    let cursor = null;
+    let cursor = /** @type {string | null} */ (null);
     let first = true;
     more.addEventListener('click', async () => {
       more.disabled = true;
@@ -980,6 +1173,11 @@
     item.appendChild(more);
   }
 
+  /**
+   * @param {CommentItem} item
+   * @param {CommentView} comment
+   * @returns {HTMLElement}
+   */
   function renderActions(item, comment) {
     const actions = make('div', 'g-comment__actions');
     const name = comment.author ? comment.author.displayName : '';
@@ -1028,6 +1226,11 @@
     return actions;
   }
 
+  /**
+   * @param {CommentItem} item
+   * @param {HTMLElement} trigger
+   * @param {HTMLElement} actions
+   */
   function confirmDelete(item, trigger, actions) {
     trigger.hidden = true;
     const box = make('span', 'g-comment__confirm');
@@ -1070,10 +1273,13 @@
     });
   }
 
+  /**
+   * @param {CommentItem} item
+   */
   function applyDeleted(item) {
     const replies = item.querySelector(':scope > .g-comment__replies');
     const hasReplies = !!(replies && replies.children.length);
-    const parentList = item.parentNode;
+    const parentList = /** @type {HTMLElement | null} */ (item.parentNode);
     if (hasReplies) {
       const next = Object.assign({}, item._comment, {
         state: 'DELETED',
@@ -1103,6 +1309,11 @@
   }
 
   // ------------------------------------------------------------------ composer
+  /**
+   * @param {Composer} composer
+   * @param {string} body
+   * @returns {string}
+   */
   function currentDraftKey(composer, body) {
     if (
       !composer.draft ||
@@ -1118,14 +1329,18 @@
     return composer.draft.key;
   }
 
+  /**
+   * @param {ComposerOptions} options
+   * @returns {Composer}
+   */
   function createComposer(options) {
-    const composer = {
+    const composer = /** @type {Composer} */ ({
       mode: options.mode,
       parentId: options.parentId || null,
       commentId: options.commentId || null,
       draft: null,
       busy: false,
-    };
+    });
     const wrapper = make('div', 'g-composer');
     const inputId = uniqueId('composer');
     const label = make(
@@ -1175,6 +1390,9 @@
       wrapper.appendChild(identity);
     }
 
+    /**
+     * @param {string} text
+     */
     function showError(text) {
       error.textContent = text;
       error.hidden = !text;
@@ -1270,7 +1488,7 @@
           result = await api(
             'POST',
             '/v2/public/comments/' +
-              encodeURIComponent(composer.commentId) +
+              encodeURIComponent(String(composer.commentId)) +
               '/revisions',
             { body: { body } },
           );
@@ -1302,6 +1520,9 @@
     for (const composer of composers) composer.update();
   }
 
+  /**
+   * @param {string} body
+   */
   function mountRootComposer(body) {
     if (!slotEl) return;
     if (rootComposer) rootComposer.close();
@@ -1323,6 +1544,10 @@
     slotEl.appendChild(rootComposer.element);
   }
 
+  /**
+   * @param {CommentView} comment
+   * @param {HTMLElement|null} parentItem
+   */
   function insertNewComment(comment, parentItem) {
     const item = renderComment(comment);
     if (parentItem) {
@@ -1341,11 +1566,17 @@
     }
   }
 
+  /**
+   * @param {CommentItem} item
+   * @param {'reply'|'edit'} mode
+   * @param {HTMLElement|null} trigger
+   * @param {string} [presetBody]
+   */
   function openInlineComposer(item, mode, trigger, presetBody) {
     closeInline();
     const comment = item._comment;
-    const done = (result) => {
-      inline.composer.close();
+    const done = (/** @type {any} */ result) => {
+      /** @type {{composer: Composer}} */ (inline).composer.close();
       inline = null;
       if (mode === 'edit') {
         fillComment(item, result);
@@ -1375,6 +1606,10 @@
   }
 
   // -------------------------------------------------------------------- report
+  /**
+   * @param {CommentItem} item
+   * @param {HTMLElement} trigger
+   */
   function openReport(item, trigger) {
     if (!session) {
       startSignIn({ kind: 'signin' });
@@ -1452,6 +1687,7 @@
     send.addEventListener('click', async () => {
       send.disabled = true;
       error.hidden = true;
+      /** @type {{reasonCode: string, note?: string}} */
       const payload = { reasonCode: select.value };
       const text = note.value.trim();
       if (text) payload.note = text.slice(0, NOTE_LIMIT);
@@ -1486,6 +1722,10 @@
   }
 
   // ------------------------------------------------------------------- loading
+  /**
+   * @param {CommentPage} page
+   * @param {boolean} replace
+   */
   function renderPage(page, replace) {
     if (!listEl) return;
     if (replace) {
@@ -1579,6 +1819,10 @@
   }
 
   // -------------------------------------------------------------------- replay
+  /**
+   * @param {Intent|null} intent
+   * @returns {Promise<void>}
+   */
   async function replay(intent) {
     if (!intent) return;
     if (intent.kind === 'reaction' && typeof intent.key === 'string') {
@@ -1615,6 +1859,10 @@
     }
   }
 
+  /**
+   * @param {string} value
+   * @returns {string}
+   */
   function cssEscape(value) {
     return String(value).replace(/[^A-Za-z0-9_-]/g, '');
   }
