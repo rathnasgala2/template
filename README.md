@@ -102,6 +102,46 @@ are processed and written once. Images use the base layer's existing `img`
 rules; no class is added. The front-matter `hero` renders as the article's cover
 `<figure>` above the body (`role: "decorative"` renders `alt=""`).
 
+### Editions
+
+A document of `kind: "edition"` restates one article at another depth. Its front
+matter's `edition` object names the article (`of`, the article's slug) and the
+depth (`kind`: `QUICK_READ`, `STANDARD` or `DEEP_DIVE`), and `build-input`
+carries it as an ordinary `content[]` record. Whether an edition is current is
+decided before the build input exists, so an edition that arrives is rendered as
+given. An edition is a content kind, not a module: the renderer runs no
+generation and has no Prism runtime.
+
+- **Routes.** `/<slug>/quick-read`, `/<slug>/standard` and `/<slug>/deep-dive`,
+  where `<slug>` is `edition.of` (written as `…/index.html` like every route).
+  The page's `data-gala-page-kind` is `article`, so the published page-kind
+  hooks do not change. Reactions and comments stay on the article; an edition
+  page carries none.
+- **The article stays the reference.** `<link rel="canonical">` and `og:url`
+  name the article, the robots directive is `noindex, follow`, and the
+  structured data is a `WebPage` with a breadcrumb back to the article.
+- **Never listed.** An edition is in no index, tag, series, archive or author
+  listing, feed, `sitemap.xml`, `search-index.json`, `llms.txt` or
+  `llms-full.txt`, and it does not move the footer's copyright year.
+- **Selector.** The article and each of its editions carry one
+  `<nav aria-label="Editions">` of links, in the `edition-selector` slot at the
+  end of the article head: Original, Quick read, Standard, Deep dive in that
+  order, only the kinds that exist, the page being read marked
+  `aria-current="page"`. An `unlisted` edition is not listed, except on its own
+  page. An edition page adds the line "Generated edition, reviewed by the
+  author; the original is the reference". The links are plain anchors; nothing
+  needs JavaScript. The strings come from the message catalog, and the markup
+  reuses the base layer's `g-pills`, `g-pill` and `g-label` hooks, so the
+  published theme styling contract does not change.
+- **Cover.** An edition with no `hero` or social image of its own uses its
+  article's.
+- **Fails closed.** Before anything is written, `BuildInputValidationError`
+  carries one diagnostic per edition that cannot be placed:
+  `EDITION_ORIGINAL_UNRESOLVED` (`edition.of` names no article of the build),
+  `EDITION_DUPLICATE` (two editions of one article at one depth) and
+  `EDITION_ROUTE_CONFLICT` (the route is already another document's route or
+  redirect).
+
 The complete output-security pipeline (`src/core/internal/content-security.js`)
 sits on top of that adapter. **Division of labour** (normalization replaces an
 authored body path with a `renderableBody` carrying "the deterministic policy
@@ -196,15 +236,19 @@ output-security pipeline every generated page still passes through:
   `data-gala-slot="<name>"` attribute on an otherwise empty, non-landmark
   `<div>`, and the collapsed slot additionally carries `hidden`. This renderer
   has no module system, so every slot except `footer-profile` (which always
-  wraps the publication's own footer card) and `header-actions` (the appearance
-  control, core content rather than a module) renders empty. This module also
-  renders breadcrumbs and deterministic pagination controls
-  (`rel="prev"`/`rel="next"`, an `aria-current="page"` status).
+  wraps the publication's own footer card), `header-actions` (the appearance
+  control, core content rather than a module) and `edition-selector` (see
+  Editions) renders empty. `edition-selector` is rendered by the article page
+  kind at the end of the article head, only where there is an edition to offer,
+  not in the footer. This module also renders breadcrumbs and deterministic
+  pagination controls (`rel="prev"`/`rel="next"`, an `aria-current="page"`
+  status).
 - **`src/core/internal/page-kinds.js`** builds every generated page kind from a
   validated `build-input:2.0.0`: `profile` (the optional publication profile),
   `author` (one page per `build-input.authors` entry, at `/authors/<id>`),
-  `article`/`page` (one page per `content[]` record, at its own route), `index`
-  (a paginated reverse-chronological listing of every `status: "published"`,
+  `article`/`page` (one page per `content[]` record, at its own route; a
+  `kind: "edition"` record renders beside its article, see Editions), `index` (a
+  paginated reverse-chronological listing of every `status: "published"`,
   `kind: "article"` record — an `unlisted` record is reachable only by its own
   direct route, never through a generated listing), `tag`/`series` (one listing
   page per distinct authored value, plus a `/tags`/`/series` root page linking
@@ -484,15 +528,15 @@ brief sits on top of the page kinds above:
   (`/feed/atom.xml`) and RSS 2.0 (`/feed/rss.xml`) documents over the exact
   reverse-chronological `status: "published"`, `kind: "article"` selection
   `internal/page-kinds.js`'s `index` page kind paginates (the shared
-  `selectPublishedArticles` export), every item URL absolute against
-  `buildInput.baseUrl`, bounded to the most recent 50 entries (documented scoped
-  decision — neither the brief nor this renderer's own styling decision fixes a
-  feed item count).
+  `selectPublishedArticles` export; editions are never in it), every item URL
+  absolute against `buildInput.baseUrl`, bounded to the most recent 50 entries
+  (documented scoped decision — neither the brief nor this renderer's own
+  styling decision fixes a feed item count).
 - **Sitemap** (`src/core/internal/sitemap.js`): `/sitemap.xml` over every page
   `internal/page-kinds.js` generated that this renderer did not itself mark
-  `noindex` (unlisted content), deterministically sorted by each entry's own
-  absolute URL, with `<lastmod>` sourced from each page's own authored
-  `publishedAt`/`updatedAt` — never build time.
+  `noindex` (unlisted content and editions), deterministically sorted by each
+  entry's own absolute URL, with `<lastmod>` sourced from each page's own
+  authored `publishedAt`/`updatedAt` — never build time.
 - **Static search index** (`src/core/internal/search-index.js`):
   `/search-index.json`, a deterministic JSON document indexing every published
   `article`/`page` record's title, description, a bounded plain-text excerpt,
@@ -503,13 +547,14 @@ brief sits on top of the page kinds above:
   C).
 - **SEO/Open-Graph/Twitter/localization metadata**: every generated page's
   `<head>` now carries a viewport meta, an optional description, an optional
-  `robots` directive (`noindex, follow` for `status: "unlisted"` content and for
-  the generated `404.html`), a canonical link, `og:*`/ `twitter:*` meta tags
-  (image resolved to an absolute content-addressed media derivative URL via
-  `internal/seo.js`, never the raw source path) and the Atom/RSS feed-discovery
-  `<link>`s. **hreflang** is a documented scope decision, not a silent omission:
-  `build-input:2.0.0` has no translation/locale-variant linkage between distinct
-  `content[]` records (see `internal/seo.js`'s module documentation), so no
+  `robots` directive (`noindex, follow` for `status: "unlisted"` content, for
+  editions and for the generated `404.html`), a canonical link, `og:*`/
+  `twitter:*` meta tags (image resolved to an absolute content-addressed media
+  derivative URL via `internal/seo.js`, never the raw source path) and the
+  Atom/RSS feed-discovery `<link>`s. **hreflang** is a documented scope
+  decision, not a silent omission: `build-input:2.0.0` has no
+  translation/locale-variant linkage between distinct `content[]` records (see
+  `internal/seo.js`'s module documentation), so no
   `<link rel="alternate" hreflang="...">` is ever emitted by this renderer.
 - **Search and assistant discovery** (3.0.0, unpublished). Every page carries
   one `<script type="application/ld+json">` data block
@@ -537,7 +582,7 @@ brief sits on top of the page kinds above:
   a GitHub project site) must have the same file at its host root. `llms.txt`
   follows llmstxt.org (`# title`, `> description`, `## Articles`, `## Series`,
   `## Optional`); `llms-full.txt` is every published article as plain text.
-  Unlisted content is excluded from both.
+  Unlisted content and editions are excluded from both.
 - **`404.html`**: the `error` page kind's pure `renderErrorPageBody`, now
   actually wired into `renderPublication` at the fixed `errorDocumentKey`
   (`internal/route.js#errorDocumentPath`) — `404.html` at the root, or
@@ -626,9 +671,10 @@ read from disk and emitted as `assets/gala-interactions-v1.js` when
 `test/module-tree-absence.test.js`, `.dependency-cruiser.cjs` and the ESLint
 `no-restricted-imports` rule enforce this. `newsletter` and `prism` have no
 module directory, package, configuration schema, stub, output or runtime code in
-this MVP. Whitelabel is not a module either: the footer's Galascribe attribution
+this MVP. Whitelabel is not a module either: the footer's "Made with Galascribe"
 line is a core appearance switch, `build-input.appearance.attribution`
-(`showMadeWith: false` omits the line; absent or `true` shows it).
+(`showMadeWith: false` omits the line; absent or `true` shows it). Nor are
+editions: they are a rendered content kind (see Editions).
 
 ## Consuming `@rathnasgala2/schemas`
 

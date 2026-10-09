@@ -15,6 +15,10 @@
  *   `/authors/<id>`;
  * - `article` / `page` — one page per `content[]` record, at its own
  *   `contentFrontmatterNormalized` route;
+ * - an `edition` record (`kind: "edition"`, `internal/editions.js`) is an
+ *   article page too, for the page-kind hook: it renders at
+ *   `<article>/quick-read`, `/standard` or `/deep-dive`, names the article as
+ *   its canonical URL, is `noindex, follow`, and never enters a listing;
  * - `index` — a paginated reverse-chronological listing of every
  *   `status: "published"` `kind: "article"` record (an `unlisted` record is
  *   reachable only by its own direct route or an authored navigation entry,
@@ -66,6 +70,13 @@ import {
   renderImage,
   renderNewsletterPanel,
 } from './components.js';
+import {
+  editionKindLabel,
+  editionRoute,
+  listedEditions,
+  renderEditionSelector,
+  resolveEditions,
+} from './editions.js';
 import { truncateAtWord } from './seo.js';
 import { createStructuredData } from './structured-data.js';
 import { icon } from './icons.js';
@@ -122,9 +133,13 @@ export const PAGE_KIND_VALUES = Object.freeze(
 
 /**
  * @param {import('../../../types/index.d.ts').ContentFrontmatterNormalized} frontmatter
- * @returns {string} the record's own canonical route (un-joined)
+ * @returns {string} the record's own canonical route (un-joined); an
+ *   edition's is derived from the article it restates, never authored
  */
 export function contentRoute(frontmatter) {
+  if (frontmatter.kind === 'edition' && frontmatter.edition) {
+    return editionRoute(frontmatter.edition);
+  }
   return frontmatter.route ?? `/${frontmatter.slug}`;
 }
 
@@ -152,6 +167,9 @@ function paginate(items, pageSize) {
  * @property {'profile' | 'author' | 'article' | 'page' | 'index' | 'tag' | 'series' | 'archive'} kind
  * @property {string} route an un-joined `canonicalRoute` (caller joins with
  *   `basePath`)
+ * @property {string} [canonicalRoute] the un-joined route the page's
+ *   `<link rel="canonical">` names when it is not the page's own (an edition
+ *   names its article)
  * @property {string} title the page's `<title>` text
  * @property {string} language the page's BCP-47 language tag
  * @property {string} [direction] the page's resolved base text direction (assigned by buildGeneratedPages's own return mapping)
@@ -353,6 +371,9 @@ export function homeDocumentTitle(name, tagline) {
  * @param {object} options rendering options
  * @param {(body: string) => string} options.pageBody turns a body into its
  *   page form (every image naming its media derivatives, lazily loaded)
+ * @param {import('./editions.js').EditionResolution} [options.editions] where
+ *   each edition sits beside its article; resolved from the build input when
+ *   the caller has not already done so
  * @param {readonly {path: string, mediaType: string}[]} [options.mediaAssets]
  *   the media pipeline's finished `assets` list, used to resolve every
  *   image reference (hero, avatar) to its emitted URL; an image with no
@@ -373,6 +394,7 @@ export function buildGeneratedPages(validatedInput, options) {
   const publicBasePath = derivePublicBasePath(baseUrl, basePath);
   const messages = getMessages(publication.defaultLanguage);
   const authorsById = new Map(authors.map((author) => [author.id, author]));
+  const editions = options.editions ?? resolveEditions(content, contentRoute);
 
   /**
    * @param {string} route an un-joined route
@@ -475,7 +497,11 @@ export function buildGeneratedPages(validatedInput, options) {
   const publishedArticles = selectPublishedArticles(content);
   const byTag = groupBy(publishedArticles, (r) => r.frontmatter.tags);
   const bySeries = groupBy(
-    content.filter((r) => r.frontmatter.status === 'published'),
+    content.filter(
+      (r) =>
+        r.frontmatter.kind !== 'edition' &&
+        r.frontmatter.status === 'published',
+    ),
     (r) => (r.frontmatter.series ? [r.frontmatter.series] : []),
   );
   for (const bucket of bySeries.values()) {
@@ -728,7 +754,15 @@ export function buildGeneratedPages(validatedInput, options) {
   for (const record of content) {
     const { frontmatter } = record;
     const isArticle = frontmatter.kind === 'article';
-    const hero = mediaImage(frontmatter.hero?.file);
+    // An edition restates `original`; a document that is not one is its own.
+    const edition = editions.byRecord.get(record);
+    const isEdition = edition !== undefined;
+    const original = edition?.original ?? record;
+    // An edition with no cover of its own wears its article's.
+    const heroMedia = isEdition
+      ? (frontmatter.hero ?? original.frontmatter.hero)
+      : frontmatter.hero;
+    const hero = mediaImage(heroMedia?.file);
     const headings = extractH2Headings(record.body);
     const contents =
       headings.length >= CONTENTS_MIN_HEADINGS
@@ -739,12 +773,17 @@ export function buildGeneratedPages(validatedInput, options) {
             )
             .join('')}</ol>`
         : '';
-    const firstTag = frontmatter.tags[0];
+    const firstTag = original.frontmatter.tags[0];
     const trail = [
-      ...(isArticle && firstTag
+      ...((isArticle || isEdition) && firstTag
         ? [{ label: firstTag, route: tagHref(firstTag) }]
         : []),
-      { label: frontmatter.title },
+      ...(edition
+        ? [
+            { label: original.frontmatter.title, route: recordHref(original) },
+            { label: editionKindLabel(edition.kind, messages) },
+          ]
+        : [{ label: frontmatter.title }]),
     ];
     const partLabel = partLabelOf(record);
     const series = frontmatter.series;
@@ -755,6 +794,19 @@ export function buildGeneratedPages(validatedInput, options) {
           : '') +
         `${escapeHtml(series)}</a>`
       : '';
+    const share =
+      `<div class="g-share" role="group" aria-label="${text('shareLabel')}" hidden>` +
+      `<button class="g-icon-btn" type="button" data-action="copy-link" aria-label="${text('copyLinkLabel')}" title="${text('copyLinkLabel')}">${icon('link')}</button>` +
+      `<button class="g-icon-btn" type="button" data-action="bookmark" aria-pressed="false" aria-label="${text('saveForLaterLabel')}" title="${text('saveForLaterLabel')}">${icon('bookmark')}</button>` +
+      `</div>`;
+    // The article and each of its editions offer the same selector.
+    const editionSelector = renderEditionSelector({
+      messages,
+      originalHref: recordHref(original),
+      entries: listedEditions(editions.byOriginal.get(original), edition),
+      current: edition,
+      site,
+    });
     const head =
       `<div class="g-wrap g-article-head">${renderBreadcrumbs({ trail: [homeStep, ...trail], messages })}` +
       (isArticle
@@ -764,16 +816,13 @@ export function buildGeneratedPages(validatedInput, options) {
       (frontmatter.description
         ? `<p class="g-dek">${escapeHtml(frontmatter.description)}</p>`
         : '') +
-      (isArticle
-        ? `<div class="g-article-meta">${byline(record, true)}` +
-          `<div class="g-share" role="group" aria-label="${text('shareLabel')}" hidden>` +
-          `<button class="g-icon-btn" type="button" data-action="copy-link" aria-label="${text('copyLinkLabel')}" title="${text('copyLinkLabel')}">${icon('link')}</button>` +
-          `<button class="g-icon-btn" type="button" data-action="bookmark" aria-pressed="false" aria-label="${text('saveForLaterLabel')}" title="${text('saveForLaterLabel')}">${icon('bookmark')}</button>` +
-          `</div></div>`
+      (isArticle || isEdition
+        ? `<div class="g-article-meta">${byline(record, true)}${isArticle ? share : ''}</div>`
         : '') +
+      editionSelector +
       `</div>`;
     const cover = hero
-      ? `<figure class="g-wrap g-article-cover">${renderImage({ image: hero, alt: frontmatter.hero?.role === 'decorative' ? '' : (frontmatter.hero?.alt ?? ''), priority: true })}</figure>`
+      ? `<figure class="g-wrap g-article-cover">${renderImage({ image: hero, alt: heroMedia?.role === 'decorative' ? '' : (heroMedia?.alt ?? ''), priority: true })}</figure>`
       : '';
     const tocNav = contents
       ? `<nav class="g-toc" aria-label="${text('onThisPageLabel')}"><p class="g-label">${icon('list')}${text('onThisPageLabel')}</p>${contents}</nav>`
@@ -875,8 +924,17 @@ export function buildGeneratedPages(validatedInput, options) {
     const articleTrail = [
       homeStep,
       ...trail.slice(0, -1),
-      { label: frontmatter.title, route: recordHref(record) },
+      {
+        label: trail.at(-1)?.label ?? frontmatter.title,
+        route: recordHref(record),
+      },
     ];
+    // An edition with no social image of its own shares its article's.
+    const social = socialOfContent(
+      isEdition && !frontmatter.socialImage && !frontmatter.hero
+        ? original.frontmatter
+        : frontmatter,
+    );
     const articleGraph = isArticle
       ? sd.article({
           url: ownUrl,
@@ -906,14 +964,24 @@ export function buildGeneratedPages(validatedInput, options) {
           dateModified: contentLastModified(frontmatter),
         });
     pages.push({
-      kind: frontmatter.kind,
+      // An edition is an article page for the page-kind hook.
+      kind: frontmatter.kind === 'edition' ? 'article' : frontmatter.kind,
       route: contentRoute(frontmatter),
+      canonicalRoute: edition ? contentRoute(original.frontmatter) : undefined,
       title: frontmatter.title,
-      documentTitle: documentTitleOf(frontmatter.title),
+      documentTitle: documentTitleOf(
+        edition
+          ? msg(
+              'editionPageTitle',
+              frontmatter.title,
+              editionKindLabel(edition.kind, messages),
+            )
+          : frontmatter.title,
+      ),
       language: frontmatter.language,
       description: contentDescription(record),
-      ogType: isArticle ? 'article' : 'website',
-      ...socialOfContent(frontmatter),
+      ogType: isArticle || isEdition ? 'article' : 'website',
+      ...social,
       jsonLd: sd.serialize(articleGraph),
       articleMeta: isArticle
         ? {
@@ -925,12 +993,15 @@ export function buildGeneratedPages(validatedInput, options) {
             tags: [...frontmatter.tags],
           }
         : undefined,
+      // An edition is never indexed: its article is the reference.
       robotsContent:
-        frontmatter.status === 'unlisted' ? 'noindex, follow' : undefined,
+        isEdition || frontmatter.status === 'unlisted'
+          ? 'noindex, follow'
+          : undefined,
       interactionBearing: Boolean(interactions),
       lastModified: contentLastModified(frontmatter),
       bodyHtml:
-        `<article class="g-article">${isArticle ? '<div class="g-progress" aria-hidden="true"></div>' : ''}${head}${cover}` +
+        `<article class="g-article">${isArticle || isEdition ? '<div class="g-progress" aria-hidden="true"></div>' : ''}${head}${cover}` +
         `<div class="g-wrap g-article-grid">${tocNav}${prose}</div>${foot}</article>` +
         after +
         (isArticle ? newsletterHtml : ''),

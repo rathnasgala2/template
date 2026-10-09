@@ -524,6 +524,7 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-article-head h1 { font-size: clamp(2.25rem, 1.2rem + 3.8vw, var(--gala-display-max)); }
   .g-article-meta { display: flex; align-items: center; justify-content: space-between; gap: var(--gala-space-4); width: 100%; padding-top: 1.1rem; border-top: var(--gala-border-width) solid var(--gala-color-border); flex-wrap: wrap; }
   .g-share { display: flex; gap: var(--gala-space-1); }
+  [data-gala-slot="edition-selector"] { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gala-space-2); min-width: 0; max-width: 100%; }
   .g-article-cover { margin-block: 0; }
   .g-article-cover img { width: 100%; height: auto; aspect-ratio: 21 / 9; object-fit: cover; border-radius: var(--gala-radius-large); border: var(--gala-border-card); box-shadow: var(--gala-shadow-card); filter: var(--gala-media-filter); }
   .g-article-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, var(--gala-content-measure)) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3.5rem); padding-block: clamp(2rem, 5vw, 3.5rem) var(--gala-space-4); }

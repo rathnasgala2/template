@@ -54,10 +54,23 @@ export interface RenderableBody {
   renderPolicy: { name: string; version: string; digest: string };
 }
 
+/**
+ * A `contentEdition`-shaped object: which article a `kind: "edition"` document
+ * restates, at what depth, and where it came from. A stale edition never
+ * reaches the renderer, so `sourceDigest` is carried but not compared.
+ */
+export interface ContentEdition {
+  of: string;
+  kind: 'QUICK_READ' | 'STANDARD' | 'DEEP_DIVE';
+  sourceDigest: string;
+  generation: { provider: string; model: string; generationId: string };
+  approvedAt: string;
+}
+
 /** A `contentFrontmatterNormalized`-shaped record's fields this renderer reads. */
 export interface ContentFrontmatterNormalized {
   id: string;
-  kind: 'article' | 'page';
+  kind: 'article' | 'page' | 'edition';
   title: string;
   description?: string;
   language: string;
@@ -74,6 +87,8 @@ export interface ContentFrontmatterNormalized {
   hero?: ResolvedMediaRef;
   socialImage?: ResolvedFileRef;
   redirects: string[];
+  /** Present exactly when `kind` is `edition`. */
+  edition?: ContentEdition;
 }
 
 /**

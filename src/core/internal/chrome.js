@@ -194,7 +194,6 @@ export function renderFooter({
     renderSlot('account-intent') +
     renderSlot('conversation') +
     renderSlot('newsletter') +
-    renderSlot('edition-selector') +
     `<div class="g-wrap g-footer-base">` +
     (copyrightText ? `<span>${escapeHtml(copyrightText)}</span>` : '') +
     (showAttribution ? `<span>${label('footerAttributionLabel')}</span>` : '') +

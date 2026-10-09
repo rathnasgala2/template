@@ -7,9 +7,12 @@ validated `build-input:2.0.0` instance into a candidate output directory plus an
 `artifact-manifest:2.0.0` instance. Never own deployment, provider credentials,
 theme presentation bytes, or any `interactions` / `newsletter` / `prism` module
 boundary (document 32 section 3.1; brief S2 section 1). Whitelabel is not a
-module: the footer's attribution line is a core appearance switch,
-`appearance.attribution.showMadeWith` (absent or `true` shows it, `false` omits
-it), read in `src/core/index.js` and applied by `renderFooter`.
+module: the footer's attribution line ("Made with Galascribe") is a core
+appearance switch, `appearance.attribution.showMadeWith` (absent or `true` shows
+it, `false` omits it), read in `src/core/index.js` and applied by
+`renderFooter`. Editions (`kind: "edition"` documents) are a core content kind
+too, not a Prism module: `internal/editions.js` places them beside their article
+and the page kinds render them; nothing here generates one.
 
 ## Commands
 
@@ -108,6 +111,17 @@ adds them to the media pipeline's references, and replaces each `<img>` with
 markup naming only pipeline output (`components.js` `createContentImage`). Never
 copy a source file into the output; never let an unresolved `<img>` reach a
 page.
+
+**Editions:** a `kind: "edition"` record renders at `/<edition.of>/quick-read`,
+`/standard` or `/deep-dive`, canonical to its article, `noindex, follow`, with
+`data-gala-page-kind="article"` (the published page-kind hooks do not change).
+It is in no listing, feed, sitemap, search index or `llms` document, and it
+carries no interactions. The article and each edition share one
+`<nav aria-label="Editions">` in the `edition-selector` slot at the end of the
+article head, styled only through hooks the base layer already owns. An edition
+that names no article of the build, repeats one, or takes another document's
+route fails the build before anything is written (`resolveEditions`). Staleness
+is decided upstream: never compare digests here.
 
 ## How to run locally
 

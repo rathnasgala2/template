@@ -22,8 +22,8 @@
  *   columns, author profile, copyright and the template attribution line,
  *   which `appearance.attribution.showMadeWith: false` omits),
  *   plus the always-present, currently-empty core slots (`footer-auxiliary`,
- *   `account-intent`, `conversation`, `newsletter`, `edition-selector`),
- *   rendered by `internal/chrome.js`.
+ *   `account-intent`, `conversation`, `newsletter`), rendered by
+ *   `internal/chrome.js`.
  *
  * Core owns nine versioned semantic slots plus the collapsed
  * `article-footer-ad` slot: `header-actions`, `article-preamble`,
@@ -47,7 +47,11 @@
  * Light/Dark/System appearance control (the three-mode appearance control
  * in the header-actions slot) — core content, not a module, so this slot's
  * earlier "every slot ... renders empty" description does not cover it.
- * Every other slot is unaffected.
+ *
+ * `edition-selector` is not a footer slot: it is rendered by the article page
+ * kind (`internal/editions.js`) at the end of the article head, on an article
+ * that has a published edition and on each edition page, and is not rendered
+ * on a page with no edition to offer. Every other slot is unaffected.
  *
  * The exact `selectorAtom`/hook-naming decisions here (`data-gala-slot`
  * attribute, one slot name per value) are what

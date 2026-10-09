@@ -155,4 +155,76 @@ export async function buildRichFixture() {
   return buildInput;
 }
 
+/** The edition kinds, with the id offset each gets in {@link editionRecord}. */
+const EDITION_KIND_OFFSET = Object.freeze({
+  QUICK_READ: 1,
+  STANDARD: 2,
+  DEEP_DIVE: 3,
+});
+
+/**
+ * A normalized `kind: "edition"` content record restating `original`: the
+ * article's authors and language, its own id, slug, source path and body, and
+ * the `edition` object the schema requires. The record is not yet part of any
+ * build input; call {@link addEditions} to add records and refresh digests.
+ *
+ * @param {any} original the article's content record
+ * @param {'QUICK_READ' | 'STANDARD' | 'DEEP_DIVE'} kind the edition's depth
+ * @param {{frontmatter?: Record<string, unknown>, body?: string}} [overrides]
+ *   front-matter fields and body to set on the record
+ * @returns {Record<string, any>} the edition record
+ */
+export function editionRecord(original, kind, overrides = {}) {
+  const offset = EDITION_KIND_OFFSET[kind];
+  const segment = kind.toLowerCase().replace('_', '-');
+  const slug = original.frontmatter.slug;
+  const record = JSON.parse(JSON.stringify(original));
+  record.frontmatter = {
+    ...record.frontmatter,
+    id: stableId(300 + offset),
+    kind: 'edition',
+    slug: `${slug}-${segment}`,
+    route: undefined,
+    hero: undefined,
+    socialImage: undefined,
+    series: undefined,
+    seriesOrder: undefined,
+    tags: [],
+    redirects: [],
+    edition: {
+      of: slug,
+      kind,
+      sourceDigest: `sha256:${'ab'.repeat(32)}`,
+      generation: {
+        provider: 'anthropic',
+        model: 'claude-sonnet-5-5',
+        generationId: stableId(400 + offset),
+      },
+      approvedAt: '2026-10-09T10:00:00.000Z',
+    },
+    ...overrides.frontmatter,
+  };
+  record.sourcePath = `content/${slug}.edition.${segment}.md`;
+  record.body = overrides.body ?? `<p>The ${segment} edition.</p>`;
+  delete record.media;
+  return record;
+}
+
+/**
+ * Add edition records to a build input and refresh what depends on them (the
+ * resolved author ids and every body digest).
+ *
+ * @param {any} buildInput the build input, mutated in place
+ * @param {readonly Record<string, any>[]} records the edition records
+ * @returns {Promise<any>} the same build input
+ */
+export async function addEditions(buildInput, records) {
+  buildInput.content.push(...records);
+  for (const record of buildInput.content) {
+    record.resolvedAuthorIds = record.frontmatter.authorIds;
+  }
+  await applyCurrentRenderPolicy(buildInput);
+  return buildInput;
+}
+
 export { stableId };

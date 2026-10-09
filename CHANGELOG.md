@@ -22,6 +22,20 @@ and this project adheres to
   source of the manifest.
 - **GIF.** The media pipeline admits GIF (still or animated): a bounded
   structure walk, then the original bytes pass through unmodified.
+- **Editions.** A document of `kind: "edition"` (schemas 3.3.0) restates one
+  article at another depth and renders beside it at `/<slug>/quick-read`,
+  `/standard` or `/deep-dive`: `<link rel="canonical">` names the article, the
+  robots directive is `noindex, follow`, and it appears in no listing, feed,
+  sitemap, search index or `llms` document. The article and each edition share
+  one `<nav aria-label="Editions">` (Original, Quick read, Standard, Deep dive;
+  only the kinds that exist, the current page `aria-current="page"`) in the
+  `edition-selector` slot at the end of the article head, which is now rendered
+  there, only where an edition exists, instead of empty in every footer. An
+  edition page adds "Generated edition, reviewed by the author; the original is
+  the reference". An edition that names no article of the build, repeats one, or
+  takes another document's route fails the build before anything is written
+  (`EDITION_ORIGINAL_UNRESOLVED`, `EDITION_DUPLICATE`,
+  `EDITION_ROUTE_CONFLICT`). No published styling hook changes.
 - **Footer attribution switch.** `appearance.attribution.showMadeWith: false`
   (schemas 3.3.0) omits the footer's Galascribe attribution line on every page;
   absent or `true` keeps it. Whitelabel is a core appearance setting, not a

@@ -50,7 +50,11 @@ import {
   applyCurrentRenderPolicy,
   loadCanonicalBuildInput,
 } from './helpers/schema-fixtures.js';
-import { buildRichFixture, stableId } from './helpers/page-kind-fixtures.js';
+import {
+  buildRichFixture,
+  editionRecord,
+  stableId,
+} from './helpers/page-kind-fixtures.js';
 import {
   buildValidThemeJson,
   buildValidThemeTokens,
@@ -362,6 +366,16 @@ async function buildCoverageFixture(sourceDirectory) {
     filler.frontmatter.kind = 'article';
     filler.frontmatter.publishedAt = `2024-02-${String(i + 1).padStart(2, '0')}T09:00:00.000Z`;
     buildInput.content.push(filler);
+  }
+  // The coverage article's edition: the edition-selector slot and the edition
+  // page's own markup are published hooks too.
+  buildInput.content.push(
+    editionRecord(coverageRecord, 'QUICK_READ', {
+      body: '<h2 id="one">One</h2><p>Short.</p><h2 id="two">Two</h2><p>Shorter.</p>',
+    }),
+  );
+  for (const record of buildInput.content) {
+    record.resolvedAuthorIds = record.frontmatter.authorIds;
   }
   buildInput.authors[0].avatar = image;
   buildInput.appearance.brandMark = image;

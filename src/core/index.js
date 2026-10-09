@@ -11,9 +11,11 @@
  * adapter options are rejected with {@link RenderOptionsError} before
  * Eleventy ever runs, a body image that names no inventoried image asset is
  * rejected with {@link BuildInputValidationError}
- * (`MEDIA_REFERENCE_UNRESOLVED`) before anything is written, and a rejected
- * image or font is rejected with {@link MediaPipelineError} before anything
- * is written.
+ * (`MEDIA_REFERENCE_UNRESOLVED`) before anything is written, an edition that
+ * names no article in the build, repeats another edition or takes another
+ * document's route is rejected the same way (`EDITION_ORIGINAL_UNRESOLVED`,
+ * `EDITION_DUPLICATE`, `EDITION_ROUTE_CONFLICT`), and a rejected image or font
+ * is rejected with {@link MediaPipelineError} before anything is written.
  *
  * `normalizeAuthoredMarkdown` (re-exported here from
  * `internal/content-security.js`) is this package's second public entry
@@ -88,6 +90,7 @@ import {
   computeRenderPolicyIdentity,
   contentSecurityPolicyMetaTag,
 } from './internal/content-security.js';
+import { resolveEditions } from './internal/editions.js';
 import { renderPagesWithEleventy } from './internal/eleventy-render.js';
 import {
   INTERACTIONS_SCRIPT_MEDIA_TYPE,
@@ -351,6 +354,9 @@ export async function renderPublication(buildInput, options) {
   // for its document; resolved here, from the verified bodies alone, so an
   // unresolved one fails closed before anything is written.
   const contentImages = resolveContentImages(validatedInput);
+  // Every edition must sit beside an article of this build; placed here for the
+  // same reason.
+  const editions = resolveEditions(validatedInput.content, contentRoute);
   assertOptions(options);
   const routeProfile = options.routeNormalizationProfile ?? 'directory-index';
 
@@ -468,6 +474,7 @@ export async function renderPublication(buildInput, options) {
       `</div></div>`
     : '';
   const latestYear = validatedInput.content
+    .filter((record) => record.frontmatter.kind !== 'edition')
     .map((record) => record.frontmatter.publishedAt.slice(0, 4))
     .sort()
     .at(-1);
@@ -556,6 +563,7 @@ export async function renderPublication(buildInput, options) {
 
   const generatedPages = buildGeneratedPages(validatedInput, {
     pageBody,
+    editions,
     mediaAssets,
     mediaDimensions,
     interactions: interactionsOn ? interactionsModule : undefined,
@@ -597,7 +605,7 @@ export async function renderPublication(buildInput, options) {
         description: page.description,
         robotsContent: page.robotsContent,
         canonicalUrl: new URL(
-          joinPublicRoute(publicBasePath, page.route),
+          joinPublicRoute(publicBasePath, page.canonicalRoute ?? page.route),
           validatedInput.baseUrl,
         ).toString(),
         siteName,

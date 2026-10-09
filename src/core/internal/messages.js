@@ -113,6 +113,15 @@ const CATALOGS = Object.freeze({
     articleCountLabel: (count) =>
       count === '1' ? '1 article' : `${count} articles`,
     emptyListingLabel: 'No articles yet.',
+    editionsNavigationLabel: 'Editions',
+    editionOriginalLabel: 'Original',
+    editionQuickReadLabel: 'Quick read',
+    editionStandardLabel: 'Standard',
+    editionDeepDiveLabel: 'Deep dive',
+    editionNoticeLabel:
+      'Generated edition, reviewed by the author; the original is the reference',
+    /** @type {(title: string, edition: string) => string} */
+    editionPageTitle: (title, edition) => `${title} (${edition})`,
     aboutPageTitle: 'About',
     /** @type {(date: string) => string} */
     updatedLabel: (date) => `Updated ${date}`,
