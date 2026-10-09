@@ -950,6 +950,289 @@ test('report dialog: reason and note posted; Escape closes and returns focus', a
   assert.equal(h.window.document.activeElement, trigger);
 });
 
+/**
+ * A signed-in reader's own removed or held comment, as the thread read
+ * returns it: a state and an `own` object, no author and no body.
+ *
+ * @param {string} id comment id
+ * @param {Record<string, unknown>} [own] overrides for the `own` object
+ * @param {Record<string, unknown>} [extra] overrides for the comment
+ * @returns {Record<string, any>} the view
+ */
+function ownComment(id, own = {}, extra = {}) {
+  return comment(id, {
+    state: 'REMOVED',
+    author: null,
+    body: null,
+    viewer: {
+      isAuthor: true,
+      canEdit: false,
+      canDelete: false,
+      canReply: false,
+    },
+    own: { state: 'REMOVED', appeal: null, canAppeal: true, ...own },
+    ...extra,
+  });
+}
+
+/**
+ * A thread read answering with exactly these comments.
+ *
+ * @param {Record<string, any>[]} items the comments
+ * @returns {{status: number, body: object}} the result
+ */
+function thread(items) {
+  return {
+    status: 200,
+    body: { items, nextCursor: null, count: NO_COUNT },
+  };
+}
+
+test("own removed and held comments: the moderators' wording, no author or body, Appeal only when allowed, replies kept", async () => {
+  const reply = comment('r1', { parentId: 'o1', depth: 1 });
+  const h = await boot({
+    session: SIGNED_IN,
+    handler: api({
+      'GET /comments': thread([
+        ownComment('o1', {}, { replies: [reply] }),
+        ownComment('o2', { state: 'HELD' }, { state: 'HELD' }),
+        ownComment('o3', { canAppeal: false, appeal: { state: 'PENDING' } }),
+        ownComment('o4', {
+          canAppeal: false,
+          appeal: { state: 'DENIED', decidedAt: new Date().toISOString() },
+        }),
+        ownComment('o5', {
+          canAppeal: false,
+          appeal: { state: 'RESTORED', decidedAt: new Date().toISOString() },
+        }),
+        ownComment('o6', { canAppeal: false }),
+        // Somebody else's removed comment is still the plain tombstone.
+        comment('x1', { state: 'REMOVED', author: null, body: null }),
+      ]),
+    }),
+  });
+  await h.ready();
+  const text = (id) => h.$(`#g-comment-${id} > .g-comment__body`).textContent;
+  const notes = (id) =>
+    h
+      .$$(`#g-comment-${id} > .g-interactions__notice`)
+      .map((node) => node.textContent);
+  const appealButtons = (id) =>
+    h
+      .$$(`#g-comment-${id} > .g-comment__actions .g-comment__action`)
+      .map((node) => node.textContent);
+
+  assert.equal(text('o1'), "Removed by the site's moderators");
+  assert.equal(text('o2'), 'Hidden while the moderators review it');
+  for (const id of ['o1', 'o2', 'o3', 'o4', 'o5', 'o6']) {
+    const item = h.$(`#g-comment-${id}`);
+    assert.ok(item.classList.contains('g-comment--tombstone'), id);
+    assert.ok(item.classList.contains('g-comment--mine'), id);
+    assert.equal(item.querySelector(':scope > .g-comment__head'), null, id);
+  }
+  assert.deepEqual(appealButtons('o1'), ['Appeal']);
+  assert.equal(
+    h
+      .$('#g-comment-o1 > .g-comment__actions button')
+      .getAttribute('aria-label'),
+    'Appeal this decision',
+  );
+  assert.deepEqual(appealButtons('o2'), ['Appeal']);
+  for (const id of ['o3', 'o4', 'o5', 'o6']) {
+    assert.deepEqual(appealButtons(id), [], `${id}: no Appeal`);
+  }
+  assert.deepEqual(notes('o1'), []);
+  assert.deepEqual(notes('o3'), [
+    'Appeal sent. The moderators will look again.',
+  ]);
+  assert.deepEqual(notes('o4'), ['Kept removed after review']);
+  assert.deepEqual(notes('o5'), ['Restored after review']);
+  assert.deepEqual(notes('o6'), []);
+  // The replies under a removed comment stay.
+  assert.equal(
+    h.$$('#g-comment-o1 .g-comment__replies > .g-comment').length,
+    1,
+  );
+  // Others' removed comments keep the plain wording and no Appeal.
+  assert.equal(text('x1'), 'This comment was removed.');
+  assert.deepEqual(appealButtons('x1'), []);
+});
+
+test('a comment restored on appeal says so under its text', async () => {
+  const restored = comment('v1', {
+    own: {
+      state: 'VISIBLE',
+      appeal: { state: 'RESTORED', decidedAt: new Date().toISOString() },
+      canAppeal: false,
+    },
+  });
+  const h = await boot({
+    session: SIGNED_IN,
+    handler: api({ 'GET /comments': thread([restored]) }),
+  });
+  await h.ready();
+  assert.equal(h.$('#g-comment-v1 > .g-comment__body').textContent, 'Hello v1');
+  assert.equal(
+    h.$('#g-comment-v1 > .g-interactions__notice').textContent,
+    'Restored after review',
+  );
+  assert.ok(!h.$('#g-comment-v1').classList.contains('g-comment--tombstone'));
+});
+
+test('appeal: the note is posted with the bearer token, the state appears under the comment, Escape returns focus', async () => {
+  const reply = comment('r1', { parentId: 'o1', depth: 1 });
+  const h = await boot({
+    session: SIGNED_IN,
+    handler: api({
+      'GET /comments': thread([ownComment('o1', {}, { replies: [reply] })]),
+      'POST /appeals': { status: 202, body: { status: 'RECEIVED' } },
+    }),
+  });
+  await h.ready();
+  const trigger = h.$('#g-comment-o1 > .g-comment__actions .g-comment__action');
+  trigger.focus();
+  trigger.click();
+  const input = h.$('#g-comment-o1 textarea');
+  assert.ok(input, 'a note field opens');
+  assert.equal(input.getAttribute('maxlength'), '1000');
+  assert.equal(
+    h.$(`label[for="${input.id}"]`).textContent,
+    'Tell the moderators why this should be restored (up to 1,000 characters)',
+  );
+  assert.equal(h.window.document.activeElement, input);
+  assert.equal(trigger.hidden, true, 'the button steps aside while writing');
+  input.dispatchEvent(
+    new h.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+  );
+  assert.equal(h.$('#g-comment-o1 textarea'), null);
+  assert.equal(trigger.hidden, false);
+  assert.equal(h.window.document.activeElement, trigger);
+  assert.equal(h.bodyCalls('POST', '/appeals').length, 0);
+
+  trigger.click();
+  h.$('#g-comment-o1 textarea').value = '  He was quoting a book.  ';
+  const send = h
+    .$$('#g-comment-o1 .g-composer__submit')
+    .find((b) => b.textContent === 'Send');
+  send.click();
+  await h.waitFor(() => !h.$('#g-comment-o1 textarea'), 'form closed');
+  const call = h.bodyCalls('POST', '/v2/public/comments/o1/appeals')[0];
+  assert.equal(call.url, `${API}/v2/public/comments/o1/appeals`);
+  assert.equal(call.init.headers.Authorization, 'Bearer tok-123');
+  assert.equal(call.init.headers['Content-Type'], 'application/json');
+  assert.equal(call.init.credentials, 'omit');
+  assert.deepEqual(JSON.parse(call.init.body), {
+    note: 'He was quoting a book.',
+  });
+  assert.equal(
+    h.$('#g-comment-o1 > .g-interactions__notice').textContent,
+    'Appeal sent. The moderators will look again.',
+  );
+  assert.equal(
+    h.$('#g-comment-o1 > .g-comment__body').textContent,
+    "Removed by the site's moderators",
+  );
+  assert.equal(h.$('#g-comment-o1 > .g-comment__actions'), null);
+  assert.equal(
+    h.$$('#g-comment-o1 .g-comment__replies > .g-comment').length,
+    1,
+  );
+  await h.waitFor(
+    () => h.status() === 'Appeal sent. The moderators will look again.',
+    'announcement',
+  );
+  assert.equal(h.window.document.activeElement, h.$('#g-comment-o1'));
+});
+
+test('appeal problems: each code has its sentence; rate limit and network keep the note, a settled one stops offering the appeal', async () => {
+  const cases = [
+    {
+      result: problem(409, 'APPEAL_EXISTS'),
+      message: 'You already appealed this decision.',
+      settled: 'Appeal sent. The moderators will look again.',
+    },
+    {
+      result: problem(409, 'APPEAL_NOT_ALLOWED'),
+      message: "This comment can't be appealed.",
+      settled: null,
+    },
+    {
+      result: problem(429, 'RATE_LIMITED'),
+      message: "You've sent several appeals today. Try again tomorrow.",
+    },
+    {
+      result: new TypeError('offline'),
+      message: "Couldn't reach Galascribe. Your draft is kept.",
+    },
+    {
+      result: problem(401, 'READER_AUTHENTICATION_REQUIRED'),
+      message: 'Sign in again to continue.',
+    },
+  ];
+  for (const { result, message, settled } of cases) {
+    const h = await boot({
+      session: SIGNED_IN,
+      handler: api({
+        'GET /comments': thread([ownComment('o1')]),
+        'POST /appeals': result,
+      }),
+    });
+    await h.ready();
+    h.$('#g-comment-o1 .g-comment__action').click();
+    h.$('#g-comment-o1 textarea').value = 'Please look again';
+    h.$('#g-comment-o1 .g-composer__submit').click();
+    await h.waitFor(() => h.status() === message, message);
+    if (settled !== undefined) {
+      // The answer is final for this removal: the form and the button go.
+      assert.equal(h.$('#g-comment-o1 textarea'), null, message);
+      assert.equal(h.$('#g-comment-o1 > .g-comment__actions'), null, message);
+      assert.equal(
+        h.$('#g-comment-o1 > .g-interactions__notice')?.textContent ?? null,
+        settled,
+        message,
+      );
+      continue;
+    }
+    // Otherwise the form stays with the note, and says why.
+    assert.equal(h.$('#g-comment-o1 .g-composer__error').textContent, message);
+    assert.equal(h.$('#g-comment-o1 textarea').value, 'Please look again');
+    assert.equal(h.$('#g-comment-o1 .g-composer__submit').disabled, false);
+    if (result.status === 401) {
+      assert.equal(h.window.localStorage.getItem(SESSION_KEY), null);
+    }
+  }
+});
+
+test('appeal: an empty note and one over 1,000 characters never reach the API', async () => {
+  const h = await boot({
+    session: SIGNED_IN,
+    handler: api({
+      'GET /comments': thread([ownComment('o1')]),
+      'POST /appeals': { status: 202, body: { status: 'RECEIVED' } },
+    }),
+  });
+  await h.ready();
+  h.$('#g-comment-o1 .g-comment__action').click();
+  const send = h.$('#g-comment-o1 .g-composer__submit');
+  h.$('#g-comment-o1 textarea').value = '   ';
+  send.click();
+  assert.equal(
+    h.$('#g-comment-o1 .g-composer__error').textContent,
+    'Write why you are appealing first.',
+  );
+  h.$('#g-comment-o1 textarea').value = 'x'.repeat(1001);
+  send.click();
+  assert.equal(
+    h.$('#g-comment-o1 .g-composer__error').textContent,
+    "That's longer than 1,000 characters.",
+  );
+  assert.equal(h.bodyCalls('POST', '/appeals').length, 0);
+  h.$('#g-comment-o1 textarea').value = 'x'.repeat(1000);
+  send.click();
+  await h.waitFor(() => !h.$('#g-comment-o1 textarea'), 'sent at the limit');
+  assert.equal(h.bodyCalls('POST', '/appeals').length, 1);
+});
+
 test('error wording: 401 drops the session, 429, closed, invalid reasons, network', async () => {
   const cases = [
     [

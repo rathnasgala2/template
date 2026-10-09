@@ -36,6 +36,20 @@ and this project adheres to
   takes another document's route fails the build before anything is written
   (`EDITION_ORIGINAL_UNRESOLVED`, `EDITION_DUPLICATE`,
   `EDITION_ROUTE_CONFLICT`). No published styling hook changes.
+- **Comment appeals in the interactions script.** A signed-in reader's thread
+  read may carry that reader's own removed or held comments, each with an `own`
+  object (`state` `REMOVED` or `HELD`, the `appeal` so far or null,
+  `canAppeal`). Such a comment reads "Removed by the site's moderators" (held:
+  "Hidden while the moderators review it"), with no author or body and its
+  replies kept. When `canAppeal` is true an Appeal button opens a note field (up
+  to 1,000 characters) and Send posts `{note}` to
+  `/v2/public/comments/{commentId}/appeals` with the bearer token; the comment
+  then reads "Appeal sent. The moderators will look again." An appeal's state
+  reads "Appeal sent. The moderators will look again.", "Restored after review"
+  or "Kept removed after review". `APPEAL_EXISTS`, `APPEAL_NOT_ALLOWED` and
+  `RATE_LIMITED` have their own sentences; an existing or disallowed appeal
+  stops the button, a rate limit or network failure keeps the note. The existing
+  markup and styling hooks are reused.
 - **Footer attribution switch.** `appearance.attribution.showMadeWith: false`
   (schemas 3.3.0) omits the footer's Galascribe attribution line on every page;
   absent or `true` keeps it. Whitelabel is a core appearance setting, not a

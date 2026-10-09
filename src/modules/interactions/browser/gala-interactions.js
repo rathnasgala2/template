@@ -30,6 +30,17 @@
  * POSTs carry an `Idempotency-Key` that is reused while the same draft is
  * retried.
  *
+ * Appeals: a signed-in reader's thread read also carries that reader's own
+ * removed or held comments, each with an `own` object (`state` REMOVED or HELD,
+ * the `appeal` so far or null, and `canAppeal`) and no body. Such a comment is
+ * shown as "Removed by the site's moderators" (held: "Hidden while the
+ * moderators review it"); when `canAppeal` is true it offers an Appeal button
+ * that opens a note field (up to 1,000 characters) and posts
+ * `{note}` to `/v2/public/comments/{commentId}/appeals` with the bearer token.
+ * The appeal's state (pending, restored, kept removed) is written under the
+ * comment. There is one appeal per removal; the moderators decide, never the
+ * script.
+ *
  * Not used, by design: iframes, popups (`window.open`), `postMessage`,
  * FedCM, cookies, third-party scripts or requests.
  *
@@ -116,6 +127,21 @@
     showMoreReplies: 'Show more replies',
     deletedTombstone: 'This comment was deleted.',
     removedTombstone: 'This comment was removed.',
+    removedOwn: "Removed by the site's moderators",
+    heldOwn: 'Hidden while the moderators review it',
+    appeal: 'Appeal',
+    appealAria: 'Appeal this decision',
+    appealLabel:
+      'Tell the moderators why this should be restored (up to 1,000 characters)',
+    appealSend: 'Send',
+    appealSent: 'Appeal sent. The moderators will look again.',
+    appealRestored: 'Restored after review',
+    appealDenied: 'Kept removed after review',
+    appealEmpty: 'Write why you are appealing first.',
+    appealTooLong: "That's longer than 1,000 characters.",
+    appealExists: 'You already appealed this decision.',
+    appealNotAllowed: "This comment can't be appealed.",
+    appealTooMany: "You've sent several appeals today. Try again tomorrow.",
     reportTitle: 'Report this comment',
     reportReason: 'Reason',
     reportNote: 'Details (optional)',
@@ -196,7 +222,9 @@
    * @typedef {{accessToken: string, expiresAt: string, reader: ReaderView}} Session
    * @typedef {{lowerBound: number, display: string, label: string}} PublicCount
    * @typedef {{isAuthor: boolean, canEdit: boolean, canDelete: boolean, canReply: boolean}} CommentViewer
-   * @typedef {{id: string, parentId: string | null, depth: number, state: 'VISIBLE' | 'REMOVED' | 'DELETED', author: ReaderView | null, body: string | null, createdAt: string, editedAt: string | null, replies: CommentView[], moreReplies: boolean, viewer: CommentViewer}} CommentView
+   * @typedef {{state: 'PENDING' | 'RESTORED' | 'DENIED', decidedAt?: string}} CommentAppeal
+   * @typedef {{state: 'REMOVED' | 'HELD', appeal: CommentAppeal | null, canAppeal: boolean}} CommentOwn
+   * @typedef {{id: string, parentId: string | null, depth: number, state: 'VISIBLE' | 'REMOVED' | 'DELETED' | 'HELD', author: ReaderView | null, body: string | null, createdAt: string, editedAt: string | null, replies: CommentView[], moreReplies: boolean, viewer: CommentViewer, own?: CommentOwn}} CommentView
    * @typedef {{items: CommentView[], nextCursor: string | null, count: PublicCount | null}} CommentPage
    * @typedef {{key: string, label: string, visual: {kind: string, token: string}, count: PublicCount | null, viewerActive: boolean}} ReactionItem
    * @typedef {{enabled: boolean, items: ReactionItem[]}} ReactionsBlock
@@ -1024,12 +1052,48 @@
   }
 
   /**
+   * The state of the signed-in reader's own removed or held comment, which
+   * arrives with an `own` object and no body.
+   *
+   * @param {CommentView} comment
+   * @returns {CommentOwn | null}
+   */
+  function ownView(comment) {
+    const own = comment.own;
+    return own &&
+      typeof own === 'object' &&
+      (own.state === 'REMOVED' || own.state === 'HELD')
+      ? own
+      : null;
+  }
+
+  /**
+   * The line saying where the reader's appeal stands, if there is one.
+   *
+   * @param {CommentView} comment
+   * @returns {HTMLElement | null}
+   */
+  function appealResult(comment) {
+    const appeal = comment.own && comment.own.appeal;
+    const text = !appeal
+      ? ''
+      : appeal.state === 'PENDING'
+        ? MESSAGES.appealSent
+        : appeal.state === 'RESTORED'
+          ? MESSAGES.appealRestored
+          : appeal.state === 'DENIED'
+            ? MESSAGES.appealDenied
+            : '';
+    return text ? make('p', 'g-interactions__notice', text) : null;
+  }
+
+  /**
    * @param {CommentView} comment
    * @returns {boolean}
    */
   function canReplyTo(comment) {
     if (!live.commentsOpen || !live.allowReplies) return false;
-    if (comment.state !== 'VISIBLE') return false;
+    if (comment.state !== 'VISIBLE' || ownView(comment)) return false;
     if (comment.depth >= live.maxDepth - 1) return false;
     if (session && comment.viewer && comment.viewer.canReply === false) {
       return false;
@@ -1061,14 +1125,29 @@
     const existingReplies = item.querySelector(':scope > .g-comment__replies');
     while (item.firstChild) item.removeChild(item.firstChild);
     item._comment = comment;
-    item.classList.toggle('g-comment--tombstone', comment.state !== 'VISIBLE');
+    const own = ownView(comment);
+    item.classList.toggle(
+      'g-comment--tombstone',
+      comment.state !== 'VISIBLE' || !!own,
+    );
     item.classList.toggle(
       'g-comment--mine',
-      !!(comment.viewer && comment.viewer.isAuthor),
+      !!own || !!(comment.viewer && comment.viewer.isAuthor),
     );
 
     const head = make('div', 'g-comment__head');
-    if (comment.state === 'VISIBLE' && comment.author) {
+    if (own) {
+      item.appendChild(
+        make(
+          'p',
+          'g-comment__body',
+          own.state === 'HELD' ? MESSAGES.heldOwn : MESSAGES.removedOwn,
+        ),
+      );
+      const result = appealResult(comment);
+      if (result) item.appendChild(result);
+      if (own.canAppeal === true) item.appendChild(renderAppealAction(item));
+    } else if (comment.state === 'VISIBLE' && comment.author) {
       const avatar = make('span', 'g-comment__avatar', comment.author.initials);
       avatar.setAttribute('aria-hidden', 'true');
       head.appendChild(avatar);
@@ -1086,6 +1165,9 @@
       head.appendChild(time);
       item.appendChild(head);
       item.appendChild(renderBody(comment.body || ''));
+      // A comment restored on appeal says so.
+      const result = appealResult(comment);
+      if (result) item.appendChild(result);
       item.appendChild(renderActions(item, comment));
     } else {
       item.appendChild(
@@ -1719,6 +1801,170 @@
       dialog.setAttribute('open', '');
     }
     focusNode(select);
+  }
+
+  // -------------------------------------------------------------------- appeal
+  /**
+   * @param {CommentItem} item
+   * @returns {HTMLElement}
+   */
+  function renderAppealAction(item) {
+    const actions = make('div', 'g-comment__actions');
+    const appeal = button(
+      'g-comment__action',
+      MESSAGES.appeal,
+      MESSAGES.appealAria,
+    );
+    appeal.addEventListener('click', () => openAppeal(item, appeal));
+    actions.appendChild(appeal);
+    return actions;
+  }
+
+  /**
+   * The sentence for a failed appeal; the problems an appeal adds are named
+   * here, everything else is worded as for any other request.
+   *
+   * @param {unknown} error
+   * @returns {string}
+   */
+  function appealFailureMessage(error) {
+    if (error instanceof ApiError && error.kind === 'problem') {
+      if (error.code === 'APPEAL_EXISTS') return MESSAGES.appealExists;
+      if (error.code === 'APPEAL_NOT_ALLOWED') return MESSAGES.appealNotAllowed;
+      if (error.status === 429 || error.code === 'RATE_LIMITED') {
+        return MESSAGES.appealTooMany;
+      }
+    }
+    return failureMessage(error);
+  }
+
+  /**
+   * Show the new state of an appeal under its comment.
+   *
+   * @param {CommentItem} item
+   * @param {CommentAppeal | null} appeal
+   */
+  function applyAppeal(item, appeal) {
+    const comment = item._comment;
+    fillComment(
+      item,
+      Object.assign({}, comment, {
+        own: Object.assign({}, comment.own, { appeal, canAppeal: false }),
+      }),
+    );
+    focusNode(item);
+  }
+
+  /**
+   * @param {CommentItem} item
+   * @param {HTMLElement} trigger
+   */
+  function openAppeal(item, trigger) {
+    if (!session) {
+      startSignIn({ kind: 'signin' });
+      return;
+    }
+    const wrapper = make('div', 'g-composer');
+    const inputId = uniqueId('appeal');
+    const label = make('label', '', MESSAGES.appealLabel);
+    label.setAttribute('for', inputId);
+    const input = make('textarea', 'g-composer__input');
+    input.id = inputId;
+    input.rows = 3;
+    input.setAttribute('maxlength', String(NOTE_LIMIT));
+    const error = make('p', 'g-composer__error');
+    error.setAttribute('role', 'alert');
+    error.hidden = true;
+    const actions = make('div', 'g-composer__actions');
+    const send = button('g-composer__submit', MESSAGES.appealSend);
+    const cancel = button('g-composer__cancel', MESSAGES.cancel);
+    actions.appendChild(send);
+    actions.appendChild(cancel);
+    for (const node of [label, input, error, actions]) {
+      wrapper.appendChild(node);
+    }
+
+    /**
+     * @param {string} text
+     */
+    const showError = (text) => {
+      error.textContent = text;
+      error.hidden = !text;
+      if (text) announceNow(text);
+    };
+    const close = () => {
+      wrapper.remove();
+      trigger.hidden = false;
+    };
+    cancel.addEventListener('click', () => {
+      close();
+      focusNode(trigger);
+    });
+    input.addEventListener('input', () => showError(''));
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        cancel.click();
+      }
+    });
+    send.addEventListener('click', async () => {
+      if (!session) {
+        startSignIn({ kind: 'signin' });
+        return;
+      }
+      const note = input.value.trim();
+      if (!note) {
+        showError(MESSAGES.appealEmpty);
+        return;
+      }
+      if (codePoints(note) > NOTE_LIMIT) {
+        showError(MESSAGES.appealTooLong);
+        return;
+      }
+      send.disabled = true;
+      send.setAttribute('aria-busy', 'true');
+      showError('');
+      try {
+        await api(
+          'POST',
+          '/v2/public/comments/' +
+            encodeURIComponent(item._comment.id) +
+            '/appeals',
+          { body: { note } },
+        );
+        close();
+        applyAppeal(item, { state: 'PENDING' });
+        announce(MESSAGES.appealSent);
+      } catch (failure) {
+        const message = appealFailureMessage(failure);
+        if (
+          failure instanceof ApiError &&
+          (failure.code === 'APPEAL_EXISTS' ||
+            failure.code === 'APPEAL_NOT_ALLOWED')
+        ) {
+          // The server's answer is final for this removal: stop offering it.
+          close();
+          applyAppeal(
+            item,
+            failure.code === 'APPEAL_EXISTS'
+              ? item._comment.own?.appeal || { state: 'PENDING' }
+              : item._comment.own?.appeal || null,
+          );
+          announce(message);
+        } else {
+          send.disabled = false;
+          showError(message);
+        }
+      } finally {
+        send.removeAttribute('aria-busy');
+      }
+    });
+
+    trigger.hidden = true;
+    const replies = item.querySelector(':scope > .g-comment__replies');
+    if (replies) item.insertBefore(wrapper, replies);
+    else item.appendChild(wrapper);
+    focusNode(input);
   }
 
   // ------------------------------------------------------------------- loading
