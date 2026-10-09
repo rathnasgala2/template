@@ -551,7 +551,7 @@ npm run format          # apply Prettier
 npm run format:check    # CI check
 npm run lint            # ESLint flat config
 npm run typecheck       # tsc --checkJs --noEmit against types/index.d.ts
-npm run architecture    # dependency-cruiser: no src/modules/, no circular deps
+npm run architecture    # dependency-cruiser: core never imports src/modules, no circular deps
 npm run duplication     # jscpd, 3% / 50 tokens
 npm run contracts:generate  # (re)write contracts/*.jcs from their reviewed source modules
 npm run contracts:check     # fail if committed contracts drifted
@@ -569,18 +569,20 @@ npm run audit               # npm audit --audit-level=high
 ## Package layout
 
 ```text
-src/core/                                # the only source root
+src/core/                                # the renderer
+src/modules/interactions/browser/        # the reader-interactions browser script (emitted as data)
 contracts/render-policy.jcs              # normalized-body policy identity (real content)
 contracts/theme-styling-contract.jcs     # published styling catalog (real and closed)
 ```
 
-No `src/modules/` tree, module import edge, registration stub, module
-configuration, module output or module runtime is ever admitted beside
-`src/core/`. `test/module-tree-absence.test.js` and `.dependency-cruiser.cjs`'s
-`only-src-core-is-a-source-root` rule both enforce this; `interactions`,
-`whitelabel`, `newsletter` and `prism` have no module directory, package,
-configuration schema, stub, output, runtime code, network target or
-compatibility promise in this MVP.
+`src/core/` and `src/modules/interactions/` are the only source roots, and
+`src/core` never imports from `src/modules`: the interactions browser script is
+read from disk and emitted as `assets/gala-interactions-v1.js` when
+`build-input.modules.interactions` is present.
+`test/module-tree-absence.test.js`, `.dependency-cruiser.cjs` and the ESLint
+`no-restricted-imports` rule enforce this. `whitelabel`, `newsletter` and
+`prism` have no module directory, package, configuration schema, stub, output or
+runtime code in this MVP.
 
 ## Consuming `@rathnasgala2/schemas`
 

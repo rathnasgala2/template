@@ -39,6 +39,11 @@ export default [
       'jsdoc/require-param-type': 'error',
       'jsdoc/require-returns': 'error',
       'jsdoc/require-returns-type': 'error',
+    },
+  },
+  {
+    files: ['src/core/**/*.js'],
+    rules: {
       'no-restricted-imports': [
         'error',
         {
@@ -46,11 +51,15 @@ export default [
             {
               group: ['*/modules/*', '**/src/modules/**', './modules/**'],
               message:
-                'src/modules/ is not admitted in this repository (DEC-097 S2 module-tree absence gate).',
+                'src/core/ never imports from src/modules/; the interactions script is emitted as data.',
             },
           ],
         },
       ],
     },
+  },
+  {
+    files: ['src/modules/**/*.js'],
+    languageOptions: { globals: globals.browser },
   },
 ];

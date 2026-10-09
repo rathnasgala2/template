@@ -22,7 +22,7 @@
   "types": "./types/index.d.ts",
   "files": [
     "src/core/",
-    "src/modules/interactions/browser/",
+    "src/modules/",
     "contracts/",
     "types/",
     "LICENSE",
@@ -53,7 +53,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "typecheck": "tsc --project tsconfig.json",
+    "typecheck": "tsc --project tsconfig.json && tsc --project tsconfig.modules.json",
     "architecture": "depcruise --validate .dependency-cruiser.cjs src contracts eslint.config.js",
     "duplication": "jscpd src scripts test eslint.config.js",
     "contracts:generate": "node scripts/generate-contracts.mjs",

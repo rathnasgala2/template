@@ -258,7 +258,10 @@ test('http localhost and 127.0.0.1 origins are accepted for the local stack', ()
 
 // --- markup ---
 
-/** @param {any} module @returns {string} */
+/**
+ * @param {any} module the module selection
+ * @returns {string} the rendered section
+ */
 function section(module) {
   return renderInteractionsSection({
     module,

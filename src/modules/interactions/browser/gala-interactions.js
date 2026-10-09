@@ -49,8 +49,6 @@
  * emulation).
  */
 
-/* global window, document */
-
 (function () {
   'use strict';
 

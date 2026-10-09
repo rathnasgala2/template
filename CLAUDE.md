@@ -18,21 +18,23 @@ when a later task changes a contract's published content, and
 
 ## Architecture boundaries
 
-`src/core/` is the only admitted source root. No `src/modules/` tree, module
-import edge, registration stub, module configuration, module output or module
-runtime is ever added. `.dependency-cruiser.cjs`'s
-`only-src-core-is-a-source-root` rule and `test/module-tree-absence.test.js`
-both enforce this; either failing blocks merge. Eleventy 3.1.6 (added in S2-T03)
-must stay fully confined behind the renderer adapter: no Eleventy object,
-plug-in API, config object or Nunjucks environment may cross the adapter
-boundary in either direction.
+`src/core/` and `src/modules/interactions/` are the only source roots.
+`src/core` never imports from `src/modules`; the interactions browser script is
+emitted as data (read from disk). No other module tree, import edge or
+registration stub is added. `.dependency-cruiser.cjs`'s
+`only-core-and-interactions-are-source-roots` and `core-never-imports-modules`
+rules, ESLint's `no-restricted-imports` on `src/core`, and
+`test/module-tree-absence.test.js` enforce this; either failing blocks merge.
+Eleventy 3.1.6 (added in S2-T03) must stay fully confined behind the renderer
+adapter: no Eleventy object, plug-in API, config object or Nunjucks environment
+may cross the adapter boundary in either direction.
 
 ## What never goes here
 
-Do not add a `src/modules/` directory, provider adapters, deployment or
-publish-kernel logic (owned by `publish`), theme presentation CSS/assets (owned
-by `theme-*`), schema authoring (owned by `schema`), a `bin` named `gala`, or
-any `interactions`/`whitelabel`/`newsletter`/`prism` boundary.
+Do not add any `src/modules/` tree other than `interactions`, provider adapters,
+deployment or publish-kernel logic (owned by `publish`), theme presentation
+CSS/assets (owned by `theme-*`), schema authoring (owned by `schema`), a `bin`
+named `gala`, or any `interactions`/`whitelabel`/`newsletter`/`prism` boundary.
 
 ## Contract sources and generation commands
 

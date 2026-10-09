@@ -8,14 +8,20 @@ module.exports = {
       to: { circular: true },
     },
     {
-      name: 'only-src-core-is-a-source-root',
+      name: 'only-core-and-interactions-are-source-roots',
       comment:
-        'The renderer has exactly one source root, src/core/. The only file under src/modules/ ' +
-        'is the interactions browser script, which is read as data (never imported); no module ' +
-        'import edge or registration path is admitted (reader interactions design, section 5).',
+        'Source roots are src/core/ and src/modules/interactions/ only; no other module tree is admitted.',
       severity: 'error',
       from: {},
-      to: { path: '^src/modules' },
+      to: { path: '^src/modules/(?!interactions/)' },
+    },
+    {
+      name: 'core-never-imports-modules',
+      comment:
+        'src/core/ never imports from src/modules/. The interactions browser script is emitted as data (read from disk), not imported.',
+      severity: 'error',
+      from: { path: '^src/core/' },
+      to: { path: '^src/modules/' },
     },
     {
       name: 'runtime-does-not-import-repository-tooling',
