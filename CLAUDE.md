@@ -38,7 +38,7 @@ named `gala`, or any `interactions`/`whitelabel`/`newsletter`/`prism` boundary.
 
 ## Contract sources and generation commands
 
-This repository consumes `@rathnasgala2/schemas@3.0.0` from the public npm
+This repository consumes `@rathnasgala2/schemas@3.1.0` from the public npm
 registry (the LOCAL-1 `file:../../local-packages/...` tarball convention is
 retired now that `@rathnasgala2/schemas` publishes; `package-lock.json` pins its
 resolved registry version and integrity). It owns two of its own published

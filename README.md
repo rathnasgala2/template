@@ -586,8 +586,8 @@ runtime code in this MVP.
 
 ## Consuming `@rathnasgala2/schemas`
 
-This repository consumes `@rathnasgala2/schemas@3.0.0` from the public npm
-registry, declared as `"@rathnasgala2/schemas": "3.0.0"` (exact pin, no range)
+This repository consumes `@rathnasgala2/schemas@3.1.0` from the public npm
+registry, declared as `"@rathnasgala2/schemas": "3.1.0"` (exact pin, no range)
 so `package-lock.json` records the resolved version and integrity hash. The
 LOCAL-1/LOCAL-39 local-tarball convention
 (`file:../../local-packages/rathnasgala2-schemas-*.tgz`) is retired for this

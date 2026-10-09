@@ -101,7 +101,6 @@
       "group": "@rathnasgala2",
       "version": "3.0.1",
       "bom-ref": "@rathnasgala2/template@3.0.1",
-      "description": "Deterministic Eleventy-backed static publication renderer for Galascribe portable repositories.",
       "licenses": [
         {
           "license": {
@@ -110,33 +109,8 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40rathnasgala2/template@3.0.1?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Frathnasgala2%2Ftemplate.git",
-      "externalReferences": [
-        {
-          "url": "git+https://github.com/rathnasgala2/template.git",
-          "type": "vcs",
-          "comment": "as detected from PackageJson property \"repository.url\""
-        },
-        {
-          "url": "https://github.com/rathnasgala2/template#readme",
-          "type": "website",
-          "comment": "as detected from PackageJson property \"homepage\""
-        },
-        {
-          "url": "https://github.com/rathnasgala2/template/issues",
-          "type": "issue-tracker",
-          "comment": "as detected from PackageJson property \"bugs.url\""
-        }
-      ],
+      "purl": "pkg:npm/%40rathnasgala2/template@3.0.1",
       "properties": [
-        {
-          "name": "cdx:npm:package:constraint:engine:node",
-          "value": ">=24.0.0"
-        },
-        {
-          "name": "cdx:npm:package:constraint:engine:npm",
-          "value": ">=11.0.0"
-        },
         {
           "name": "cdx:npm:package:path",
           "value": ""
@@ -297,8 +271,8 @@
       "type": "library",
       "name": "schemas",
       "group": "@rathnasgala2",
-      "version": "3.0.0",
-      "bom-ref": "@rathnasgala2/template@3.0.1|@rathnasgala2/schemas@3.0.0",
+      "version": "3.1.0",
+      "bom-ref": "@rathnasgala2/template@3.0.1|@rathnasgala2/schemas@3.1.0",
       "licenses": [
         {
           "license": {
@@ -307,15 +281,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40rathnasgala2/schemas@3.0.0",
+      "purl": "pkg:npm/%40rathnasgala2/schemas@3.1.0",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.0.0.tgz",
+          "url": "https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.1.0.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "767e23f477c348d41e83be1cf4b60f42fcbcbff1c3439501060bc6346a3b5bc40a6be04b3407f32d0310b617b11cd4ae12fc3974a5fda5aa1d42bd8dfcada787"
+              "content": "d5f41175fb20a58b295ea3c6322ed930b47f31da7556ee86f4a07c727dd5c99f9979db9c3e6dcc124793f5f11da406e899c78184668b055a0e392b86c6409ce8"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -18893,7 +18867,7 @@
         "@rathnasgala2/template@3.0.1|@11ty/eleventy@3.1.6",
         "@rathnasgala2/template@3.0.1|@cyclonedx/cyclonedx-npm@6.0.1",
         "@rathnasgala2/template@3.0.1|@eslint/js@10.0.1",
-        "@rathnasgala2/template@3.0.1|@rathnasgala2/schemas@3.0.0",
+        "@rathnasgala2/template@3.0.1|@rathnasgala2/schemas@3.1.0",
         "@rathnasgala2/template@3.0.1|@types/markdown-it@14.2.0",
         "@rathnasgala2/template@3.0.1|@types/node@24.13.4",
         "@rathnasgala2/template@3.0.1|@types/sanitize-html@2.16.1",
@@ -18977,7 +18951,7 @@
       ]
     },
     {
-      "ref": "@rathnasgala2/template@3.0.1|@rathnasgala2/schemas@3.0.0",
+      "ref": "@rathnasgala2/template@3.0.1|@rathnasgala2/schemas@3.1.0",
       "dependsOn": [
         "@rathnasgala2/template@3.0.1|ajv-formats@3.0.1",
         "@rathnasgala2/template@3.0.1|ajv@8.20.0"
