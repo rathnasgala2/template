@@ -16,7 +16,8 @@ import { icon } from './icons.js';
 export const INTERACTIONS_SCRIPT_PATH = 'assets/gala-interactions-v1.js';
 
 /** @type {string} */
-export const INTERACTIONS_SCRIPT_MEDIA_TYPE = 'text/javascript; charset=utf-8';
+export const INTERACTIONS_SCRIPT_MEDIA_TYPE =
+  'application/javascript; charset=utf-8';
 
 const INTERACTIONS_SCRIPT_SOURCE_URL = new URL(
   '../../modules/interactions/browser/gala-interactions.js',
