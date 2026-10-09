@@ -1006,6 +1006,8 @@ test("own removed and held comments: the moderators' wording, no author or body,
           appeal: { state: 'RESTORED', decidedAt: new Date().toISOString() },
         }),
         ownComment('o6', { canAppeal: false }),
+        // The `own` object decides, whatever `state` the comment carries.
+        ownComment('o7', { state: 'HELD' }, { state: 'VISIBLE' }),
         // Somebody else's removed comment is still the plain tombstone.
         comment('x1', { state: 'REMOVED', author: null, body: null }),
       ]),
@@ -1024,7 +1026,8 @@ test("own removed and held comments: the moderators' wording, no author or body,
 
   assert.equal(text('o1'), "Removed by the site's moderators");
   assert.equal(text('o2'), 'Hidden while the moderators review it');
-  for (const id of ['o1', 'o2', 'o3', 'o4', 'o5', 'o6']) {
+  assert.equal(text('o7'), 'Hidden while the moderators review it');
+  for (const id of ['o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o7']) {
     const item = h.$(`#g-comment-${id}`);
     assert.ok(item.classList.contains('g-comment--tombstone'), id);
     assert.ok(item.classList.contains('g-comment--mine'), id);
@@ -1038,6 +1041,7 @@ test("own removed and held comments: the moderators' wording, no author or body,
     'Appeal this decision',
   );
   assert.deepEqual(appealButtons('o2'), ['Appeal']);
+  assert.deepEqual(appealButtons('o7'), ['Appeal']);
   for (const id of ['o3', 'o4', 'o5', 'o6']) {
     assert.deepEqual(appealButtons(id), [], `${id}: no Appeal`);
   }

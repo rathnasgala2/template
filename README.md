@@ -227,22 +227,23 @@ output-security pipeline every generated page still passes through:
   `header-actions` slot), one primary `<nav>` from `navigationNormalized.items`,
   one `<main id="main-content">` (an optional breadcrumb `<nav>` before the
   page's own single `<h1>`), and one `<footer>` (publication name, footer
-  navigation, the `footer-profile` slot, the remaining core slots, and the
-  template attribution line, which `appearance.attribution.showMadeWith: false`
-  omits). Core owns nine versioned semantic slots (`header-actions`,
-  `article-preamble`, `article-end`, `footer-profile`, `footer-auxiliary`,
-  `account-intent`, `conversation`, `newsletter`, `edition-selector`) plus the
-  collapsed `article-footer-ad` slot: every slot is one
-  `data-gala-slot="<name>"` attribute on an otherwise empty, non-landmark
-  `<div>`, and the collapsed slot additionally carries `hidden`. This renderer
-  has no module system, so every slot except `footer-profile` (which always
-  wraps the publication's own footer card), `header-actions` (the appearance
-  control, core content rather than a module) and `edition-selector` (see
-  Editions) renders empty. `edition-selector` is rendered by the article page
-  kind at the end of the article head, only where there is an edition to offer,
-  not in the footer. This module also renders breadcrumbs and deterministic
-  pagination controls (`rel="prev"`/`rel="next"`, an `aria-current="page"`
-  status).
+  navigation, the `footer-profile` slot, the remaining footer slots
+  (`footer-auxiliary`, `account-intent`, `conversation`, `newsletter`), and the
+  "Made with Galascribe" attribution line, which
+  `appearance.attribution.showMadeWith: false` omits). Core owns nine versioned
+  semantic slots (`header-actions`, `article-preamble`, `article-end`,
+  `footer-profile`, `footer-auxiliary`, `account-intent`, `conversation`,
+  `newsletter`, `edition-selector`) plus the collapsed `article-footer-ad` slot:
+  every slot is one `data-gala-slot="<name>"` attribute on an otherwise empty,
+  non-landmark `<div>`, and the collapsed slot additionally carries `hidden`.
+  This renderer has no module system, so every slot except `footer-profile`
+  (which always wraps the publication's own footer card), `header-actions` (the
+  appearance control, core content rather than a module) and `edition-selector`
+  (see Editions) renders empty. `edition-selector` is rendered by the article
+  page kind at the end of the article head, only where there is an edition to
+  offer, not in the footer. This module also renders breadcrumbs and
+  deterministic pagination controls (`rel="prev"`/`rel="next"`, an
+  `aria-current="page"` status).
 - **`src/core/internal/page-kinds.js`** builds every generated page kind from a
   validated `build-input:2.0.0`: `profile` (the optional publication profile),
   `author` (one page per `build-input.authors` entry, at `/authors/<id>`),
