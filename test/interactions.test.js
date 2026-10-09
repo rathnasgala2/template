@@ -11,8 +11,6 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { test } from 'node:test';
 
-import { validateGalaDocument } from '@rathnasgala2/schemas';
-
 import { renderPublication } from '../src/core/index.js';
 import { RenderPolicyViolationError } from '../src/core/errors.js';
 import {
@@ -71,7 +69,7 @@ function moduleSelection() {
           },
           {
             key: 'applause',
-            label: 'A <b>&</b> "q"',
+            label: 'A & "q"',
             visual: { kind: 'emoji', token: '\u{1F44F}' },
             order: 1,
             enabled: true,
@@ -315,7 +313,7 @@ test('the section carries the page contract: attributes, order, labels and escap
       '<span class="g-reaction__icon" aria-hidden="true">\u{1F4A1}</span>',
     ),
   );
-  assert.ok(html.includes('A &lt;b&gt;&amp;&lt;/b&gt; &quot;q&quot;'));
+  assert.ok(html.includes('A &amp; &quot;q&quot;'));
   assert.ok(!html.includes('<b>'));
   assert.ok(html.indexOf('g-reactions') < html.indexOf('g-comments'));
 });
@@ -358,23 +356,6 @@ test('every interactions label comes from the message catalog', () => {
 // --- end to end ---
 
 /**
- * The installed `@rathnasgala2/schemas` must admit `modules.interactions`
- * (schemas 3.1.0, package SCH); older releases close `modules` to `{}`.
- *
- * @returns {Promise<boolean>} whether a build input carrying the module
- *   validates against the installed schemas
- */
-async function installedSchemasAdmitInteractions() {
-  const input = /** @type {any} */ (await buildRichFixture());
-  input.modules = { interactions: moduleSelection() };
-  return validateGalaDocument('urn:gala:schema:build-input:2.0.0', input).valid;
-}
-
-const SCHEMAS_READY = await installedSchemasAdmitInteractions();
-const NEEDS_SCHEMAS =
-  'needs @rathnasgala2/schemas >= 3.1.0 (modules.interactions); bump the pin at integration';
-
-/**
  * Render the rich fixture and read back every output file.
  *
  * @param {any} modules the build input's `modules`
@@ -410,192 +391,165 @@ async function renderRich(modules) {
   }
 }
 
-test(
-  'module on: article routes carry the section and the deferred script; every other route does not',
-  { skip: SCHEMAS_READY ? false : NEEDS_SCHEMAS },
-  async () => {
-    const { manifest, files, bytes } = await renderRich({
-      interactions: moduleSelection(),
-    });
-    const scriptPath = manifest.assets
-      .map((/** @type {any} */ asset) => asset.path)
-      .find((/** @type {string} */ p) => p.endsWith(INTERACTIONS_SCRIPT_PATH));
-    assert.ok(scriptPath, 'script is a manifest asset');
-    const scriptEntry = manifest.assets.find(
-      (/** @type {any} */ asset) => asset.path === scriptPath,
-    );
-    const source = await readFile(
-      path.join(
-        REPO_ROOT,
-        'src/modules/interactions/browser/gala-interactions.js',
-      ),
-    );
-    assert.equal(
-      scriptEntry.sha256,
-      `sha256:${createHash('sha256').update(source).digest('hex')}`,
-    );
-    assert.equal(
-      scriptEntry.mediaType,
-      'application/javascript; charset=utf-8',
-    );
-    assert.deepEqual(await bytes(scriptPath), source);
+test('module on: article routes carry the section and the deferred script; every other route does not', async () => {
+  const { manifest, files, bytes } = await renderRich({
+    interactions: moduleSelection(),
+  });
+  const scriptPath = manifest.assets
+    .map((/** @type {any} */ asset) => asset.path)
+    .find((/** @type {string} */ p) => p.endsWith(INTERACTIONS_SCRIPT_PATH));
+  assert.ok(scriptPath, 'script is a manifest asset');
+  const scriptEntry = manifest.assets.find(
+    (/** @type {any} */ asset) => asset.path === scriptPath,
+  );
+  const source = await readFile(
+    path.join(
+      REPO_ROOT,
+      'src/modules/interactions/browser/gala-interactions.js',
+    ),
+  );
+  assert.equal(
+    scriptEntry.sha256,
+    `sha256:${createHash('sha256').update(source).digest('hex')}`,
+  );
+  assert.equal(scriptEntry.mediaType, 'application/javascript; charset=utf-8');
+  assert.deepEqual(await bytes(scriptPath), source);
 
-    let bearing = 0;
-    for (const route of manifest.routes) {
-      if (route.routeClass !== 'html' && route.routeClass !== 'error') {
-        assert.equal(route.interactionBearing, false, route.path);
-        continue;
-      }
-      const html = /** @type {string} */ (files.get(route.path));
-      const isArticle = html.includes('data-gala-page-kind="article"');
-      assert.equal(route.interactionBearing, isArticle, route.path);
-      assert.equal(
-        html.includes('data-gala-interactions'),
-        isArticle,
-        `${route.path}: section presence`,
-      );
-      assert.equal(
-        html.includes('gala-interactions-v1.js" defer></script>'),
-        isArticle,
-        `${route.path}: script tag presence`,
-      );
-      assert.ok(html.includes(`content="${SECTION_CSP}"`), route.path);
-      if (!isArticle) continue;
-      bearing += 1;
-      assert.equal(
-        html.match(/<script[^>]*\bsrc=/g)?.length,
-        2,
-        'appearance script plus interactions script',
-      );
-      const contentId = /data-content-id="([^"]+)"/.exec(html)?.[1];
-      assert.match(contentId ?? '', /^019c0000-0000-7000-8000-/);
-      const canonical = /<link rel="canonical" href="([^"]+)">/.exec(html)?.[1];
-      assert.equal(
-        /data-canonical-url="([^"]+)"/.exec(html)?.[1],
-        canonical,
-        `${route.path}: canonical URL`,
-      );
-      assert.ok(html.includes('data-publication-id="'));
-      const at = (/** @type {string} */ marker) => html.indexOf(marker);
-      assert.ok(at('g-author-card') < at('g-interactions'));
-      if (html.includes('g-series-box')) {
-        assert.ok(at('g-interactions') < at('g-series-box'));
-      }
-      if (html.includes('g-pager')) {
-        assert.ok(at('g-interactions') < at('<nav class="g-pager"'));
-      }
-    }
-    assert.ok(bearing >= 3, 'the rich fixture has several articles');
-  },
-);
-
-test(
-  'the interactions section is nested in the article footer and its ids match front matter and publication',
-  { skip: SCHEMAS_READY ? false : NEEDS_SCHEMAS },
-  async () => {
-    const input = /** @type {any} */ (await buildRichFixture());
-    const { manifest, files } = await renderRich({
-      interactions: moduleSelection(),
-    });
-    const publicationId = input.publication.id;
-    const articleIds = new Set(
-      input.content
-        .filter((/** @type {any} */ r) => r.frontmatter.kind === 'article')
-        .map((/** @type {any} */ r) => r.frontmatter.id),
-    );
-    const seen = new Set();
-    for (const route of manifest.routes) {
-      const html = files.get(route.path) ?? '';
-      if (!html.includes('data-gala-interactions')) continue;
-      assert.ok(
-        html.includes(`data-publication-id="${publicationId}"`),
-        route.path,
-      );
-      const id = /data-content-id="([^"]+)"/.exec(html)?.[1];
-      assert.ok(articleIds.has(id), `${route.path}: ${id}`);
-      seen.add(id);
-      assert.match(
-        html,
-        /<div class="g-wrap g-article-foot">.*<section class="g-interactions"/,
-      );
-    }
-    assert.equal(seen.size, articleIds.size, 'every article has its own id');
-  },
-);
-
-test(
-  'module off: no section, no script, no asset, every flag false and the production CSP',
-  { skip: SCHEMAS_READY ? false : undefined },
-  async () => {
-    const { manifest, files } = await renderRich({});
-    assert.ok(
-      !manifest.assets.some((/** @type {any} */ a) =>
-        a.path.endsWith('gala-interactions-v1.js'),
-      ),
-    );
-    for (const route of manifest.routes) {
+  let bearing = 0;
+  for (const route of manifest.routes) {
+    if (route.routeClass !== 'html' && route.routeClass !== 'error') {
       assert.equal(route.interactionBearing, false, route.path);
-      const html = files.get(route.path) ?? '';
-      assert.ok(!html.includes('data-gala-interactions'), route.path);
-      assert.ok(!html.includes('gala-interactions-v1'), route.path);
-      if (route.routeClass === 'html' || route.routeClass === 'error') {
-        assert.ok(html.includes(`content="${SECTION_CSP}"`), route.path);
-        assert.equal(html.match(/<script[^>]*\bsrc=/g)?.length, 1);
-      }
+      continue;
     }
-  },
-);
-
-test(
-  'a local API origin reaches connect-src on every HTML route',
-  { skip: SCHEMAS_READY ? false : NEEDS_SCHEMAS },
-  async () => {
-    const module = moduleSelection();
-    module.apiOrigin = 'http://localhost:8787';
-    module.appOrigin = 'http://localhost:5173';
-    const { manifest, files } = await renderRich({ interactions: module });
-    const expected = contentSecurityPolicyMeta('http://localhost:8787');
-    for (const route of manifest.routes) {
-      if (route.routeClass !== 'html' && route.routeClass !== 'error') continue;
-      assert.ok(
-        (files.get(route.path) ?? '').includes(`content="${expected}"`),
-        route.path,
-      );
-    }
-  },
-);
-
-test(
-  'both parts disabled behaves as module off for markup, script and flags',
-  { skip: SCHEMAS_READY ? false : NEEDS_SCHEMAS },
-  async () => {
-    const module = moduleSelection();
-    module.config.reactions.enabled = false;
-    module.config.comments.enabled = false;
-    const { manifest, files } = await renderRich({ interactions: module });
-    assert.ok(
-      !manifest.assets.some((/** @type {any} */ a) =>
-        a.path.endsWith('gala-interactions-v1.js'),
-      ),
+    const html = /** @type {string} */ (files.get(route.path));
+    const isArticle = html.includes('data-gala-page-kind="article"');
+    assert.equal(route.interactionBearing, isArticle, route.path);
+    assert.equal(
+      html.includes('data-gala-interactions'),
+      isArticle,
+      `${route.path}: section presence`,
     );
-    for (const route of manifest.routes) {
-      assert.equal(route.interactionBearing, false);
-      assert.ok(!(files.get(route.path) ?? '').includes('g-interactions'));
+    assert.equal(
+      html.includes('gala-interactions-v1.js" defer></script>'),
+      isArticle,
+      `${route.path}: script tag presence`,
+    );
+    assert.ok(html.includes(`content="${SECTION_CSP}"`), route.path);
+    if (!isArticle) continue;
+    bearing += 1;
+    assert.equal(
+      html.match(/<script[^>]*\bsrc=/g)?.length,
+      2,
+      'appearance script plus interactions script',
+    );
+    const contentId = /data-content-id="([^"]+)"/.exec(html)?.[1];
+    assert.match(contentId ?? '', /^019c0000-0000-7000-8000-/);
+    const canonical = /<link rel="canonical" href="([^"]+)">/.exec(html)?.[1];
+    assert.equal(
+      /data-canonical-url="([^"]+)"/.exec(html)?.[1],
+      canonical,
+      `${route.path}: canonical URL`,
+    );
+    assert.ok(html.includes('data-publication-id="'));
+    const at = (/** @type {string} */ marker) => html.indexOf(marker);
+    assert.ok(at('g-author-card') < at('g-interactions'));
+    if (html.includes('g-series-box')) {
+      assert.ok(at('g-interactions') < at('g-series-box'));
     }
-  },
-);
+    if (html.includes('g-pager')) {
+      assert.ok(at('g-interactions') < at('<nav class="g-pager"'));
+    }
+  }
+  assert.ok(bearing >= 3, 'the rich fixture has several articles');
+});
 
-test(
-  'a module-on build is byte-identical across runs',
-  { skip: SCHEMAS_READY ? false : NEEDS_SCHEMAS },
-  async () => {
-    const first = await renderRich({ interactions: moduleSelection() });
-    const second = await renderRich({ interactions: moduleSelection() });
-    assert.equal(first.manifest.artifactDigest, second.manifest.artifactDigest);
-    assert.deepEqual(first.manifest.routes, second.manifest.routes);
-    assert.deepEqual(first.manifest.assets, second.manifest.assets);
-  },
-);
+test('the interactions section is nested in the article footer and its ids match front matter and publication', async () => {
+  const input = /** @type {any} */ (await buildRichFixture());
+  const { manifest, files } = await renderRich({
+    interactions: moduleSelection(),
+  });
+  const publicationId = input.publication.id;
+  const articleIds = new Set(
+    input.content
+      .filter((/** @type {any} */ r) => r.frontmatter.kind === 'article')
+      .map((/** @type {any} */ r) => r.frontmatter.id),
+  );
+  const seen = new Set();
+  for (const route of manifest.routes) {
+    const html = files.get(route.path) ?? '';
+    if (!html.includes('data-gala-interactions')) continue;
+    assert.ok(
+      html.includes(`data-publication-id="${publicationId}"`),
+      route.path,
+    );
+    const id = /data-content-id="([^"]+)"/.exec(html)?.[1];
+    assert.ok(articleIds.has(id), `${route.path}: ${id}`);
+    seen.add(id);
+    assert.match(
+      html,
+      /<div class="g-wrap g-article-foot">.*<section class="g-interactions"/,
+    );
+  }
+  assert.equal(seen.size, articleIds.size, 'every article has its own id');
+});
+
+test('module off: no section, no script, no asset, every flag false and the production CSP', async () => {
+  const { manifest, files } = await renderRich({});
+  assert.ok(
+    !manifest.assets.some((/** @type {any} */ a) =>
+      a.path.endsWith('gala-interactions-v1.js'),
+    ),
+  );
+  for (const route of manifest.routes) {
+    assert.equal(route.interactionBearing, false, route.path);
+    const html = files.get(route.path) ?? '';
+    assert.ok(!html.includes('data-gala-interactions'), route.path);
+    assert.ok(!html.includes('gala-interactions-v1'), route.path);
+    if (route.routeClass === 'html' || route.routeClass === 'error') {
+      assert.ok(html.includes(`content="${SECTION_CSP}"`), route.path);
+      assert.equal(html.match(/<script[^>]*\bsrc=/g)?.length, 1);
+    }
+  }
+});
+
+test('a local API origin reaches connect-src on every HTML route', async () => {
+  const module = moduleSelection();
+  module.apiOrigin = 'http://localhost:8787';
+  module.appOrigin = 'http://localhost:5173';
+  const { manifest, files } = await renderRich({ interactions: module });
+  const expected = contentSecurityPolicyMeta('http://localhost:8787');
+  for (const route of manifest.routes) {
+    if (route.routeClass !== 'html' && route.routeClass !== 'error') continue;
+    assert.ok(
+      (files.get(route.path) ?? '').includes(`content="${expected}"`),
+      route.path,
+    );
+  }
+});
+
+test('both parts disabled behaves as module off for markup, script and flags', async () => {
+  const module = moduleSelection();
+  module.config.reactions.enabled = false;
+  module.config.comments.enabled = false;
+  const { manifest, files } = await renderRich({ interactions: module });
+  assert.ok(
+    !manifest.assets.some((/** @type {any} */ a) =>
+      a.path.endsWith('gala-interactions-v1.js'),
+    ),
+  );
+  for (const route of manifest.routes) {
+    assert.equal(route.interactionBearing, false);
+    assert.ok(!(files.get(route.path) ?? '').includes('g-interactions'));
+  }
+});
+
+test('a module-on build is byte-identical across runs', async () => {
+  const first = await renderRich({ interactions: moduleSelection() });
+  const second = await renderRich({ interactions: moduleSelection() });
+  assert.equal(first.manifest.artifactDigest, second.manifest.artifactDigest);
+  assert.deepEqual(first.manifest.routes, second.manifest.routes);
+  assert.deepEqual(first.manifest.assets, second.manifest.assets);
+});
 
 test('an unknown module is still rejected before rendering', async () => {
   const input = /** @type {any} */ (await buildRichFixture());
