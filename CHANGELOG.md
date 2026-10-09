@@ -22,6 +22,14 @@ and this project adheres to
 - **GIF.** The media pipeline admits GIF (still or animated): a bounded
   structure walk, then the original bytes pass through unmodified.
 
+### Fixed
+
+- **Camera-size JPEG photos decode.** The JPEG decoder's memory knob was set to
+  the RGBA output ceiling (64 MiB), but it counts the decoder's whole working
+  set, so every JPEG above about three to five megapixels (an ordinary phone
+  photo included) failed with `MEDIA_RESOURCE_EXCEEDED`. It is now sized for an
+  image at the unchanged 16,777,216-pixel ceiling.
+
 ### Changed
 
 - **Nothing is written before every media check passes.** The output and work

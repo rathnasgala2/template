@@ -458,6 +458,10 @@ numbers:
 - decode/resource ceilings reuse the theme binary-asset profile's numbers
   (dimension, pixel-count, decoded-buffer, source-byte caps), since the
   decode-bomb risk they defend against is identical regardless of asset class;
+  the JPEG decoder's own memory knob counts its whole working set (coefficient
+  and line buffers as well as the RGBA output), so it is sized for an image at
+  the pixel ceiling at 32 bytes per pixel (512 MiB) rather than to the RGBA
+  output alone, which rejected every JPEG above about three to five megapixels;
 - responsive derivative widths (`320/640/960/1280/1920`), JPEG derivative
   quality (`82`), and the per-publication image/font count and aggregate byte
   ceilings are this renderer's own conservative choices;

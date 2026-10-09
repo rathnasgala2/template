@@ -41,6 +41,27 @@ export const MAX_IMAGE_PIXELS = 16_777_216;
 export const MAX_DECODED_RGBA_BYTES = 67_108_864;
 
 /**
+ * The most bytes per pixel the `jpeg-js` decoder holds while decoding one
+ * image, all of which its own `maxMemoryUsageInMB` knob counts: per
+ * component (at most four, CMYK) every 8x8 coefficient block as a 32-bit
+ * integer per sample (4 bytes), one output-line byte and one interleaved
+ * byte per sample, plus the 4-byte RGBA output: (4 + 1 + 1) x 4 + 4 = 28,
+ * rounded up to 32 to leave room for MCU padding and table allocations.
+ */
+export const JPEG_DECODE_BYTES_PER_PIXEL = 32;
+
+/**
+ * The `jpeg-js` working-set ceiling: an image at the pixel ceiling, at the
+ * worst-case per-pixel cost above (536,870,912 bytes). The decoded RGBA8
+ * output itself stays bounded by {@link MAX_DECODED_RGBA_BYTES} through the
+ * pixel ceiling; this bound only stops the decoder's own intermediate
+ * buffers from being mistaken for the output buffer, which rejected every
+ * JPEG above roughly three to five megapixels.
+ */
+export const MAX_JPEG_DECODE_WORKING_SET_BYTES =
+  MAX_IMAGE_PIXELS * JPEG_DECODE_BYTES_PER_PIXEL;
+
+/**
  * Maximum admitted raster source byte length: the smaller of this
  * renderer's raster-specific cap (16,777,216) and its general
  * per-source-file cap (10,485,760).

@@ -103,6 +103,20 @@ test('JPEG decode reports width/height and EXIF orientation', () => {
   assert.equal(decoded.rgba.byteLength, 8 * 4 * 4);
 });
 
+test('JPEG decode admits a camera-size photo up to the pixel ceiling and rejects one pixel row past it', () => {
+  // 4032x3024 is a common phone camera size; the decoder's own working set
+  // for it is far larger than the RGBA output alone.
+  const photo = decodeJpeg(buildTestJpeg(4032, 3024), 'photo.jpg');
+  assert.equal(photo.width, 4032);
+  assert.equal(photo.height, 3024);
+  assert.throws(
+    () => decodeJpeg(buildTestJpeg(4096, 4097), 'huge.jpg'),
+    (error) =>
+      error instanceof MediaPipelineError &&
+      error.reasonCode === 'MEDIA_RESOURCE_EXCEEDED',
+  );
+});
+
 test('JPEG decode defaults to orientation 1 when no EXIF is present', () => {
   const decoded = decodeJpeg(buildTestJpeg(4, 4), 'no-exif.jpg');
   assert.equal(decoded.orientation, 1);
