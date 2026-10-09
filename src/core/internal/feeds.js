@@ -18,7 +18,7 @@
  * media pipeline scope decisions in the package README).
  */
 
-import { escapeHtml } from './skeleton.js';
+import { escapeHtml, unescapeHtml } from './skeleton.js';
 import { derivePublicBasePath, joinPublicRoute } from './route.js';
 import { deriveAuthorSlugs } from './route-labels.js';
 import {
@@ -49,19 +49,6 @@ function toRfc822(rfc3339) {
 }
 
 /**
- * @param {string} value an attribute value as it appears in HTML source
- * @returns {string} the value with the five predefined entities decoded
- */
-function decodeAttribute(value) {
-  return value
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&');
-}
-
-/**
  * Make every `href`/`src` in an article body absolute against the article's
  * own URL: a feed reader renders the body away from the site, so a relative
  * link or image would otherwise point nowhere.
@@ -75,7 +62,7 @@ export function absolutizeBodyLinks(bodyHtml, pageUrl) {
     /\b(href|src)="([^"]*)"/g,
     (match, attribute, value) => {
       try {
-        return `${attribute}="${escapeHtml(new URL(decodeAttribute(value), pageUrl).toString())}"`;
+        return `${attribute}="${escapeHtml(new URL(unescapeHtml(value), pageUrl).toString())}"`;
       } catch {
         return match;
       }
@@ -99,11 +86,14 @@ function cdata(text) {
  * validated `build-input:2.0.0` instance.
  *
  * @param {import('../../../types/index.d.ts').NormalizedBuildInput} validatedInput
+ * @param {object} options feed options
+ * @param {(body: string) => string} options.feedBody turns an article body
+ *   into its feed form (every image naming its media derivative)
  * @returns {{atomXml: string, rssXml: string, atomSelfUrl: string, rssSelfUrl: string}}
  *   both feed documents' exact UTF-8 text, plus each feed's own absolute
  *   self URL (for the shared layout's feed-discovery `<link>` tags)
  */
-export function buildFeeds(validatedInput) {
+export function buildFeeds(validatedInput, { feedBody }) {
   const { publication, authors, content, basePath, baseUrl } = validatedInput;
   const authorsById = new Map(authors.map((author) => [author.id, author]));
   const authorSlugs = deriveAuthorSlugs(authors);
@@ -144,7 +134,7 @@ export function buildFeeds(validatedInput) {
       const categoriesXml = frontmatter.tags
         .map((tag) => `<category term="${escapeHtml(tag)}"/>`)
         .join('');
-      const contentXml = `<content type="html">${escapeHtml(absolutizeBodyLinks(record.body, entryUrl))}</content>`;
+      const contentXml = `<content type="html">${escapeHtml(absolutizeBodyLinks(feedBody(record.body), entryUrl))}</content>`;
       const summaryXml = frontmatter.description
         ? `<summary>${escapeHtml(frontmatter.description)}</summary>`
         : '';
@@ -200,7 +190,7 @@ export function buildFeeds(validatedInput) {
         creatorsXml +
         categoriesXml +
         descriptionXml +
-        `<content:encoded>${cdata(absolutizeBodyLinks(record.body, itemUrl))}</content:encoded>` +
+        `<content:encoded>${cdata(absolutizeBodyLinks(feedBody(record.body), itemUrl))}</content:encoded>` +
         `</item>`
       );
     })

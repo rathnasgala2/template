@@ -107,6 +107,22 @@ export function escapeHtml(value) {
 }
 
 /**
+ * Decode the five predefined entities {@link escapeHtml} produces, turning an
+ * attribute value as it appears in sanitized HTML back into its text.
+ *
+ * @param {string} value an attribute value as it appears in HTML source
+ * @returns {string} the value with the five predefined entities decoded
+ */
+export function unescapeHtml(value) {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+/**
  * Render one always-present, currently-empty core semantic slot.
  *
  * @param {string} slotName one of the nine versioned slot names, or the

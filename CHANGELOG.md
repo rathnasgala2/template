@@ -8,6 +8,28 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- **Content images.** Every `<img>` in a body must name an image file the build
+  input inventories for that document (`content[].media[]`); it runs through the
+  media pipeline and renders with `srcset` (every output file), a fixed
+  `sizes="(max-width: 960px) 100vw, 960px"`, the widest output no wider than 960
+  pixels as `src`, `width`/`height`, `loading="lazy"` and `decoding="async"`.
+  Feeds carry the same `src` as an absolute URL. An image that names nothing
+  inventoried (a remote image included) fails the build with
+  `BuildInputValidationError` `MEDIA_REFERENCE_UNRESOLVED` before anything is
+  written. Source files are never copied.
+- **GIF.** The media pipeline admits GIF (still or animated): a bounded
+  structure walk, then the original bytes pass through unmodified.
+
+### Changed
+
+- **Nothing is written before every media check passes.** The output and work
+  directories are created after the media pipeline has validated every image and
+  font, so a rejected reference leaves nothing behind.
+- **Identical image bytes under two paths are processed once** (outputs are
+  content-addressed; a second copy previously produced duplicate asset rows).
+
 ## [3.1.0] - 2026-10-08
 
 ### Added

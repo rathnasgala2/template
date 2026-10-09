@@ -76,6 +76,18 @@ export interface ContentFrontmatterNormalized {
   redirects: string[];
 }
 
+/**
+ * A `contentBuildMediaFile`-shaped entry: one repository file a document
+ * references. Every image the document's body references must be one of
+ * these (an image media type).
+ */
+export interface ContentBuildMediaFile {
+  path: string;
+  sourceDigest: string;
+  mediaType: string;
+  byteLength: number;
+}
+
 /** A `contentBuildRecord`-shaped record. */
 export interface ContentBuildRecord {
   frontmatter: ContentFrontmatterNormalized;
@@ -87,6 +99,7 @@ export interface ContentBuildRecord {
   sourceRevision: string;
   sourceDigest: string;
   resolvedAuthorIds: string[];
+  media?: ContentBuildMediaFile[];
 }
 
 /** A `socialLink`-shaped reference. */

@@ -9,8 +9,11 @@
  * fails closed: an invalid `build-input` is rejected with
  * {@link BuildInputValidationError} before anything is written, malformed
  * adapter options are rejected with {@link RenderOptionsError} before
- * Eleventy ever runs, and a rejected image or font is rejected with
- * {@link MediaPipelineError} before the manifest is assembled.
+ * Eleventy ever runs, a body image that names no inventoried image asset is
+ * rejected with {@link BuildInputValidationError}
+ * (`MEDIA_REFERENCE_UNRESOLVED`) before anything is written, and a rejected
+ * image or font is rejected with {@link MediaPipelineError} before anything
+ * is written.
  *
  * `normalizeAuthoredMarkdown` (re-exported here from
  * `internal/content-security.js`) is this package's second public entry
@@ -100,6 +103,10 @@ import {
 } from './internal/feeds.js';
 import { listFilesSortedByUtf8Bytes } from './internal/fs-walk.js';
 import { getMessages } from './internal/messages.js';
+import {
+  resolveContentImages,
+  rewriteBodyImages,
+} from './internal/media/content-images.js';
 import { processMedia } from './internal/media/pipeline.js';
 import {
   buildGeneratedPages,
@@ -136,7 +143,11 @@ import {
   renderPrimaryNavigation,
 } from './internal/skeleton.js';
 import { renderFooter, renderHeader } from './internal/chrome.js';
-import { createComponents, createMediaImage } from './internal/components.js';
+import {
+  createComponents,
+  createContentImage,
+  createMediaImage,
+} from './internal/components.js';
 import {
   collectIncludedSources,
   compareUtf8Bytes,
@@ -336,13 +347,15 @@ export async function renderPublication(buildInput, options) {
     );
 
   await assertRenderPolicyCompliance(validatedInput);
+  // Every body image must name an image asset the build input inventories
+  // for its document; resolved here, from the verified bodies alone, so an
+  // unresolved one fails closed before anything is written.
+  const contentImages = resolveContentImages(validatedInput);
   assertOptions(options);
   const routeProfile = options.routeNormalizationProfile ?? 'directory-index';
 
   const outputDirectory = path.resolve(options.outputDirectory);
   const workDirectory = path.resolve(options.workDirectory);
-  await mkdir(outputDirectory, { recursive: true });
-  await mkdir(workDirectory, { recursive: true });
 
   // The site-wide message catalog for core chrome (skip link, navigation,
   // breadcrumb, pagination and footer labels). Every page's own <html lang>
@@ -388,9 +401,22 @@ export async function renderPublication(buildInput, options) {
     assets: mediaAssets,
     files: mediaFiles,
     dimensions: mediaDimensions,
+    variants: mediaVariants,
   } = await processMedia(validatedInput, {
     sourceDirectory: path.resolve(options.sourceDirectory),
+    contentImages: [...contentImages.values()],
   });
+  // Created only now, after every input and media check has passed, so a
+  // rejected build input or media reference leaves nothing behind.
+  await mkdir(outputDirectory, { recursive: true });
+  await mkdir(workDirectory, { recursive: true });
+  const contentImage = createContentImage({ mediaVariants, publicBasePath });
+  /** @type {(body: string) => string} a body's page form */
+  const pageBody = (body) =>
+    rewriteBodyImages(body, contentImages, contentImage.page);
+  /** @type {(body: string) => string} a body's feed form */
+  const feedBody = (body) =>
+    rewriteBodyImages(body, contentImages, contentImage.feed);
   const mediaImage = createMediaImage({
     mediaAssets,
     publicBasePath,
@@ -407,7 +433,9 @@ export async function renderPublication(buildInput, options) {
   // Already verified render-policy-conformant HTML by
   // assertRenderPolicyCompliance's assertPolicyConformantHtml call above —
   // inserted as-is, never re-parsed as Markdown.
-  const footerProfileHtml = footerCard?.enabled ? footerCard.body.body : '';
+  const footerProfileHtml = footerCard?.enabled
+    ? pageBody(footerCard.body.body)
+    : '';
   const authorsById = new Map(
     validatedInput.authors.map((author) => [author.id, author]),
   );
@@ -489,7 +517,7 @@ export async function renderPublication(buildInput, options) {
   // The site-wide feeds, resolved once so every page's feed-discovery
   // `<link>` tags and the feed documents themselves agree on the exact same
   // self URLs.
-  const feeds = buildFeeds(validatedInput);
+  const feeds = buildFeeds(validatedInput, { feedBody });
   const siteName = validatedInput.publication.title;
   const appearanceScriptHrefValue =
     appearanceBootstrapScriptHref(publicBasePath);
@@ -524,6 +552,7 @@ export async function renderPublication(buildInput, options) {
   const redirectProjections = [];
 
   const generatedPages = buildGeneratedPages(validatedInput, {
+    pageBody,
     mediaAssets,
     mediaDimensions,
     interactions: interactionsOn ? interactionsModule : undefined,

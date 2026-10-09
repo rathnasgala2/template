@@ -14,6 +14,7 @@
  * published one is never rendered.
  */
 
+import { RenderPolicyViolationError } from '../errors.js';
 import { escapeHtml } from './skeleton.js';
 import { icon } from './icons.js';
 import { joinBasePathAndRoute } from './route.js';
@@ -197,18 +198,76 @@ export function renderImage({
 }
 
 /**
- * Add `loading="lazy" decoding="async"` to every `<img>` in an
- * already-sanitized body. Applied at render time only: the body's own
- * digest is over the stored bytes and is never recomputed.
- *
- * @param {string} bodyHtml sanitized body HTML
- * @returns {string} the body with loading hints on its images
+ * The widest slot a content image fills, in CSS pixels: the prose column
+ * never exceeds it, so a content image's `src` is its largest output file
+ * no wider than this.
  */
-export function lazyBodyImages(bodyHtml) {
-  return bodyHtml.replace(
-    /<img\b(?![^>]*\bloading=)/g,
-    '<img loading="lazy" decoding="async"',
-  );
+export const CONTENT_IMAGE_SLOT_WIDTH = 960;
+
+/** The `sizes` value every content image carries (the slot above). */
+export const CONTENT_IMAGE_SIZES = `(max-width: ${CONTENT_IMAGE_SLOT_WIDTH}px) 100vw, ${CONTENT_IMAGE_SLOT_WIDTH}px`;
+
+/**
+ * Build the two renderers for a content image (an image a body references,
+ * already resolved by `media/content-images.js` and processed by the media
+ * pipeline). The page form names every output file of the image in
+ * `srcset`; its `src` is the largest output file no wider than
+ * {@link CONTENT_IMAGE_SLOT_WIDTH}, or the original when the image has no
+ * narrower file (a GIF, WebP or AVIF passes through as its original only).
+ * Applied at render time only: the body's own digest is over the stored
+ * bytes and is never recomputed.
+ *
+ * @param {object} options
+ * @param {Readonly<Record<string, readonly {path: string, width: number, height: number}[]>>} options.mediaVariants
+ *   the media pipeline's output files per source digest, ascending width
+ * @param {string} options.publicBasePath the public base path
+ * @returns {{page: (reference: {path: string, sourceDigest: string}, altAttribute: string) => string, feed: (reference: {path: string, sourceDigest: string}, altAttribute: string) => string}}
+ *   the page form (responsive, lazy) and the feed form (one `src`, no
+ *   loading hints); `altAttribute` is the body's own entity-encoded `alt`
+ */
+export function createContentImage({ mediaVariants, publicBasePath }) {
+  /**
+   * @param {{path: string, sourceDigest: string}} reference
+   * @returns {{url: string, width: number, height: number}[]} every output
+   *   file of the image, ascending width
+   */
+  const filesOf = (reference) => {
+    const variants = mediaVariants[reference.sourceDigest] ?? [];
+    if (variants.length === 0) {
+      throw new RenderPolicyViolationError(
+        `content image ${reference.path} has no media pipeline output; this is a renderer defect`,
+      );
+    }
+    return variants.map((variant) => ({
+      url: joinBasePathAndRoute(publicBasePath, `/${variant.path}`),
+      width: variant.width,
+      height: variant.height,
+    }));
+  };
+  /**
+   * @param {{url: string, width: number, height: number}[]} files
+   * @returns {{url: string, width: number, height: number}} the `src` file
+   */
+  const fitting = (files) =>
+    files.filter((file) => file.width <= CONTENT_IMAGE_SLOT_WIDTH).at(-1) ??
+    files[0];
+  return {
+    page(reference, altAttribute) {
+      const files = filesOf(reference);
+      const source = fitting(files);
+      const srcset = files
+        .map((file) => `${file.url} ${file.width}w`)
+        .join(', ');
+      return (
+        `<img src="${escapeHtml(source.url)}" srcset="${escapeHtml(srcset)}" sizes="${CONTENT_IMAGE_SIZES}"` +
+        ` alt="${altAttribute}" width="${source.width}" height="${source.height}" loading="lazy" decoding="async">`
+      );
+    },
+    feed(reference, altAttribute) {
+      const source = fitting(filesOf(reference));
+      return `<img src="${escapeHtml(source.url)}" alt="${altAttribute}" width="${source.width}" height="${source.height}">`;
+    },
+  };
 }
 
 /**

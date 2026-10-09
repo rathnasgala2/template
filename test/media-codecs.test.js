@@ -15,12 +15,14 @@ import {
 } from '../src/core/internal/media/resize.js';
 import { sniffMediaFormat } from '../src/core/internal/media/sniff.js';
 import { probeAvif } from '../src/core/internal/media/avif-probe.js';
+import { probeGif } from '../src/core/internal/media/gif-probe.js';
 import { probeWebp } from '../src/core/internal/media/webp-probe.js';
 import {
   buildGradientRaster,
   buildOversizedDimensionPng,
   buildPngDecompressionBomb,
   buildPngJpegPolyglot,
+  buildTestGif,
   buildTestJpeg,
   buildTestPng,
   buildTestWoff2,
@@ -31,6 +33,10 @@ test('sniffMediaFormat classifies by decoded bytes, not extension', () => {
   assert.equal(sniffMediaFormat(buildTestPng(2, 2)), 'png');
   assert.equal(sniffMediaFormat(buildTestJpeg(2, 2)), 'jpeg');
   assert.equal(sniffMediaFormat(TEST_SVG_BYTES), 'svg');
+  assert.equal(sniffMediaFormat(buildTestGif(2, 2)), 'gif');
+  const gif87a = buildTestGif(2, 2);
+  gif87a.write('GIF87a', 0, 'ascii');
+  assert.equal(sniffMediaFormat(gif87a), 'gif');
   assert.equal(sniffMediaFormat(Buffer.from('not an image')), 'unknown');
   // A file with a misleading name would still sniff correctly, because
   // there is no name here at all to mislead — proving the classification
@@ -211,4 +217,60 @@ test('probeAvif rejects a container with no ftyp box', () => {
       error instanceof MediaPipelineError &&
       error.reasonCode === 'MEDIA_FORMAT_INVALID',
   );
+});
+
+test('probeGif validates GIF structure, still or animated, without decoding it', () => {
+  assert.deepEqual(probeGif(buildTestGif(1, 1), 'still.gif'), {
+    width: 1,
+    height: 1,
+  });
+  assert.deepEqual(probeGif(buildTestGif(1200, 10, 3), 'loop.gif'), {
+    width: 1200,
+    height: 10,
+  });
+
+  const gif = buildTestGif(10, 10);
+  // Header (6) + logical screen descriptor (7) + global colour table (6),
+  // then the frame's graphic control extension (8) and image descriptor.
+  const firstBlock = 19;
+  const frameWidth = firstBlock + 8 + 5;
+  /** @type {[string, Buffer][]} */
+  const malformed = [
+    ['bad signature', Buffer.concat([Buffer.from('GIF90a'), gif.subarray(6)])],
+    ['bytes after the trailer', Buffer.concat([gif, Buffer.from([0x00])])],
+    ['no trailer', gif.subarray(0, gif.length - 1)],
+    ['sub-blocks run past the end', gif.subarray(0, gif.length - 3)],
+    [
+      'no image',
+      Buffer.concat([gif.subarray(0, firstBlock), Buffer.from([0x3b])]),
+    ],
+    [
+      'unknown block',
+      (() => {
+        const bytes = Buffer.from(gif);
+        bytes[firstBlock] = 0x99;
+        return bytes;
+      })(),
+    ],
+  ];
+  for (const [label, bytes] of malformed) {
+    assert.throws(
+      () => probeGif(bytes, 'bad.gif'),
+      (error) =>
+        error instanceof MediaPipelineError &&
+        error.reasonCode === 'MEDIA_FORMAT_INVALID',
+      label,
+    );
+  }
+
+  const oversizedFrame = Buffer.from(gif);
+  oversizedFrame.writeUInt16LE(9000, frameWidth);
+  for (const bytes of [buildTestGif(9000, 1), oversizedFrame]) {
+    assert.throws(
+      () => probeGif(bytes, 'huge.gif'),
+      (error) =>
+        error instanceof MediaPipelineError &&
+        error.reasonCode === 'MEDIA_RESOURCE_EXCEEDED',
+    );
+  }
 });

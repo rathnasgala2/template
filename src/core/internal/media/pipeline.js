@@ -12,9 +12,11 @@
  *
  * Every distinct image/font reference in the publication (publication
  * default image, each author's avatar, each content record's hero and
- * social image, the appearance package's brand mark, wordmark and font
- * assets) is collected once, deduplicated by path, processed independently,
- * and turned into one or more content-addressed output files under
+ * social image, every content image a rendered body references (resolved
+ * by `content-images.js` before this pipeline runs), the appearance
+ * package's brand mark, wordmark and font assets) is collected once,
+ * deduplicated by path, processed once per distinct source digest, and
+ * turned into one or more content-addressed output files under
  * `assets/media/` in the candidate output directory plus one
  * `manifestAsset`-shaped row per output file. `manifestAsset` has no field
  * for a separate source/transform/output digest triple or for width/height
@@ -44,6 +46,7 @@ import { decodePng, encodePng } from './png-codec.js';
 import { applyExifOrientation, resizeRaster } from './resize.js';
 import { MEDIA_TYPE_BY_FORMAT, sniffMediaFormat } from './sniff.js';
 import { probeAvif } from './avif-probe.js';
+import { probeGif } from './gif-probe.js';
 import { probeWebp } from './webp-probe.js';
 
 /** @type {Readonly<Record<string, string>>} media type -> file extension */
@@ -52,6 +55,7 @@ const EXTENSION_BY_MEDIA_TYPE = Object.freeze({
   'image/jpeg': 'jpg',
   'image/webp': 'webp',
   'image/avif': 'avif',
+  'image/gif': 'gif',
   'font/woff2': 'woff2',
 });
 
@@ -60,15 +64,23 @@ const EXTENSION_BY_MEDIA_TYPE = Object.freeze({
  */
 
 /**
+ * One output file of a processed image: its output path and pixel size.
+ *
+ * @typedef {{path: string, width: number, height: number}} MediaVariant
+ */
+
+/**
  * Collect every distinct image reference in `buildInput`, deduplicated by
  * path (rejecting a path reused with a conflicting digest).
  *
  * @param {import('../../../../types/index.d.ts').NormalizedBuildInput} buildInput
  *   the validated build input
+ * @param {readonly ImageReference[]} contentImages the assets rendered
+ *   bodies reference, already resolved by `content-images.js`
  * @returns {ImageReference[]} the distinct image references, in
  *   first-seen order
  */
-function collectImageReferences(buildInput) {
+function collectImageReferences(buildInput, contentImages) {
   /** @type {Map<string, ImageReference>} */
   const byPath = new Map();
   /** @type {(ref: ImageReference | undefined) => void} */
@@ -91,6 +103,7 @@ function collectImageReferences(buildInput) {
     if (record.frontmatter.hero) add(record.frontmatter.hero.file);
     add(record.frontmatter.socialImage);
   }
+  for (const reference of contentImages) add(reference);
   add(buildInput.appearance.brandMark);
   add(buildInput.appearance.wordmark);
 
@@ -192,9 +205,9 @@ function derivativePath(sourceDigest, variant, extension) {
  *
  * @param {Buffer} bytes verified source bytes
  * @param {ImageReference} reference the reference these bytes back
- * @returns {{files: PipelineOutputFile[], width: number, height: number}}
- *   the output files this reference produces and the canonical original's
- *   pixel dimensions
+ * @returns {(PipelineOutputFile & {width: number, height: number})[]} the
+ *   output files this reference produces, each with its pixel size: the
+ *   canonical original first, then every derivative in ascending width
  */
 function processImage(bytes, reference) {
   const format = sniffMediaFormat(bytes);
@@ -213,24 +226,21 @@ function processImage(bytes, reference) {
     );
   }
 
-  if (format === 'webp' || format === 'avif') {
-    // Bounded container/dimension validation only; see webp-probe.js and
-    // avif-probe.js module documentation for the documented scope decision.
-    const size =
-      format === 'webp'
-        ? probeWebp(bytes, reference.path)
-        : probeAvif(bytes, reference.path);
+  if (format === 'webp' || format === 'avif' || format === 'gif') {
+    // Bounded container/dimension validation only, and the original bytes
+    // pass through unmodified; see webp-probe.js, avif-probe.js and
+    // gif-probe.js module documentation for the documented scope decision.
+    const probe = { webp: probeWebp, avif: probeAvif, gif: probeGif }[format];
+    const size = probe(bytes, reference.path);
     const extension = EXTENSION_BY_MEDIA_TYPE[MEDIA_TYPE_BY_FORMAT[format]];
-    return {
-      files: [
-        {
-          path: derivativePath(reference.sourceDigest, 'original', extension),
-          bytes,
-        },
-      ],
-      width: size.width,
-      height: size.height,
-    };
+    return [
+      {
+        path: derivativePath(reference.sourceDigest, 'original', extension),
+        bytes,
+        width: size.width,
+        height: size.height,
+      },
+    ];
   }
 
   /** @type {{width: number, height: number, rgba: Buffer}} */
@@ -250,11 +260,12 @@ function processImage(bytes, reference) {
     extension = 'jpg';
   }
 
-  /** @type {PipelineOutputFile[]} */
   const outputs = [
     {
       path: derivativePath(reference.sourceDigest, 'original', extension),
       bytes: encode(oriented),
+      width: oriented.width,
+      height: oriented.height,
     },
   ];
 
@@ -264,9 +275,11 @@ function processImage(bytes, reference) {
     outputs.push({
       path: derivativePath(reference.sourceDigest, `${width}w`, extension),
       bytes: encode(resized),
+      width: resized.width,
+      height: resized.height,
     });
   }
-  return { files: outputs, width: oriented.width, height: oriented.height };
+  return outputs;
 }
 
 /**
@@ -275,16 +288,22 @@ function processImage(bytes, reference) {
  *
  * @param {import('../../../../types/index.d.ts').NormalizedBuildInput} buildInput
  *   the validated build input
- * @param {{sourceDirectory: string}} options the media pipeline's own
- *   options
- * @returns {Promise<{assets: import('../../../../types/index.d.ts').ManifestAssetEntry[], files: PipelineOutputFile[], dimensions: Record<string, {width: number, height: number}>}>}
- *   the asset manifest rows, the output files backing them, and the pixel
+ * @param {{sourceDirectory: string, contentImages?: readonly ImageReference[]}} options
+ *   the media pipeline's own options: the read-only source root, and the
+ *   assets rendered bodies reference (`content-images.js`)
+ * @returns {Promise<{assets: import('../../../../types/index.d.ts').ManifestAssetEntry[], files: PipelineOutputFile[], dimensions: Record<string, {width: number, height: number}>, variants: Record<string, MediaVariant[]>}>}
+ *   the asset manifest rows, the output files backing them, the pixel
  *   dimensions of each image's canonical original keyed by its output path
  *   (`manifestAsset` has no width/height field, so this is the one place the
- *   renderer learns them, for `<img width height>` and structured data)
+ *   renderer learns them, for `<img width height>` and structured data),
+ *   and every output file of each image keyed by its source digest, in
+ *   ascending width (for `srcset`)
  */
-export async function processMedia(buildInput, { sourceDirectory }) {
-  const imageReferences = collectImageReferences(buildInput);
+export async function processMedia(
+  buildInput,
+  { sourceDirectory, contentImages = [] },
+) {
+  const imageReferences = collectImageReferences(buildInput, contentImages);
   if (imageReferences.length > MAX_IMAGES_PER_PUBLICATION) {
     throw new MediaPipelineError(
       'MEDIA_RESOURCE_EXCEEDED',
@@ -305,19 +324,33 @@ export async function processMedia(buildInput, { sourceDirectory }) {
   const files = [];
   /** @type {Record<string, {width: number, height: number}>} */
   const dimensions = {};
+  /** @type {Record<string, MediaVariant[]>} */
+  const variants = {};
   let totalBytes = 0;
 
   for (const reference of imageReferences) {
     const bytes = await readAndVerify(sourceDirectory, reference);
-    const processed = processImage(bytes, reference);
-    for (const output of processed.files) {
+    // Output paths are content-addressed: two paths with identical bytes
+    // produce identical files, so each distinct digest is processed (and
+    // emitted) once.
+    if (Object.hasOwn(variants, reference.sourceDigest)) continue;
+    const outputs = processImage(bytes, reference);
+    for (const output of outputs) {
       totalBytes += output.bytes.byteLength;
-      files.push(output);
+      files.push({ path: output.path, bytes: output.bytes });
     }
-    dimensions[processed.files[0].path] = {
-      width: processed.width,
-      height: processed.height,
+    const [original] = outputs;
+    dimensions[original.path] = {
+      width: original.width,
+      height: original.height,
     };
+    variants[reference.sourceDigest] = outputs
+      .map(({ path: outputPath, width, height }) => ({
+        path: outputPath,
+        width,
+        height,
+      }))
+      .sort((a, b) => a.width - b.width);
   }
 
   for (const reference of fontReferences) {
@@ -364,5 +397,5 @@ export async function processMedia(buildInput, { sourceDirectory }) {
     });
   });
 
-  return { assets, files, dimensions };
+  return { assets, files, dimensions, variants };
 }

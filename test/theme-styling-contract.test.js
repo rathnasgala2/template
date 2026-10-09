@@ -343,6 +343,11 @@ async function buildCoverageFixture(sourceDirectory) {
   };
   coverageRecord.body = html;
   coverageRecord.bodyDigest = bodyDigest;
+  // The body's `![alt](photo.png)` must name an inventoried image asset.
+  const photo = await stageMediaFile(sourceDirectory, 'photo.png', png);
+  coverageRecord.media = [
+    { ...photo, mediaType: 'image/png', byteLength: png.byteLength },
+  ];
   buildInput.content.push(coverageRecord);
   for (let i = 0; i < 12; i += 1) {
     const filler = JSON.parse(JSON.stringify(templateRecord));

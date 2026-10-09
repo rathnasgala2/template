@@ -96,6 +96,15 @@ inserting the body verbatim. Do not reintroduce a markdown-it call inside the
 `renderPublication` code path; that would double-escape every already-rendered
 tag.
 
+**Content images:** every body `<img src>` must resolve, by the one rule in
+`src/core/internal/media/content-images.js`, to an image entry in its document's
+`content[].media[]`; `renderPublication` resolves them all before anything is
+written (`BuildInputValidationError`, `MEDIA_REFERENCE_UNRESOLVED` otherwise),
+adds them to the media pipeline's references, and replaces each `<img>` with
+markup naming only pipeline output (`components.js` `createContentImage`). Never
+copy a source file into the output; never let an unresolved `<img>` reach a
+page.
+
 ## How to run locally
 
 Activate Node 24.18.0, run `npm install`, then `npm run verify`. This repository

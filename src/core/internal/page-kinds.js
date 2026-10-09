@@ -62,7 +62,6 @@ import {
   createComponents,
   createMediaImage,
   extractH2Headings,
-  lazyBodyImages,
   plainText,
   renderImage,
   renderNewsletterPanel,
@@ -351,7 +350,9 @@ export function homeDocumentTitle(name, tagline) {
  * `build-input:2.0.0` instance.
  *
  * @param {import('../../../types/index.d.ts').NormalizedBuildInput} validatedInput
- * @param {object} [options] rendering options
+ * @param {object} options rendering options
+ * @param {(body: string) => string} options.pageBody turns a body into its
+ *   page form (every image naming its media derivatives, lazily loaded)
  * @param {readonly {path: string, mediaType: string}[]} [options.mediaAssets]
  *   the media pipeline's finished `assets` list, used to resolve every
  *   image reference (hero, avatar) to its emitted URL; an image with no
@@ -364,7 +365,7 @@ export function homeDocumentTitle(name, tagline) {
  * @returns {GeneratedPage[]} every generated page, in a stable, deterministic
  *   order
  */
-export function buildGeneratedPages(validatedInput, options = {}) {
+export function buildGeneratedPages(validatedInput, options) {
   const { publication, authors, content, basePath, baseUrl } = validatedInput;
   const interactionsModule = interactionsActive(options.interactions)
     ? options.interactions
@@ -658,7 +659,7 @@ export function buildGeneratedPages(validatedInput, options = {}) {
       bodyHtml:
         `<article class="g-article"><div class="g-wrap g-article-head">` +
         `<h1>${escapeHtml(publication.title)}</h1></div>` +
-        `<div class="g-wrap g-article-grid"><div class="g-prose">${lazyBodyImages(publication.profile.body.body)}</div></div></article>`,
+        `<div class="g-wrap g-article-grid"><div class="g-prose">${options.pageBody(publication.profile.body.body)}</div></div></article>`,
     });
   }
 
@@ -792,7 +793,7 @@ export function buildGeneratedPages(validatedInput, options = {}) {
     const prose =
       `<div class="g-prose">${tocMobile}` +
       renderSlot('article-preamble') +
-      lazyBodyImages(record.body) +
+      options.pageBody(record.body) +
       tags +
       renderSlot('article-end') +
       renderSlot('article-footer-ad', { collapsed: true }) +

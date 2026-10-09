@@ -35,10 +35,11 @@ mistaken for an HTML route:
 
 - **Bounded decode.** JPEG (via the pinned pure-JS `jpeg-js` decoder, no native
   addon or WebAssembly) and PNG (hand-written, using Node's built-in `zlib` with
-  a decompression-bomb-bounded inflate) are fully decoded to RGBA8; WebP and
-  AVIF get bounded container/declared-dimension validation without a full
-  entropy decode (a documented scope decision — see
-  `webp-probe.js`/`avif-probe.js`). Every format shares one set of resource
+  a decompression-bomb-bounded inflate) are fully decoded to RGBA8; WebP, AVIF
+  and GIF get bounded container/declared-dimension validation without a full
+  entropy decode, and their original bytes pass through unmodified (a documented
+  scope decision — see `webp-probe.js`/`avif-probe.js`/ `gif-probe.js`; an
+  animated GIF keeps its animation). Every format shares one set of resource
   ceilings in `limits.js` (raster dimension, pixel count, decoded-buffer and
   source-byte caps reused from the theme package's own closed binary-asset
   decoder bounds, plus this renderer's own documented per-publication ceilings).
@@ -61,12 +62,45 @@ mistaken for an HTML route:
   structurally.
 - **Fail-closed errors.** Every rejection — oversize, decompression bomb, digest
   mismatch, SVG, unrecognized format, invalid font — is a `MediaPipelineError`
-  with a stable `reasonCode`, thrown before the manifest is assembled.
+  with a stable `reasonCode`, thrown before anything is written.
 
 `options.sourceDirectory` is the caller-mounted, read-only repository source
 tree `build-input`'s `resolvedFile` references point into; every referenced
 file's bytes are read from there and verified against `build-input`'s declared
 `sourceDigest` before being decoded.
+
+### Content images
+
+Every `<img>` in a rendered body must name an image file `build-input`
+inventories for that document in `content[].media[]` (an entry whose `mediaType`
+is `image/png`, `image/jpeg`, `image/webp`, `image/avif` or `image/gif`). The
+`src` is resolved by one rule (`src/core/internal/media/content-images.js`): it
+is entity-decoded; a scheme, a protocol-relative `//`, a query or a fragment
+never resolves; one leading `/` or `./` is dropped (paths are
+repository-root-relative); the rest is percent-decoded and NFC-normalized; an
+empty, `.` or `..` segment never resolves; the result must equal an inventoried
+`path`. The publication profile and the footer card (checked only when enabled,
+since only then is it rendered) have no inventory, so an image there never
+resolves.
+
+An image that resolves to nothing (a remote image included: the render policy
+already strips its `src`) fails the build with `BuildInputValidationError`, one
+`MEDIA_REFERENCE_UNRESOLVED` diagnostic per image (`instancePointer` names the
+body, `reference` the `src`), before anything is written. An inventoried file
+the media pipeline rejects fails with that `MediaPipelineError` reason code,
+also before anything is written.
+
+A resolved image runs through the media pipeline and renders as
+`<img src srcset sizes="(max-width: 960px) 100vw, 960px" alt width height loading="lazy" decoding="async">`:
+`srcset` names every output file in ascending width (PNG/JPEG: each fixed
+derivative width below the source plus the re-encoded original; GIF, WebP and
+AVIF: the original only), and `src` is the widest of them no wider than 960
+pixels, or the original when none is. `alt` is the authored text. The feeds
+carry the same `src` as an absolute URL, without `srcset`. Only pipeline output
+is written: the source file is never copied, and identical bytes under two paths
+are processed and written once. Images use the base layer's existing `img`
+rules; no class is added. The front-matter `hero` renders as the article's cover
+`<figure>` above the body (`role: "decorative"` renders `alt=""`).
 
 The complete output-security pipeline (`src/core/internal/content-security.js`)
 sits on top of that adapter. **Division of labour** (normalization replaces an
@@ -431,7 +465,12 @@ numbers:
   VP8/VP8L/AV1 entropy decode or derivative generation — hand-authoring an
   independently verifiable decoder for either format was judged out of
   proportion to this task, and is flagged as a follow-up rather than attempted
-  partially.
+  partially;
+- GIF gets a bounded block-structure walk (signature, logical screen and every
+  frame within the dimension ceilings, every sub-block chain inside the file, at
+  least one image, the trailer as the last byte) and passes through unmodified:
+  this renderer carries no GIF encoder, so an animation is never resized, and
+  any comment or application extension is served as authored.
 
 Every remaining "Required generated output" from this renderer's own governing
 brief sits on top of the page kinds above:
@@ -481,9 +520,9 @@ brief sits on top of the page kinds above:
   `width` and `height` from the media pipeline; the article cover and the home
   hero are `fetchpriority="high"`, all other images
   `loading="lazy" decoding="async"`. Feeds carry the full sanitized body
-  (`content:encoded` in RSS, `<content type="html">` in Atom), authors and
-  categories. Author pages live at `/authors/<name-slug>` (the id when two names
-  collide).
+  (`content:encoded` in RSS, `<content type="html">` in Atom; each image as its
+  absolute media-derivative URL), authors and categories. Author pages live at
+  `/authors/<name-slug>` (the id when two names collide).
 - **`robots.txt`, `llms.txt`, `llms-full.txt`** (`internal/robots.js`,
   `internal/llms.js`). `robots.txt` allows all crawlers and names the absolute
   sitemap; `publication.crawlers.ai: "block"` (validated by the build-input

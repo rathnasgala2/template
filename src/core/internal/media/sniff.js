@@ -61,6 +61,17 @@ function isAvif(bytes) {
 }
 
 /**
+ * @param {Buffer} bytes candidate file bytes
+ * @returns {boolean} true when `bytes` starts with a `GIF87a` or `GIF89a`
+ *   signature
+ */
+function isGif(bytes) {
+  if (bytes.length < 6) return false;
+  const signature = bytes.subarray(0, 6).toString('ascii');
+  return signature === 'GIF87a' || signature === 'GIF89a';
+}
+
+/**
  * Detect whether `bytes` looks like SVG/XML markup, scanning only the first
  * 4096 bytes (bounded: this classification exists purely to reject, never to
  * parse). A byte-order mark, XML declaration, comment or a bare `<svg` root
@@ -82,7 +93,7 @@ function looksLikeSvg(bytes) {
 }
 
 /**
- * @typedef {'png' | 'jpeg' | 'webp' | 'avif' | 'svg' | 'unknown'} SniffedFormat
+ * @typedef {'png' | 'jpeg' | 'webp' | 'avif' | 'gif' | 'svg' | 'unknown'} SniffedFormat
  */
 
 /**
@@ -97,13 +108,15 @@ export function sniffMediaFormat(bytes) {
   if (isJpeg(bytes)) return 'jpeg';
   if (isWebp(bytes)) return 'webp';
   if (isAvif(bytes)) return 'avif';
+  if (isGif(bytes)) return 'gif';
   return 'unknown';
 }
 
-/** @type {Readonly<Record<'png' | 'jpeg' | 'webp' | 'avif', string>>} */
+/** @type {Readonly<Record<'png' | 'jpeg' | 'webp' | 'avif' | 'gif', string>>} */
 export const MEDIA_TYPE_BY_FORMAT = Object.freeze({
   png: 'image/png',
   jpeg: 'image/jpeg',
   webp: 'image/webp',
   avif: 'image/avif',
+  gif: 'image/gif',
 });
