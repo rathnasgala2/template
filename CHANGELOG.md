@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-10-09
+
 ### Added
 
 - **Content images.** Every `<img>` in a body must name an image file the build
@@ -19,7 +21,9 @@ and this project adheres to
   inventoried (a remote image included) fails the build with
   `BuildInputValidationError` `MEDIA_REFERENCE_UNRESOLVED` before anything is
   written. Source files are never copied; each inventoried file is an included
-  source of the manifest.
+  source of the manifest. The front-matter `hero` file goes through the same
+  pipeline (content-addressed derivatives) and keeps rendering as the article's
+  cover.
 - **GIF.** The media pipeline admits GIF (still or animated): a bounded
   structure walk, then the original bytes pass through unmodified.
 - **Editions.** A document of `kind: "edition"` (schemas 3.3.0) restates one
@@ -35,7 +39,9 @@ and this project adheres to
   the reference". An edition that names no article of the build, repeats one, or
   takes another document's route fails the build before anything is written
   (`EDITION_ORIGINAL_UNRESOLVED`, `EDITION_DUPLICATE`,
-  `EDITION_ROUTE_CONFLICT`). No published styling hook changes.
+  `EDITION_ROUTE_CONFLICT`). An edition with no `hero` or social image of its
+  own uses its article's. No published styling hook changes; the base layer
+  gains one rule that keeps the selector inside its column on narrow screens.
 - **Comment appeals in the interactions script.** A signed-in reader's thread
   read may carry that reader's own removed or held comments, each with an `own`
   object (`state` `REMOVED` or `HELD`, the `appeal` so far or null,
@@ -43,13 +49,12 @@ and this project adheres to
   "Hidden while the moderators review it"), with no author or body and its
   replies kept. When `canAppeal` is true an Appeal button opens a note field (up
   to 1,000 characters) and Send posts `{note}` to
-  `/v2/public/comments/{commentId}/appeals` with the bearer token; the comment
-  then reads "Appeal sent. The moderators will look again." An appeal's state
-  reads "Appeal sent. The moderators will look again.", "Restored after review"
-  or "Kept removed after review". `APPEAL_EXISTS`, `APPEAL_NOT_ALLOWED` and
-  `RATE_LIMITED` have their own sentences; an existing or disallowed appeal
-  stops the button, a rate limit or network failure keeps the note. The existing
-  markup and styling hooks are reused.
+  `/v2/public/comments/{commentId}/appeals` with the bearer token. The appeal's
+  state reads under the comment: "Appeal sent. The moderators will look again.",
+  "Restored after review" or "Kept removed after review". `APPEAL_EXISTS`,
+  `APPEAL_NOT_ALLOWED` and `RATE_LIMITED` have their own sentences; an existing
+  or disallowed appeal stops the button, a rate limit or network failure keeps
+  the note. The existing markup and styling hooks are reused.
 - **Footer attribution switch.** `appearance.attribution.showMadeWith: false`
   (schemas 3.3.0) omits the footer's Galascribe attribution line on every page;
   absent or `true` keeps it. Whitelabel is a core appearance setting, not a
@@ -61,7 +66,9 @@ and this project adheres to
   the RGBA output ceiling (64 MiB), but it counts the decoder's whole working
   set, so every JPEG above about three to five megapixels (an ordinary phone
   photo included) failed with `MEDIA_RESOURCE_EXCEEDED`. It is now sized for an
-  image at the unchanged 16,777,216-pixel ceiling.
+  image at the unchanged 16,777,216-pixel ceiling, 32 bytes per pixel (512 MiB);
+  a 4032x3024 photo decodes. The pixel ceiling and the decoded-RGBA ceiling are
+  unchanged.
 
 ### Changed
 
@@ -73,6 +80,12 @@ and this project adheres to
 - **The footer attribution reads "Made with Galascribe"** (it read "Published
   with the Galascribe template renderer."), matching the switch that shows or
   hides it.
+- **Schemas pin 3.3.0** (exact), which admits `content[].media[]`,
+  `kind: "edition"` documents with their `edition` object, and
+  `appearance.attribution`.
+- **Public types** gain `ContentEdition`, `ContentBuildMediaFile`, the `edition`
+  kind and `edition` object on a content record's front matter, `media` on a
+  content record, and `attribution` on the appearance.
 
 ## [3.1.0] - 2026-10-08
 
