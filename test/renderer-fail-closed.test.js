@@ -18,7 +18,14 @@ import {
 
 test('C. module absence: every empty-modules-placements S2 fixture case behaves exactly as its expectedDiagnostics say', async () => {
   const family = await loadS2FixtureFamily('empty-modules-placements');
-  assert.equal(family.cases.length, 3);
+  assert.equal(family.cases.length, 4);
+  assert.ok(
+    family.cases.some(
+      (fixtureCase) =>
+        fixtureCase.caseId === 'build-input-valid-interactions-module',
+    ),
+    'fixture corpus must carry the valid interactions-module case',
+  );
 
   for (const fixtureCase of family.cases) {
     if (fixtureCase.schemaId !== 'urn:gala:schema:build-input:2.0.0') continue;
@@ -97,9 +104,19 @@ test('an invalid build-input is rejected before any file is written (fails close
     assert.ok(caught.diagnostics.length > 0);
     assert.ok(
       caught.diagnostics.some(
-        (diagnostic) => diagnostic.instancePointer === '/modules',
+        (diagnostic) => diagnostic.instancePointer === '/modules/newsletter',
       ),
     );
+    for (const expected of rejectedCase.expectedDiagnostics) {
+      assert.ok(
+        caught.diagnostics.some(
+          (diagnostic) =>
+            diagnostic.code === expected.code &&
+            diagnostic.instancePointer === expected.instancePointer,
+        ),
+        `${rejectedCase.caseId}: expected diagnostic ${expected.code} at ${expected.instancePointer}`,
+      );
+    }
 
     // Schema validation runs before the output directory is even created,
     // so it must still be exactly the empty directory `createRenderDirectories`
