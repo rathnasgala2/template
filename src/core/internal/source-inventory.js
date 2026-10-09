@@ -89,6 +89,10 @@ export function collectIncludedSources(buildInput) {
       contentRecord.frontmatter.socialImage,
       contentRecord.sourceRevision,
     );
+    // The document's inventoried media (its body images' sources).
+    for (const mediaFile of contentRecord.media ?? []) {
+      recordResolvedFile(record, mediaFile, contentRecord.sourceRevision);
+    }
   }
 
   if (buildInput.navigation.source.kind === 'authored') {

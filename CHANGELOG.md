@@ -18,7 +18,8 @@ and this project adheres to
   Feeds carry the same `src` as an absolute URL. An image that names nothing
   inventoried (a remote image included) fails the build with
   `BuildInputValidationError` `MEDIA_REFERENCE_UNRESOLVED` before anything is
-  written. Source files are never copied.
+  written. Source files are never copied; each inventoried file is an included
+  source of the manifest.
 - **GIF.** The media pipeline admits GIF (still or animated): a bounded
   structure walk, then the original bytes pass through unmodified.
 - **Footer attribution switch.** `appearance.attribution.showMadeWith: false`

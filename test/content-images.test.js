@@ -192,6 +192,21 @@ test('a body image renders its largest output within 960px as src, every output 
     }
   }
   assert.equal(assetPaths.size, manifest.assets.length, 'no duplicate asset');
+  // Each derivative's source is an included source of the manifest.
+  for (const [file, bytes] of [
+    ['assets/content/first-article/wide.png', wide],
+    ['assets/content/first-article/narrow.png', narrow],
+  ]) {
+    assert.ok(
+      manifest.includedSources.some(
+        (/** @type {any} */ source) =>
+          source.path === file &&
+          source.sha256 === sha256Of(bytes) &&
+          source.role === 'asset',
+      ),
+      `${file} is an included source`,
+    );
+  }
   const written = await listFilesSortedByUtf8Bytes(outputDirectory);
   assert.ok(
     !written.some((file) => file.includes('assets/content/')),
