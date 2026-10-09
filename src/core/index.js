@@ -484,6 +484,9 @@ export async function renderPublication(buildInput, options) {
     authorHtml: footerAuthorHtml,
     footerProfileHtml,
     copyrightText: `${siteMessages.footerCopyrightPrefix} ${latestYear ? `${latestYear} ` : ''}${publication.title}`,
+    // The whitelabel switch: a core appearance setting, not a module.
+    showAttribution:
+      validatedInput.appearance.attribution?.showMadeWith !== false,
     messages: siteMessages,
   });
 

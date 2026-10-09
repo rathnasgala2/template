@@ -19,6 +19,7 @@ import {
   readingMinutes,
   renderNewsletterPanel,
 } from '../src/core/internal/components.js';
+import { renderFooter } from '../src/core/internal/chrome.js';
 import { ICONS, icon } from '../src/core/internal/icons.js';
 import { getMessages } from '../src/core/internal/messages.js';
 import {
@@ -482,4 +483,55 @@ test('hero images: cover figure with alt on the article, media on cards; decorat
     /<figure class="g-card-media"><img src="\/fixture-1\/assets\/media\/[0-9a-f]+\/original\.[a-z]+" alt="A red square" width="640" height="360" loading="lazy" decoding="async"><\/figure>/,
   );
   assert.ok(stableId(1));
+});
+
+test('the footer attribution follows appearance.attribution.showMadeWith; absent shows it', async (t) => {
+  const attribution = `<span>${getMessages('en').footerAttributionLabel}</span>`;
+  const footer = (/** @type {boolean} */ showAttribution) =>
+    renderFooter({
+      homeRoute: '/',
+      publicationName: 'Notes',
+      description: 'About notes.',
+      brandMark: undefined,
+      socialLinks: [],
+      rssHref: '/feed/rss.xml',
+      primaryItems: [],
+      footerItems: [],
+      urlPrefix: '/',
+      authorHtml: '',
+      footerProfileHtml: '',
+      copyrightText: '© Notes',
+      showAttribution,
+      messages: getMessages('en'),
+    });
+  assert.ok(footer(true).includes(attribution));
+  assert.ok(
+    footer(false).endsWith(
+      '<div class="g-wrap g-footer-base"><span>© Notes</span></div></footer>',
+    ),
+  );
+
+  // Through the build input (schemas 3.3.0 admit `appearance.attribution`).
+  for (const [setting, shown] of [
+    [undefined, true],
+    [{ showMadeWith: true }, true],
+    [{ showMadeWith: false }, false],
+  ]) {
+    const buildInput = /** @type {any} */ (await buildRichFixture());
+    if (setting) buildInput.appearance.attribution = setting;
+    await applyCurrentRenderPolicy(buildInput);
+    const { pages, cleanup } = await renderPages(buildInput);
+    t.after(cleanup);
+    const withFooter = [...pages].filter(([, html]) =>
+      html.includes('<footer class="g-footer">'),
+    );
+    assert.ok(withFooter.length > 5);
+    for (const [route, html] of withFooter) {
+      assert.equal(
+        html.includes(attribution),
+        shown,
+        `${route}: ${JSON.stringify(setting)}`,
+      );
+    }
+  }
 });

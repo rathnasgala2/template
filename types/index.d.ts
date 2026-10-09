@@ -187,6 +187,8 @@ export interface AppearanceNormalized {
   fontAssets: ResolvedFileRef[];
   tokens: Record<string, never>;
   source: NormalizedSource;
+  /** The footer attribution switch; absent means the attribution shows. */
+  attribution?: { showMadeWith: boolean };
 }
 
 /** The subset of `build-input:2.0.0` this renderer reads. */

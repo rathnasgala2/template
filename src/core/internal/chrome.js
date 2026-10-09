@@ -142,6 +142,9 @@ function renderSocialLinks(socialLinks, rssHref, messages) {
  * @param {string} options.footerProfileHtml the already-rendered footer card
  *   body (may be empty)
  * @param {string | undefined} options.copyrightText the copyright line
+ * @param {boolean} options.showAttribution whether the Galascribe
+ *   attribution line renders: the build input's
+ *   `appearance.attribution.showMadeWith`, shown when absent
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
  * @returns {string} the rendered footer
  */
@@ -158,6 +161,7 @@ export function renderFooter({
   authorHtml,
   footerProfileHtml,
   copyrightText,
+  showAttribution,
   messages,
 }) {
   const label = (/** @type {string} */ key) =>
@@ -193,7 +197,7 @@ export function renderFooter({
     renderSlot('edition-selector') +
     `<div class="g-wrap g-footer-base">` +
     (copyrightText ? `<span>${escapeHtml(copyrightText)}</span>` : '') +
-    `<span>${label('footerAttributionLabel')}</span>` +
+    (showAttribution ? `<span>${label('footerAttributionLabel')}</span>` : '') +
     `</div></footer>`
   );
 }

@@ -5,8 +5,11 @@
 Own the deterministic Eleventy-backed static publication renderer that turns a
 validated `build-input:2.0.0` instance into a candidate output directory plus an
 `artifact-manifest:2.0.0` instance. Never own deployment, provider credentials,
-theme presentation bytes, or any `interactions` / `whitelabel` / `newsletter` /
-`prism` module boundary (document 32 section 3.1; brief S2 section 1).
+theme presentation bytes, or any `interactions` / `newsletter` / `prism` module
+boundary (document 32 section 3.1; brief S2 section 1). Whitelabel is not a
+module: the footer's attribution line is a core appearance switch,
+`appearance.attribution.showMadeWith` (absent or `true` shows it, `false` omits
+it), read in `src/core/index.js` and applied by `renderFooter`.
 
 ## Commands
 
@@ -34,7 +37,8 @@ may cross the adapter boundary in either direction.
 Do not add any `src/modules/` tree other than `interactions`, provider adapters,
 deployment or publish-kernel logic (owned by `publish`), theme presentation
 CSS/assets (owned by `theme-*`), schema authoring (owned by `schema`), a `bin`
-named `gala`, or any `interactions`/`whitelabel`/`newsletter`/`prism` boundary.
+named `gala`, or any `interactions`/`whitelabel`/`newsletter`/`prism` module
+boundary (the attribution switch above stays a core appearance setting).
 
 ## Contract sources and generation commands
 

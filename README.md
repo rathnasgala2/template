@@ -188,11 +188,12 @@ output-security pipeline every generated page still passes through:
   one `<main id="main-content">` (an optional breadcrumb `<nav>` before the
   page's own single `<h1>`), and one `<footer>` (publication name, footer
   navigation, the `footer-profile` slot, the remaining core slots, and the
-  template attribution line). Core owns nine versioned semantic slots
-  (`header-actions`, `article-preamble`, `article-end`, `footer-profile`,
-  `footer-auxiliary`, `account-intent`, `conversation`, `newsletter`,
-  `edition-selector`) plus the collapsed `article-footer-ad` slot: every slot is
-  one `data-gala-slot="<name>"` attribute on an otherwise empty, non-landmark
+  template attribution line, which `appearance.attribution.showMadeWith: false`
+  omits). Core owns nine versioned semantic slots (`header-actions`,
+  `article-preamble`, `article-end`, `footer-profile`, `footer-auxiliary`,
+  `account-intent`, `conversation`, `newsletter`, `edition-selector`) plus the
+  collapsed `article-footer-ad` slot: every slot is one
+  `data-gala-slot="<name>"` attribute on an otherwise empty, non-landmark
   `<div>`, and the collapsed slot additionally carries `hidden`. This renderer
   has no module system, so every slot except `footer-profile` (which always
   wraps the publication's own footer card) and `header-actions` (the appearance
@@ -623,9 +624,11 @@ contracts/theme-styling-contract.jcs     # published styling catalog (real and c
 read from disk and emitted as `assets/gala-interactions-v1.js` when
 `build-input.modules.interactions` is present.
 `test/module-tree-absence.test.js`, `.dependency-cruiser.cjs` and the ESLint
-`no-restricted-imports` rule enforce this. `whitelabel`, `newsletter` and
-`prism` have no module directory, package, configuration schema, stub, output or
-runtime code in this MVP.
+`no-restricted-imports` rule enforce this. `newsletter` and `prism` have no
+module directory, package, configuration schema, stub, output or runtime code in
+this MVP. Whitelabel is not a module either: the footer's Galascribe attribution
+line is a core appearance switch, `build-input.appearance.attribution`
+(`showMadeWith: false` omits the line; absent or `true` shows it).
 
 ## Consuming `@rathnasgala2/schemas`
 

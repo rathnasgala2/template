@@ -19,7 +19,8 @@
  * - exactly one `<main id="main-content">`; each page kind places its own
  *   breadcrumb `<nav>` and single `<h1>` inside it;
  * - exactly one `<footer>` (brand, description, social links, navigation
- *   columns, author profile, copyright and the template attribution line),
+ *   columns, author profile, copyright and the template attribution line,
+ *   which `appearance.attribution.showMadeWith: false` omits),
  *   plus the always-present, currently-empty core slots (`footer-auxiliary`,
  *   `account-intent`, `conversation`, `newsletter`, `edition-selector`),
  *   rendered by `internal/chrome.js`.

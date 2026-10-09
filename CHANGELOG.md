@@ -21,6 +21,10 @@ and this project adheres to
   written. Source files are never copied.
 - **GIF.** The media pipeline admits GIF (still or animated): a bounded
   structure walk, then the original bytes pass through unmodified.
+- **Footer attribution switch.** `appearance.attribution.showMadeWith: false`
+  (schemas 3.3.0) omits the footer's Galascribe attribution line on every page;
+  absent or `true` keeps it. Whitelabel is a core appearance setting, not a
+  module.
 
 ### Fixed
 
