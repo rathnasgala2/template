@@ -12,11 +12,12 @@ and this project adheres to
 
 ### Fixed
 
-- Interaction buttons (Like, reactions, Reply, Post, Send, Cancel, Edit, Delete, Report, Sign in)
-  now have clearly distinct enabled, disabled and working states in the base layer: a disabled
-  button is muted with a dashed border and `cursor: not-allowed`, a working one keeps its colours
-  and shows a spinner (a static ring under reduced motion), and every state change sets
-  `disabled`, `aria-disabled` and `aria-busy` together.
+- Interaction buttons (Like, reactions, Reply, Post, Send, Cancel, Edit, Delete,
+  Report, Sign in) now have clearly distinct enabled, disabled and working
+  states in the base layer: a disabled button is muted with a dashed border and
+  `cursor: not-allowed`, a working one keeps its colours and shows a spinner (a
+  static ring under reduced motion), and every state change sets `disabled`,
+  `aria-disabled` and `aria-busy` together.
 
 ## [3.2.0] - 2026-10-09
 
