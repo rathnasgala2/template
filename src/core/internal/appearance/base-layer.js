@@ -671,7 +671,6 @@ export const GALA_BASE_COMPONENT_CSS = `
   }
   .g-reaction:hover:not(:disabled) { border-color: var(--gala-color-text); color: var(--gala-color-text); }
   .g-reaction:active:not(:disabled) { transform: scale(.96); }
-  .g-reaction:disabled { opacity: .55; cursor: default; }
   .g-reaction__icon { display: inline-grid; place-items: center; font-size: 1.1rem; line-height: 1; }
   .g-reaction__icon .g-icon { width: 1.15rem; height: 1.15rem; }
   .g-reaction__label { overflow-wrap: anywhere; }
@@ -706,12 +705,41 @@ export const GALA_BASE_COMPONENT_CSS = `
   }
   .g-composer__submit:hover:not(:disabled), .g-composer__signin:hover, .g-report button[type="submit"]:hover { filter: brightness(1.07) saturate(1.05); }
   .g-composer__submit:active:not(:disabled), .g-composer__signin:active { transform: scale(.97); }
-  .g-composer__submit:disabled { opacity: .55; cursor: default; box-shadow: none; }
   .g-composer__cancel, .g-report button[type="button"] {
     min-height: 2.75rem; padding: .6rem 1rem; border-radius: var(--gala-radius-pill); border: var(--gala-border-width) solid var(--gala-color-border); background: transparent; color: var(--gala-color-text);
     font-family: var(--gala-font-ui); font-weight: var(--gala-weight-ui); font-size: .9rem; cursor: pointer;
   }
   .g-composer__cancel:hover, .g-report button[type="button"]:hover { border-color: var(--gala-color-text); }
+  /* Interaction-button states. Enabled: full-strength tokens and a pointer.
+     Disabled (native or aria-disabled): muted surface and border tokens,
+     faint text, reduced opacity, a dashed border and not-allowed. Working
+     (aria-busy): enabled colours, a progress cursor and a spinner, never the
+     muted look. Themes may tint these tokens, never remove the rule. */
+  .g-reaction:is(:disabled, [aria-disabled="true"]):not([aria-busy="true"]),
+  .g-comments__more:is(:disabled, [aria-disabled="true"]):not([aria-busy="true"]),
+  .g-composer__cancel:is(:disabled, [aria-disabled="true"]):not([aria-busy="true"]),
+  .g-report button[type="button"]:is(:disabled, [aria-disabled="true"]):not([aria-busy="true"]),
+  .g-comment__action:is(:disabled, [aria-disabled="true"]):not([aria-busy="true"]),
+  .g-composer__submit:is(:disabled, [aria-disabled="true"]):not([aria-busy="true"]),
+  .g-composer__signin:is(:disabled, [aria-disabled="true"]):not([aria-busy="true"]),
+  .g-report button[type="submit"]:is(:disabled, [aria-disabled="true"]):not([aria-busy="true"]) {
+    background: var(--gala-color-surface-raised); background-image: none; color: var(--gala-color-text-faint);
+    border: var(--gala-border-width) dashed var(--gala-color-border); box-shadow: none; filter: none; transform: none;
+    opacity: .6; cursor: not-allowed;
+  }
+  .g-interactions__signout:is(:disabled, [aria-disabled="true"]):not([aria-busy="true"]) { color: var(--gala-color-text-faint); text-decoration-style: dashed; opacity: .6; cursor: not-allowed; }
+  .g-reaction[aria-busy="true"], .g-comments__more[aria-busy="true"], .g-composer__cancel[aria-busy="true"], .g-comment__action[aria-busy="true"],
+  .g-composer__submit[aria-busy="true"], .g-composer__signin[aria-busy="true"], .g-report button[aria-busy="true"] { cursor: progress; }
+  .g-reaction[aria-busy="true"]::after, .g-comments__more[aria-busy="true"]::after, .g-comment__action[aria-busy="true"]::after,
+  .g-composer__submit[aria-busy="true"]::after, .g-report button[aria-busy="true"]::after {
+    content: ""; display: inline-block; flex: none; width: .9em; height: .9em; margin-left: .5em; border-radius: 50%;
+    border: 2px solid currentColor; border-right-color: transparent; vertical-align: -.1em; animation: g-busy-spin .8s linear infinite;
+  }
+  @keyframes g-busy-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .g-reaction[aria-busy="true"]::after, .g-comments__more[aria-busy="true"]::after, .g-comment__action[aria-busy="true"]::after,
+    .g-composer__submit[aria-busy="true"]::after, .g-report button[aria-busy="true"]::after { animation: none; border-right-color: currentColor; border-style: dotted; }
+  }
   .g-comment-list { display: grid; gap: var(--gala-space-4); min-width: 0; }
   .g-comment { display: grid; gap: var(--gala-space-2); min-width: 0; }
   .g-comment__head { display: flex; align-items: center; gap: var(--gala-space-3); min-width: 0; }

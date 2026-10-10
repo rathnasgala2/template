@@ -759,6 +759,49 @@ test('reply: composer opens inline, only while depth allows; posts under the par
   );
 });
 
+test('Reply is aria-disabled and inert while its composer is open, enabled again after Cancel; Post carries disabled, aria-disabled and aria-busy while pending', async () => {
+  const h = await boot({
+    session: SIGNED_IN,
+    handler: api({
+      'GET /comments': {
+        status: 200,
+        body: { items: [comment('root')], nextCursor: null, count: NO_COUNT },
+      },
+      'POST /comments': () => new Promise(() => {}),
+    }),
+  });
+  await h.ready();
+  const reply = h.$('#g-comment-root > .g-comment__actions .g-comment__action');
+  assert.equal(reply.textContent, 'Reply');
+  assert.equal(reply.getAttribute('aria-disabled'), null);
+  assert.equal(reply.disabled, false);
+  assert.equal(reply.classList.contains('g-comment__action'), true);
+  reply.click();
+  assert.equal(reply.getAttribute('aria-disabled'), 'true');
+  const composer = h.$('#g-comment-root > .g-composer');
+  assert.ok(composer);
+  reply.click();
+  assert.equal(
+    h.$$('#g-comment-root > .g-composer').length,
+    1,
+    'a click on the aria-disabled Reply does nothing',
+  );
+  assert.equal(h.$('#g-comment-root > .g-composer'), composer);
+  composer.querySelector('.g-composer__cancel').click();
+  assert.equal(reply.getAttribute('aria-disabled'), null);
+  assert.equal(h.window.document.activeElement, reply);
+  reply.click();
+  const inline = h.$('#g-comment-root > .g-composer');
+  const post = inline.querySelector('.g-composer__submit');
+  assert.equal(post.disabled, false);
+  assert.equal(post.getAttribute('aria-disabled'), null);
+  inline.querySelector('textarea').value = 'a reply';
+  post.click();
+  await h.waitFor(() => post.disabled, 'Post becomes pending');
+  assert.equal(post.getAttribute('aria-disabled'), 'true');
+  assert.equal(post.getAttribute('aria-busy'), 'true');
+});
+
 test('replies disabled by the API hide every Reply action', async () => {
   const view = interactionsView();
   view.comments.allowReplies = false;

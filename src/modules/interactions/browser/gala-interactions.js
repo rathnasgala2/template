@@ -253,9 +253,10 @@
   };
   const composers = new Set();
   let rootComposer = /** @type {Composer | null} */ (null);
-  let inline = /** @type {{composer: Composer, item: CommentItem} | null} */ (
-    null
-  );
+  let inline =
+    /** @type {{composer: Composer, item: CommentItem, trigger: HTMLElement | null} | null} */ (
+      null
+    );
   let loadToken = 0;
 
   // ------------------------------------------------------------------- helpers
@@ -293,6 +294,47 @@
     node.type = 'button';
     if (label) node.setAttribute('aria-label', label);
     return node;
+  }
+
+  /**
+   * One place for the disabled state: the native attribute (which blocks
+   * activation and focus) and `aria-disabled` together, so the base layer's
+   * `:disabled` / `[aria-disabled="true"]` rule and assistive technology agree.
+   *
+   * @param {HTMLElement} node
+   * @param {boolean} on
+   */
+  function setDisabled(node, on) {
+    /** @type {HTMLButtonElement} */ (node).disabled = on;
+    if (on) node.setAttribute('aria-disabled', 'true');
+    else node.removeAttribute('aria-disabled');
+  }
+
+  /**
+   * The working (pending) state: disabled for activation, but marked
+   * `aria-busy` so the base layer draws a spinner instead of the muted
+   * disabled look.
+   *
+   * @param {HTMLElement} node
+   * @param {boolean} on
+   */
+  function setBusy(node, on) {
+    setDisabled(node, on);
+    if (on) node.setAttribute('aria-busy', 'true');
+    else node.removeAttribute('aria-busy');
+  }
+
+  /**
+   * A trigger whose action is already in progress (its inline composer is
+   * open) stays focusable, so it is `aria-disabled` only, and ignores clicks.
+   *
+   * @param {HTMLElement | null} trigger
+   * @param {boolean} on
+   */
+  function holdTrigger(trigger, on) {
+    if (!trigger) return;
+    if (on) trigger.setAttribute('aria-disabled', 'true');
+    else trigger.removeAttribute('aria-disabled');
   }
 
   let idCounter = 0;
@@ -867,7 +909,7 @@
         continue;
       }
       node.hidden = false;
-      node.disabled = false;
+      setDisabled(node, false);
       setPressed(node, !!item.viewerActive);
       setCount(node, item.count, 'reactions');
     }
@@ -1267,7 +1309,7 @@
     let cursor = /** @type {string | null} */ (null);
     let first = true;
     more.addEventListener('click', async () => {
-      more.disabled = true;
+      setBusy(more, true);
       try {
         const query = new URLSearchParams({ parentId: comment.id });
         if (cursor) query.set('cursor', cursor);
@@ -1284,9 +1326,9 @@
           list.appendChild(renderComment(reply));
         cursor = page.nextCursor || null;
         if (!cursor) more.remove();
-        else more.disabled = false;
+        else setBusy(more, false);
       } catch (error) {
-        more.disabled = false;
+        setBusy(more, false);
         announce(failureMessage(error));
       }
     });
@@ -1307,9 +1349,10 @@
         MESSAGES.reply,
         MESSAGES.reply + ' to ' + name,
       );
-      reply.addEventListener('click', () =>
-        openInlineComposer(item, 'reply', reply),
-      );
+      reply.addEventListener('click', () => {
+        if (reply.getAttribute('aria-disabled') === 'true') return;
+        openInlineComposer(item, 'reply', reply);
+      });
       actions.appendChild(reply);
     }
     if (comment.viewer && comment.viewer.canEdit) {
@@ -1318,9 +1361,10 @@
         MESSAGES.edit,
         MESSAGES.edit + ' your comment',
       );
-      edit.addEventListener('click', () =>
-        openInlineComposer(item, 'edit', edit),
-      );
+      edit.addEventListener('click', () => {
+        if (edit.getAttribute('aria-disabled') === 'true') return;
+        openInlineComposer(item, 'edit', edit);
+      });
       actions.appendChild(edit);
     }
     if (comment.viewer && comment.viewer.canDelete) {
@@ -1376,8 +1420,8 @@
       }
     });
     yes.addEventListener('click', async () => {
-      yes.disabled = true;
-      no.disabled = true;
+      setBusy(yes, true);
+      setDisabled(no, true);
       try {
         await api(
           'DELETE',
@@ -1386,8 +1430,8 @@
         applyDeleted(item);
         announce(MESSAGES.deleted);
       } catch (error) {
-        yes.disabled = false;
-        no.disabled = false;
+        setBusy(yes, false);
+        setDisabled(no, false);
         announce(failureMessage(error));
       }
     });
@@ -1599,7 +1643,7 @@
         return;
       }
       composer.busy = true;
-      submit.disabled = true;
+      setDisabled(submit, true);
       submit.setAttribute('aria-busy', 'true');
       showError('');
       try {
@@ -1626,7 +1670,7 @@
         showError(failureMessage(failure));
       } finally {
         composer.busy = false;
-        submit.disabled = false;
+        setDisabled(submit, false);
         submit.removeAttribute('aria-busy');
       }
     });
@@ -1682,6 +1726,7 @@
   function closeInline() {
     if (inline) {
       inline.composer.close();
+      holdTrigger(inline.trigger, false);
       inline = null;
     }
   }
@@ -1697,6 +1742,7 @@
     const comment = item._comment;
     const done = (/** @type {any} */ result) => {
       /** @type {{composer: Composer}} */ (inline).composer.close();
+      holdTrigger(trigger, false);
       inline = null;
       if (mode === 'edit') {
         fillComment(item, result);
@@ -1713,12 +1759,14 @@
       body: mode === 'edit' ? comment.body || '' : presetBody || '',
       onDone: done,
       onCancel: () => {
+        holdTrigger(trigger, false);
         inline = null;
         if (trigger && trigger.isConnected) focusNode(trigger);
         else focusNode(item);
       },
     });
-    inline = { composer, item };
+    holdTrigger(trigger, true);
+    inline = { composer, item, trigger };
     const replies = item.querySelector(':scope > .g-comment__replies');
     if (replies) item.insertBefore(composer.element, replies);
     else item.appendChild(composer.element);
@@ -1805,7 +1853,7 @@
     });
     cancel.addEventListener('click', finish);
     send.addEventListener('click', async () => {
-      send.disabled = true;
+      setBusy(send, true);
       error.hidden = true;
       /** @type {{reasonCode: string, note?: string}} */
       const payload = { reasonCode: select.value };
@@ -1822,7 +1870,7 @@
         finish();
         announce(MESSAGES.reported);
       } catch (failure) {
-        send.disabled = false;
+        setBusy(send, false);
         error.textContent = failureMessage(failure);
         error.hidden = false;
       }
@@ -1959,7 +2007,7 @@
         showError(MESSAGES.appealTooLong);
         return;
       }
-      send.disabled = true;
+      setDisabled(send, true);
       send.setAttribute('aria-busy', 'true');
       showError('');
       try {
@@ -1991,7 +2039,7 @@
           );
           announce(message);
         } else {
-          send.disabled = false;
+          setDisabled(send, false);
           showError(message);
         }
       } finally {
@@ -2088,7 +2136,7 @@
 
   async function loadMore() {
     if (!live.nextCursor || !moreEl) return;
-    moreEl.disabled = true;
+    setBusy(moreEl, true);
     try {
       const query = new URLSearchParams({ cursor: live.nextCursor });
       const page = await api(
@@ -2099,7 +2147,7 @@
     } catch (error) {
       announce(failureMessage(error));
     } finally {
-      moreEl.disabled = false;
+      setBusy(moreEl, false);
     }
   }
 
