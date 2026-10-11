@@ -220,7 +220,7 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
           `${routePath} must carry exactly one skip link`,
         );
         assert.equal(
-          (html.match(/<header class="g-header">/g) ?? []).length,
+          (html.match(/<header class="g-header"[^>]*>/g) ?? []).length,
           1,
           routePath,
         );
@@ -231,7 +231,7 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
           routePath,
         );
         assert.equal(
-          (html.match(/<footer class="g-footer">/g) ?? []).length,
+          (html.match(/<footer class="g-footer"[^>]*>/g) ?? []).length,
           1,
           routePath,
         );

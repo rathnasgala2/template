@@ -85,8 +85,9 @@ import { sanitizeThemeSvg } from './media/theme-svg-sanitizer.js';
 import { projectFixedAssetPath } from './route.js';
 import { satisfiesTemplateRange } from './semver-range.js';
 import { escapeHtml } from './skeleton.js';
+import { assertSupportedComposition } from './template-composition.js';
 
-/** @type {string} the `urn:gala:schema:theme-contract:2.0.0` schema id
+/** @type {string} the immutable `urn:gala:schema:theme-contract:2.0.0` schema id
  * every consumed `theme.json` is validated against (TPL-H1). */
 const THEME_CONTRACT_SCHEMA_ID = 'urn:gala:schema:theme-contract:2.0.0';
 
@@ -415,7 +416,7 @@ function assertThemeContractIntegrity(themeJson) {
   if (!validation.valid) {
     throw new ThemeAssetError(
       'THEME_CONTRACT_SCHEMA_INVALID',
-      `theme.json failed urn:gala:schema:theme-contract:2.0.0 validation ` +
+      `theme.json failed ${THEME_CONTRACT_SCHEMA_ID} validation ` +
         `(${validation.diagnostics.length} diagnostic(s)): ` +
         JSON.stringify(validation.diagnostics),
     );
@@ -458,6 +459,14 @@ function assertThemeContractIntegrity(themeJson) {
         `(${TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION})`,
     );
   }
+  try {
+    assertSupportedComposition(themeJson.composition);
+  } catch (error) {
+    throw new ThemeAssetError(
+      'THEME_COMPOSITION_UNSUPPORTED',
+      /** @type {Error} */ (error).message,
+    );
+  }
 }
 
 /**
@@ -490,6 +499,7 @@ function subresourceIntegrityAttribute(bytes) {
  *   files: {path: string, bytes: Buffer}[],
  *   assets: import('../../../types/index.d.ts').ManifestAssetEntry[],
  *   linkTagsHtml: string,
+ *   composition: (typeof import('./template-composition.js').SUPPORTED_COMPOSITIONS)[number],
  * }>} the files to write (already `basePath`-joined), their manifest rows
  *   (same joined paths), and the ready-to-insert `<link>` markup
  */
@@ -611,7 +621,12 @@ export async function loadThemeAssets({
     });
   }
 
-  return { files, assets, linkTagsHtml: linkTags.join('') };
+  return {
+    files,
+    assets,
+    linkTagsHtml: linkTags.join(''),
+    composition: assertSupportedComposition(themeJson.composition),
+  };
 }
 
 /**

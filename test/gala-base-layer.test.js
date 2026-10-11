@@ -27,7 +27,7 @@ import {
 } from './helpers/render-fixtures.js';
 import { loadCanonicalBuildInput } from './helpers/schema-fixtures.js';
 
-test('contract 3.0.0 publishes the closed five-member pseudo-class catalog', () => {
+test('contract 4.0.0 publishes the closed five-member pseudo-class catalog', () => {
   const contract = buildTemplateStylingContract();
   assert.deepEqual(contract.pseudoClasses, [...PSEUDO_CLASSES]);
   assert.deepEqual(
@@ -37,7 +37,7 @@ test('contract 3.0.0 publishes the closed five-member pseudo-class catalog', () 
   assert.deepEqual(contract.composition.functionalPseudoKeywordArguments, [
     ...FUNCTIONAL_PSEUDO_KEYWORD_ARGUMENTS,
   ]);
-  assert.equal(contract.contractVersion, '3.0.0');
+  assert.equal(contract.contractVersion, '4.0.0');
 });
 
 test('the gala-base stylesheet source declares the fixed layer order as its own first line', () => {
@@ -92,5 +92,16 @@ test('the gala-base stylesheet sets a real, paintable focus ring (outline-style,
   assert.match(
     GALA_BASE_STYLESHEET_SOURCE,
     /:focus-visible\s*\{[^}]*outline-style:\s*solid/,
+  );
+});
+
+test('the anchor reset does not outrank link component colors', () => {
+  assert.match(
+    GALA_BASE_STYLESHEET_SOURCE,
+    /\[data-gala-publication-root\] :where\(a\)\s*\{[^}]*color:\s*inherit/u,
+  );
+  assert.doesNotMatch(
+    GALA_BASE_STYLESHEET_SOURCE,
+    /\[data-gala-publication-root\] a\s*\{/u,
   );
 });

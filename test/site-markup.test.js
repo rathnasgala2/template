@@ -199,7 +199,13 @@ test('header, home, article, listings and footer render the redesigned structure
     'header: monogram brand, tagline, hidden search, details menu',
     () => {
       for (const html of pages.values()) {
-        assert.equal(count(html, /<header class="g-header">/g), 1);
+        assert.equal(
+          count(
+            html,
+            /<header class="g-header" data-gala-header-layout="masthead">/g,
+          ),
+          1,
+        );
         assert.match(
           html,
           /<span class="g-mark" aria-hidden="true">F<\/span><span class="g-brand-text"><span class="g-brand-name">fixture-1<\/span><span class="g-brand-tag">fixture-1<\/span>/,
@@ -364,7 +370,13 @@ test('header, home, article, listings and footer render the redesigned structure
   await t.test(
     'footer: brand, description, social icons, RSS, columns, author, base line',
     () => {
-      assert.equal(count(home, /<footer class="g-footer">/g), 1);
+      assert.equal(
+        count(
+          home,
+          /<footer class="g-footer" data-gala-footer-layout="expanded">/g,
+        ),
+        1,
+      );
       assert.match(home, /<p class="g-footer-about">fixture-1<\/p>/);
       assert.match(
         home,
@@ -504,6 +516,7 @@ test('the footer attribution follows appearance.attribution.showMadeWith; absent
       copyrightText: '© Notes',
       showAttribution,
       messages: getMessages('en'),
+      footerLayout: 'expanded',
     });
   assert.ok(footer(true).includes(attribution));
   assert.ok(
@@ -524,7 +537,9 @@ test('the footer attribution follows appearance.attribution.showMadeWith; absent
     const { pages, cleanup } = await renderPages(buildInput);
     t.after(cleanup);
     const withFooter = [...pages].filter(([, html]) =>
-      html.includes('<footer class="g-footer">'),
+      html.includes(
+        '<footer class="g-footer" data-gala-footer-layout="expanded">',
+      ),
     );
     assert.ok(withFooter.length > 5);
     for (const [route, html] of withFooter) {

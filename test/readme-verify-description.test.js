@@ -50,6 +50,7 @@ const README_GATE_PHRASE = Object.freeze({
   duplication: /`jscpd` duplication scan/,
   'contracts:check': /the `contracts\/\*\.jcs` canonical-form check/,
   'schema-pin:check': /the no-local-schema-pin check/,
+  'vendor:check': /the vendored-schema integrity and provenance check/,
   test: /`node --test`/,
   'licenses:check': /the license inventory check/,
   'sbom:check':

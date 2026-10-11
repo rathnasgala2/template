@@ -1,0 +1,9 @@
+{
+  "archive": "vendor/rathnasgala2-schemas-3.8.0.tgz",
+  "byteLength": 3731759,
+  "integrity": "sha512-opSg97hyJiFnGVOwCXbdSahgeFytQoKATVcyZvN9WfYLJ+snoQL1cKg/JzqZRsRHBnX+7/Ed/gwtvonofSV09Q==",
+  "packageName": "@rathnasgala2/schemas",
+  "schemaVersion": 1,
+  "sha256": "c00e94ae04e7d8eab02c5a344dd569e81a35f8674dc92b0e5911907afda592e3",
+  "version": "3.8.0"
+}

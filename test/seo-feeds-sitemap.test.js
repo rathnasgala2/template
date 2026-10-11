@@ -211,8 +211,14 @@ test('S2-T08 acceptance: feeds, sitemap, search index, 404 and print CSS are gen
         html,
         /<a class="g-btn" href="\/fixture-1">Return to the home page/,
       );
-      assert.equal((html.match(/<header class="g-header">/g) ?? []).length, 1);
-      assert.equal((html.match(/<footer class="g-footer">/g) ?? []).length, 1);
+      assert.equal(
+        (html.match(/<header class="g-header"[^>]*>/g) ?? []).length,
+        1,
+      );
+      assert.equal(
+        (html.match(/<footer class="g-footer"[^>]*>/g) ?? []).length,
+        1,
+      );
       assert.ok(!html.includes('rel="canonical"'));
     },
   );

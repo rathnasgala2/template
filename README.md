@@ -629,10 +629,11 @@ npm run verify
 hand-maintained) runs, in order: Prettier format check, ESLint,
 `tsc --checkJs --noEmit`, the dependency-cruiser
 architecture/module-tree-absence gate, `jscpd` duplication scan, the
-`contracts/*.jcs` canonical-form check, the no-local-schema-pin check,
-`node --test`, the license inventory check, the SBOM currency check
-(`sbom:check` compares `sbom.cdx.json` against the current lockfile — it is not
-a presence check), the workflow-pin check, and `npm audit --audit-level=high`.
+`contracts/*.jcs` canonical-form check, the no-local-schema-pin check, the
+vendored-schema integrity and provenance check, `node --test`, the license
+inventory check, the SBOM currency check (`sbom:check` compares `sbom.cdx.json`
+against the current lockfile — it is not a presence check), the workflow-pin
+check, and `npm audit --audit-level=high`.
 
 Individual gates:
 
@@ -645,7 +646,8 @@ npm run architecture    # dependency-cruiser: core never imports src/modules, no
 npm run duplication     # jscpd, 3% / 50 tokens
 npm run contracts:generate  # (re)write contracts/*.jcs from their reviewed source modules
 npm run contracts:check     # fail if committed contracts drifted
-npm run schema-pin:check    # fail on a file: @rathnasgala2/schemas specifier
+npm run schema-pin:check    # require the exact vendored @rathnasgala2/schemas specifier
+npm run vendor:check        # verify vendor manifest, bytes, lock integrity, and installed provenance
 npm test                # node --test
 npm run licenses:generate   # (re)write THIRD_PARTY_LICENSES.json
 npm run licenses:check      # fail if it drifted from package-lock.json
@@ -655,6 +657,12 @@ npm run workflows:check     # fail if a GitHub Actions ref is not SHA-pinned
 npm run workflows:drift     # fail if workflow files diverge from their own baseline
 npm run audit               # npm audit --audit-level=high
 ```
+
+Source development does not require a sibling schema checkout. The exact
+`@rathnasgala2/schemas@3.8.0` development artifact is committed under `vendor/`;
+`vendor/schema-manifest.json`, the lockfile integrity, and `vendor:check` bind
+its bytes and installed provenance. The exact peer remains the public consumer
+contract.
 
 ## Package layout
 
@@ -679,17 +687,16 @@ editions: they are a rendered content kind (see Editions).
 
 ## Consuming `@rathnasgala2/schemas`
 
-This repository consumes `@rathnasgala2/schemas@3.3.0` from the public npm
-registry, declared as `"@rathnasgala2/schemas": "3.3.0"` (exact pin, no range)
-so `package-lock.json` records the resolved version and integrity hash. The
-LOCAL-1/LOCAL-39 local-tarball convention
-(`file:../../local-packages/rathnasgala2-schemas-*.tgz`) is retired for this
-package now that it publishes to the registry. The 2.8.0->2.11.0 convergence
-changes none of the four roots this renderer validates, for the same reason the
-2.7.0-2.8.0 delta below did not. Only the `"."` export (`validateGalaDocument`,
-`GALA_SCHEMA_IDS`) is consumed; the 2.6.0 `./runtime-origins` narrow export and
-every other addition through 2.6.1 (new OpenAPI operations, App route/catalog
-copy, the `PrincipalSummary`/`AuthenticatorSummary`/keyset field additions) are
+This source targets `@rathnasgala2/schemas@3.8.0` with an exact manifest pin.
+Generation-4 development verifies against the schema sibling/packed candidate.
+The historical `package-lock.json` is not a 3.8.0 registry claim: it must be
+regenerated, together with the SBOM, from the authoritative published 3.8.0
+artifact before release. The 2.8.0->2.11.0 convergence changes none of the four
+roots this renderer validates, for the same reason the 2.7.0-2.8.0 delta below
+did not. Only the `"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) is
+consumed; the 2.6.0 `./runtime-origins` narrow export and every other addition
+through 2.6.1 (new OpenAPI operations, App route/catalog copy, the
+`PrincipalSummary`/`AuthenticatorSummary`/keyset field additions) are
 App/API-surface changes this renderer does not read. The `"."` export's 2.2.2
 browser-safety refactor (Node builtins replaced with browser-safe equivalents
 behind the same public API) is byte-identical in behaviour for a Node consumer

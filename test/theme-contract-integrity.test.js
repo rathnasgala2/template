@@ -63,16 +63,16 @@ async function assertRejectsWithReason(dir, reasonCode) {
   }
 }
 
-test('theme.json failing urn:gala:schema:theme-contract:2.0.0 validation is rejected', async () => {
+test('theme.json failing the immutable theme-contract schema is rejected', async () => {
   const dir = await buildThemeDirectory({
     browserPolicyRef: 'not-the-fixed-value',
   });
   await assertRejectsWithReason(dir, 'THEME_CONTRACT_SCHEMA_INVALID');
 });
 
-test('a contractVersion that does not match the published styling contract is rejected', async () => {
+test('an unsupported generation-4 contractVersion is rejected by the closed schema', async () => {
   const dir = await buildThemeDirectory({ contractVersion: '9.9.9' });
-  await assertRejectsWithReason(dir, 'THEME_CONTRACT_VERSION_MISMATCH');
+  await assertRejectsWithReason(dir, 'THEME_CONTRACT_SCHEMA_INVALID');
 });
 
 test('a stylingContractDigest that does not match the published catalogDigest is rejected', async () => {
@@ -83,13 +83,37 @@ test('a stylingContractDigest that does not match the published catalogDigest is
 });
 
 test("a templateRange that does not admit this renderer's own version is rejected", async () => {
-  const dir = await buildThemeDirectory({ templateRange: '^4.0.0' });
-  await assertRejectsWithReason(dir, 'THEME_CONTRACT_VERSION_MISMATCH');
+  const dir = await buildThemeDirectory({ templateRange: '^3.0.0' });
+  await assertRejectsWithReason(dir, 'THEME_CONTRACT_SCHEMA_INVALID');
 });
 
 test('a well-formed but unsupported templateRange syntax is rejected, not silently admitted', async () => {
   const dir = await buildThemeDirectory({ templateRange: '>=2.0.0 <3.0.0' });
-  await assertRejectsWithReason(dir, 'THEME_CONTRACT_VERSION_MISMATCH');
+  await assertRejectsWithReason(dir, 'THEME_CONTRACT_SCHEMA_INVALID');
+});
+
+test('a missing composition fails closed', async () => {
+  const dir = await buildThemeDirectory({ composition: undefined });
+  await assertRejectsWithReason(dir, 'THEME_CONTRACT_SCHEMA_INVALID');
+});
+
+test('an unsupported composition fails closed', async () => {
+  const dir = await buildThemeDirectory({
+    composition: {
+      schemaId: 'urn:gala:schema:template-composition:2.0.0',
+      schemaVersion: '2.0.0',
+      profile: 'editorial',
+      homeLayout: 'chronological',
+      articleLayout: 'editorial',
+      authorLayout: 'portrait',
+      listingLayout: 'rows',
+      headerLayout: 'masthead',
+      footerLayout: 'expanded',
+      mediaRatio: 'landscape',
+      density: 'comfortable',
+    },
+  });
+  await assertRejectsWithReason(dir, 'THEME_CONTRACT_SCHEMA_INVALID');
 });
 
 test('a fully valid, digest-consistent theme.json is accepted', async () => {
@@ -100,6 +124,8 @@ test('a fully valid, digest-consistent theme.json is accepted', async () => {
       basePath: '/',
     });
     assert.equal(result.files.length, 3);
+    assert.equal(result.composition.profile, 'editorial');
+    assert.equal(result.composition.homeLayout, 'magazine');
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

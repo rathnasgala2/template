@@ -1,6 +1,6 @@
 {
   "name": "@rathnasgala2/template",
-  "version": "3.2.1",
+  "version": "4.0.0",
   "description": "Deterministic Eleventy-backed static publication renderer for Galascribe portable repositories.",
   "type": "module",
   "license": "Apache-2.0",
@@ -66,20 +66,24 @@
     "workflows:check": "node scripts/check-workflow-pins.mjs",
     "workflows:drift": "node scripts/check-workflow-drift.mjs",
     "schema-pin:check": "node scripts/check-no-local-schema-pin.mjs",
+    "vendor:check": "node scripts/check-vendored-schema.mjs",
     "audit": "node scripts/npm-audit.mjs",
-    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run architecture && npm run duplication && npm run contracts:check && npm run schema-pin:check && npm test && npm run licenses:check && npm run sbom:check && npm run workflows:check && npm run audit"
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run architecture && npm run duplication && npm run contracts:check && npm run schema-pin:check && npm run vendor:check && npm test && npm run licenses:check && npm run sbom:check && npm run workflows:check && npm run audit"
   },
   "dependencies": {
     "@11ty/eleventy": "3.1.6",
     "@11ty/eleventy-plugin-syntaxhighlight": "5.0.2",
-    "@rathnasgala2/schemas": "3.3.0",
     "jpeg-js": "0.4.4",
     "markdown-it": "14.3.1",
     "sanitize-html": "2.17.7"
   },
+  "peerDependencies": {
+    "@rathnasgala2/schemas": "3.8.0"
+  },
   "devDependencies": {
     "@cyclonedx/cyclonedx-npm": "6.0.1",
     "@eslint/js": "10.0.1",
+    "@rathnasgala2/schemas": "file:vendor/rathnasgala2-schemas-3.8.0.tgz",
     "@types/markdown-it": "14.2.0",
     "@types/node": "24.13.4",
     "@types/sanitize-html": "2.16.1",

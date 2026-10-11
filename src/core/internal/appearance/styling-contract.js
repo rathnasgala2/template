@@ -74,15 +74,19 @@ import {
   APPEARANCE_TOGGLE_ID,
 } from './contract.js';
 import { PAGE_KIND_ATTRIBUTE, PAGE_KIND_VALUES } from '../page-kinds.js';
+import {
+  COMPOSITION_ATTRIBUTES,
+  COMPOSITION_ATTRIBUTE_CATALOG,
+} from '../template-composition.js';
 import { SLOT_NAMES } from '../skeleton.js';
 import { canonicalizeJcs, domainDigest } from '../canonical-jcs.js';
 
 /** @type {string} */
 export const TEMPLATE_STYLING_CONTRACT_PACKAGE = '@rathnasgala2/template';
 /** @type {string} */
-export const TEMPLATE_STYLING_CONTRACT_VERSION = '3.0.0';
+export const TEMPLATE_STYLING_CONTRACT_VERSION = '4.0.0';
 /** @type {string} */
-export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '3.0.0';
+export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '4.0.0';
 
 /** @type {string} the `main-content` landmark's fixed `id`. */
 const MAIN_CONTENT_ID = 'main-content';
@@ -468,6 +472,13 @@ const ATTRIBUTE_VALUE_HOOKS = Object.freeze([
       kind: /** @type {const} */ ('attribute'),
     }),
   ),
+  ...COMPOSITION_ATTRIBUTES.map(({ field, name, value }) =>
+    Object.freeze({
+      hookId: `composition-${field.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}-${value}`,
+      selectorAtom: `[${name}="${value}"]`,
+      kind: /** @type {const} */ ('attribute'),
+    }),
+  ),
 ]);
 
 /** @type {readonly StyleHookDefinition[]} every public hook, unsorted. */
@@ -524,6 +535,12 @@ export function buildTemplateStylingContract() {
       values: sortedUniqueBytes(PAGE_KIND_VALUES),
       role: 'semantic',
     },
+    ...COMPOSITION_ATTRIBUTE_CATALOG.map(({ name, values }) => ({
+      name,
+      match: 'exact-value',
+      values: sortedUniqueBytes(values),
+      role: 'semantic',
+    })),
   ].sort((a, b) => {
     const bufferA = Buffer.from(canonicalizeJcs(a), 'utf8');
     const bufferB = Buffer.from(canonicalizeJcs(b), 'utf8');
@@ -648,7 +665,7 @@ export function assertTemplateStylingContractShape(contract) {
   if (contract.profile !== 'gala-template-styling-contract-v2') {
     fail('profile');
   }
-  if (contract.contractVersion !== '3.0.0') fail('contractVersion');
+  if (contract.contractVersion !== '4.0.0') fail('contractVersion');
   if (contract.templatePackage !== '@rathnasgala2/template') {
     fail('templatePackage');
   }

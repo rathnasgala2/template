@@ -52,6 +52,8 @@ function renderMark(name, mark) {
  * @param {string} [options.appearanceControlHtml] the already-rendered
  *   appearance control, inserted into the `header-actions` slot
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
+ * @param {string} options.profile the admitted composition profile
+ * @param {string} options.headerLayout the admitted composition's header layout
  * @returns {string} the rendered header
  */
 export function renderHeader({
@@ -66,6 +68,8 @@ export function renderHeader({
   searchIndexHref,
   appearanceControlHtml,
   messages,
+  profile,
+  headerLayout,
 }) {
   const label = (/** @type {string} */ key) =>
     escapeHtml(/** @type {string} */ (messages[key]));
@@ -74,19 +78,28 @@ export function renderHeader({
       ? `<details class="g-menu"><summary>${icon('menu')}<span class="g-sr">${label('menuSummaryLabel')}</span></summary>` +
         `<ul>${navItems.map((item) => renderNavItem(item, currentRoute, urlPrefix)).join('')}</ul></details>`
       : '';
-  return (
-    `<header class="g-header"><div class="g-wrap g-header-row">` +
+  const brand =
     `<a class="g-brand" href="${escapeHtml(homeRoute)}">${renderMark(publicationName, brandMark)}` +
     `<span class="g-brand-text"><span class="g-brand-name">${escapeHtml(publicationName)}</span>` +
-    `<span class="g-brand-tag">${escapeHtml(tagline)}</span></span></a>` +
-    navHtml +
+    `<span class="g-brand-tag">${escapeHtml(tagline)}</span></span></a>`;
+  const actions =
     `<div class="g-actions">` +
     `<button class="g-search-btn" type="button" hidden data-action="search" data-search-index="${escapeHtml(searchIndexHref)}" aria-label="${label('searchButtonAriaLabel')}">` +
     `${icon('search')}<span>${label('searchButtonLabel')}</span></button>` +
     renderSlot('header-actions', { html: appearanceControlHtml }) +
     menu +
-    `</div></div></header>`
-  );
+    `</div>`;
+  const content =
+    profile === 'newsletter'
+      ? actions + brand + navHtml
+      : profile === 'visual'
+        ? brand + actions + navHtml
+        : profile === 'personal'
+          ? navHtml + brand + actions
+          : profile === 'developer'
+            ? navHtml + actions + brand
+            : brand + navHtml + actions;
+  return `<header class="g-header" data-gala-header-layout="${escapeHtml(headerLayout)}"><div class="g-wrap g-header-row">${content}</div></header>`;
 }
 
 /**
@@ -146,6 +159,8 @@ function renderSocialLinks(socialLinks, rssHref, messages) {
  *   attribution line renders: the build input's
  *   `appearance.attribution.showMadeWith`, shown when absent
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
+ * @param {string} options.profile the admitted composition profile
+ * @param {string} options.footerLayout the admitted composition's footer layout
  * @returns {string} the rendered footer
  */
 export function renderFooter({
@@ -163,6 +178,8 @@ export function renderFooter({
   copyrightText,
   showAttribution,
   messages,
+  profile,
+  footerLayout,
 }) {
   const label = (/** @type {string} */ key) =>
     escapeHtml(/** @type {string} */ (messages[key]));
@@ -176,20 +193,31 @@ export function renderFooter({
       ? ''
       : `<nav class="g-footer-col" aria-label="${label(labelKey)}"><p class="g-label">${label(labelKey)}</p>` +
         `<ul>${items.map((item) => renderNavItem(item, undefined, urlPrefix)).join('')}</ul></nav>`;
-  return (
-    `<footer class="g-footer"><div class="g-wrap g-footer-grid">` +
+  const brand =
     `<div class="g-footer-brand">` +
     `<a class="g-brand" href="${escapeHtml(homeRoute)}">${renderMark(publicationName, brandMark)}` +
     `<span class="g-brand-name">${escapeHtml(publicationName)}</span></a>` +
     `<p class="g-footer-about">${escapeHtml(description)}</p>` +
     renderSocialLinks(socialLinks, rssHref, messages) +
-    `</div>` +
-    column('exploreColumnLabel', primaryItems) +
-    column('footerNavigationLabel', footerItems) +
+    `</div>`;
+  const primary = column('exploreColumnLabel', primaryItems);
+  const secondary = column('footerNavigationLabel', footerItems);
+  const profileCard =
     `<div class="g-footer-col">` +
     renderSlot('footer-profile', { html: authorHtml + footerProfileHtml }) +
-    `</div>` +
-    `</div>` +
+    `</div>`;
+  const grid =
+    profile === 'newsletter'
+      ? brand + profileCard + primary + secondary
+      : profile === 'visual'
+        ? brand + primary + profileCard + secondary
+        : profile === 'personal'
+          ? profileCard + brand + primary + secondary
+          : profile === 'developer'
+            ? primary + secondary + brand + profileCard
+            : brand + primary + secondary + profileCard;
+  return (
+    `<footer class="g-footer" data-gala-footer-layout="${escapeHtml(footerLayout)}"><div class="g-wrap g-footer-grid">${grid}</div>` +
     renderSlot('footer-auxiliary') +
     renderSlot('account-intent') +
     renderSlot('conversation') +

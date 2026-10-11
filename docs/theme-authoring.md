@@ -1,11 +1,12 @@
 # Authoring a theme package
 
-A theme package (`@rathnasgala2/theme-default`, `-amaze`, `-flashy`, `-minimal`
-or `-zebra` — see [Theme identity](#theme-identity) for why the list is closed)
-supplies presentation only: colors, spacing, type, and a handful of passive
-image/font assets. It never supplies markup, behaviour, or document structure —
-those are this renderer's job. Concretely, a theme is **four files and one
-manifest**:
+A theme package (`@rathnasgala2/theme-default`, `-amaze`, `-editorial`,
+`-flashy`, `-minimal` or `-zebra` — see [Theme identity](#theme-identity) for
+why the list is closed) selects one renderer-owned composition and supplies
+presentation: colors, spacing, type, and a handful of passive image/font assets.
+It never supplies markup or behaviour; `theme.json.composition` selects one
+complete structure implemented by this renderer. Concretely, a theme is **four
+files and one manifest**:
 
 ```
 theme.json        # the theme-contract:2.0.0 manifest (schema-validated)
@@ -63,7 +64,7 @@ obvious ones:
   schema closes this to exactly those two combinations — there is no other valid
   pairing.
 - **`contractVersion`** — must byte-equal this template's own published styling
-  contract version (currently `3.0.0`). A theme built against a different
+  contract version (currently `4.0.0`). A theme built against a different
   contract version fails to load, on purpose: the token/hook/ pseudo-class
   catalogs a theme was authored against are the catalogs it is checked against.
 - **`stylingContractDigest`** — must byte-equal the published contract's own
@@ -73,7 +74,7 @@ obvious ones:
   the current value from `buildTemplateStylingContract().catalogDigest`
   (`src/core/internal/appearance/styling-contract.js`) — the scaffold script
   already does this for you.
-- **`templateRange`** — an exact version or caret range (`^2.0.0`) admitting
+- **`templateRange`** — an exact version or caret range (`^4.0.0`) admitting
   this renderer's own published version. Checked with `satisfiesTemplateRange`
   (`src/core/internal/semver-range.js`), a deliberately narrow SemVer-range
   engine: only exact versions and caret ranges are supported, nothing else.
@@ -85,12 +86,24 @@ obvious ones:
 
 ### Theme identity
 
-`theme.json.themeId`/`package` are closed to five admitted identities:
-`default`, `amaze`, `flashy`, `minimal`, `zebra`
-(`urn:gala:schema: theme-contract:2.0.0`'s own enum). A new theme cannot mint a
-sixth identity today; extending the set is a schema change in
+`theme.json.themeId`/`package` are closed to six admitted identities: `default`,
+`amaze`, `editorial`, `flashy`, `minimal`, `zebra`
+(`urn:gala:schema:theme-contract:2.0.0`'s own enum). A new theme cannot mint a
+seventh identity today; extending the set is a schema change in
 `@rathnasgala2/schemas`, not something this repository or a theme package
 controls.
+
+Every generation-4 identity owns one complete composition. The mapping is
+closed: copying a layout field from another row makes `theme.json` invalid.
+
+| Theme identity | Profile    | Home          | Article    | Author    | Listing    | Header      | Footer   | Media     | Density     |
+| -------------- | ---------- | ------------- | ---------- | --------- | ---------- | ----------- | -------- | --------- | ----------- |
+| `default`      | Newsletter | newspaper     | issue      | profile   | issues     | publication | expanded | landscape | comfortable |
+| `amaze`        | Editorial  | magazine      | editorial  | portrait  | rows       | masthead    | expanded | landscape | comfortable |
+| `editorial`    | Editorial  | magazine      | editorial  | portrait  | rows       | masthead    | expanded | landscape | comfortable |
+| `flashy`       | Visual     | gallery       | full-bleed | portfolio | image-grid | minimal     | compact  | mixed     | comfortable |
+| `minimal`      | Personal   | chronological | prose      | biography | dated-rows | compact     | compact  | landscape | spacious    |
+| `zebra`        | Developer  | topic-index   | technical  | biography | rows       | utility     | compact  | landscape | compact     |
 
 ## The token catalog
 

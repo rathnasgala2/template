@@ -139,6 +139,7 @@ import {
   defaultThemeStylesheetLinksHtml,
   loadThemeAssets,
 } from './internal/theme-assets.js';
+import { EDITORIAL_COMPOSITION } from './internal/template-composition.js';
 import { resolveTextDirection } from './internal/text-direction.js';
 import {
   escapeHtml,
@@ -189,7 +190,7 @@ export const TEMPLATE_PACKAGE_NAME = '@rathnasgala2/template';
  *
  * @type {string}
  */
-export const TEMPLATE_PACKAGE_VERSION = '2.1.0';
+export const TEMPLATE_PACKAGE_VERSION = '4.0.0';
 
 /**
  * Validate the caller-supplied render options, independent of build-input
@@ -391,6 +392,22 @@ export async function renderPublication(buildInput, options) {
   const urlPrefix = derivePublicBasePath(validatedInput.baseUrl, '/');
   const homeRoute = joinPublicRoute(publicBasePath, '/');
 
+  // Admit the selected generation-4 theme and its complete structural
+  // composition before any output directory is created. Theme-less calls
+  // use the renderer's Editorial composition and the conventional print
+  // stylesheet link; a supplied theme never receives that fallback.
+  const themeAssetsResult = options.themeDirectory
+    ? await loadThemeAssets({
+        themeDirectory: path.resolve(options.themeDirectory),
+        basePath: validatedInput.basePath,
+        publicBasePath,
+      })
+    : undefined;
+  const themeStylesheetLinksHtml = themeAssetsResult
+    ? themeAssetsResult.linkTagsHtml
+    : defaultThemeStylesheetLinksHtml(publicBasePath);
+  const composition = themeAssetsResult?.composition ?? EDITORIAL_COMPOSITION;
+
   const appearanceControlHtml = renderAppearanceControl({
     messages: siteMessages,
   });
@@ -495,6 +512,8 @@ export async function renderPublication(buildInput, options) {
     showAttribution:
       validatedInput.appearance.attribution?.showMadeWith !== false,
     messages: siteMessages,
+    profile: composition.profile,
+    footerLayout: composition.footerLayout,
   });
 
   /**
@@ -522,6 +541,8 @@ export async function renderPublication(buildInput, options) {
       searchIndexHref,
       appearanceControlHtml,
       messages: siteMessages,
+      profile: composition.profile,
+      headerLayout: composition.headerLayout,
     });
 
   // The site-wide feeds, resolved once so every page's feed-discovery
@@ -540,22 +561,6 @@ export async function renderPublication(buildInput, options) {
     `/${GALA_BASE_STYLESHEET_PATH}`,
   );
 
-  // The selected theme package's copied stylesheets/passive assets and the
-  // ordered `<link>` markup every generated page's `<head>` inserts.
-  // Run before page assembly (same reasoning as the media pipeline above):
-  // every page's `data.themeStylesheetLinksHtml` needs the same one
-  // already-rendered fragment.
-  const themeAssetsResult = options.themeDirectory
-    ? await loadThemeAssets({
-        themeDirectory: path.resolve(options.themeDirectory),
-        basePath: validatedInput.basePath,
-        publicBasePath,
-      })
-    : undefined;
-  const themeStylesheetLinksHtml = themeAssetsResult
-    ? themeAssetsResult.linkTagsHtml
-    : defaultThemeStylesheetLinksHtml(publicBasePath);
-
   /** @type {{virtualPath: string, content: string, permalink: string, layout?: string, data?: Record<string, unknown>}[]} */
   const contentPages = [];
   /** @type {{joinedSource: string, joinedTarget: string, publicTarget: string, filePath: string}[]} */
@@ -567,6 +572,7 @@ export async function renderPublication(buildInput, options) {
     mediaAssets,
     mediaDimensions,
     interactions: interactionsOn ? interactionsModule : undefined,
+    composition,
   });
   /** @type {Set<string>} output paths of the interaction-bearing routes */
   const interactionBearingPaths = new Set();
@@ -629,6 +635,7 @@ export async function renderPublication(buildInput, options) {
         cspMetaTag,
         baseStylesheetHref: baseStylesheetHrefValue,
         themeStylesheetLinksHtml,
+        composition,
       },
     });
   });
@@ -701,6 +708,7 @@ export async function renderPublication(buildInput, options) {
       cspMetaTag,
       baseStylesheetHref: baseStylesheetHrefValue,
       themeStylesheetLinksHtml,
+      composition,
     },
   });
 

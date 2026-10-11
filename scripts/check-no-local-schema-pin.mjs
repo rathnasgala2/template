@@ -1,22 +1,21 @@
 #!/usr/bin/env node
 /**
- * CI guard (contract re-pin packet, 2026-09-22): fails the build if
- * `@rathnasgala2/schemas` is ever pinned back to the LOCAL-1 local-tarball
- * convention (`file:../../local-packages/rathnasgala2-schemas-*.tgz`). That
- * convention was retired once `@rathnasgala2/schemas` published to the
- * registry; a GitHub Actions runner has no `local-packages` directory, so a
- * regression here previously surfaced only as an opaque `ENOENT` in CI. This
- * check fails loudly and locally instead.
+ * Source-delivery guard: generation 4 is intentionally not published to npm.
+ * Development consumes the integrity-checked schema archive vendored in this
+ * repository. The packed template exposes the same exact peer contract.
  */
 import { readFile } from 'node:fs/promises';
 
 import { runIfMain } from './run-if-main.mjs';
 
 const FORBIDDEN = [
+  /file:\.\.\/schema/u,
   /file:.*local-packages/u,
   /local-packages\/rathnasgala2-schemas-/u,
+  /https?:\/\/[^\s"']*rathnasgala2-schemas/u,
 ];
 const FILES = ['package.json', 'package-lock.json'];
+const EXPECTED_SCHEMA_SPECIFIER = 'file:vendor/rathnasgala2-schemas-3.8.0.tgz';
 
 /**
  * @param {string} path the file to scan
@@ -29,9 +28,9 @@ async function checkFile(path) {
   for (const pattern of FORBIDDEN) {
     if (pattern.test(text)) {
       diagnostics.push(
-        `${path}: found a local-tarball schema reference (${pattern}). ` +
-          '@rathnasgala2/schemas must be pinned to a registry version; ' +
-          'the file:../local-packages/... convention (LOCAL-1) is retired.',
+        `${path}: found a forbidden schema source (${pattern}). ` +
+          '@rathnasgala2/schemas must resolve only from the reviewed ' +
+          'vendor/rathnasgala2-schemas-3.8.0.tgz archive.',
       );
     }
   }
@@ -43,10 +42,58 @@ async function checkFile(path) {
  */
 async function main() {
   const diagnostics = (await Promise.all(FILES.map(checkFile))).flat();
+  const manifest = JSON.parse(await readFile('package.json', 'utf8'));
+  const lock = JSON.parse(await readFile('package-lock.json', 'utf8'));
+  if (manifest.peerDependencies?.['@rathnasgala2/schemas'] !== '3.8.0') {
+    diagnostics.push(
+      'package.json: @rathnasgala2/schemas must be the exact 3.8.0 peer for portable source-only installation.',
+    );
+  }
+  if (
+    manifest.devDependencies?.['@rathnasgala2/schemas'] !==
+    EXPECTED_SCHEMA_SPECIFIER
+  ) {
+    diagnostics.push(
+      `package.json: the development @rathnasgala2/schemas dependency must be ${EXPECTED_SCHEMA_SPECIFIER}.`,
+    );
+  }
+  if (
+    lock.packages?.['']?.devDependencies?.['@rathnasgala2/schemas'] !==
+    EXPECTED_SCHEMA_SPECIFIER
+  ) {
+    diagnostics.push(
+      `package-lock.json: development @rathnasgala2/schemas must be ${EXPECTED_SCHEMA_SPECIFIER}; regenerate the lock from the vendored archive.`,
+    );
+  }
+  if (
+    lock.packages?.['']?.peerDependencies?.['@rathnasgala2/schemas'] !== '3.8.0'
+  ) {
+    diagnostics.push(
+      'package-lock.json: @rathnasgala2/schemas must be the exact 3.8.0 peer.',
+    );
+  }
+  const schemaLock = lock.packages?.['node_modules/@rathnasgala2/schemas'];
+  if (schemaLock?.version !== '3.8.0') {
+    diagnostics.push(
+      'package-lock.json: the installed @rathnasgala2/schemas entry must be version 3.8.0.',
+    );
+  }
+  if (schemaLock?.resolved !== EXPECTED_SCHEMA_SPECIFIER) {
+    diagnostics.push(
+      `package-lock.json: the installed @rathnasgala2/schemas entry must resolve from ${EXPECTED_SCHEMA_SPECIFIER}.`,
+    );
+  }
+  if (schemaLock?.link !== undefined) {
+    diagnostics.push(
+      'package-lock.json: @rathnasgala2/schemas must be an archive-backed install, not a filesystem link.',
+    );
+  }
   if (diagnostics.length > 0) {
     throw new Error(diagnostics.join('\n'));
   }
-  console.log('no local-tarball @rathnasgala2/schemas reference found.');
+  console.log(
+    'schema is an exact portable peer backed by the vendored 3.8.0 archive.',
+  );
 }
 
 runIfMain(import.meta, main);

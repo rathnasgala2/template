@@ -1,5 +1,5 @@
 /**
- * Shared builder for a fully schema-conformant `theme-contract:2.0.0`
+ * Shared builder for a fully schema-conformant generation-4 theme contract
  * `theme.json` document (TPL-H1), used by every test that needs
  * `loadThemeAssets`'s consumed `theme.json` to actually pass
  * `validateGalaDocument`/the digest-chain checks, rather than the
@@ -13,6 +13,7 @@ import {
 } from '../../scripts/scaffold-theme.mjs';
 import { digestBytes } from '../../src/core/internal/canonical-jcs.js';
 import { buildTemplateStylingContract } from '../../src/core/internal/appearance/styling-contract.js';
+import { EDITORIAL_COMPOSITION } from '../../src/core/internal/template-composition.js';
 
 /** @returns {{key: string, type: string, light: string, dark: string}[]} the
  *   required, exactly-116-row (contract 3) `tokens` array, in the schema's own
@@ -27,7 +28,7 @@ export function buildValidThemeTokens() {
 }
 
 /**
- * Build a fully `theme-contract:2.0.0`-conformant `theme.json` object whose
+ * Build a fully generation-4-conformant `theme.json` object whose
  * digest chain is internally consistent (`stylingContractDigest` byte-equals
  * the template's own published `catalogDigest`, so this fixture is *accepted*
  * by TPL-H1's consume-time checks unless a test deliberately mutates it
@@ -44,7 +45,7 @@ export function buildValidThemeTokens() {
  * @param {Record<string, unknown>} [options.overrides] shallow overrides
  *   applied last, for negative-path tests
  * @returns {Record<string, unknown>} a complete, internally-consistent
- *   `theme-contract:2.0.0` candidate instance
+ *   generation-4 theme-contract candidate instance
  */
 export function buildValidThemeJson({
   stylesheets,
@@ -56,10 +57,11 @@ export function buildValidThemeJson({
   return {
     schemaId: 'urn:gala:schema:theme-contract:2.0.0',
     schemaVersion: '2.0.0',
-    themeId: 'default',
-    package: '@rathnasgala2/theme-default@2.0.0',
+    themeId: 'editorial',
+    package: '@rathnasgala2/theme-editorial@4.0.0',
     contractVersion: publishedContract.contractVersion,
-    templateRange: '^3.0.0',
+    templateRange: '^4.0.0',
+    composition: { ...EDITORIAL_COMPOSITION },
     stylesheets: [...stylesheets],
     cssLayers: [...cssLayers],
     slotHooks: ['landmark-header'],

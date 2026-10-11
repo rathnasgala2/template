@@ -45,11 +45,11 @@ boundary (the attribution switch above stays a core appearance setting).
 
 ## Contract sources and generation commands
 
-This repository consumes `@rathnasgala2/schemas@3.3.0` from the public npm
-registry (the LOCAL-1 `file:../../local-packages/...` tarball convention is
-retired now that `@rathnasgala2/schemas` publishes; `package-lock.json` pins its
-resolved registry version and integrity). It owns two of its own published
-contracts, `contracts/render-policy.jcs` and
+This source targets the exact `@rathnasgala2/schemas@3.8.0` package.
+Generation-4 development verifies against the schema sibling/packed candidate;
+the release lock remains intentionally unchanged until 3.8.0 is published and
+must be regenerated from that authoritative artifact before release. It owns two
+of its own published contracts, `contracts/render-policy.jcs` and
 `contracts/theme-styling-contract.jcs`, emitted as compact RFC 8785 JCS by
 `npm run contracts:generate` and drift-checked by `npm run contracts:check`.
 `contracts/render-policy.jcs` is S2-T04's real, closed sanitizer/parser catalog,

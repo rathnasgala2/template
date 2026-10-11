@@ -8,9 +8,9 @@
  * script), an empty `components.css`, and a `print.css`.
  *
  * `themeId` (and the derived `package` field) is constrained by the schema
- * to one of the five admitted theme identities
- * (`default`/`amaze`/`flashy`/`minimal`/`zebra`); this scaffold cannot mint a
- * new one, only start (or reset) one of those five from a clean, valid
+ * to one of the six admitted theme identities
+ * (`default`/`amaze`/`editorial`/`flashy`/`minimal`/`zebra`); this scaffold
+ * cannot mint a new one, only start (or reset) one of those six from a clean, valid
  * baseline. See `docs/theme-authoring.md` for the full guide this script
  * accompanies.
  */
@@ -27,18 +27,35 @@ import {
   RESOLVED_PALETTE_SELECTORS,
   TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION,
 } from '../src/core/internal/appearance/styling-contract.js';
+import {
+  DEVELOPER_COMPOSITION,
+  EDITORIAL_COMPOSITION,
+  NEWSLETTER_COMPOSITION,
+  PERSONAL_COMPOSITION,
+  VISUAL_COMPOSITION,
+} from '../src/core/internal/template-composition.js';
 import { runIfMain } from './run-if-main.mjs';
 
-/** @type {readonly string[]} the five theme identities
+/** @type {readonly string[]} the six theme identities
  * `urn:gala:schema:theme-contract:2.0.0` admits, in `themeId`/`package`
  * pairing order. */
 export const ADMITTED_THEME_IDS = Object.freeze([
   'default',
   'amaze',
+  'editorial',
   'flashy',
   'minimal',
   'zebra',
 ]);
+
+const COMPOSITION_BY_THEME_ID = Object.freeze({
+  default: NEWSLETTER_COMPOSITION,
+  amaze: EDITORIAL_COMPOSITION,
+  editorial: EDITORIAL_COMPOSITION,
+  flashy: VISUAL_COMPOSITION,
+  minimal: PERSONAL_COMPOSITION,
+  zebra: DEVELOPER_COMPOSITION,
+});
 
 /** @type {{key: string, type: string}[]}
  * the closed 116-entry token catalog `urn:gala:schema:theme-contract:2.0.0`'s
@@ -265,6 +282,7 @@ export async function scaffoldTheme({
     package: `@rathnasgala2/theme-${themeId}@${packageVersion}`,
     contractVersion: publishedContract.contractVersion,
     templateRange: `^${TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION}`,
+    composition: { ...COMPOSITION_BY_THEME_ID[themeId] },
     stylesheets: ['tokens.css', 'components.css', 'print.css'],
     cssLayers: ['gala-tokens', 'gala-components', 'gala-print'],
     slotHooks: ['landmark-header'],

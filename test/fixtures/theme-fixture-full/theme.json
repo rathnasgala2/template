@@ -1,10 +1,23 @@
 {
   "schemaId": "urn:gala:schema:theme-contract:2.0.0",
   "schemaVersion": "2.0.0",
-  "themeId": "default",
-  "package": "@rathnasgala2/theme-default@2.0.0",
-  "contractVersion": "3.0.0",
-  "templateRange": "^3.0.0",
+  "themeId": "editorial",
+  "package": "@rathnasgala2/theme-editorial@4.0.0",
+  "contractVersion": "4.0.0",
+  "templateRange": "^4.0.0",
+  "composition": {
+    "schemaId": "urn:gala:schema:template-composition:2.0.0",
+    "schemaVersion": "2.0.0",
+    "profile": "editorial",
+    "homeLayout": "magazine",
+    "articleLayout": "editorial",
+    "authorLayout": "portrait",
+    "listingLayout": "rows",
+    "headerLayout": "masthead",
+    "footerLayout": "expanded",
+    "mediaRatio": "landscape",
+    "density": "comfortable"
+  },
   "stylesheets": ["tokens.css", "components.css", "utilities.css", "print.css"],
   "cssLayers": [
     "gala-tokens",
@@ -759,5 +772,5 @@
   },
   "fixtureDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
   "evidenceDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-  "stylingContractDigest": "sha256:a10fecf6d43e4392312158f15b66d55a9e2bd3c7816a0747eb2084735d336de5"
+  "stylingContractDigest": "sha256:04abe6e0ce1e75ebfdd2549cceb66b4f4ff7aa0aeccf96ac18b300bed1f7aa0a"
 }

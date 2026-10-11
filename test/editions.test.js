@@ -155,7 +155,10 @@ test('an edition renders beside its article, canonical to the article and not in
     );
     assert.deepEqual(metaContents(html, 'og:url'), [articleUrl]);
     assert.deepEqual(metaContents(html, 'robots'), ['noindex, follow']);
-    assert.match(html, /<body data-gala-page-kind="article">/);
+    assert.match(
+      html,
+      /<body[^>]*data-gala-page-kind="article"[^>]*data-gala-profile="editorial"[^>]*>/,
+    );
     assert.match(
       html,
       new RegExp(

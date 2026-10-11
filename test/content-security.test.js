@@ -481,7 +481,9 @@ test('golden output: the canonical S2 fixture renders its document head byte-exa
     assert.ok(
       bytes
         .slice(bodyStart)
-        .startsWith('<body data-gala-page-kind="article">\n'),
+        .startsWith(
+          '<body data-gala-page-kind="article" data-gala-profile="editorial"',
+        ),
     );
     // The fixture's `body` is the literal string "fixture-1" — already
     // policy-conformant HTML (a bare text node) — inserted verbatim inside

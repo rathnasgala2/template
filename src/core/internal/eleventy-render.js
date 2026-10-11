@@ -172,7 +172,7 @@ const SKELETON_LAYOUT_SOURCE = [
   '<link rel="stylesheet" href="{{ baseStylesheetHref }}">',
   '{{ themeStylesheetLinksHtml | safe }}',
   '</head>',
-  `<body ${PAGE_KIND_ATTRIBUTE}="{{ pageKind }}">`,
+  `<body ${PAGE_KIND_ATTRIBUTE}="{{ pageKind }}" data-gala-profile="{{ composition.profile }}" data-gala-home-layout="{{ composition.homeLayout }}" data-gala-article-layout="{{ composition.articleLayout }}" data-gala-author-layout="{{ composition.authorLayout }}" data-gala-listing-layout="{{ composition.listingLayout }}" data-gala-header-layout="{{ composition.headerLayout }}" data-gala-footer-layout="{{ composition.footerLayout }}" data-gala-media-ratio="{{ composition.mediaRatio }}" data-gala-density="{{ composition.density }}">`,
   '{{ content | safe }}',
   '</body>',
   '</html>',

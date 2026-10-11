@@ -1,6 +1,6 @@
 /**
  * Task packet S2-T12 acceptance tests: `contracts/theme-styling-contract.jcs`
- * emission and structural self-validation, theme-contract:2.0.0 fixtures for
+ * emission and structural self-validation, generation-4 theme fixtures for
  * both palettes validated with the schema package's own exported validator,
  * a rendered-HTML drift gate against the published hook catalog, theme
  * asset copy/link integration for both stylesheet-list shapes, and the
@@ -62,6 +62,10 @@ import {
 import { normalizeAuthoredMarkdown } from '../src/core/internal/content-security.js';
 import { HIGHLIGHT_GRAMMARS } from '../src/core/internal/render-policy-content.js';
 import { buildTestPng, sha256Of } from './helpers/media-fixtures.js';
+import {
+  EDITORIAL_COMPOSITION,
+  SUPPORTED_COMPOSITIONS,
+} from '../src/core/internal/template-composition.js';
 
 /**
  * Stage one file under a render's `sourceDirectory` and return a
@@ -130,7 +134,7 @@ test('a mutated catalogDigest, layer order or attribute row is rejected', () => 
 
 test('public theme-slot hooks stay within the 256 cap, sorted by hookId, each atom and id appearing exactly once', () => {
   const hooks = templateStylingContractHooks();
-  assert.ok(hooks.length > 64, 'contract 3.0.0 publishes the component hooks');
+  assert.ok(hooks.length > 64, 'contract 4.0.0 publishes the component hooks');
   assert.ok(hooks.length <= MAX_PUBLIC_HOOKS);
   assert.equal(MAX_PUBLIC_HOOKS, 256);
   const atoms = new Set(hooks.map((hook) => hook.selectorAtom));
@@ -174,7 +178,7 @@ test('cssLayers/stylesheet shapes: the contract fixes the ordered five-layer cat
   });
 });
 
-// --- theme-contract:2.0.0 fixtures for both palettes, validated with the
+// --- Generation-4 theme fixtures for both palettes, validated with the
 // schema package's own exported validator ---
 
 /**
@@ -197,18 +201,19 @@ function baseThemeContractTokens(colors) {
 }
 
 /**
- * @param {{themeId: string, light: string, dark: string}} options
- * @returns {Record<string, unknown>} a complete `theme-contract:2.0.0`
+ * @param {{light: string, dark: string}} options
+ * @returns {Record<string, unknown>} a complete generation-4 theme-contract
  *   candidate instance for one palette pair
  */
-function buildThemeContractFixture({ themeId, light, dark }) {
+function buildThemeContractFixture({ light, dark }) {
   return {
     schemaId: 'urn:gala:schema:theme-contract:2.0.0',
     schemaVersion: '2.0.0',
-    themeId,
-    package: `@rathnasgala2/theme-default@2.0.0`,
-    contractVersion: '2.0.0',
-    templateRange: '^2.0.0',
+    themeId: 'editorial',
+    package: `@rathnasgala2/theme-editorial@4.0.0`,
+    contractVersion: '4.0.0',
+    templateRange: '^4.0.0',
+    composition: { ...EDITORIAL_COMPOSITION },
     stylesheets: ['tokens.css', 'components.css', 'print.css'],
     cssLayers: ['gala-tokens', 'gala-components', 'gala-print'],
     slotHooks: ['landmark-header'],
@@ -233,7 +238,7 @@ function buildThemeContractFixture({ themeId, light, dark }) {
   };
 }
 
-test('theme-contract:2.0.0 fixture validates for a light-dominant palette', () => {
+test('generation-4 theme fixture validates for a light-dominant palette', () => {
   const instance = buildThemeContractFixture({
     themeId: 'default',
     light: '#ffffff',
@@ -250,7 +255,7 @@ test('theme-contract:2.0.0 fixture validates for a light-dominant palette', () =
   );
 });
 
-test('theme-contract:2.0.0 fixture validates for a dark-dominant palette', () => {
+test('generation-4 theme fixture validates for a dark-dominant palette', () => {
   const instance = buildThemeContractFixture({
     themeId: 'default',
     light: '#f5f0e8',
@@ -267,7 +272,7 @@ test('theme-contract:2.0.0 fixture validates for a dark-dominant palette', () =>
   );
 });
 
-test('an invalid theme-contract:2.0.0 fixture (missing required field) is rejected', () => {
+test('an invalid generation-4 theme fixture (missing required field) is rejected', () => {
   const instance = buildThemeContractFixture({
     themeId: 'default',
     light: '#ffffff',
@@ -402,18 +407,47 @@ async function readAllHtml(outputDirectory, routes) {
   return chunks.join('\n');
 }
 
-test('drift gate: every published hook is actually rendered by the rich fixture, and every rendered hook-like construct is published', async () => {
-  const { outputDirectory, workDirectory, sourceDirectory, cleanup } =
-    await createRenderDirectories();
-  try {
-    const buildInput = await buildCoverageFixture(sourceDirectory);
-    const { manifest } = await renderPublication(buildInput, {
-      outputDirectory,
-      workDirectory,
-      sourceDirectory,
-      provenance: testProvenance(),
+test('drift gate: every published hook is rendered across all five profiles, and every rendered hook-like construct is published', async () => {
+  const themeIdsByProfile = {
+    editorial: 'editorial',
+    newsletter: 'default',
+    visual: 'flashy',
+    personal: 'minimal',
+    developer: 'zebra',
+  };
+  const htmlChunks = [];
+  for (const composition of SUPPORTED_COMPOSITIONS) {
+    const { outputDirectory, workDirectory, sourceDirectory, cleanup } =
+      await createRenderDirectories();
+    const themeId = themeIdsByProfile[composition.profile];
+    const themeDirectory = await buildThemeFixtureDirectory([], {
+      themeId,
+      package: `@rathnasgala2/theme-${themeId}@4.0.0`,
+      composition: { ...composition },
     });
-    const html = await readAllHtml(outputDirectory, manifest.routes);
+    try {
+      const buildInput = await buildCoverageFixture(sourceDirectory);
+      const { manifest } = await renderPublication(buildInput, {
+        outputDirectory,
+        workDirectory,
+        sourceDirectory,
+        provenance: testProvenance(),
+        themeDirectory,
+      });
+      htmlChunks.push(await readAllHtml(outputDirectory, manifest.routes));
+    } finally {
+      await cleanup();
+      await rm(themeDirectory, { recursive: true, force: true });
+    }
+  }
+  const html = htmlChunks.join('\n');
+  for (const composition of SUPPORTED_COMPOSITIONS) {
+    assert.ok(
+      html.includes(`data-gala-profile="${composition.profile}"`),
+      `${composition.profile} profile must be rendered`,
+    );
+  }
+  {
     const hooks = templateStylingContractHooks();
 
     // Direction 1: every declared hook must actually be rendered.
@@ -455,6 +489,15 @@ test('drift gate: every published hook is actually rendered by the rich fixture,
       'data-gala-resolved-color-mode',
       'data-gala-slot',
       'data-gala-page-kind',
+      'data-gala-profile',
+      'data-gala-home-layout',
+      'data-gala-article-layout',
+      'data-gala-author-layout',
+      'data-gala-listing-layout',
+      'data-gala-header-layout',
+      'data-gala-footer-layout',
+      'data-gala-media-ratio',
+      'data-gala-density',
       // Set by the client-side bootstrap script only, never server-rendered
       // (S2-T07); included here so a false positive never occurs if it ever
       // is.
@@ -537,15 +580,13 @@ test('drift gate: every published hook is actually rendered by the rich fixture,
         );
       }
     }
-  } finally {
-    await cleanup();
   }
 });
 
 // --- Theme asset path containment (independent-review finding B1) ---
 
 /**
- * Build a fresh, minimal, otherwise fully `theme-contract:2.0.0`-conformant
+ * Build a fresh, minimal, otherwise fully generation-4-conformant
  * (TPL-H1) theme package directory (three stylesheets, no `utilities.css`)
  * with a caller-supplied set of extra passive-asset files, for exercising
  * `loadThemeAssets`'s path-containment checks directly (unit level, rather
@@ -554,9 +595,11 @@ test('drift gate: every published hook is actually rendered by the rich fixture,
  * @param {readonly {path: string, mediaType: string, bytes: Buffer}[]} extraFiles
  *   declared passive-asset files (already written to disk by the caller) to
  *   add to `theme.json.assets`, each with an internally-consistent digest
+ * @param {Record<string, unknown>} [overrides] theme identity/composition
+ *   overrides for another admitted generation-4 profile
  * @returns {Promise<string>} the fresh temporary theme directory
  */
-async function buildThemeFixtureDirectory(extraFiles) {
+async function buildThemeFixtureDirectory(extraFiles, overrides = {}) {
   const dir = await mkdtemp(path.join(tmpdir(), 'gala-theme-fixture-'));
   const stylesheetFiles = [
     {
@@ -589,6 +632,7 @@ async function buildThemeFixtureDirectory(extraFiles) {
       })),
       ...extraFiles,
     ],
+    overrides,
   });
   await writeFile(path.join(dir, 'theme.json'), JSON.stringify(themeJson));
   return dir;

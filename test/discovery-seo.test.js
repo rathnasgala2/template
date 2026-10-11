@@ -572,7 +572,7 @@ test('exactly one h1 per page; the home h1 is the publication name, screen-reade
   }
   assert.match(
     page('fixture-1/index.html'),
-    /<main id="main-content" class="g-main" tabindex="-1"><h1 class="g-sr">Quiet Notes<\/h1>/,
+    /<h1 class="g-sr">Quiet Notes<\/h1>/,
   );
 });
 

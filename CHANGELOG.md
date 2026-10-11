@@ -8,6 +8,22 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-10-11
+
+### Added
+
+- Closed Editorial, Newsletter, Visual, Personal, and Developer compositions,
+  with purpose-specific Home, Article, Author, listing, header, and footer
+  structures for generation-4 theme packages.
+- A generation-4 styling contract with the public hooks required by the new
+  layouts while retaining every legacy hook used by contract-3 themes.
+
+### Changed
+
+- The renderer and theme admission boundary now require contract `4.0.0`,
+  template range `^4.0.0`, and a complete supported composition.
+- The schema dependency moves to exact `@rathnasgala2/schemas@3.8.0`.
+
 ## [3.2.1] - 2026-10-10
 
 ### Fixed

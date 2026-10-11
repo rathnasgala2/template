@@ -88,6 +88,10 @@ import { getMessages } from './messages.js';
 import { resolveTextDirection } from './text-direction.js';
 import { deriveAuthorSlugs, routeSegmentForLabel } from './route-labels.js';
 import { derivePublicBasePath, joinPublicRoute } from './route.js';
+import {
+  assertSupportedComposition,
+  EDITORIAL_COMPOSITION,
+} from './template-composition.js';
 
 /** Listing page size (index and per-year archive pages). Scoped decision:
  * this renderer has no externally fixed page size; 10 is a deterministic,
@@ -383,11 +387,46 @@ export function homeDocumentTitle(name, tagline) {
  * @param {import('../../../types/index.d.ts').InteractionsModule} [options.interactions]
  *   the validated interactions module; when set, every article page carries
  *   the interactions section and is interaction-bearing
+ * @param {unknown} [options.composition] the schema-validated structural
+ *   composition selected by the theme; defaults to Editorial only for
+ *   theme-less renderer use
  * @returns {GeneratedPage[]} every generated page, in a stable, deterministic
  *   order
  */
 export function buildGeneratedPages(validatedInput, options) {
   const { publication, authors, content, basePath, baseUrl } = validatedInput;
+  const composition = assertSupportedComposition(
+    options.composition ?? EDITORIAL_COMPOSITION,
+  );
+  /**
+   * Preserve every content region while giving each article direction its
+   * own reading sequence and semantic container.
+   *
+   * @param {{head: string, cover: string, toc: string, prose: string, foot: string}} parts
+   * @returns {string}
+   */
+  const articleStructure = ({ head, cover, toc, prose, foot }) => {
+    /**
+     * @param {string} contents rendered article regions
+     * @param {string} [element] semantic wrapper element
+     * @returns {string}
+     */
+    const grid = (contents, element = 'div') =>
+      `<${element} class="g-wrap g-article-grid">${contents}</${element}>`;
+    if (composition.profile === 'newsletter') {
+      return `<section>${head}${cover}${grid(prose + toc, 'section')}${foot}</section>`;
+    }
+    if (composition.profile === 'visual') {
+      return `<div>${cover}${head}${grid(prose + toc)}</div>${foot}`;
+    }
+    if (composition.profile === 'personal') {
+      return `<section>${head}${cover}${grid(prose)}${toc ? grid(toc, 'section') : ''}${foot}</section>`;
+    }
+    if (composition.profile === 'developer') {
+      return `<div>${head}${cover}${grid(toc + prose, 'section')}${foot}</div>`;
+    }
+    return head + cover + grid(toc + prose) + foot;
+  };
   const interactionsModule = interactionsActive(options.interactions)
     ? options.interactions
     : undefined;
@@ -612,13 +651,32 @@ export function buildGeneratedPages(validatedInput, options) {
    * @param {string} [afterHtml] markup after the list (pagination)
    * @returns {string}
    */
-  const rowList = (items, afterHtml = '') =>
-    `<section class="g-wrap g-section">` +
-    (items.length > 0
-      ? `<div class="g-list">${items.map((record) => cardOf(record, 'row', 2)).join('')}</div>`
-      : `<p>${text('emptyListingLabel')}</p>`) +
-    afterHtml +
-    `</section>`;
+  const rowList = (items, afterHtml = '') => {
+    const grid = composition.listingLayout === 'image-grid';
+    const issueCards = composition.listingLayout === 'issues';
+    const datedRows = composition.listingLayout === 'dated-rows';
+    const outer =
+      composition.profile === 'personal' || composition.profile === 'developer'
+        ? 'div'
+        : 'section';
+    const contents =
+      items.length > 0
+        ? datedRows
+          ? `<div class="g-list g-dated-list">${items
+              .map(
+                (record) =>
+                  `<div class="g-dated-row"><time class="g-date-stamp" datetime="${escapeHtml(record.frontmatter.publishedAt)}">` +
+                  `${call('formatDate', record.frontmatter.publishedAt)}</time>${cardOf(record, 'row', 2)}</div>`,
+              )
+              .join('')}</div>`
+          : `<div class="${grid ? 'g-grid' : 'g-list'}">${items
+              .map((record) =>
+                cardOf(record, grid || issueCards ? 'grid' : 'row', 2),
+              )
+              .join('')}</div>`
+        : `<p>${text('emptyListingLabel')}</p>`;
+    return `<${outer} class="g-wrap g-section" data-gala-listing-layout="${composition.listingLayout}">${contents}${afterHtml}</${outer}>`;
+  };
 
   /**
    * One listing page's metadata: bare title, `<title>`, description,
@@ -710,6 +768,28 @@ export function buildGeneratedPages(validatedInput, options) {
         ? `<p class="g-dek">${escapeHtml(author.biography)}</p>`
         : '') +
       links;
+    const authorHead = listingHead({
+      breadcrumbHtml: crumbs(
+        [{ label: /** @type {string} */ (messages.authorsSectionLabel) }],
+        [{ label: author.displayName }],
+      ),
+      kicker: /** @type {string} */ (messages.authorKickerLabel),
+      count: authored.length,
+      title: author.displayName,
+      descriptionHtml: intro,
+      markHtml: avatar(author),
+    });
+    const authoredList = rowList(authored);
+    const authorContents =
+      composition.profile === 'newsletter'
+        ? `<section>${authorHead}${authoredList}</section>`
+        : composition.profile === 'visual'
+          ? `<div>${authorHead}<section>${authoredList}</section></div>`
+          : composition.profile === 'personal'
+            ? `<section>${authorHead}<div>${authoredList}</div></section>`
+            : composition.profile === 'developer'
+              ? `<div>${authorHead}<div>${authoredList}</div></div>`
+              : authorHead + authoredList;
     pages.push({
       kind: 'author',
       route: authorRoute(author),
@@ -737,17 +817,9 @@ export function buildGeneratedPages(validatedInput, options) {
         }),
       ),
       bodyHtml:
-        listingHead({
-          breadcrumbHtml: crumbs(
-            [{ label: /** @type {string} */ (messages.authorsSectionLabel) }],
-            [{ label: author.displayName }],
-          ),
-          kicker: /** @type {string} */ (messages.authorKickerLabel),
-          count: authored.length,
-          title: author.displayName,
-          descriptionHtml: intro,
-          markHtml: avatar(author),
-        }) + rowList(authored),
+        `<div data-gala-author-layout="${composition.authorLayout}">` +
+        authorContents +
+        `</div>`,
     });
   }
 
@@ -822,7 +894,7 @@ export function buildGeneratedPages(validatedInput, options) {
       editionSelector +
       `</div>`;
     const cover = hero
-      ? `<figure class="g-wrap g-article-cover">${renderImage({ image: hero, alt: heroMedia?.role === 'decorative' ? '' : (heroMedia?.alt ?? ''), priority: true })}</figure>`
+      ? `<figure class="${composition.articleLayout === 'full-bleed' ? 'g-article-cover g-article-cover-full-bleed' : 'g-wrap g-article-cover'}">${renderImage({ image: hero, alt: heroMedia?.role === 'decorative' ? '' : (heroMedia?.alt ?? ''), priority: true })}</figure>`
       : '';
     const tocNav = contents
       ? `<nav class="g-toc" aria-label="${text('onThisPageLabel')}"><p class="g-label">${icon('list')}${text('onThisPageLabel')}</p>${contents}</nav>`
@@ -1001,8 +1073,8 @@ export function buildGeneratedPages(validatedInput, options) {
       interactionBearing: Boolean(interactions),
       lastModified: contentLastModified(frontmatter),
       bodyHtml:
-        `<article class="g-article">${isArticle || isEdition ? '<div class="g-progress" aria-hidden="true"></div>' : ''}${head}${cover}` +
-        `<div class="g-wrap g-article-grid">${tocNav}${prose}</div>${foot}</article>` +
+        `<article class="g-article" data-gala-article-layout="${composition.articleLayout}">${isArticle || isEdition ? '<div class="g-progress" aria-hidden="true"></div>' : ''}` +
+        `${articleStructure({ head, cover, toc: tocNav, prose, foot })}</article>` +
         after +
         (isArticle ? newsletterHtml : ''),
     });
@@ -1093,15 +1165,49 @@ export function buildGeneratedPages(validatedInput, options) {
         ? `<section class="g-wrap g-section"><div class="g-section-head"><h2>${text('moreArticlesHeading')}</h2></div>` +
           `<div class="g-list">${items.map((r) => cardOf(r, 'row')).join('')}</div>${pagination}</section>`
         : '';
+    const homeParts =
+      composition.profile === 'newsletter'
+        ? homeHeading +
+          homeTags +
+          homeFeatured +
+          homeLatest +
+          moreList +
+          homeSeries +
+          newsletterHtml
+        : composition.profile === 'visual'
+          ? homeHeading +
+            homeFeatured +
+            homeLatest +
+            homeSeries +
+            homeTags +
+            moreList +
+            newsletterHtml
+          : composition.profile === 'personal'
+            ? homeHeading +
+              homeLatest +
+              homeFeatured +
+              moreList +
+              homeTags +
+              homeSeries +
+              newsletterHtml
+            : composition.profile === 'developer'
+              ? homeHeading +
+                homeTags +
+                homeLatest +
+                homeSeries +
+                homeFeatured +
+                moreList +
+                newsletterHtml
+              : homeHeading +
+                homeFeatured +
+                homeTags +
+                homeLatest +
+                homeSeries +
+                moreList +
+                newsletterHtml;
     const bodyHtml =
       pageNumber === 1
-        ? homeHeading +
-          homeFeatured +
-          homeTags +
-          homeLatest +
-          homeSeries +
-          moreList +
-          newsletterHtml
+        ? `<div data-gala-home-layout="${composition.homeLayout}">${homeParts}</div>`
         : listingHead({
             breadcrumbHtml: crumbs([
               { label: /** @type {string} */ (messages.indexHeading) },

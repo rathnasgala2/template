@@ -48,7 +48,7 @@ async function buildThemeDirectory() {
 }
 
 /**
- * Write a fully `theme-contract:2.0.0`-conformant `theme.json` (TPL-H1),
+ * Write a fully generation-4-conformant `theme.json` (TPL-H1),
  * whose passive-asset rows are exactly the caller-supplied ones (verbatim,
  * so a deliberately wrong `byteLength`/`sha256`/`mediaType` reaches this
  * module's own TPL-C2 checks rather than being computed away).
