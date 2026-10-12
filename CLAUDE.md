@@ -45,9 +45,9 @@ boundary (the attribution switch above stays a core appearance setting).
 
 ## Contract sources and generation commands
 
-This source targets the exact `@rathnasgala2/schemas@3.8.0` package.
+This source targets the exact `@rathnasgala2/schemas@3.10.0` package.
 Generation-4 development verifies against the schema sibling/packed candidate;
-the release lock remains intentionally unchanged until 3.8.0 is published and
+the release lock remains intentionally unchanged until 3.10.0 is published and
 must be regenerated from that authoritative artifact before release. It owns two
 of its own published contracts, `contracts/render-policy.jcs` and
 `contracts/theme-styling-contract.jcs`, emitted as compact RFC 8785 JCS by

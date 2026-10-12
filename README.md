@@ -669,7 +669,7 @@ npm run audit               # npm audit --audit-level=high
 ```
 
 Source development does not require a sibling schema checkout. The exact
-`@rathnasgala2/schemas@3.8.0` release is installed from the npm registry, and
+`@rathnasgala2/schemas@3.10.0` release is installed from the npm registry, and
 the lockfile carries its registry integrity. The exact peer is the public
 consumer contract.
 
@@ -696,10 +696,10 @@ editions: they are a rendered content kind (see Editions).
 
 ## Consuming `@rathnasgala2/schemas`
 
-This source targets `@rathnasgala2/schemas@3.8.0` with an exact manifest pin.
+This source targets `@rathnasgala2/schemas@3.10.0` with an exact manifest pin.
 Generation-4 development verifies against the schema sibling/packed candidate.
-The historical `package-lock.json` is not a 3.8.0 registry claim: it must be
-regenerated, together with the SBOM, from the authoritative published 3.8.0
+The historical `package-lock.json` is not a 3.10.0 registry claim: it must be
+regenerated, together with the SBOM, from the authoritative published 3.10.0
 artifact before release. The 2.8.0->2.11.0 convergence changes none of the four
 roots this renderer validates, for the same reason the 2.7.0-2.8.0 delta below
 did not. Only the `"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) is

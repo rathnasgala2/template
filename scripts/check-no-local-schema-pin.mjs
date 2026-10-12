@@ -16,7 +16,7 @@ const FORBIDDEN = [
 ];
 const FILES = ['package.json', 'package-lock.json'];
 const REGISTRY_TARBALL =
-  'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.8.0.tgz';
+  'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.10.0.tgz';
 
 /**
  * @param {string} path the file to scan
@@ -44,22 +44,23 @@ async function main() {
   const diagnostics = (await Promise.all(FILES.map(checkFile))).flat();
   const manifest = JSON.parse(await readFile('package.json', 'utf8'));
   const lock = JSON.parse(await readFile('package-lock.json', 'utf8'));
-  if (manifest.peerDependencies?.['@rathnasgala2/schemas'] !== '3.8.0') {
+  if (manifest.peerDependencies?.['@rathnasgala2/schemas'] !== '3.10.0') {
     diagnostics.push(
-      'package.json: @rathnasgala2/schemas must be the exact 3.8.0 peer for portable source-only installation.',
+      'package.json: @rathnasgala2/schemas must be the exact 3.10.0 peer for portable source-only installation.',
     );
   }
   if (
-    lock.packages?.['']?.peerDependencies?.['@rathnasgala2/schemas'] !== '3.8.0'
+    lock.packages?.['']?.peerDependencies?.['@rathnasgala2/schemas'] !==
+    '3.10.0'
   ) {
     diagnostics.push(
-      'package-lock.json: @rathnasgala2/schemas must be the exact 3.8.0 peer.',
+      'package-lock.json: @rathnasgala2/schemas must be the exact 3.10.0 peer.',
     );
   }
   const schemaLock = lock.packages?.['node_modules/@rathnasgala2/schemas'];
-  if (schemaLock?.version !== '3.8.0') {
+  if (schemaLock?.version !== '3.10.0') {
     diagnostics.push(
-      'package-lock.json: the installed @rathnasgala2/schemas entry must be version 3.8.0.',
+      'package-lock.json: the installed @rathnasgala2/schemas entry must be version 3.10.0.',
     );
   }
   if (schemaLock?.resolved !== REGISTRY_TARBALL) {

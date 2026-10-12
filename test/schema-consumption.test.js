@@ -13,7 +13,7 @@ test('package.json pins one exact registry schemas release as the exact peer, in
     packageJson.devDependencies?.['@rathnasgala2/schemas'],
     undefined,
   );
-  assert.equal(packageJson.peerDependencies['@rathnasgala2/schemas'], '3.8.0');
+  assert.equal(packageJson.peerDependencies['@rathnasgala2/schemas'], '3.10.0');
 });
 
 test('package-lock.json resolves schemas from the registry', async () => {
@@ -22,10 +22,10 @@ test('package-lock.json resolves schemas from the registry', async () => {
   );
   const entry = lock.packages['node_modules/@rathnasgala2/schemas'];
   assert.ok(entry, '@rathnasgala2/schemas must be present in the lockfile');
-  assert.equal(entry.version, '3.8.0');
+  assert.equal(entry.version, '3.10.0');
   assert.equal(
     entry.resolved,
-    'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.8.0.tgz',
+    'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.10.0.tgz',
   );
   assert.equal(entry.link, undefined);
   assert.match(entry.integrity, /^sha512-/u);
