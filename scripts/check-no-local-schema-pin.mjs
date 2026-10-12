@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Source-delivery guard: generation 4 is intentionally not published to npm.
- * Development consumes the integrity-checked schema archive vendored in this
- * repository. The packed template exposes the same exact peer contract.
+ * Schema-source guard: development and the packed peer contract both use the
+ * exact registry release of @rathnasgala2/schemas; no local or vendored
+ * archive may stand in for it.
  */
 import { readFile } from 'node:fs/promises';
 
@@ -15,7 +15,8 @@ const FORBIDDEN = [
   /https?:\/\/[^\s"']*rathnasgala2-schemas/u,
 ];
 const FILES = ['package.json', 'package-lock.json'];
-const EXPECTED_SCHEMA_SPECIFIER = 'file:vendor/rathnasgala2-schemas-3.8.0.tgz';
+const REGISTRY_TARBALL =
+  'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.8.0.tgz';
 
 /**
  * @param {string} path the file to scan
@@ -29,8 +30,7 @@ async function checkFile(path) {
     if (pattern.test(text)) {
       diagnostics.push(
         `${path}: found a forbidden schema source (${pattern}). ` +
-          '@rathnasgala2/schemas must resolve only from the reviewed ' +
-          'vendor/rathnasgala2-schemas-3.8.0.tgz archive.',
+          '@rathnasgala2/schemas must resolve only from the npm registry.',
       );
     }
   }
@@ -50,22 +50,6 @@ async function main() {
     );
   }
   if (
-    manifest.devDependencies?.['@rathnasgala2/schemas'] !==
-    EXPECTED_SCHEMA_SPECIFIER
-  ) {
-    diagnostics.push(
-      `package.json: the development @rathnasgala2/schemas dependency must be ${EXPECTED_SCHEMA_SPECIFIER}.`,
-    );
-  }
-  if (
-    lock.packages?.['']?.devDependencies?.['@rathnasgala2/schemas'] !==
-    EXPECTED_SCHEMA_SPECIFIER
-  ) {
-    diagnostics.push(
-      `package-lock.json: development @rathnasgala2/schemas must be ${EXPECTED_SCHEMA_SPECIFIER}; regenerate the lock from the vendored archive.`,
-    );
-  }
-  if (
     lock.packages?.['']?.peerDependencies?.['@rathnasgala2/schemas'] !== '3.8.0'
   ) {
     diagnostics.push(
@@ -78,22 +62,20 @@ async function main() {
       'package-lock.json: the installed @rathnasgala2/schemas entry must be version 3.8.0.',
     );
   }
-  if (schemaLock?.resolved !== EXPECTED_SCHEMA_SPECIFIER) {
+  if (schemaLock?.resolved !== REGISTRY_TARBALL) {
     diagnostics.push(
-      `package-lock.json: the installed @rathnasgala2/schemas entry must resolve from ${EXPECTED_SCHEMA_SPECIFIER}.`,
+      `package-lock.json: the installed @rathnasgala2/schemas entry must resolve from ${REGISTRY_TARBALL}.`,
     );
   }
   if (schemaLock?.link !== undefined) {
     diagnostics.push(
-      'package-lock.json: @rathnasgala2/schemas must be an archive-backed install, not a filesystem link.',
+      'package-lock.json: @rathnasgala2/schemas must be a registry install, not a filesystem link.',
     );
   }
   if (diagnostics.length > 0) {
     throw new Error(diagnostics.join('\n'));
   }
-  console.log(
-    'schema is an exact portable peer backed by the vendored 3.8.0 archive.',
-  );
+  console.log('schema is an exact registry peer.');
 }
 
 runIfMain(import.meta, main);

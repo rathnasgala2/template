@@ -630,10 +630,9 @@ hand-maintained) runs, in order: Prettier format check, ESLint,
 `tsc --checkJs --noEmit`, the dependency-cruiser
 architecture/module-tree-absence gate, `jscpd` duplication scan, the
 `contracts/*.jcs` canonical-form check, the no-local-schema-pin check, the
-vendored-schema integrity and provenance check, `node --test`, the license
-inventory check, the SBOM currency check (`sbom:check` compares `sbom.cdx.json`
-against the current lockfile — it is not a presence check), the workflow-pin
-check, and `npm audit --audit-level=high`.
+`node --test`, the license inventory check, the SBOM currency check
+(`sbom:check` compares `sbom.cdx.json` against the current lockfile — it is not
+a presence check), the workflow-pin check, and `npm audit --audit-level=high`.
 
 Individual gates:
 
@@ -646,8 +645,7 @@ npm run architecture    # dependency-cruiser: core never imports src/modules, no
 npm run duplication     # jscpd, 3% / 50 tokens
 npm run contracts:generate  # (re)write contracts/*.jcs from their reviewed source modules
 npm run contracts:check     # fail if committed contracts drifted
-npm run schema-pin:check    # require the exact vendored @rathnasgala2/schemas specifier
-npm run vendor:check        # verify vendor manifest, bytes, lock integrity, and installed provenance
+npm run schema-pin:check    # require the exact registry @rathnasgala2/schemas release
 npm test                # node --test
 npm run licenses:generate   # (re)write THIRD_PARTY_LICENSES.json
 npm run licenses:check      # fail if it drifted from package-lock.json
@@ -659,10 +657,9 @@ npm run audit               # npm audit --audit-level=high
 ```
 
 Source development does not require a sibling schema checkout. The exact
-`@rathnasgala2/schemas@3.8.0` development artifact is committed under `vendor/`;
-`vendor/schema-manifest.json`, the lockfile integrity, and `vendor:check` bind
-its bytes and installed provenance. The exact peer remains the public consumer
-contract.
+`@rathnasgala2/schemas@3.8.0` release is installed from the npm registry, and
+the lockfile carries its registry integrity. The exact peer is the public
+consumer contract.
 
 ## Package layout
 

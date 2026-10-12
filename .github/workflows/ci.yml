@@ -80,7 +80,6 @@ jobs:
       - run: npm run architecture
       - run: npm run contracts:check
       - run: npm run schema-pin:check
-      - run: npm run vendor:check
       - run: npm run workflows:check
       - run: npm run workflows:drift
 

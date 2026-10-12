@@ -66,9 +66,8 @@
     "workflows:check": "node scripts/check-workflow-pins.mjs",
     "workflows:drift": "node scripts/check-workflow-drift.mjs",
     "schema-pin:check": "node scripts/check-no-local-schema-pin.mjs",
-    "vendor:check": "node scripts/check-vendored-schema.mjs",
     "audit": "node scripts/npm-audit.mjs",
-    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run architecture && npm run duplication && npm run contracts:check && npm run schema-pin:check && npm run vendor:check && npm test && npm run licenses:check && npm run sbom:check && npm run workflows:check && npm run audit"
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run architecture && npm run duplication && npm run contracts:check && npm run schema-pin:check && npm test && npm run licenses:check && npm run sbom:check && npm run workflows:check && npm run audit"
   },
   "dependencies": {
     "@11ty/eleventy": "3.1.6",
@@ -83,7 +82,6 @@
   "devDependencies": {
     "@cyclonedx/cyclonedx-npm": "6.0.1",
     "@eslint/js": "10.0.1",
-    "@rathnasgala2/schemas": "file:vendor/rathnasgala2-schemas-3.8.0.tgz",
     "@types/markdown-it": "14.2.0",
     "@types/node": "24.13.4",
     "@types/sanitize-html": "2.16.1",

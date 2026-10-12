@@ -308,11 +308,20 @@
         }
       ],
       "purl": "pkg:npm/%40rathnasgala2/schemas@3.8.0",
-      "properties": [
+      "externalReferences": [
         {
-          "name": "cdx:npm:package:development",
-          "value": "true"
-        },
+          "url": "https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.8.0.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "0dd99a5cf78fb90b0652bc6949421b7146fdc5d10139791b5f80ea9c7e0d39ffb5fab081561c7550f10a30cbfd0a2ee440f8d2d8cd96a98e77b610213b918beb"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/@rathnasgala2/schemas"
@@ -3272,10 +3281,6 @@
       ],
       "properties": [
         {
-          "name": "cdx:npm:package:development",
-          "value": "true"
-        },
-        {
           "name": "cdx:npm:package:path",
           "value": "node_modules/ajv-formats"
         }
@@ -3309,10 +3314,6 @@
         }
       ],
       "properties": [
-        {
-          "name": "cdx:npm:package:development",
-          "value": "true"
-        },
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/ajv"
@@ -5447,10 +5448,6 @@
         }
       ],
       "properties": [
-        {
-          "name": "cdx:npm:package:development",
-          "value": "true"
-        },
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/fast-deep-equal"
@@ -8735,10 +8732,6 @@
       ],
       "properties": [
         {
-          "name": "cdx:npm:package:development",
-          "value": "true"
-        },
-        {
           "name": "cdx:npm:package:path",
           "value": "node_modules/fast-uri"
         }
@@ -8773,10 +8766,6 @@
       ],
       "properties": [
         {
-          "name": "cdx:npm:package:development",
-          "value": "true"
-        },
-        {
           "name": "cdx:npm:package:path",
           "value": "node_modules/json-schema-traverse"
         }
@@ -8810,10 +8799,6 @@
         }
       ],
       "properties": [
-        {
-          "name": "cdx:npm:package:development",
-          "value": "true"
-        },
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/require-from-string"

@@ -22,10 +22,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  package:
-    name: Validate and package the declared version
+  publish:
+    name: Validate and publish the declared package version
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Check out the complete history
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -38,6 +42,7 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
+          registry-url: https://registry.npmjs.org
 
       - name: Verify toolchain pins
         shell: bash
@@ -52,15 +57,21 @@ jobs:
       - name: Run the complete release gate
         run: npm run verify
 
-      - name: Build the package artifact
-        run: |
-          mkdir -p dist
-          npm pack --pack-destination dist
+      - name: Verify the package payload
+        run: npm pack --dry-run
 
-      - name: Upload the package artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: template-package-${{ github.sha }}
-          path: dist/*.tgz
-          if-no-files-found: error
-          retention-days: 90
+      - name: Publish with trusted provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_name="$(node --input-type=module -e "import definition from './package.json' with {type: 'json'}; process.stdout.write(definition.name)")"
+          package_version="$(node --input-type=module -e "import definition from './package.json' with {type: 'json'}; process.stdout.write(definition.version)")"
+          if npm view "${package_name}@${package_version}" version >/dev/null 2>&1; then
+            if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+              echo "${package_name}@${package_version} is already published; skipping this manual re-run."
+              exit 0
+            fi
+            echo "::error::${package_name}@${package_version} is already published, but this run was triggered by a push that touched a packed path (src/core/, contracts/, types/, LICENSE, README.md, package.json or package-lock.json). Bump package.json's version before merging a real content change."
+            exit 1
+          fi
+          npm publish --access public --provenance
