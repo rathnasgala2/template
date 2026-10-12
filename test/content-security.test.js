@@ -446,7 +446,10 @@ test('golden output: the canonical S2 fixture renders its document head byte-exa
     assert.equal(
       bytes.slice(0, bodyStart),
       '<!doctype html>\n' +
-        '<html lang="en-US" dir="ltr" data-gala-publication-root data-gala-resolved-color-mode="light">\n' +
+        // Template 4.1.0: the root also carries the author's "Visitors see"
+        // default and allowed modes (the shared loader offers all three with
+        // a system default, which keeps the light server-resolved mode).
+        '<html lang="en-US" dir="ltr" data-gala-publication-root data-gala-resolved-color-mode="light" data-gala-color-mode-default="system" data-gala-color-mode-allowed="light dark system">\n' +
         '<head>\n' +
         '<meta charset="utf-8">\n' +
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
