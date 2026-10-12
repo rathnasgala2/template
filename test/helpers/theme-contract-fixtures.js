@@ -8,11 +8,13 @@
  */
 
 import {
+  buildStarterPalette,
   STARTER_VALUES,
   THEME_TOKEN_CATALOG,
 } from '../../scripts/scaffold-theme.mjs';
 import { digestBytes } from '../../src/core/internal/canonical-jcs.js';
 import { buildTemplateStylingContract } from '../../src/core/internal/appearance/styling-contract.js';
+import { TEMPLATE_RENDERER_VERSION } from '../../src/core/internal/package-version.js';
 import { EDITORIAL_COMPOSITION } from '../../src/core/internal/template-composition.js';
 
 /** @returns {{key: string, type: string, light: string, dark: string}[]} the
@@ -60,12 +62,13 @@ export function buildValidThemeJson({
     themeId: 'editorial',
     package: '@rathnasgala2/theme-editorial@4.0.0',
     contractVersion: publishedContract.contractVersion,
-    templateRange: '^4.0.0',
+    templateRange: `^${TEMPLATE_RENDERER_VERSION}`,
     composition: { ...EDITORIAL_COMPOSITION },
     stylesheets: [...stylesheets],
     cssLayers: [...cssLayers],
     slotHooks: ['landmark-header'],
     tokens: buildValidThemeTokens(),
+    palette: buildStarterPalette(),
     modes: ['dark', 'light', 'system'],
     assets: files.map((file) => ({
       path: file.path,

@@ -8,6 +8,38 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-10-12
+
+### Added
+
+- The publication palette. Every build that supplies a theme derives the theme's
+  palette-driven tokens from `appearance.tokens` (`{}` or absent selects the
+  theme's own default palette) with `@rathnasgala2/schemas/palette`, checks
+  every derived value against the token grammar and every contrast pair in both
+  modes, and writes `assets/gala-palette-<12 hex>.css`: four blocks in
+  `@layer gala-tokens`, linked after the theme stylesheets with Subresource
+  Integrity and listed in the manifest. No inline style is added.
+- "Visitors see" reaches the page. `appearance.colorMode.default` renders as
+  `data-gala-color-mode-default` on the root and, when it is `light` or `dark`,
+  as the server-resolved mode; the page script uses the reader's stored choice,
+  else the author's default, else `system`. When `colorMode.allowed` has one
+  mode, no toggle is rendered and `color-scheme` is that mode.
+  `data-gala-color-mode-allowed` lists the allowed modes for the script. Both
+  attributes are template-internal, not theme hooks.
+
+### Changed
+
+- A theme whose `theme.json` has no `palette` block is refused with
+  `THEME_PALETTE_MISSING`, and a malformed block with `THEME_PALETTE_INVALID`;
+  there is no fallback path. Palette failures at build time are refused with
+  `APPEARANCE_PALETTE_INVALID` or `APPEARANCE_PALETTE_CONTRAST` (the failing
+  pair and mode are named).
+- Themes declare `templateRange` `^4.1.0`. The styling contract stays `4.0.0`
+  and its digest is unchanged.
+- The scaffolded theme starts from the reference Default theme's tokens and
+  palette bindings, and its `tokens.css` leaves the palette-driven tokens out.
+- The schema dependency moves to exact `@rathnasgala2/schemas@3.10.0`.
+
 ## [4.0.0] - 2026-10-11
 
 ### Added

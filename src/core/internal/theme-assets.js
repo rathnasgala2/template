@@ -77,9 +77,13 @@ import { validateGalaDocument } from '@rathnasgala2/schemas';
 import { ThemeAssetError } from '../errors.js';
 import { digestBytes } from './canonical-jcs.js';
 import {
-  buildTemplateStylingContract,
-  TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION,
-} from './appearance/styling-contract.js';
+  assertThemePalette,
+  buildPaletteStylesheet,
+  PALETTE_STYLESHEET_DIRECTORY,
+  PALETTE_STYLESHEET_MEDIA_TYPE,
+} from './appearance/palette-sheet.js';
+import { buildTemplateStylingContract } from './appearance/styling-contract.js';
+import { TEMPLATE_RENDERER_VERSION } from './package-version.js';
 import { MEDIA_TYPE_BY_FORMAT, sniffMediaFormat } from './media/sniff.js';
 import { sanitizeThemeSvg } from './media/theme-svg-sanitizer.js';
 import { projectFixedAssetPath } from './route.js';
@@ -414,6 +418,21 @@ function admitPassiveAssetBytes(relativePath, bytes) {
 function assertThemeContractIntegrity(themeJson) {
   const validation = validateGalaDocument(THEME_CONTRACT_SCHEMA_ID, themeJson);
   if (!validation.valid) {
+    // A palette block the closed schema itself refuses (unknown or
+    // non-drivable key, bad profile, bad role) is a palette refusal, not a
+    // generic contract refusal, so the author sees one code for it.
+    if (
+      validation.diagnostics.every((diagnostic) =>
+        String(diagnostic.instancePointer ?? '').startsWith('/palette'),
+      )
+    ) {
+      throw new ThemeAssetError(
+        'THEME_PALETTE_INVALID',
+        `theme.json palette failed ${THEME_CONTRACT_SCHEMA_ID} validation ` +
+          `(${validation.diagnostics.length} diagnostic(s)): ` +
+          JSON.stringify(validation.diagnostics),
+      );
+    }
     throw new ThemeAssetError(
       'THEME_CONTRACT_SCHEMA_INVALID',
       `theme.json failed ${THEME_CONTRACT_SCHEMA_ID} validation ` +
@@ -442,7 +461,7 @@ function assertThemeContractIntegrity(themeJson) {
   let templateRangeSatisfied;
   try {
     templateRangeSatisfied = satisfiesTemplateRange(
-      TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION,
+      TEMPLATE_RENDERER_VERSION,
       /** @type {string} */ (themeJson.templateRange),
     );
   } catch (error) {
@@ -456,7 +475,7 @@ function assertThemeContractIntegrity(themeJson) {
       'THEME_CONTRACT_VERSION_MISMATCH',
       `theme.json.templateRange (${themeJson.templateRange}) does not admit ` +
         `this renderer's own published version ` +
-        `(${TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION})`,
+        `(${TEMPLATE_RENDERER_VERSION})`,
     );
   }
   try {
@@ -467,6 +486,9 @@ function assertThemeContractIntegrity(themeJson) {
       /** @type {Error} */ (error).message,
     );
   }
+  // Template 4.1.0: every theme declares its palette bindings; a theme
+  // without them (any 4.0.0 package) is refused, with no fallback path.
+  assertThemePalette(themeJson);
 }
 
 /**
@@ -495,6 +517,9 @@ function subresourceIntegrityAttribute(bytes) {
  * @param {string} options.basePath the build input's `basePath`
  * @param {string} [options.publicBasePath] the base path emitted `<link href>`
  *   values use (`route.js#derivePublicBasePath`); defaults to `basePath`
+ * @param {unknown} [options.appearanceTokens] `appearance.tokens` (`{}` or
+ *   absent selects the theme's default palette); the derived palette sheet
+ *   is written and linked after the theme's own stylesheets
  * @returns {Promise<{
  *   files: {path: string, bytes: Buffer}[],
  *   assets: import('../../../types/index.d.ts').ManifestAssetEntry[],
@@ -507,6 +532,7 @@ export async function loadThemeAssets({
   themeDirectory,
   basePath,
   publicBasePath = basePath,
+  appearanceTokens = {},
 }) {
   const { bytes: themeJsonBytes } = await readDeclaredThemeFile(
     themeDirectory,
@@ -565,6 +591,27 @@ export async function loadThemeAssets({
       `<link rel="stylesheet" href="${escapeHtml(themeHref(publicBasePath, relativePath))}" integrity="${integrity}" crossorigin="anonymous"${mediaAttribute}>`,
     );
   }
+
+  // Template 4.1.0: the publication palette sheet, derived on every build
+  // (`{}` selects the theme's default palette), content-addressed, linked
+  // last with SRI and manifested like every theme stylesheet.
+  const paletteSheet = buildPaletteStylesheet(themeJson, appearanceTokens);
+  const paletteRelativePath = `${PALETTE_STYLESHEET_DIRECTORY}/${paletteSheet.fileName}`;
+  const paletteOutputPath = projectFixedAssetPath(
+    basePath,
+    `/${paletteRelativePath}`,
+  );
+  files.push({ path: paletteOutputPath, bytes: paletteSheet.bytes });
+  assets.push({
+    path: paletteOutputPath,
+    mediaType: PALETTE_STYLESHEET_MEDIA_TYPE,
+    byteLength: String(paletteSheet.bytes.byteLength),
+    sha256: digestBytes(paletteSheet.bytes),
+    immutable: false,
+  });
+  linkTags.push(
+    `<link rel="stylesheet" href="${escapeHtml(`/${projectFixedAssetPath(publicBasePath, `/${paletteRelativePath}`)}`)}" integrity="${subresourceIntegrityAttribute(paletteSheet.bytes)}" crossorigin="anonymous">`,
+  );
 
   // TPL-M2 fix: partition by the already-shape-validated `stylesheets` list
   // itself, not by comparing `asset.mediaType` against the literal string

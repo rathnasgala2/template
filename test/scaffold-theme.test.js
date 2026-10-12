@@ -31,7 +31,11 @@ test('scaffoldTheme writes a theme.json/tokens.css/components.css/print.css set 
       themeDirectory: dir,
       basePath: '/',
     });
-    assert.equal(result.files.length, 3, 'one file per declared stylesheet');
+    assert.equal(
+      result.files.length,
+      4,
+      'one file per declared stylesheet plus the palette sheet',
+    );
     assert.match(
       result.linkTagsHtml,
       /tokens\.css/,

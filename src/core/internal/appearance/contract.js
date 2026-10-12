@@ -67,6 +67,27 @@ export const APPEARANCE_RESOLVED_MODE_ATTRIBUTE =
  */
 export const APPEARANCE_SELECTION_ATTRIBUTE = 'data-gala-color-mode-selection';
 
+/**
+ * Template-internal bookkeeping attribute carrying the author's "Visitors
+ * see" default (`appearance.colorMode.default`: `light`, `dark` or
+ * `system`), rendered on the root by the server. Not part of the published
+ * theme styling contract; no theme selector may target it.
+ *
+ * @type {string}
+ */
+export const APPEARANCE_DEFAULT_ATTRIBUTE = 'data-gala-color-mode-default';
+
+/**
+ * Template-internal bookkeeping attribute carrying the modes the author
+ * allows (`appearance.colorMode.allowed`), space separated, rendered on the
+ * root so the page script ignores a stored choice the author no longer
+ * offers and cycles only through allowed modes. Not part of the published
+ * theme styling contract.
+ *
+ * @type {string}
+ */
+export const APPEARANCE_ALLOWED_ATTRIBUTE = 'data-gala-color-mode-allowed';
+
 /** @type {'light'} */
 export const APPEARANCE_MODE_LIGHT = 'light';
 /** @type {'dark'} */
@@ -116,6 +137,58 @@ export const APPEARANCE_RESOLVED_MODE_VALUES = Object.freeze([
  * @type {'light'}
  */
 export const APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE = APPEARANCE_MODE_LIGHT;
+
+/**
+ * What the server renders for one publication's `appearance.colorMode`
+ * (the "Visitors see" setting).
+ *
+ * - `defaultMode`: the author's default, a root attribute.
+ * - `allowedModes`: the author's allowed list, in canonical order.
+ * - `resolvedMode`: the server-resolved mode. `light` and `dark` defaults
+ *   are used as is; `system` keeps {@link APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE}
+ *   (the script resolves it against the reader's system preference).
+ * - `colorScheme`: the `<meta name="color-scheme">` content. A single
+ *   allowed `light` or `dark` is that mode alone; everything else is
+ *   {@link COLOR_SCHEME_META_CONTENT}.
+ * - `toggle`: whether the colour-mode control is rendered (two or more
+ *   allowed modes).
+ *
+ * @param {{default: string, allowed: readonly string[]} | undefined} colorMode
+ *   `appearance.colorMode`; absent behaves as the former fixed behaviour
+ *   (all three modes allowed, default `system`)
+ * @returns {{
+ *   defaultMode: string,
+ *   allowedModes: string[],
+ *   resolvedMode: string,
+ *   colorScheme: string,
+ *   toggle: boolean,
+ * }} the render facts
+ */
+export function resolveColorModePresentation(colorMode) {
+  const allowedModes = APPEARANCE_MODE_VALUES.filter((mode) =>
+    (colorMode?.allowed ?? APPEARANCE_MODE_VALUES).includes(mode),
+  );
+  const defaultMode =
+    colorMode !== undefined && allowedModes.includes(colorMode.default)
+      ? colorMode.default
+      : APPEARANCE_DEFAULT_MODE;
+  const resolvedMode =
+    defaultMode === APPEARANCE_MODE_LIGHT ||
+    defaultMode === APPEARANCE_MODE_DARK
+      ? defaultMode
+      : APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE;
+  const only = allowedModes.length === 1 ? allowedModes[0] : undefined;
+  return {
+    defaultMode,
+    allowedModes,
+    resolvedMode,
+    colorScheme:
+      only === APPEARANCE_MODE_LIGHT || only === APPEARANCE_MODE_DARK
+        ? only
+        : COLOR_SCHEME_META_CONTENT,
+    toggle: allowedModes.length > 1,
+  };
+}
 
 /**
  * The initial reader default is `system`.

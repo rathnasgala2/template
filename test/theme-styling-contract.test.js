@@ -502,6 +502,12 @@ test('drift gate: every published hook is rendered across all five profiles, and
       // (S2-T07); included here so a false positive never occurs if it ever
       // is.
       'data-gala-color-mode-selection',
+      // Template-internal, server-rendered on the root (4.1.0): the author's
+      // "Visitors see" default and allowed modes, read by the bootstrap
+      // script. Like the selection attribute they are not theme hooks and
+      // are not part of the published contract.
+      'data-gala-color-mode-default',
+      'data-gala-color-mode-allowed',
     ]);
     const foundAttributeNames = new Set(
       [...html.matchAll(/data-gala-[a-z-]+/g)].map((m) => m[0]),
@@ -726,7 +732,11 @@ test('theme asset path containment: a file physically present but never declared
       themeDirectory: dir,
       basePath: '/',
     });
-    assert.equal(result.files.length, 3, 'only the three declared stylesheets');
+    assert.equal(
+      result.files.length,
+      4,
+      'only the three declared stylesheets and the palette sheet',
+    );
     assert.ok(
       !result.files.some((file) => file.path.includes('undeclared.svg')),
       'an undeclared file present in the theme directory must never be copied',
@@ -751,8 +761,8 @@ test('TPL-M2: a stylesheet path re-declared in assets[] is not classified as a p
     });
     assert.equal(
       result.files.length,
-      3,
-      'the three declared stylesheets, no duplicate passive copy of tokens.css',
+      4,
+      'the three declared stylesheets and the palette sheet, no duplicate passive copy of tokens.css',
     );
     const tokensRows = result.assets.filter((asset) =>
       asset.path.endsWith('tokens.css'),

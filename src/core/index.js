@@ -77,6 +77,8 @@ import {
   GALA_BASE_STYLESHEET_SOURCE,
 } from './internal/appearance/base-layer.js';
 import { renderAppearanceControl } from './internal/appearance/controller-markup.js';
+import { resolveColorModePresentation } from './internal/appearance/contract.js';
+import { TEMPLATE_RENDERER_VERSION } from './internal/package-version.js';
 import {
   ArtifactManifestValidationError,
   BuildInputValidationError,
@@ -190,7 +192,7 @@ export const TEMPLATE_PACKAGE_NAME = '@rathnasgala2/template';
  *
  * @type {string}
  */
-export const TEMPLATE_PACKAGE_VERSION = '4.0.0';
+export const TEMPLATE_PACKAGE_VERSION = TEMPLATE_RENDERER_VERSION;
 
 /**
  * Validate the caller-supplied render options, independent of build-input
@@ -401,8 +403,19 @@ export async function renderPublication(buildInput, options) {
         themeDirectory: path.resolve(options.themeDirectory),
         basePath: validatedInput.basePath,
         publicBasePath,
+        appearanceTokens: validatedInput.appearance.tokens,
       })
     : undefined;
+  // "Visitors see": the author's colour-mode default and allowed modes.
+  const colorMode = resolveColorModePresentation(
+    validatedInput.appearance.colorMode,
+  );
+  const colorModeData = {
+    resolvedColorMode: colorMode.resolvedMode,
+    colorModeDefault: colorMode.defaultMode,
+    colorModeAllowed: colorMode.allowedModes.join(' '),
+    colorScheme: colorMode.colorScheme,
+  };
   const themeStylesheetLinksHtml = themeAssetsResult
     ? themeAssetsResult.linkTagsHtml
     : defaultThemeStylesheetLinksHtml(publicBasePath);
@@ -410,6 +423,7 @@ export async function renderPublication(buildInput, options) {
 
   const appearanceControlHtml = renderAppearanceControl({
     messages: siteMessages,
+    toggle: colorMode.toggle,
   });
 
   // Run before page assembly, not after: resolving each page's own images
@@ -636,6 +650,7 @@ export async function renderPublication(buildInput, options) {
         baseStylesheetHref: baseStylesheetHrefValue,
         themeStylesheetLinksHtml,
         composition,
+        ...colorModeData,
       },
     });
   });
@@ -709,6 +724,7 @@ export async function renderPublication(buildInput, options) {
       baseStylesheetHref: baseStylesheetHrefValue,
       themeStylesheetLinksHtml,
       composition,
+      ...colorModeData,
     },
   });
 

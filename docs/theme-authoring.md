@@ -74,7 +74,15 @@ obvious ones:
   the current value from `buildTemplateStylingContract().catalogDigest`
   (`src/core/internal/appearance/styling-contract.js`) — the scaffold script
   already does this for you.
-- **`templateRange`** — an exact version or caret range (`^4.0.0`) admitting
+- **`palette`** — required since template 4.1.0:
+  `{profile: "gala-palette-follow-v1", follow: [...]}` says, per palette-driven
+  token and mode, which seed (`accent`, `canvas`, `text`, or `null` to stay
+  fixed) each colour follows. A theme without it is refused
+  (`THEME_PALETTE_MISSING`), a malformed block is `THEME_PALETTE_INVALID`. The
+  template writes every bound token to the build's palette stylesheet, so a
+  theme's `tokens.css` and `components.css` must not declare them. See
+  `@rathnasgala2/schemas/palette`.
+- **`templateRange`** — an exact version or caret range (`^4.1.0`) admitting
   this renderer's own published version. Checked with `satisfiesTemplateRange`
   (`src/core/internal/semver-range.js`), a deliberately narrow SemVer-range
   engine: only exact versions and caret ranges are supported, nothing else.

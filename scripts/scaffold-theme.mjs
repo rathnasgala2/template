@@ -17,15 +17,14 @@
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 
 import { validateGalaDocument } from '@rathnasgala2/schemas';
 
 import { digestBytes } from '../src/core/internal/canonical-jcs.js';
-import { GALA_BASE_DEFAULT_TOKENS } from '../src/core/internal/appearance/base-layer.js';
 import {
   buildTemplateStylingContract,
   RESOLVED_PALETTE_SELECTORS,
-  TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION,
 } from '../src/core/internal/appearance/styling-contract.js';
 import {
   DEVELOPER_COMPOSITION,
@@ -34,7 +33,10 @@ import {
   PERSONAL_COMPOSITION,
   VISUAL_COMPOSITION,
 } from '../src/core/internal/template-composition.js';
+import { TEMPLATE_RENDERER_VERSION } from '../src/core/internal/package-version.js';
 import { runIfMain } from './run-if-main.mjs';
+
+const require = createRequire(import.meta.url);
 
 /** @type {readonly string[]} the six theme identities
  * `urn:gala:schema:theme-contract:2.0.0` admits, in `themeId`/`package`
@@ -60,9 +62,8 @@ const COMPOSITION_BY_THEME_ID = Object.freeze({
 /** @type {{key: string, type: string}[]}
  * the closed 116-entry token catalog `urn:gala:schema:theme-contract:2.0.0`'s
  * `tokens` prefix schema requires (contract 3), in the exact key order the
- * schema fixes. Starter values are the template's own `gala-base` defaults
- * (`GALA_BASE_DEFAULT_TOKENS`), so a scaffolded theme looks like the unthemed
- * site. `test/scaffold-theme.test.js` proves the list stays conformant by
+ * schema fixes. Starter values are the reference Default theme's, so a
+ * scaffolded theme looks like the Default theme. `test/scaffold-theme.test.js` proves the list stays conformant by
  * validating a scaffolded theme against the schema. */
 export const THEME_TOKEN_CATALOG = Object.freeze([
   { key: 'border-button', type: 'border' },
@@ -184,50 +185,55 @@ export const THEME_TOKEN_CATALOG = Object.freeze([
 ]);
 
 /**
- * The schema admits only unquoted, plain font-family names, so the starter
- * stacks differ from `gala-base`'s quoted ones.
- *
- * @type {Readonly<Record<string, string>>}
+ * The reference Default theme's published tokens and palette bindings
+ * (`@rathnasgala2/schemas/palette/theme-default.fixture.json`): the starter
+ * values pass the schema's token grammar and every palette contrast pair, which
+ * the template's own `gala-base` fallback defaults do not promise.
  */
-const STARTER_FONT_STACKS = Object.freeze({
-  'font-body': 'ui-sans-serif, system-ui, Segoe UI, Roboto, Arial, sans-serif',
-  'font-display':
-    'ui-sans-serif, system-ui, Segoe UI, Roboto, Arial, sans-serif',
-  'font-label': 'ui-sans-serif, system-ui, Segoe UI, Roboto, Arial, sans-serif',
-  'font-ui': 'ui-sans-serif, system-ui, Segoe UI, Roboto, Arial, sans-serif',
-  'font-mono': 'ui-monospace, Menlo, Consolas, monospace',
-});
+const DEFAULT_THEME_FIXTURE = require('@rathnasgala2/schemas/palette/theme-default.fixture.json');
 
 /** @type {Readonly<Record<string, {light: string, dark: string}>>} */
 export const STARTER_VALUES = Object.freeze(
   Object.fromEntries(
-    Object.entries(GALA_BASE_DEFAULT_TOKENS).map(([key, value]) => {
-      const stack = STARTER_FONT_STACKS[key];
-      if (stack) return [key, { light: stack, dark: stack }];
-      return [
-        key,
-        typeof value === 'string'
-          ? { light: value, dark: value }
-          : { light: value[0], dark: value[1] ?? value[0] },
-      ];
-    }),
+    DEFAULT_THEME_FIXTURE.tokens.map(
+      (/** @type {{key: string, light: string, dark: string}} */ row) => [
+        row.key,
+        { light: row.light, dark: row.dark },
+      ],
+    ),
   ),
 );
 
 /**
- * @returns {string} `tokens.css`: every catalog token declared as a
- *   `--gala-<key>` custom property, scoped only to
+ * The starter theme's `palette` block (template 4.1.0 requires every theme
+ * to declare one): the reference Default theme's bindings from
+ * `@rathnasgala2/schemas/palette/theme-default.fixture.json`.
+ *
+ * @returns {{profile: string, follow: {key: string, light: (string|null)[], dark: (string|null)[]}[]}}
+ *   the starter `palette` block
+ */
+export function buildStarterPalette() {
+  return structuredClone(DEFAULT_THEME_FIXTURE.palette);
+}
+
+/**
+ * @returns {string} `tokens.css`: every catalog token the palette does not
+ *   drive declared as a `--gala-<key>` custom property, scoped only to
  *   {@link RESOLVED_PALETTE_SELECTORS} (never a bare `:root`) so the
  *   server-rendered light default (no script required) already resolves
  *   every `var(--gala-…)` reference a theme's own `components.css` makes.
+ *   Palette-driven tokens are written to the build's palette stylesheet
+ *   instead and are never declared here.
  */
 function buildTokensCss() {
-  const lightDeclarations = THEME_TOKEN_CATALOG.map(
-    ({ key }) => `    --gala-${key}: ${STARTER_VALUES[key].light};`,
-  ).join('\n');
-  const darkDeclarations = THEME_TOKEN_CATALOG.map(
-    ({ key }) => `    --gala-${key}: ${STARTER_VALUES[key].dark};`,
-  ).join('\n');
+  const bound = new Set(buildStarterPalette().follow.map((entry) => entry.key));
+  const unbound = THEME_TOKEN_CATALOG.filter(({ key }) => !bound.has(key));
+  const lightDeclarations = unbound
+    .map(({ key }) => `    --gala-${key}: ${STARTER_VALUES[key].light};`)
+    .join('\n');
+  const darkDeclarations = unbound
+    .map(({ key }) => `    --gala-${key}: ${STARTER_VALUES[key].dark};`)
+    .join('\n');
   return (
     `@layer gala-tokens {\n` +
     `  ${RESOLVED_PALETTE_SELECTORS.light} {\n${lightDeclarations}\n  }\n` +
@@ -281,7 +287,7 @@ export async function scaffoldTheme({
     themeId,
     package: `@rathnasgala2/theme-${themeId}@${packageVersion}`,
     contractVersion: publishedContract.contractVersion,
-    templateRange: `^${TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION}`,
+    templateRange: `^${TEMPLATE_RENDERER_VERSION}`,
     composition: { ...COMPOSITION_BY_THEME_ID[themeId] },
     stylesheets: ['tokens.css', 'components.css', 'print.css'],
     cssLayers: ['gala-tokens', 'gala-components', 'gala-print'],
@@ -292,6 +298,7 @@ export async function scaffoldTheme({
       light: STARTER_VALUES[key].light,
       dark: STARTER_VALUES[key].dark,
     })),
+    palette: buildStarterPalette(),
     modes: ['dark', 'light', 'system'],
     assets: stylesheetFiles.map((file) => ({
       path: file.path,

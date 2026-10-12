@@ -33,10 +33,10 @@
 import Eleventy from '@11ty/eleventy';
 
 import {
+  APPEARANCE_ALLOWED_ATTRIBUTE,
+  APPEARANCE_DEFAULT_ATTRIBUTE,
   APPEARANCE_RESOLVED_MODE_ATTRIBUTE,
   APPEARANCE_ROOT_ATTRIBUTE,
-  APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE,
-  COLOR_SCHEME_META_CONTENT,
 } from './appearance/contract.js';
 import { PAGE_KIND_ATTRIBUTE } from './page-kinds.js';
 
@@ -78,7 +78,8 @@ import { PAGE_KIND_ATTRIBUTE } from './page-kinds.js';
  *   rendered independent of JavaScript, so a theme's own no-JS
  *   `prefers-color-scheme` fallback CSS has a stable root scope to key off;
  * - (TPL-C1 fix) `data-gala-resolved-color-mode`, server-rendered as
- *   {@link APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE} (`"light"`) on the same
+ *   `data.resolvedColorMode` (the author's `light`/`dark` default, else
+ *   `"light"` for a `system` default) on the same
  *   `<html>` element, so `RESOLVED_PALETTE_SELECTORS.light` already matches
  *   before any script runs and a page is never unstyled UA-default HTML for
  *   a no-JS reader, a text-mode/archival crawler, or a load where the
@@ -87,7 +88,12 @@ import { PAGE_KIND_ATTRIBUTE } from './page-kinds.js';
  *   this attribute with the resolved value for the reader's actual stored
  *   selection/system preference the instant it runs, so a scripted reader's
  *   experience is unchanged;
- * - `<meta name="color-scheme" content="light dark">`, so user-agent styling
+ * - `data-gala-color-mode-default` and `data-gala-color-mode-allowed`, the
+ *   author's "Visitors see" default and allowed modes
+ *   (`appearance.colorMode`), which the bootstrap script prefers over
+ *   `system` when the reader has no stored choice;
+ * - `<meta name="color-scheme">`, `light dark` unless the author allows a
+ *   single `light` or `dark` mode, so user-agent styling
  *   (form controls, scrollbars) and the initial paint already follow
  *   `prefers-color-scheme` before any script runs;
  * - the one `<script src>` this renderer ever emits (the appearance
@@ -128,12 +134,12 @@ import { PAGE_KIND_ATTRIBUTE } from './page-kinds.js';
  */
 const SKELETON_LAYOUT_SOURCE = [
   '<!doctype html>',
-  `<html lang="{{ lang }}" dir="{{ dir }}" ${APPEARANCE_ROOT_ATTRIBUTE} ${APPEARANCE_RESOLVED_MODE_ATTRIBUTE}="${APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE}">`,
+  `<html lang="{{ lang }}" dir="{{ dir }}" ${APPEARANCE_ROOT_ATTRIBUTE} ${APPEARANCE_RESOLVED_MODE_ATTRIBUTE}="{{ resolvedColorMode }}" ${APPEARANCE_DEFAULT_ATTRIBUTE}="{{ colorModeDefault }}" ${APPEARANCE_ALLOWED_ATTRIBUTE}="{{ colorModeAllowed }}">`,
   '<head>',
   '<meta charset="utf-8">',
   '<meta name="viewport" content="width=device-width, initial-scale=1">',
   '{{ cspMetaTag | safe }}',
-  `<meta name="color-scheme" content="${COLOR_SCHEME_META_CONTENT}">`,
+  '<meta name="color-scheme" content="{{ colorScheme }}">',
   // The interactions script (article pages, module on) is deferred and sits
   // on the appearance script's line, so a page without it is byte-identical
   // to before.

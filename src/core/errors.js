@@ -104,12 +104,16 @@ export class ThemeAssetError extends Error {
    * @param {string} reasonCode a stable, machine-checkable reason code (for
    *   example `THEME_STYLESHEETS_INVALID`, `THEME_CONTRACT_SCHEMA_INVALID`)
    * @param {string} message a human-readable description
+   * @param {Record<string, unknown>} [detail] optional machine-readable
+   *   detail (the palette refusals carry the failing pair and mode)
    */
-  constructor(reasonCode, message) {
+  constructor(reasonCode, message, detail) {
     super(`${reasonCode}: ${message}`);
     this.name = 'ThemeAssetError';
     /** @type {string} */
     this.reasonCode = reasonCode;
+    /** @type {Record<string, unknown> | undefined} */
+    this.detail = detail;
   }
 }
 

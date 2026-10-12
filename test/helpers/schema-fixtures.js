@@ -77,6 +77,17 @@ export async function loadCanonicalBuildInput() {
   /** @type {{appearance: {fontAssets: unknown[]}}} */ (
     buildInput
   ).appearance.fontAssets = [];
+  // Template 4.1.0 renders "Visitors see": the upstream fixture allows only
+  // `light`, which now (correctly) renders no colour-mode toggle. The shared
+  // loader offers all three modes with a `system` default so every test that
+  // is not about colour mode keeps a site with the toggle; the colour-mode
+  // tests set their own `appearance.colorMode`.
+  /** @type {{appearance: {colorMode: unknown}}} */ (
+    buildInput
+  ).appearance.colorMode = {
+    allowed: ['system', 'light', 'dark'],
+    default: 'system',
+  };
   await applyCurrentRenderPolicy(buildInput);
   return buildInput;
 }

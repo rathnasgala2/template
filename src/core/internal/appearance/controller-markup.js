@@ -30,9 +30,13 @@ import {
  * @param {object} options rendering options
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
  *   the resolved message catalog
- * @returns {string} the control markup
+ * @param {boolean} [options.toggle] whether the control is rendered; `false`
+ *   when the author allows a single colour mode ("Visitors see" offers the
+ *   reader nothing to choose), so no dead control is shown
+ * @returns {string} the control markup (empty when `toggle` is `false`)
  */
-export function renderAppearanceControl({ messages }) {
+export function renderAppearanceControl({ messages, toggle = true }) {
+  if (!toggle) return '';
   const control = /** @type {string} */ (messages.appearanceControlLabel);
   /** @type {Record<string, string>} */
   const modeText = {

@@ -41,6 +41,8 @@
 
 import { minifyScript } from './minify-script.js';
 import {
+  APPEARANCE_ALLOWED_ATTRIBUTE,
+  APPEARANCE_DEFAULT_ATTRIBUTE,
   APPEARANCE_MODE_DARK,
   APPEARANCE_MODE_LIGHT,
   APPEARANCE_MODE_SYSTEM,
@@ -65,6 +67,8 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
   var SAVED_KEY = ${JSON.stringify(SAVED_STORAGE_KEY)};
   var RESOLVED_ATTRIBUTE = ${JSON.stringify(APPEARANCE_RESOLVED_MODE_ATTRIBUTE)};
   var SELECTION_ATTRIBUTE = ${JSON.stringify(APPEARANCE_SELECTION_ATTRIBUTE)};
+  var DEFAULT_ATTRIBUTE = ${JSON.stringify(APPEARANCE_DEFAULT_ATTRIBUTE)};
+  var ALLOWED_ATTRIBUTE = ${JSON.stringify(APPEARANCE_ALLOWED_ATTRIBUTE)};
   var TOGGLE_ID = ${JSON.stringify(APPEARANCE_TOGGLE_ID)};
   var MODE_LIGHT = ${JSON.stringify(APPEARANCE_MODE_LIGHT)};
   var MODE_DARK = ${JSON.stringify(APPEARANCE_MODE_DARK)};
@@ -75,14 +79,32 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
   function isKnownMode(value) {
     return value === MODE_LIGHT || value === MODE_DARK || value === MODE_SYSTEM;
   }
+  function allowedModes() {
+    var listed = (root.getAttribute(ALLOWED_ATTRIBUTE) || '').split(' ');
+    var modes = [];
+    for (var i = 0; i < listed.length; i++) {
+      if (isKnownMode(listed[i])) modes.push(listed[i]);
+    }
+    return modes.length ? modes : [MODE_SYSTEM, MODE_LIGHT, MODE_DARK];
+  }
+  function isAllowed(value) {
+    return isKnownMode(value) && allowedModes().indexOf(value) !== -1;
+  }
+  // The author's "Visitors see" default, else system.
+  function authorDefault() {
+    var value = root.getAttribute(DEFAULT_ATTRIBUTE);
+    return isAllowed(value) ? value : MODE_SYSTEM;
+  }
+  // The reader's stored choice (when the author still allows it), else the
+  // author's default, else system.
   function readStoredSelection() {
     try {
       var value = window.localStorage.getItem(STORAGE_KEY);
-      if (isKnownMode(value)) return value;
+      if (isAllowed(value)) return value;
     } catch (error) {
-      // Storage blocked: fall back to MODE_SYSTEM below.
+      // Storage blocked: fall back to the author's default below.
     }
-    return MODE_SYSTEM;
+    return authorDefault();
   }
   function writeStoredSelection(mode) {
     try {
@@ -230,7 +252,8 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
   function enhanceMode() {
     var button = document.getElementById(TOGGLE_ID);
     if (!button) return;
-    var order = [MODE_SYSTEM, MODE_LIGHT, MODE_DARK];
+    var order = [MODE_SYSTEM, MODE_LIGHT, MODE_DARK].filter(isAllowed);
+    if (order.length < 2) return;
     var sync = function () {
       var label = button.getAttribute('data-label-' + readStoredSelection());
       if (label) {

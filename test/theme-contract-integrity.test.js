@@ -123,7 +123,7 @@ test('a fully valid, digest-consistent theme.json is accepted', async () => {
       themeDirectory: dir,
       basePath: '/',
     });
-    assert.equal(result.files.length, 3);
+    assert.equal(result.files.length, 4, 'three stylesheets and the palette');
     assert.equal(result.composition.profile, 'editorial');
     assert.equal(result.composition.homeLayout, 'magazine');
   } finally {

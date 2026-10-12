@@ -436,6 +436,18 @@ allowlist: raster formats are admitted directly, and SVG is admitted only after
 in scope and expected** (TPL-H6 decision): this sanitizer is what makes a
 theme-declared SVG icon mark safe to publish.
 
+- **Publication palette and "Visitors see" (4.1.0).** Every build with a theme
+  derives the theme's palette-driven tokens from `appearance.tokens` (`{}` is
+  the theme's default palette) with `@rathnasgala2/schemas/palette`, checks the
+  derived values and every contrast pair in both modes (a failure refuses the
+  build with `APPEARANCE_PALETTE_CONTRAST`, naming the pair and mode), and
+  writes `assets/gala-palette-<12 hex of sha256>.css`, linked last with SRI and
+  listed in the manifest. A theme without a `palette` block is refused
+  (`THEME_PALETTE_MISSING`; malformed: `THEME_PALETTE_INVALID`).
+  `appearance.colorMode` reaches the page as `data-gala-color-mode-default` and
+  `data-gala-color-mode-allowed` on the root; a `light`/`dark` default is the
+  server-resolved mode, and a single allowed mode renders no toggle and sets
+  `color-scheme` to it.
 - **`baseUrl` path prefix (2.2.0).** `buildInput.baseUrl` may carry a path (a
   GitHub project site, `https://owner.github.io/g9/`); it is not origin-only.
   `internal/route.js#derivePublicBasePath(baseUrl, basePath)` joins that path
