@@ -166,10 +166,13 @@ export const APPEARANCE_SERVER_DEFAULT_RESOLVED_MODE = APPEARANCE_MODE_LIGHT;
  */
 export function resolveColorModePresentation(colorMode) {
   const allowedModes = APPEARANCE_MODE_VALUES.filter((mode) =>
-    (colorMode?.allowed ?? APPEARANCE_MODE_VALUES).includes(mode),
+    /** @type {readonly string[]} */ (
+      colorMode?.allowed ?? APPEARANCE_MODE_VALUES
+    ).includes(mode),
   );
   const defaultMode =
-    colorMode !== undefined && allowedModes.includes(colorMode.default)
+    colorMode !== undefined &&
+    /** @type {readonly string[]} */ (allowedModes).includes(colorMode.default)
       ? colorMode.default
       : APPEARANCE_DEFAULT_MODE;
   const resolvedMode =

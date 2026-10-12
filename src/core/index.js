@@ -408,7 +408,9 @@ export async function renderPublication(buildInput, options) {
     : undefined;
   // "Visitors see": the author's colour-mode default and allowed modes.
   const colorMode = resolveColorModePresentation(
-    validatedInput.appearance.colorMode,
+    /** @type {{default: string, allowed: readonly string[]} | undefined} */ (
+      validatedInput.appearance.colorMode
+    ),
   );
   const colorModeData = {
     resolvedColorMode: colorMode.resolvedMode,

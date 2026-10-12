@@ -220,7 +220,7 @@ test('stress corpus: every recorded failure is refused naming the recorded pair 
     const expected = mode === 'light' ? light : dark;
     assert.equal(error.detail?.mode, mode, palette.id);
     assert.deepEqual(
-      /** @type {{pair: string}[]} */ (error.detail?.failures)
+      /** @type {{pair: string}[]} */ (error.detail?.['failures'] ?? [])
         .map((failure) => failure.pair)
         .sort(),
       [...expected].sort(),
