@@ -44,17 +44,17 @@ async function main() {
   const diagnostics = (await Promise.all(FILES.map(checkFile))).flat();
   const manifest = JSON.parse(await readFile('package.json', 'utf8'));
   const lock = JSON.parse(await readFile('package-lock.json', 'utf8'));
-  if (manifest.peerDependencies?.['@rathnasgala2/schemas'] !== '3.10.0') {
+  if (manifest.peerDependencies?.['@rathnasgala2/schemas'] !== '^3.10.0') {
     diagnostics.push(
-      'package.json: @rathnasgala2/schemas must be the exact 3.10.0 peer for portable source-only installation.',
+      'package.json: @rathnasgala2/schemas must be the ^3.10.0 peer for portable source-only installation.',
     );
   }
   if (
     lock.packages?.['']?.peerDependencies?.['@rathnasgala2/schemas'] !==
-    '3.10.0'
+    '^3.10.0'
   ) {
     diagnostics.push(
-      'package-lock.json: @rathnasgala2/schemas must be the exact 3.10.0 peer.',
+      'package-lock.json: @rathnasgala2/schemas must be the ^3.10.0 peer.',
     );
   }
   const schemaLock = lock.packages?.['node_modules/@rathnasgala2/schemas'];
@@ -76,7 +76,9 @@ async function main() {
   if (diagnostics.length > 0) {
     throw new Error(diagnostics.join('\n'));
   }
-  console.log('schema is an exact registry peer.');
+  console.log(
+    'schema is a caret-range registry peer (installed 3.10.0 pinned by the lock).',
+  );
 }
 
 runIfMain(import.meta, main);

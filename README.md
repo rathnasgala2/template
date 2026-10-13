@@ -696,15 +696,16 @@ editions: they are a rendered content kind (see Editions).
 
 ## Consuming `@rathnasgala2/schemas`
 
-This source targets `@rathnasgala2/schemas@3.10.0` with an exact manifest pin.
-Generation-4 development verifies against the schema sibling/packed candidate.
-The historical `package-lock.json` is not a 3.10.0 registry claim: it must be
-regenerated, together with the SBOM, from the authoritative published 3.10.0
-artifact before release. The 2.8.0->2.11.0 convergence changes none of the four
-roots this renderer validates, for the same reason the 2.7.0-2.8.0 delta below
-did not. Only the `"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) is
-consumed; the 2.6.0 `./runtime-origins` narrow export and every other addition
-through 2.6.1 (new OpenAPI operations, App route/catalog copy, the
+This source targets `@rathnasgala2/schemas@3.10.0` with a `^3.10.0` peer range
+(any 3.x from 3.10.0); the lock installs 3.10.0 exactly. Generation-4
+development verifies against the schema sibling/packed candidate. The historical
+`package-lock.json` is not a 3.10.0 registry claim: it must be regenerated,
+together with the SBOM, from the authoritative published 3.10.0 artifact before
+release. The 2.8.0->2.11.0 convergence changes none of the four roots this
+renderer validates, for the same reason the 2.7.0-2.8.0 delta below did not.
+Only the `"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) is consumed;
+the 2.6.0 `./runtime-origins` narrow export and every other addition through
+2.6.1 (new OpenAPI operations, App route/catalog copy, the
 `PrincipalSummary`/`AuthenticatorSummary`/keyset field additions) are
 App/API-surface changes this renderer does not read. The `"."` export's 2.2.2
 browser-safety refactor (Node builtins replaced with browser-safe equivalents

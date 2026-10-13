@@ -5,7 +5,7 @@ import { test } from 'node:test';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..');
 
-test('package.json pins one exact registry schemas release as the exact peer, installed from the peer range', async () => {
+test('package.json pins the registry schemas release as a ^3.10.0 peer, installed from the peer range', async () => {
   const packageJson = JSON.parse(
     await readFile(path.join(REPO_ROOT, 'package.json'), 'utf8'),
   );
@@ -13,7 +13,10 @@ test('package.json pins one exact registry schemas release as the exact peer, in
     packageJson.devDependencies?.['@rathnasgala2/schemas'],
     undefined,
   );
-  assert.equal(packageJson.peerDependencies['@rathnasgala2/schemas'], '3.10.0');
+  assert.equal(
+    packageJson.peerDependencies['@rathnasgala2/schemas'],
+    '^3.10.0',
+  );
 });
 
 test('package-lock.json resolves schemas from the registry', async () => {

@@ -8,6 +8,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.2.1] - 2026-10-13
+
+### Changed
+
+- The schemas peer accepts any 3.x from 3.10.0 (`^3.10.0`), so consumers can
+  take 3.11.0. The lock still installs 3.10.0 and `schema-pin:check` now
+  requires the caret peer.
+
 ## [4.2.0] - 2026-10-12
 
 ### Added
