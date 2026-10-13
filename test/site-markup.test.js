@@ -283,6 +283,7 @@ test('header, home, article, listings and footer render the redesigned structure
     () => {
       assert.match(home, /<div class="g-card-placeholder" aria-hidden="true">/);
       assert.equal(count(home, /<figure class="g-card-media">/g), 0);
+      // A post with no hero and no body image is still a placeholder card.
     },
   );
 

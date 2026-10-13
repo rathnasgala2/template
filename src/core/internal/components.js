@@ -19,6 +19,7 @@ import { escapeHtml } from './skeleton.js';
 import { icon } from './icons.js';
 import { joinBasePathAndRoute } from './route.js';
 import { resolveOriginalDerivativePath } from './seo.js';
+import { cardMediaOf } from './first-body-image.js';
 
 /** Reading speed used for every reading-time estimate. */
 export const WORDS_PER_MINUTE = 230;
@@ -395,9 +396,10 @@ export function createComponents(context) {
   const card = (record, options = {}, variant = 'grid') => {
     const fm = record.frontmatter;
     const href = escapeHtml(recordHref(record));
-    const hero = mediaImage(fm.hero?.file);
+    const cardMedia = cardMediaOf(record);
+    const hero = mediaImage(cardMedia?.file);
     const media = hero
-      ? `<figure class="g-card-media">${renderImage({ image: hero, alt: fm.hero?.role === 'decorative' ? '' : (fm.hero?.alt ?? '') })}</figure>`
+      ? `<figure class="g-card-media">${renderImage({ image: hero, alt: cardMedia?.role === 'decorative' ? '' : (cardMedia?.alt ?? '') })}</figure>`
       : `<div class="g-card-placeholder" aria-hidden="true">${icon('sparkle')}</div>`;
     const seriesTag = options.partLabel
       ? `<span class="g-series-tag">${icon('book')}${escapeHtml(options.partLabel)}</span>`

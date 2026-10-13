@@ -78,6 +78,7 @@ import {
   resolveEditions,
 } from './editions.js';
 import { truncateAtWord } from './seo.js';
+import { cardMediaOf } from './first-body-image.js';
 import { createStructuredData } from './structured-data.js';
 import { icon } from './icons.js';
 import {
@@ -499,21 +500,22 @@ export function buildGeneratedPages(validatedInput, options) {
       }
     : {};
   /**
-   * @param {import('../../../types/index.d.ts').ContentFrontmatterNormalized} fm
+   * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
    * @returns {{socialImageRef?: {path: string, sourceDigest: string}, socialImageAlt?: string}}
    */
-  const socialOfContent = (fm) =>
-    fm.socialImage
+  const socialOfContent = (record) => {
+    const fm = record.frontmatter;
+    const media = cardMediaOf(record);
+    return fm.socialImage
       ? { socialImageRef: fm.socialImage, socialImageAlt: fm.title }
-      : fm.hero
+      : media
         ? {
-            socialImageRef: fm.hero.file,
+            socialImageRef: media.file,
             socialImageAlt:
-              fm.hero.role === 'informative' && fm.hero.alt
-                ? fm.hero.alt
-                : fm.title,
+              media.role === 'informative' && media.alt ? media.alt : fm.title,
           }
         : defaultSocial;
+  };
   /**
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
    * @returns {string} the page description: authored, else the body's
@@ -1004,15 +1006,15 @@ export function buildGeneratedPages(validatedInput, options) {
     // An edition with no social image of its own shares its article's.
     const social = socialOfContent(
       isEdition && !frontmatter.socialImage && !frontmatter.hero
-        ? original.frontmatter
-        : frontmatter,
+        ? original
+        : record,
     );
     const articleGraph = isArticle
       ? sd.article({
           url: ownUrl,
           headline: frontmatter.title,
           description: contentDescription(record),
-          image: absoluteImage(socialOfContent(frontmatter).socialImageRef),
+          image: absoluteImage(socialOfContent(record).socialImageRef),
           datePublished: frontmatter.publishedAt,
           dateModified: contentLastModified(frontmatter),
           language: frontmatter.language,
@@ -1095,7 +1097,8 @@ export function buildGeneratedPages(validatedInput, options) {
   const homeFeatured = featured
     ? (() => {
         const fm = featured.frontmatter;
-        const hero = mediaImage(fm.hero?.file);
+        const cardMedia = cardMediaOf(featured);
+        const hero = mediaImage(cardMedia?.file);
         const href = escapeHtml(recordHref(featured));
         return (
           `<section class="g-wrap g-hero" aria-labelledby="hero-title">` +
@@ -1103,7 +1106,10 @@ export function buildGeneratedPages(validatedInput, options) {
           (hero
             ? renderImage({
                 image: hero,
-                alt: fm.hero?.role === 'decorative' ? '' : (fm.hero?.alt ?? ''),
+                alt:
+                  cardMedia?.role === 'decorative'
+                    ? ''
+                    : (cardMedia?.alt ?? ''),
                 priority: true,
               })
             : `<span class="g-card-placeholder">${icon('sparkle')}</span>`) +

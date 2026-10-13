@@ -417,3 +417,70 @@ test('the resolution rule: repository-root-relative, decoded, no scheme, query, 
     assert.equal(repositoryPathOfImageSource(source), expected, String(source));
   }
 });
+
+test('a post with no hero shows its first body image on cards, the home hero and og:image, and inventories it', async (t) => {
+  const picture = buildTestPng(1000, 500);
+  const { manifest, read, cleanup } = await render(
+    async (buildInput, source) => {
+      for (const record of buildInput.content) {
+        delete record.frontmatter.hero;
+        delete record.frontmatter.socialImage;
+      }
+      await setBody(
+        buildInput,
+        source,
+        0,
+        'Intro.\n\n![A wide photo](assets/content/first-article/wide.png)\n',
+        [{ path: 'assets/content/first-article/wide.png', bytes: picture }],
+      );
+      await setBody(
+        buildInput,
+        source,
+        1,
+        '![A second photo](./assets/content/second-article/wide.png)\n',
+        [{ path: 'assets/content/second-article/wide.png', bytes: picture }],
+      );
+    },
+  );
+  t.after(cleanup);
+  const base = `/fixture-1/assets/media/${sha256Of(picture).slice(7)}`;
+  const home = await read('fixture-1/index.html');
+  const article = await read(FIRST_ARTICLE);
+
+  // The latest article (the second) is featured; the first is a Latest card.
+  const heroHtml = home.slice(
+    home.indexOf('class="g-hero-media"'),
+    home.indexOf('class="g-hero-body"'),
+  );
+  assert.ok(
+    heroHtml.includes(`<img src="${base}/original.png"`) &&
+      heroHtml.includes('alt="A second photo"') &&
+      !heroHtml.includes('g-card-placeholder'),
+    'the featured hero is its body image with its alt',
+  );
+  assert.ok(
+    home.includes(
+      `<figure class="g-card-media"><img src="${base}/original.png"`,
+    ) && home.includes('alt="A wide photo"'),
+    'a card shows its body image with its alt',
+  );
+  assert.match(
+    article,
+    new RegExp(
+      `<meta property="og:image" content="[^"]*${base}/original\\.png">`,
+    ),
+    'og:image falls back to the first body image',
+  );
+  assert.equal(
+    (article.match(/g-article-cover/g) ?? []).length,
+    0,
+    'the article page gets no cover from a body image',
+  );
+  assert.ok(
+    manifest.includedSources.some(
+      (/** @type {{path: string}} */ source) =>
+        source.path === 'assets/content/first-article/wide.png',
+    ),
+    'the body image is an included source',
+  );
+});

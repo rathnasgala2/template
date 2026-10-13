@@ -8,6 +8,24 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-10-12
+
+### Added
+
+- A post with no `hero` now shows its first body image where it is summarised.
+  Cards (Latest, lists, rows), the home featured hero, `og:image` /
+  `twitter:image` and the source inventory use `frontmatter.hero` when present,
+  else the first repository-relative `assets/` image of the body, resolved
+  through the media pipeline like the prose images (same `sourceDigest`, same
+  emitted asset) with the image's own alt text. Remote, `data:` and code-sample
+  images are never used. The article page gets no extra cover; the picture is
+  already in its prose.
+
+### Changed
+
+- The card placeholder (posts with no image at all) is flat: the theme's
+  `color-surface-raised` background and a muted icon, with no gradient.
+
 ## [4.1.0] - 2026-10-12
 
 ### Added

@@ -6,6 +6,8 @@
  * appears once, and its role is the earliest value in the enum order.
  */
 
+import { cardMediaOf } from './first-body-image.js';
+
 /** @type {readonly string[]} */
 const ROLE_PRIORITY = Object.freeze([
   'publication',
@@ -77,13 +79,12 @@ export function collectIncludedSources(buildInput) {
       'content',
       contentRecord.sourceRevision,
     );
-    if (contentRecord.frontmatter.hero) {
-      recordResolvedFile(
-        record,
-        contentRecord.frontmatter.hero.file,
-        contentRecord.sourceRevision,
-      );
-    }
+    // The hero, else the first body image a card shows in its place.
+    recordResolvedFile(
+      record,
+      cardMediaOf(contentRecord)?.file,
+      contentRecord.sourceRevision,
+    );
     recordResolvedFile(
       record,
       contentRecord.frontmatter.socialImage,
