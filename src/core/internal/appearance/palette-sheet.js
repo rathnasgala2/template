@@ -139,7 +139,9 @@ export function assertThemePalette(themeJson) {
  *   text: string,
  *   bytes: Buffer,
  *   fileName: string,
- * }} the sheet and its content-addressed file name
+ *   canvas: {light: string, dark: string} | undefined,
+ * }} the sheet, its content-addressed file name and the resolved page canvas
+ *   colour per mode (`undefined` unless both are opaque `#rrggbb`)
  * @throws {ThemeAssetError} `APPEARANCE_PALETTE_INVALID` (malformed picks or
  *   a derived value outside the token grammar), `APPEARANCE_PALETTE_CONTRAST`
  *   (a pair below its minimum; the message names the pair, mode and ratio)
@@ -209,9 +211,15 @@ export function buildPaletteStylesheet(themeJson, appearanceTokens) {
     );
   }
   const hash = createHash('sha256').update(bytes).digest('hex').slice(0, 12);
+  const canvas = derived.tokens['color-canvas'];
+  const opaque = /^#[0-9a-f]{6}$/i;
   return {
     text,
     bytes,
     fileName: `${PALETTE_STYLESHEET_PREFIX}${hash}.css`,
+    canvas:
+      canvas && opaque.test(canvas.light) && opaque.test(canvas.dark)
+        ? { light: canvas.light, dark: canvas.dark }
+        : undefined,
   };
 }

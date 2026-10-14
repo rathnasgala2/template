@@ -47,6 +47,8 @@ function renderMark(name, mark) {
  *   the same items, rendered again as the mobile menu's link list
  * @param {string | undefined} options.currentRoute the page's joined route
  * @param {string} options.urlPrefix the `baseUrl` path prefix
+ * @param {import('./route.js').RouteNormalizationProfile} [options.routeProfile]
+ *   the route normalization profile (default `directory-index`)
  * @param {string} options.searchIndexHref the static search index URL, read
  *   by the site script
  * @param {string} [options.appearanceControlHtml] the already-rendered
@@ -65,6 +67,7 @@ export function renderHeader({
   navItems,
   currentRoute,
   urlPrefix,
+  routeProfile = 'directory-index',
   searchIndexHref,
   appearanceControlHtml,
   messages,
@@ -76,7 +79,7 @@ export function renderHeader({
   const menu =
     navItems.length > 0
       ? `<details class="g-menu"><summary>${icon('menu')}<span class="g-sr">${label('menuSummaryLabel')}</span></summary>` +
-        `<ul>${navItems.map((item) => renderNavItem(item, currentRoute, urlPrefix)).join('')}</ul></details>`
+        `<ul>${navItems.map((item) => renderNavItem(item, currentRoute, urlPrefix, routeProfile)).join('')}</ul></details>`
       : '';
   const brand =
     `<a class="g-brand" href="${escapeHtml(homeRoute)}">${renderMark(publicationName, brandMark)}` +
@@ -150,6 +153,8 @@ function renderSocialLinks(socialLinks, rssHref, messages) {
  * @param {readonly import('../../../types/index.d.ts').NavigationItem[]} options.footerItems
  *   `navigationNormalized.footerItems`
  * @param {string} options.urlPrefix the `baseUrl` path prefix
+ * @param {import('./route.js').RouteNormalizationProfile} [options.routeProfile]
+ *   the route normalization profile (default `directory-index`)
  * @param {string} options.authorHtml the already-rendered author mini
  *   profile (may be empty)
  * @param {string} options.footerProfileHtml the already-rendered footer card
@@ -173,6 +178,7 @@ export function renderFooter({
   primaryItems,
   footerItems,
   urlPrefix,
+  routeProfile = 'directory-index',
   authorHtml,
   footerProfileHtml,
   copyrightText,
@@ -192,7 +198,7 @@ export function renderFooter({
     items.length === 0
       ? ''
       : `<nav class="g-footer-col" aria-label="${label(labelKey)}"><p class="g-label">${label(labelKey)}</p>` +
-        `<ul>${items.map((item) => renderNavItem(item, undefined, urlPrefix)).join('')}</ul></nav>`;
+        `<ul>${items.map((item) => renderNavItem(item, undefined, urlPrefix, routeProfile)).join('')}</ul></nav>`;
   const brand =
     `<div class="g-footer-brand">` +
     `<a class="g-brand" href="${escapeHtml(homeRoute)}">${renderMark(publicationName, brandMark)}` +

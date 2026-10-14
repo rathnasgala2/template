@@ -24,10 +24,14 @@ import { compareUtf8Bytes } from './source-inventory.js';
 /**
  * @param {import('./page-kinds.js').GeneratedPage} page a generated page
  * @returns {boolean} `true` when this page must be excluded from the
- *   sitemap (its `robotsContent` includes `noindex`)
+ *   sitemap: its `robotsContent` includes `noindex`, or it names another
+ *   canonical URL (`seo.canonicalUrl`), so its own URL is not the one to list
  */
 function isNoindex(page) {
-  return (page.robotsContent ?? '').includes('noindex');
+  return (
+    (page.robotsContent ?? '').includes('noindex') ||
+    page.canonicalUrl !== undefined
+  );
 }
 
 /**
@@ -40,15 +44,22 @@ function isNoindex(page) {
  * @param {string} options.basePath the public base path
  *   (`route.js#derivePublicBasePath`)
  * @param {string} options.baseUrl the build input's `baseUrl`
+ * @param {import('./route.js').RouteNormalizationProfile} options.routeProfile
+ *   the route normalization profile deciding each `<loc>`'s public form
  * @returns {string} the exact UTF-8 `sitemap.xml` text
  */
-export function buildSitemap({ generatedPages, basePath, baseUrl }) {
+export function buildSitemap({
+  generatedPages,
+  basePath,
+  baseUrl,
+  routeProfile,
+}) {
   /**
    * @param {string} route an un-joined route
    * @returns {string} the absolute `https://` URL
    */
   const absoluteUrl = (route) =>
-    new URL(joinPublicRoute(basePath, route), baseUrl).toString();
+    new URL(joinPublicRoute(basePath, route, routeProfile), baseUrl).toString();
 
   const entries = generatedPages
     .filter((page) => !isNoindex(page))

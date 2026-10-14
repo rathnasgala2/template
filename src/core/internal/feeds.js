@@ -24,6 +24,7 @@ import { deriveAuthorSlugs } from './route-labels.js';
 import {
   contentLastModified,
   contentRoute,
+  isSeoNoindex,
   selectPublishedArticles,
 } from './page-kinds.js';
 
@@ -89,15 +90,20 @@ function cdata(text) {
  * @param {object} options feed options
  * @param {(body: string) => string} options.feedBody turns an article body
  *   into its feed form (every image naming its media derivative)
+ * @param {import('./route.js').RouteNormalizationProfile} options.routeProfile
+ *   the route normalization profile deciding each link's and id's public form
  * @returns {{atomXml: string, rssXml: string, atomSelfUrl: string, rssSelfUrl: string}}
  *   both feed documents' exact UTF-8 text, plus each feed's own absolute
  *   self URL (for the shared layout's feed-discovery `<link>` tags)
  */
-export function buildFeeds(validatedInput, { feedBody }) {
+export function buildFeeds(validatedInput, { feedBody, routeProfile }) {
   const { publication, authors, content, basePath, baseUrl } = validatedInput;
   const authorsById = new Map(authors.map((author) => [author.id, author]));
   const authorSlugs = deriveAuthorSlugs(authors);
-  const articles = selectPublishedArticles(content).slice(0, FEED_ITEM_LIMIT);
+  // `seo.noindex` articles stay on the site but out of the feeds.
+  const articles = selectPublishedArticles(content)
+    .filter((record) => !isSeoNoindex(record.frontmatter))
+    .slice(0, FEED_ITEM_LIMIT);
 
   /**
    * @param {string} route an un-joined route
@@ -105,7 +111,11 @@ export function buildFeeds(validatedInput, { feedBody }) {
    */
   const absoluteUrl = (route) =>
     new URL(
-      joinPublicRoute(derivePublicBasePath(baseUrl, basePath), route),
+      joinPublicRoute(
+        derivePublicBasePath(baseUrl, basePath),
+        route,
+        routeProfile,
+      ),
       baseUrl,
     ).toString();
 

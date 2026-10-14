@@ -121,8 +121,8 @@ test('JSON-LD: one parseable block per page; types per page kind', () => {
     'BreadcrumbList',
   ]);
   for (const file of [
-    'fixture-1/tags/alpha-8ed3f6ad68/index.html',
-    'fixture-1/series/story-c478361e68/index.html',
+    'fixture-1/tags/alpha/index.html',
+    'fixture-1/series/story/index.html',
     'fixture-1/archive/2025/index.html',
     'fixture-1/archive/index.html',
   ]) {
@@ -167,7 +167,7 @@ test('JSON-LD: BlogPosting carries every required field', () => {
   assert.equal(post.author.name, 'fixture-1');
   assert.equal(
     post.author.url,
-    'https://fixture-1.example.com/fixture-1/authors/fixture-1',
+    'https://fixture-1.example.com/fixture-1/authors/fixture-1/',
   );
   assert.ok(Array.isArray(post.author.sameAs));
   assert.equal(post.publisher['@type'], 'Organization');
@@ -175,7 +175,7 @@ test('JSON-LD: BlogPosting carries every required field', () => {
   assert.equal(post.publisher.logo.width, 640);
   assert.equal(
     post.mainEntityOfPage['@id'],
-    'https://fixture-1.example.com/fixture-1/first-article',
+    'https://fixture-1.example.com/fixture-1/first-article/',
   );
   assert.equal(post.keywords, 'alpha');
   assert.equal(post.isPartOf.name, 'story');
@@ -300,12 +300,12 @@ test('llms.txt follows the llmstxt.org structure and omits unlisted content', ()
   assert.ok(lines.includes('## Optional'));
   assert.ok(
     lines.includes(
-      '- [Second article](https://fixture-1.example.com/fixture-1/second-article): The second article.',
+      '- [Second article](https://fixture-1.example.com/fixture-1/second-article/): The second article.',
     ),
   );
   assert.ok(
     lines.some((line) =>
-      /^- \[story\]\(https:\/\/fixture-1\.example\.com\/fixture-1\/series\/story-/.test(
+      /^- \[story\]\(https:\/\/fixture-1\.example\.com\/fixture-1\/series\/story\//.test(
         line,
       ),
     ),
@@ -330,7 +330,7 @@ test('llms-full.txt carries each published article in full as plain text', () =>
   assert.ok(full.includes('# Second article\n'));
   assert.ok(
     full.includes(
-      'URL: https://fixture-1.example.com/fixture-1/second-article',
+      'URL: https://fixture-1.example.com/fixture-1/second-article/',
     ),
   );
   assert.ok(full.includes('Published: 2025-06-01T09:00:00.000Z'));
@@ -361,7 +361,7 @@ test('article meta: published, modified, author, tags and image facts', () => {
     '2025-03-01T09:00:00.000Z',
   ]);
   assert.deepEqual(metaContents(html, 'article:author'), [
-    'https://fixture-1.example.com/fixture-1/authors/fixture-1',
+    'https://fixture-1.example.com/fixture-1/authors/fixture-1/',
   ]);
   assert.deepEqual(metaContents(html, 'article:tag'), ['alpha']);
   assert.deepEqual(metaContents(html, 'og:image:width'), ['640']);
@@ -432,11 +432,11 @@ test('titles: home is "<Publication> - <tagline>" within 60 chars; every other p
     'First article | Quiet Notes',
   );
   assert.equal(
-    titleOf(page('fixture-1/tags/alpha-8ed3f6ad68/index.html')),
+    titleOf(page('fixture-1/tags/alpha/index.html')),
     'Posts tagged “alpha” | Quiet Notes',
   );
   assert.equal(
-    titleOf(page('fixture-1/series/story-c478361e68/index.html')),
+    titleOf(page('fixture-1/series/story/index.html')),
     'story | Quiet Notes',
   );
   assert.equal(
@@ -473,11 +473,11 @@ test('meta descriptions exist on every indexable page and are generated per kind
     assert.ok(Array.from(description).length <= 160, `${file}: ${description}`);
   }
   assert.equal(
-    descriptionOf(page('fixture-1/tags/alpha-8ed3f6ad68/index.html')),
+    descriptionOf(page('fixture-1/tags/alpha/index.html')),
     '2 articles tagged alpha on Quiet Notes.',
   );
   assert.equal(
-    descriptionOf(page('fixture-1/series/story-c478361e68/index.html')),
+    descriptionOf(page('fixture-1/series/story/index.html')),
     'story, a series of 2 parts on Quiet Notes.',
   );
   assert.equal(
@@ -509,7 +509,7 @@ test('RSS carries the full sanitized body, authors and categories; Atom carries 
   assert.match(atom, /<category term="alpha"\/><category term="beta"\/>/);
   assert.match(
     atom,
-    /<author><name>fixture-author-2<\/name><uri>https:\/\/fixture-1\.example\.com\/fixture-1\/authors\/fixture-author-2<\/uri><\/author>/,
+    /<author><name>fixture-author-2<\/name><uri>https:\/\/fixture-1\.example\.com\/fixture-1\/authors\/fixture-author-2\/<\/uri><\/author>/,
   );
 });
 
@@ -535,7 +535,7 @@ test('author URLs use a slug of the display name; collisions fall back to the id
   assert.ok(!page('fixture-1/sitemap.xml').includes(stableId(2)));
   assert.ok(
     page('fixture-1/sitemap.xml').includes(
-      '<loc>https://fixture-1.example.com/fixture-1/authors/fixture-author-2</loc>',
+      '<loc>https://fixture-1.example.com/fixture-1/authors/fixture-author-2/</loc>',
     ),
   );
 });

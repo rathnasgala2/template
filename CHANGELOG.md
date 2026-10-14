@@ -8,6 +8,64 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.3.0] - 2026-10-13
+
+### Added
+
+- Per-post `seo` fields (schemas 3.12.0 `seo` object in the content front
+  matter): `seo.title` replaces the page title in `<title>`, `og:title` and
+  `twitter:title` (the `| Publication` suffix is unchanged; JSON-LD `headline`
+  stays the real title); `seo.description` replaces the meta, `og:` and
+  `twitter:` description and the JSON-LD `description`; `seo.canonicalUrl`
+  replaces the canonical link and `og:url` and leaves the page out of the
+  sitemap (feeds and `llms.txt` keep the page's own URL); `seo.noindex` emits
+  `robots: noindex, follow` and leaves the post out of the sitemap, the feeds,
+  `llms.txt`/`llms-full.txt` and the search index while it stays listed on the
+  site (cards, archive, tags), unlike `status: unlisted`.
+- Site icons and browser colour: when `appearance.brandMark` resolves, every
+  page (and `404.html`) gets `<link rel="icon" type=...>` pointing at the mark's
+  original derivative, and `<link rel="apple-touch-icon">` when the mark is a
+  square PNG or JPEG (an SVG or non-square mark gets the icon link only). Every
+  page of every site gets `<meta name="theme-color">` from the resolved palette
+  canvas colour (the base layer's default when no theme is supplied), with a
+  second one for `prefers-color-scheme: dark` when dark mode is allowed.
+- The `Organization` JSON-LD node carries `sameAs` from the publication's
+  `socialLinks` URIs (omitted when there are none).
+- Requires schemas `^3.12.0` (content `seo` object).
+- Author pages carry `lastModified` (so a sitemap `<lastmod>`): the latest
+  `updatedAt ?? publishedAt` of the author's published articles.
+
+### Changed
+
+- Under the default `directory-index` route profile every emitted page URL now
+  ends with a trailing slash (the site root stays `/`): canonical, `og:url`,
+  sitemap `<loc>`, Atom/RSS links and ids, `llms.txt`/`llms-full.txt`, JSON-LD,
+  the search index, redirect-document targets and every internal link. This
+  matches the directory each page is written to, so hosts no longer 301 the
+  slash-less form. `explicit-file` output, fixed files, manifest paths and
+  output paths are unchanged. New `publicRouteForm(route, profile)` in
+  `internal/route.js`; `joinPublicRoute` takes the profile as a third argument.
+- Tag and series routes use the readable segment alone (`/tags/alpha/`) when it
+  is non-empty and unique, ignoring case, among the site's tags (respectively
+  series); the 10-hex digest suffix is appended only on a collision or when the
+  readable part is empty. The decision is made once per build from the whole
+  label set. Existing hashed tag and series URLs change and no redirects are
+  emitted for them.
+- The fallback meta description (a post with no subtitle) skips heading text
+  instead of starting with it. A body made only of headings falls back to its
+  whole text, then to the publication description, so no page lacks a meta
+  description.
+- A rendered article drops a leading body `<h1>` whose text equals the title
+  (trim, whitespace-collapsed, case-insensitive), because the page head already
+  prints the title as the one `<h1>`. This is the page only: feeds, `llms.txt`
+  and the search text keep the heading, and an in-body `#id` link to that `<h1>`
+  no longer resolves.
+- The home `<title>` is the publication name alone when the tagline equals the
+  name (same normalisation) instead of repeating it.
+- The `#organization`, `#website` and `#blog` JSON-LD ids, and the `url` and
+  `publisher` that refer to them, use the public site root including the base
+  path; they used the host root when `baseUrl` carried a path.
+
 ## [4.2.1] - 2026-10-13
 
 ### Changed

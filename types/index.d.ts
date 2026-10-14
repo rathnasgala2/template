@@ -67,6 +67,14 @@ export interface ContentEdition {
   approvedAt: string;
 }
 
+/** The closed `seo` object of a content record's frontmatter. */
+export interface ContentSeo {
+  title?: string;
+  description?: string;
+  canonicalUrl?: string;
+  noindex?: boolean;
+}
+
 /** A `contentFrontmatterNormalized`-shaped record's fields this renderer reads. */
 export interface ContentFrontmatterNormalized {
   id: string;
@@ -87,6 +95,8 @@ export interface ContentFrontmatterNormalized {
   hero?: ResolvedMediaRef;
   socialImage?: ResolvedFileRef;
   redirects: string[];
+  /** Optional search-engine overrides (schemas 3.12.0). */
+  seo?: ContentSeo;
   /** Present exactly when `kind` is `edition`. */
   edition?: ContentEdition;
 }

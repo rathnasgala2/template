@@ -110,7 +110,7 @@ test('S2-T08 acceptance: feeds, sitemap, search index, 404 and print CSS are gen
       );
       assert.match(
         xml,
-        /<id>https:\/\/fixture-1\.example\.com\/fixture-1\/second-article<\/id>/,
+        /<id>https:\/\/fixture-1\.example\.com\/fixture-1\/second-article\/<\/id>/,
         'every entry id/link must be an absolute https:// URL',
       );
     },
@@ -135,7 +135,7 @@ test('S2-T08 acceptance: feeds, sitemap, search index, 404 and print CSS are gen
       assert.ok(secondIndex < firstIndex);
       assert.match(
         xml,
-        /<link>https:\/\/fixture-1\.example\.com\/fixture-1\/second-article<\/link>/,
+        /<link>https:\/\/fixture-1\.example\.com\/fixture-1\/second-article\/<\/link>/,
       );
     },
   );
@@ -151,7 +151,7 @@ test('S2-T08 acceptance: feeds, sitemap, search index, 404 and print CSS are gen
       );
       assert.match(
         xml,
-        /<loc>https:\/\/fixture-1\.example\.com\/fixture-1\/first-article<\/loc><lastmod>2025-01-10T09:00:00\.000Z<\/lastmod>/,
+        /<loc>https:\/\/fixture-1\.example\.com\/fixture-1\/first-article\/<\/loc><lastmod>2025-01-10T09:00:00\.000Z<\/lastmod>/,
       );
       assert.ok(
         !xml.includes('/fixture-1/unlisted-article'),
@@ -180,11 +180,11 @@ test('S2-T08 acceptance: feeds, sitemap, search index, 404 and print CSS are gen
       const routes = document.documents.map((doc) => doc.route);
       assert.ok(
         routes.includes(
-          'https://fixture-1.example.com/fixture-1/first-article',
+          'https://fixture-1.example.com/fixture-1/first-article/',
         ),
       );
       assert.ok(
-        routes.includes('https://fixture-1.example.com/fixture-1/contact'),
+        routes.includes('https://fixture-1.example.com/fixture-1/contact/'),
         'a page-kind record must be indexed too (unlike the feeds)',
       );
       assert.ok(
@@ -209,7 +209,7 @@ test('S2-T08 acceptance: feeds, sitemap, search index, 404 and print CSS are gen
       assert.match(html, /<h1>Page not found<\/h1>/);
       assert.match(
         html,
-        /<a class="g-btn" href="\/fixture-1">Return to the home page/,
+        /<a class="g-btn" href="\/fixture-1\/">Return to the home page/,
       );
       assert.equal(
         (html.match(/<header class="g-header"[^>]*>/g) ?? []).length,
@@ -254,11 +254,11 @@ test('S2-T08 acceptance: feeds, sitemap, search index, 404 and print CSS are gen
       );
       assert.match(
         html,
-        /<link rel="canonical" href="https:\/\/fixture-1\.example\.com\/fixture-1\/first-article">/,
+        /<link rel="canonical" href="https:\/\/fixture-1\.example\.com\/fixture-1\/first-article\/">/,
       );
       assert.match(
         html,
-        /<meta property="og:url" content="https:\/\/fixture-1\.example\.com\/fixture-1\/first-article">/,
+        /<meta property="og:url" content="https:\/\/fixture-1\.example\.com\/fixture-1\/first-article\/">/,
       );
       assert.match(html, /<meta property="og:type" content="article">/);
       assert.match(html, /<meta property="og:title" content="First article">/);
@@ -330,7 +330,7 @@ test('S2-T08: routeSegmentForLabel keeps distinct tag routes in the rich fixture
   });
   assert.ok(
     manifest.routes.some(
-      (route) => route.path === 'fixture-1/tags/alpha-8ed3f6ad68/index.html',
+      (route) => route.path === 'fixture-1/tags/alpha/index.html',
     ),
   );
   assert.equal(stableId(1), '019c0000-0000-7000-8000-000000000001');

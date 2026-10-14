@@ -5,7 +5,7 @@ import { test } from 'node:test';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..');
 
-test('package.json pins the registry schemas release as a ^3.10.0 peer, installed from the peer range', async () => {
+test('package.json pins the registry schemas release as a ^3.12.0 peer, installed from the peer range', async () => {
   const packageJson = JSON.parse(
     await readFile(path.join(REPO_ROOT, 'package.json'), 'utf8'),
   );
@@ -15,7 +15,7 @@ test('package.json pins the registry schemas release as a ^3.10.0 peer, installe
   );
   assert.equal(
     packageJson.peerDependencies['@rathnasgala2/schemas'],
-    '^3.10.0',
+    '^3.12.0',
   );
 });
 
@@ -25,10 +25,10 @@ test('package-lock.json resolves schemas from the registry', async () => {
   );
   const entry = lock.packages['node_modules/@rathnasgala2/schemas'];
   assert.ok(entry, '@rathnasgala2/schemas must be present in the lockfile');
-  assert.equal(entry.version, '3.10.0');
+  assert.equal(entry.version, '3.12.0');
   assert.equal(
     entry.resolved,
-    'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.10.0.tgz',
+    'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.12.0.tgz',
   );
   assert.equal(entry.link, undefined);
   assert.match(entry.integrity, /^sha512-/u);

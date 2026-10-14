@@ -1,6 +1,17 @@
 /**
- * Route-to-output-path projection and the byte-exact generated redirect
- * document.
+ * Route-to-output-path projection, the public URL form of a route, and the
+ * byte-exact generated redirect document.
+ *
+ * Public URL form (`publicRouteForm`, `joinPublicRoute`): under the
+ * `directory-index` profile every page route except `/` is emitted with
+ * exactly one trailing slash (`/about/`), matching the directory the page is
+ * written to (`about/index.html`), so a host never has to redirect a
+ * slash-less URL. Under `explicit-file` a route is emitted unchanged. Fixed
+ * files (a final segment with a file extension such as `/sitemap.xml`, or
+ * anything under `/assets/`) are never changed. Every emitted page URL
+ * (canonical, og:url, sitemap, feeds, llms, JSON-LD, search index, internal
+ * hrefs, redirect targets) goes through this form; manifest paths and
+ * physical output paths (`projectRouteToFilePath`) are not affected.
  *
  * This module implements the `directory-index` and `explicit-file` cases of
  * route projection only for routes that are already valid `canonicalRoute`
@@ -59,20 +70,55 @@ export function derivePublicBasePath(baseUrl, basePath) {
   return joined !== '/' && urlPath !== '/' ? `${joined}/` : joined;
 }
 
+const FIXED_FILE_EXTENSION =
+  /\.(?:xml|json|txt|html?|css|m?js|map|ico|webmanifest|png|jpe?g|gif|webp|avif|svg|woff2?|pdf)$/i;
+
+/**
+ * Whether a route denotes a fixed file (a feed, the sitemap, an asset), not
+ * a page: its final segment carries a known file extension, or it lives
+ * under `/assets/`. Such routes keep their exact form under every profile.
+ *
+ * @param {string} route an absolute route or URL path
+ * @returns {boolean}
+ */
+export function isFixedFileRoute(route) {
+  return /^\/assets\//.test(route) || FIXED_FILE_EXTENSION.test(route);
+}
+
+/**
+ * The public URL form of a route: under `directory-index`, every page route
+ * except `/` ends with exactly one `/`; under `explicit-file`, and for fixed
+ * files, the route is returned unchanged.
+ *
+ * @param {string} route an absolute route (already base-path joined or not)
+ * @param {RouteNormalizationProfile} profile the selected route
+ *   normalization profile
+ * @returns {string} the route in its emitted form
+ */
+export function publicRouteForm(route, profile) {
+  if (profile !== 'directory-index') return route;
+  if (route === '/' || isFixedFileRoute(route)) return route;
+  return `${route.replace(/\/+$/, '')}/`;
+}
+
 /**
  * Join a public base path (see {@link derivePublicBasePath}) and a route
  * into one emitted URL path. The site root route is the public base path
  * itself (`/site/` when `baseUrl` carries a path); every other route is
- * joined exactly like {@link joinBasePathAndRoute}.
+ * joined exactly like {@link joinBasePathAndRoute}, then put in the profile's
+ * public URL form ({@link publicRouteForm}); fixed-file routes keep their
+ * exact form.
  *
  * @param {string} publicBasePath the public base path
  * @param {string} route a `canonicalRoute`
+ * @param {RouteNormalizationProfile} profile the selected route
+ *   normalization profile
  * @returns {string} the emitted absolute URL path
  */
-export function joinPublicRoute(publicBasePath, route) {
-  return route === '/'
-    ? publicBasePath
-    : joinBasePathAndRoute(publicBasePath, route);
+export function joinPublicRoute(publicBasePath, route, profile) {
+  if (route === '/') return publicRouteForm(publicBasePath, profile);
+  const joined = joinBasePathAndRoute(publicBasePath, route);
+  return isFixedFileRoute(route) ? joined : publicRouteForm(joined, profile);
 }
 
 /**

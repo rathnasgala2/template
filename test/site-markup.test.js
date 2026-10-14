@@ -227,7 +227,7 @@ test('header, home, article, listings and footer render the redesigned structure
   await t.test('home: featured is the newest published article', () => {
     assert.match(
       home,
-      /<h2 id="hero-title"><a href="\/fixture-1\/second-article">Second article<\/a><\/h2>/,
+      /<h2 id="hero-title"><a href="\/fixture-1\/second-article\/">Second article<\/a><\/h2>/,
     );
     assert.match(home, /Read the essay/);
     assert.match(
@@ -245,7 +245,7 @@ test('header, home, article, listings and footer render the redesigned structure
   await t.test('home: tag pills carry counts and real tag links', () => {
     assert.match(
       home,
-      /<a class="g-pill" href="\/fixture-1\/tags\/alpha-8ed3f6ad68"><svg[^>]*>.*?<\/svg><span>alpha<\/span><span class="g-pill-count">2<\/span><\/a>/,
+      /<a class="g-pill" href="\/fixture-1\/tags\/alpha\/"><svg[^>]*>.*?<\/svg><span>alpha<\/span><span class="g-pill-count">2<\/span><\/a>/,
     );
     assert.match(
       home,
@@ -260,11 +260,11 @@ test('header, home, article, listings and footer render the redesigned structure
       assert.match(home, /2 parts/);
       assert.match(
         home,
-        /<ol class="g-series-list"><li><a href="\/fixture-1\/second-article"><span class="g-series-n">1<\/span>/,
+        /<ol class="g-series-list"><li><a href="\/fixture-1\/second-article\/"><span class="g-series-n">1<\/span>/,
       );
       assert.match(
         home,
-        /<a class="g-btn" href="\/fixture-1\/second-article">Start with part 1/,
+        /<a class="g-btn" href="\/fixture-1\/second-article\/">Start with part 1/,
       );
     },
   );
@@ -292,7 +292,7 @@ test('header, home, article, listings and footer render the redesigned structure
     () => {
       assert.match(
         article,
-        /<a class="g-series-tag" href="\/fixture-1\/series\/story-c478361e68"><svg[^>]*>.*?<\/svg>Part 2 of 2<span class="g-dot" aria-hidden="true"><\/span>story<\/a>/,
+        /<a class="g-series-tag" href="\/fixture-1\/series\/story\/"><svg[^>]*>.*?<\/svg>Part 2 of 2<span class="g-dot" aria-hidden="true"><\/span>story<\/a>/,
       );
       assert.match(article, /<h1>First article<\/h1>/);
       assert.match(
@@ -301,7 +301,7 @@ test('header, home, article, listings and footer render the redesigned structure
       );
       assert.match(
         article,
-        /<a href="\/fixture-1\/authors\/fixture-1">fixture-1<\/a>/,
+        /<a href="\/fixture-1\/authors\/fixture-1\/">fixture-1<\/a>/,
       );
       assert.match(
         article,
@@ -309,12 +309,12 @@ test('header, home, article, listings and footer render the redesigned structure
       );
       assert.match(
         article,
-        /<ul class="g-tags" aria-label="Tags"><li><a class="g-tag" href="\/fixture-1\/tags\/alpha-8ed3f6ad68">/,
+        /<ul class="g-tags" aria-label="Tags"><li><a class="g-tag" href="\/fixture-1\/tags\/alpha\/">/,
       );
       assert.match(article, /<section class="g-author-card"/);
       assert.match(
         article,
-        /<li aria-current="true"><a href="\/fixture-1\/first-article"><span class="g-series-n">2<\/span><span>First article<\/span><span class="g-series-here">You are here<\/span>/,
+        /<li aria-current="true"><a href="\/fixture-1\/first-article\/"><span class="g-series-n">2<\/span><span>First article<\/span><span class="g-series-here">You are here<\/span>/,
       );
     },
   );
@@ -325,13 +325,13 @@ test('header, home, article, listings and footer render the redesigned structure
       // First article is the older of the two published articles.
       assert.match(
         article,
-        /<a class="g-pager-link" rel="prev" href="\/fixture-1\/second-article">/,
+        /<a class="g-pager-link" rel="prev" href="\/fixture-1\/second-article\/">/,
       );
       assert.ok(!article.includes('g-pager-next'));
       const reading = article.slice(article.indexOf('id="related-title"'));
       assert.match(reading, /Keep reading/);
-      assert.match(reading, /href="\/fixture-1\/second-article"/);
-      assert.ok(!reading.includes('href="/fixture-1/first-article"'));
+      assert.match(reading, /href="\/fixture-1\/second-article\/"/);
+      assert.ok(!reading.includes('href="/fixture-1/first-article/"'));
     },
   );
 
@@ -343,7 +343,7 @@ test('header, home, article, listings and footer render the redesigned structure
     'tag, series, archive and author pages: header block plus row cards',
     () => {
       const tag = /** @type {string} */ (
-        pages.get('fixture-1/tags/alpha-8ed3f6ad68/index.html')
+        pages.get('fixture-1/tags/alpha/index.html')
       );
       assert.match(
         tag,
@@ -356,7 +356,7 @@ test('header, home, article, listings and footer render the redesigned structure
       assert.match(tag, /<a class="g-pill" href="[^"]+" aria-current="page">/);
       assert.equal(count(tag, /<article class="g-card g-card-row">/g), 2);
       const series = /** @type {string} */ (
-        pages.get('fixture-1/series/story-c478361e68/index.html')
+        pages.get('fixture-1/series/story/index.html')
       );
       assert.match(series, /<h1>story<\/h1>/);
       assert.equal(count(series, /<article class="g-card g-card-row">/g), 2);

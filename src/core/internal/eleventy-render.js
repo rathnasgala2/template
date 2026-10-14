@@ -139,7 +139,10 @@ const SKELETON_LAYOUT_SOURCE = [
   '<meta charset="utf-8">',
   '<meta name="viewport" content="width=device-width, initial-scale=1">',
   '{{ cspMetaTag | safe }}',
-  '<meta name="color-scheme" content="{{ colorScheme }}">',
+  // Site icon (the appearance brand mark's original derivative) and the
+  // browser chrome colour (the resolved page canvas), per allowed mode. They
+  // share the colour-scheme line so no blank line is added to a page.
+  '<meta name="color-scheme" content="{{ colorScheme }}">{% if iconHref %}<link rel="icon" href="{{ iconHref }}"{% if iconType %} type="{{ iconType }}"{% endif %}>{% if appleTouchIcon %}<link rel="apple-touch-icon" href="{{ iconHref }}">{% endif %}{% endif %}{% for themeColor in themeColors %}<meta name="theme-color" content="{{ themeColor.color }}"{% if themeColor.media %} media="{{ themeColor.media }}"{% endif %}>{% endfor %}',
   // The interactions script (article pages, module on) is deferred and sits
   // on the appearance script's line, so a page without it is byte-identical
   // to before.

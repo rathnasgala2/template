@@ -61,6 +61,7 @@ import {
   renderBreadcrumbs,
   renderPagination,
   renderSlot,
+  unescapeHtml,
 } from './skeleton.js';
 import {
   createComponents,
@@ -87,7 +88,12 @@ import {
 } from './interactions.js';
 import { getMessages } from './messages.js';
 import { resolveTextDirection } from './text-direction.js';
-import { deriveAuthorSlugs, routeSegmentForLabel } from './route-labels.js';
+import {
+  deriveAuthorSlugs,
+  deriveSeriesSegments,
+  deriveTagSegments,
+  routeSegmentForLabel,
+} from './route-labels.js';
 import { derivePublicBasePath, joinPublicRoute } from './route.js';
 import {
   assertSupportedComposition,
@@ -204,6 +210,10 @@ function paginate(items, pageSize) {
  *   output path a given `sourceDigest` produced)
  * @property {boolean} [interactionBearing] whether this page carries the
  *   reader-interactions section (article pages when the module is on)
+ * @property {string} [socialTitle] the `og:title`/`twitter:title` when it
+ *   differs from `title` (`seo.title`)
+ * @property {string} [canonicalUrl] an absolute canonical URL overriding the
+ *   page's own (`seo.canonicalUrl`); such a page is left out of the sitemap
  * @property {string} [robotsContent] an optional
  *   `<meta name="robots">` content value (e.g. `'noindex, follow'` for
  *   `status: "unlisted"` content); omitted entirely for ordinarily indexable
@@ -214,8 +224,8 @@ function paginate(items, pageSize) {
  *   `rfc3339` timestamp the generated sitemap's `<lastmod>` for this page is
  *   drawn from — always derived from authored content timestamps
  *   (`publishedAt`/`updatedAt`), never build time. Omitted
- *   for a page kind with no natural underlying timestamp (`profile`,
- *   `author`), which the generated sitemap then emits with no `<lastmod>`
+ *   for a page kind with no natural underlying timestamp (`profile`, or
+ *   an `author` with no published article), which the generated sitemap then emits with no `<lastmod>`
  *   element at all (a sitemap's own `<lastmod>` is optional per the Sitemaps
  *   0.9 protocol).
  */
@@ -248,6 +258,18 @@ export function selectPublishedArticles(content) {
       }
       return a.frontmatter.id < b.frontmatter.id ? -1 : 1;
     });
+}
+
+/**
+ * Whether a record opted out of search engines with `seo.noindex`. Such a
+ * record stays listed on the site (cards, archive, tags) but is left out of
+ * the sitemap, feeds, `llms.txt` and the search index.
+ *
+ * @param {import('../../../types/index.d.ts').ContentFrontmatterNormalized} frontmatter
+ * @returns {boolean} `true` when the record is `seo.noindex`
+ */
+export function isSeoNoindex(frontmatter) {
+  return frontmatter.seo?.noindex === true;
 }
 
 /**
@@ -345,6 +367,32 @@ export function selectRelatedArticles(record, published) {
 }
 
 /**
+ * The page head already prints the title as the one `<h1>`; a body that opens
+ * with an `<h1>` repeating it would show the title twice, so that leading
+ * heading is dropped from the rendered article body.
+ *
+ * @param {string} body sanitized body HTML
+ * @param {string} title the record title
+ * @returns {string} the body without a leading `<h1>` that equals the title
+ */
+function dropLeadingTitleHeading(body, title) {
+  const match = /^\s*<h1(?:\s[^>]*)?>([\s\S]*?)<\/h1>\s*/i.exec(body);
+  if (!match) return body;
+  const heading = unescapeHtml(match[1].replace(/<[^>]*>/g, ''));
+  return normalizeTitleText(heading) === normalizeTitleText(title)
+    ? body.slice(match[0].length)
+    : body;
+}
+
+/**
+ * @param {string} value a title or tagline
+ * @returns {string} trimmed, whitespace-collapsed, lower-cased for comparison
+ */
+function normalizeTitleText(value) {
+  return value.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/**
  * The home page `<title>`: `<Publication> – <tagline>`, with the tagline cut
  * at a word boundary (and an ellipsis) so the whole stays within
  * {@link HOME_TITLE_MAX} characters; the publication name alone when there is
@@ -358,6 +406,8 @@ export function homeDocumentTitle(name, tagline) {
   const separator = ' \u2013 ';
   const line = (tagline ?? '').replace(/\s+/g, ' ').trim();
   if (!line) return name;
+  // A tagline that only repeats the name adds nothing to the title.
+  if (normalizeTitleText(line) === normalizeTitleText(name)) return name;
   if (Array.from(`${name}${separator}${line}`).length <= HOME_TITLE_MAX) {
     return `${name}${separator}${line}`;
   }
@@ -388,6 +438,9 @@ export function homeDocumentTitle(name, tagline) {
  * @param {import('../../../types/index.d.ts').InteractionsModule} [options.interactions]
  *   the validated interactions module; when set, every article page carries
  *   the interactions section and is interaction-bearing
+ * @param {import('./route.js').RouteNormalizationProfile} [options.routeProfile]
+ *   the route normalization profile deciding every emitted page URL's form
+ *   (default `directory-index`)
  * @param {unknown} [options.composition] the schema-validated structural
  *   composition selected by the theme; defaults to Editorial only for
  *   theme-less renderer use
@@ -432,6 +485,7 @@ export function buildGeneratedPages(validatedInput, options) {
     ? options.interactions
     : undefined;
   const publicBasePath = derivePublicBasePath(baseUrl, basePath);
+  const routeProfile = options.routeProfile ?? 'directory-index';
   const messages = getMessages(publication.defaultLanguage);
   const authorsById = new Map(authors.map((author) => [author.id, author]));
   const editions = options.editions ?? resolveEditions(content, contentRoute);
@@ -440,11 +494,19 @@ export function buildGeneratedPages(validatedInput, options) {
    * @param {string} route an un-joined route
    * @returns {string} the `basePath`-joined absolute route
    */
-  const site = (route) => joinPublicRoute(publicBasePath, route);
+  const site = (route) => joinPublicRoute(publicBasePath, route, routeProfile);
+  // Decided once from the site's whole label set, so a segment moves only when
+  // the label set does (D8).
+  const tagSegments = deriveTagSegments(content);
+  const seriesSegments = deriveSeriesSegments(content);
+  const tagSegment = (/** @type {string} */ tag) =>
+    tagSegments.get(tag) ?? routeSegmentForLabel(tag);
+  const seriesSegment = (/** @type {string} */ name) =>
+    seriesSegments.get(name) ?? routeSegmentForLabel(name);
   const tagHref = (/** @type {string} */ tag) =>
-    site(`/tags/${routeSegmentForLabel(tag)}`);
+    site(`/tags/${tagSegment(tag)}`);
   const seriesHref = (/** @type {string} */ series) =>
-    site(`/series/${routeSegmentForLabel(series)}`);
+    site(`/series/${seriesSegment(series)}`);
   const recordHref = (
     /** @type {import('../../../types/index.d.ts').ContentBuildRecord} */ record,
   ) => site(contentRoute(record.frontmatter));
@@ -468,6 +530,8 @@ export function buildGeneratedPages(validatedInput, options) {
     authorsById,
     recordHref,
     tagHref,
+    // A tag only unlisted posts carry has no listing page: plain text.
+    hasTagPage: (tag) => tagSegments.has(tag),
   });
   const { text, call, chip, byline, card, avatar } = ui;
 
@@ -491,6 +555,12 @@ export function buildGeneratedPages(validatedInput, options) {
     publication,
     absolute,
     brandMark: absoluteImage(validatedInput.appearance.brandMark),
+    // The ids hang off the public site root, base path included.
+    siteUrl: absolute(site('/')),
+    sameAs: publication.socialLinks.flatMap((entry) => {
+      const uri = /** @type {Record<string, unknown>} */ (entry)?.uri;
+      return typeof uri === 'string' ? [uri] : [];
+    }),
   });
   /** The publication-default social image and its alt, when one is set. */
   const defaultSocial = publication.defaultImage
@@ -518,12 +588,22 @@ export function buildGeneratedPages(validatedInput, options) {
   };
   /**
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
-   * @returns {string} the page description: authored, else the body's
-   *   opening words
+   * @returns {string} the page description: `seo.description`, else the
+   *   subtitle, else the body's opening words (heading text skipped)
    */
   const contentDescription = (record) =>
+    record.frontmatter.seo?.description ||
     record.frontmatter.description ||
-    truncateAtWord(plainText(record.body), DESCRIPTION_MAX);
+    // Heading text is not a sentence: skip it for the fallback. A body of
+    // headings only falls back to the whole text, then to the site's own
+    // description, so no page is left without a meta description.
+    truncateAtWord(
+      plainText(record.body.replace(/<h[1-6][\s>][\s\S]*?<\/h[1-6]>/gi, ' ')) ||
+        plainText(record.body),
+      DESCRIPTION_MAX,
+    ) ||
+    truncateAtWord(publication.description, DESCRIPTION_MAX) ||
+    record.frontmatter.title;
 
   const text0 = (/** @type {string} */ key) =>
     /** @type {string} */ (messages[key]);
@@ -802,6 +882,7 @@ export function buildGeneratedPages(validatedInput, options) {
         truncateAtWord(author.biography, DESCRIPTION_MAX) ||
         msg('authorPageDescription', author.displayName, publicationTitle),
       ogType: 'profile',
+      lastModified: latestContentTimestamp(authored),
       ...(author.avatar
         ? {
             socialImageRef: author.avatar,
@@ -849,7 +930,7 @@ export function buildGeneratedPages(validatedInput, options) {
         : '';
     const firstTag = original.frontmatter.tags[0];
     const trail = [
-      ...((isArticle || isEdition) && firstTag
+      ...((isArticle || isEdition) && firstTag && tagSegments.has(firstTag)
         ? [{ label: firstTag, route: tagHref(firstTag) }]
         : []),
       ...(edition
@@ -907,16 +988,19 @@ export function buildGeneratedPages(validatedInput, options) {
     const tags =
       isArticle && frontmatter.tags.length > 0
         ? `<ul class="g-tags" aria-label="${text('tagListLabel')}">${frontmatter.tags
-            .map(
-              (tag) =>
-                `<li><a class="g-tag" href="${escapeHtml(tagHref(tag))}">${icon('hash')}${escapeHtml(tag)}</a></li>`,
+            .map((tag) =>
+              tagSegments.has(tag)
+                ? `<li><a class="g-tag" href="${escapeHtml(tagHref(tag))}">${icon('hash')}${escapeHtml(tag)}</a></li>`
+                : `<li><span class="g-tag">${icon('hash')}${escapeHtml(tag)}</span></li>`,
             )
             .join('')}</ul>`
         : '';
     const prose =
       `<div class="g-prose">${tocMobile}` +
       renderSlot('article-preamble') +
-      options.pageBody(record.body) +
+      options.pageBody(
+        dropLeadingTitleHeading(record.body, frontmatter.title),
+      ) +
       tags +
       renderSlot('article-end') +
       renderSlot('article-footer-ad', { collapsed: true }) +
@@ -987,13 +1071,23 @@ export function buildGeneratedPages(validatedInput, options) {
         related.length > 0
           ? `<section class="g-wrap g-section" aria-labelledby="related-title"><div class="g-section-head">` +
             `<h2 id="related-title">${text('keepReadingHeading')}</h2>` +
-            (firstTag
+            (firstTag && tagSegments.has(firstTag)
               ? `<a class="g-more" href="${escapeHtml(tagHref(firstTag))}">${call('moreInTagLabel', firstTag)}${icon('arrow')}</a>`
               : '') +
             `</div><div class="g-grid">${related.map((r) => cardOf(r)).join('')}</div></section>`
           : '';
     }
+    // An edition keeps its own title and canonicalises to its article, so only
+    // `seo.description` applies to it.
+    const seoTitle = isEdition
+      ? undefined
+      : frontmatter.seo?.title || undefined;
+    const seoCanonical = isEdition
+      ? undefined
+      : frontmatter.seo?.canonicalUrl || undefined;
     const ownUrl = absolute(recordHref(record));
+    // JSON-LD names the same URL the canonical link does.
+    const graphUrl = seoCanonical ?? ownUrl;
     const recordAuthors = ui.recordAuthors(record);
     const articleTrail = [
       homeStep,
@@ -1011,7 +1105,7 @@ export function buildGeneratedPages(validatedInput, options) {
     );
     const articleGraph = isArticle
       ? sd.article({
-          url: ownUrl,
+          url: graphUrl,
           headline: frontmatter.title,
           description: contentDescription(record),
           image: absoluteImage(socialOfContent(record).socialImageRef),
@@ -1032,7 +1126,7 @@ export function buildGeneratedPages(validatedInput, options) {
       : sd.webPage({
           name: frontmatter.title,
           description: contentDescription(record),
-          url: ownUrl,
+          url: graphUrl,
           language: frontmatter.language,
           trail: articleTrail,
           dateModified: contentLastModified(frontmatter),
@@ -1050,8 +1144,10 @@ export function buildGeneratedPages(validatedInput, options) {
               frontmatter.title,
               editionKindLabel(edition.kind, messages),
             )
-          : frontmatter.title,
+          : (seoTitle ?? frontmatter.title),
       ),
+      socialTitle: seoTitle,
+      canonicalUrl: seoCanonical,
       language: frontmatter.language,
       description: contentDescription(record),
       ogType: isArticle || isEdition ? 'article' : 'website',
@@ -1069,7 +1165,9 @@ export function buildGeneratedPages(validatedInput, options) {
         : undefined,
       // An edition is never indexed: its article is the reference.
       robotsContent:
-        isEdition || frontmatter.status === 'unlisted'
+        isEdition ||
+        frontmatter.status === 'unlisted' ||
+        isSeoNoindex(frontmatter)
           ? 'noindex, follow'
           : undefined,
       interactionBearing: Boolean(interactions),
@@ -1307,7 +1405,7 @@ export function buildGeneratedPages(validatedInput, options) {
       );
     pages.push({
       kind: 'tag',
-      route: `/tags/${routeSegmentForLabel(tag)}`,
+      route: `/tags/${tagSegment(tag)}`,
       ...listingMeta({
         name: msg('tagPageTitle', tag),
         description: msg(
@@ -1316,7 +1414,7 @@ export function buildGeneratedPages(validatedInput, options) {
           tag,
           publicationTitle,
         ),
-        route: `/tags/${routeSegmentForLabel(tag)}`,
+        route: `/tags/${tagSegment(tag)}`,
         parents: [{ label: text0('tagsSectionLabel'), route: site('/tags') }],
       }),
       language: publication.defaultLanguage,
@@ -1378,7 +1476,7 @@ export function buildGeneratedPages(validatedInput, options) {
       );
     pages.push({
       kind: 'series',
-      route: `/series/${routeSegmentForLabel(name)}`,
+      route: `/series/${seriesSegment(name)}`,
       ...listingMeta({
         name,
         description: msg(
@@ -1387,7 +1485,7 @@ export function buildGeneratedPages(validatedInput, options) {
           name,
           publicationTitle,
         ),
-        route: `/series/${routeSegmentForLabel(name)}`,
+        route: `/series/${seriesSegment(name)}`,
         parents: [
           { label: text0('seriesSectionLabel'), route: site('/series') },
         ],

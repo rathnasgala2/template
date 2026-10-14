@@ -45,10 +45,10 @@ boundary (the attribution switch above stays a core appearance setting).
 
 ## Contract sources and generation commands
 
-This source targets `@rathnasgala2/schemas@3.10.0` (installed exactly by the
-lock); the peer range is `^3.10.0`. Generation-4 development verifies against
+This source targets `@rathnasgala2/schemas@3.12.0` (installed exactly by the
+lock); the peer range is `^3.12.0`. Generation-4 development verifies against
 the schema sibling/packed candidate; the release lock remains intentionally
-unchanged until 3.10.0 is published and must be regenerated from that
+unchanged until 3.12.0 is published and must be regenerated from that
 authoritative artifact before release. It owns two of its own published
 contracts, `contracts/render-policy.jcs` and
 `contracts/theme-styling-contract.jcs`, emitted as compact RFC 8785 JCS by

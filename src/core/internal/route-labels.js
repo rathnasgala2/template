@@ -19,10 +19,10 @@
  * the one new case it introduces — turning an arbitrary label into a route
  * segment — and closes the collision risk a lossy ASCII-only slug would
  * otherwise introduce (two distinct Unicode labels both losing all their
- * characters to filtering) by always appending a short, deterministic content
- * hash of the exact label. Two distinct labels can therefore never collide on
- * the same generated route, even when their readable prefixes are identical
- * or both empty.
+ * characters to filtering) by appending a short, deterministic content hash of
+ * the exact label whenever the readable prefix is empty or shared with another
+ * label of the site (`deriveLabelSegments`). Two distinct labels can therefore
+ * never collide on the same generated route.
  */
 
 import { createHash } from 'node:crypto';
@@ -64,6 +64,82 @@ export function routeSegmentForLabel(label) {
     .slice(0, 10);
   const prefix = asciiReadablePrefix(label);
   return prefix.length > 0 ? `${prefix}-${hash}` : hash;
+}
+
+/**
+ * Decide every label's route segment once, from the whole label set.
+ * A label whose readable prefix is non-empty and unique (case-insensitive)
+ * among the labels uses the prefix alone; a collision (every label sharing
+ * the prefix) or an empty prefix keeps the digest-suffixed form of
+ * {@link routeSegmentForLabel}. The decision depends only on the set, never
+ * on order, so a segment changes only when the label set does. A prefix-only
+ * segment that equals another label's digest-suffixed segment also falls
+ * back to the suffixed form.
+ *
+ * @param {Iterable<string>} labels the site's distinct labels of one kind
+ * @returns {Map<string, string>} label to route segment
+ */
+export function deriveLabelSegments(labels) {
+  const distinct = [...new Set(labels)];
+  /** @type {Map<string, number>} */
+  const prefixCounts = new Map();
+  for (const label of distinct) {
+    const prefix = asciiReadablePrefix(label);
+    prefixCounts.set(prefix, (prefixCounts.get(prefix) ?? 0) + 1);
+  }
+  const suffixed = new Set(
+    distinct
+      .filter(
+        (label) =>
+          asciiReadablePrefix(label) === '' ||
+          (prefixCounts.get(asciiReadablePrefix(label)) ?? 0) > 1,
+      )
+      .map((label) => routeSegmentForLabel(label)),
+  );
+  /** @type {Map<string, string>} */
+  const segments = new Map();
+  for (const label of distinct) {
+    const prefix = asciiReadablePrefix(label);
+    const unique = prefix !== '' && prefixCounts.get(prefix) === 1;
+    segments.set(
+      label,
+      unique && !suffixed.has(prefix) ? prefix : routeSegmentForLabel(label),
+    );
+  }
+  return segments;
+}
+
+/**
+ * @param {readonly import('../../../types/index.d.ts').ContentBuildRecord[]} content
+ * @returns {Map<string, string>} each published article tag's route segment
+ */
+export function deriveTagSegments(content) {
+  return deriveLabelSegments(
+    content
+      .filter(
+        (r) =>
+          r.frontmatter.kind === 'article' &&
+          r.frontmatter.status === 'published',
+      )
+      .flatMap((r) => r.frontmatter.tags),
+  );
+}
+
+/**
+ * @param {readonly import('../../../types/index.d.ts').ContentBuildRecord[]} content
+ * @returns {Map<string, string>} each published series' route segment
+ */
+export function deriveSeriesSegments(content) {
+  return deriveLabelSegments(
+    content
+      .filter(
+        (r) =>
+          r.frontmatter.kind !== 'edition' &&
+          r.frontmatter.status === 'published' &&
+          r.frontmatter.series,
+      )
+      .map((r) => /** @type {string} */ (r.frontmatter.series)),
+  );
 }
 
 /**

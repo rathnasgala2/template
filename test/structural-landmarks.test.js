@@ -177,9 +177,9 @@ test('S2-T06 structural test: one golden page per kind has correct landmarks and
     page: 'fixture-1/contact/index.html',
     index: 'fixture-1/index.html',
     'tag-root': 'fixture-1/tags/index.html',
-    'tag-leaf': 'fixture-1/tags/alpha-8ed3f6ad68/index.html',
+    'tag-leaf': 'fixture-1/tags/alpha/index.html',
     'series-root': 'fixture-1/series/index.html',
-    'series-leaf': 'fixture-1/series/story-c478361e68/index.html',
+    'series-leaf': 'fixture-1/series/story/index.html',
     'archive-root': 'fixture-1/archive/index.html',
     'archive-leaf': 'fixture-1/archive/2025/index.html',
   };

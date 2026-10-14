@@ -168,14 +168,25 @@ export function renderSkipLink(messages) {
  *   route, so the matching link can carry `aria-current="page"`
  * @param {string} urlPrefix the `baseUrl` path prefix prepended to an
  *   internal route's href (`/` when `baseUrl` has no path)
+ * @param {import('./route.js').RouteNormalizationProfile} [routeProfile] the
+ *   route normalization profile (default `directory-index`)
  * @returns {string} the rendered `<li>`
  */
-export function renderNavItem(item, currentRoute, urlPrefix) {
+export function renderNavItem(
+  item,
+  currentRoute,
+  urlPrefix,
+  routeProfile = 'directory-index',
+) {
   const label = escapeHtml(item.label);
   const href = escapeHtml(
     /** @type {string} */ (
       item.type === 'internal'
-        ? joinPublicRoute(urlPrefix, /** @type {string} */ (item.route))
+        ? joinPublicRoute(
+            urlPrefix,
+            /** @type {string} */ (item.route),
+            routeProfile,
+          )
         : item.url
     ),
   );
@@ -184,7 +195,7 @@ export function renderNavItem(item, currentRoute, urlPrefix) {
   const children = item.children ?? [];
   const childList =
     children.length > 0
-      ? `<ul>${children.map((child) => renderNavItem(child, currentRoute, urlPrefix)).join('')}</ul>`
+      ? `<ul>${children.map((child) => renderNavItem(child, currentRoute, urlPrefix, routeProfile)).join('')}</ul>`
       : '';
   return `<li><a href="${href}"${currentAttribute}>${label}</a>${childList}</li>`;
 }
@@ -202,6 +213,8 @@ export function renderNavItem(item, currentRoute, urlPrefix) {
  *   the resolved message catalog
  * @param {string} [options.urlPrefix] the `baseUrl` path prefix for internal
  *   hrefs (default `/`)
+ * @param {import('./route.js').RouteNormalizationProfile} [options.routeProfile]
+ *   the route normalization profile (default `directory-index`)
  * @returns {string} the rendered primary navigation `<nav>`, always present
  *   even when `items` is empty (TPL-M3): every page kind renders exactly
  *   one primary-navigation landmark unconditionally
@@ -215,12 +228,13 @@ export function renderPrimaryNavigation({
   currentRoute,
   messages,
   urlPrefix = '/',
+  routeProfile = 'directory-index',
 }) {
   const label = escapeHtml(
     /** @type {string} */ (messages.primaryNavigationLabel),
   );
   const itemsHtml = items
-    .map((item) => renderNavItem(item, currentRoute, urlPrefix))
+    .map((item) => renderNavItem(item, currentRoute, urlPrefix, routeProfile))
     .join('');
   return `<nav class="g-nav" aria-label="${label}"><ul>${itemsHtml}</ul></nav>`;
 }

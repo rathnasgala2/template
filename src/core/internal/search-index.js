@@ -34,7 +34,11 @@
 
 import { derivePublicBasePath, joinPublicRoute } from './route.js';
 import { compareUtf8Bytes } from './source-inventory.js';
-import { contentLastModified, contentRoute } from './page-kinds.js';
+import {
+  contentLastModified,
+  contentRoute,
+  isSeoNoindex,
+} from './page-kinds.js';
 
 /** @type {number} the excerpt's maximum character length — bounded for the
  * same documented reason `plainText`'s own `description` field is bounded
@@ -66,9 +70,11 @@ function plainTextExcerpt(html) {
  * `build-input:2.0.0` instance.
  *
  * @param {import('../../../types/index.d.ts').NormalizedBuildInput} validatedInput
+ * @param {import('./route.js').RouteNormalizationProfile} routeProfile the
+ *   route normalization profile deciding each entry's public URL form
  * @returns {string} the exact UTF-8 JSON text, LF-terminated
  */
-export function buildSearchIndex(validatedInput) {
+export function buildSearchIndex(validatedInput, routeProfile) {
   const { publication, content, basePath, baseUrl, buildEpoch } =
     validatedInput;
 
@@ -78,7 +84,11 @@ export function buildSearchIndex(validatedInput) {
    */
   const absoluteUrl = (route) =>
     new URL(
-      joinPublicRoute(derivePublicBasePath(baseUrl, basePath), route),
+      joinPublicRoute(
+        derivePublicBasePath(baseUrl, basePath),
+        route,
+        routeProfile,
+      ),
       baseUrl,
     ).toString();
 
@@ -87,7 +97,8 @@ export function buildSearchIndex(validatedInput) {
       (record) =>
         (record.frontmatter.kind === 'article' ||
           record.frontmatter.kind === 'page') &&
-        record.frontmatter.status === 'published',
+        record.frontmatter.status === 'published' &&
+        !isSeoNoindex(record.frontmatter),
     )
     .map((record) => {
       const { frontmatter } = record;

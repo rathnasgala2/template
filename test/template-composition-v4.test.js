@@ -322,7 +322,7 @@ test('Editorial composition renders distinct Home, Article and Author structures
   assert.match(home, /data-gala-home-layout="magazine"/);
   assert.match(
     home,
-    /<h2 id="hero-title"><a href="\/fixture-1\/second-article">Second article<\/a><\/h2>/,
+    /<h2 id="hero-title"><a href="\/fixture-1\/second-article\/">Second article<\/a><\/h2>/,
   );
   assert.match(article, /data-gala-article-layout="editorial"/);
   assert.match(article, /<article class="g-article"/);

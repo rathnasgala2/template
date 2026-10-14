@@ -524,6 +524,7 @@ function subresourceIntegrityAttribute(bytes) {
  *   files: {path: string, bytes: Buffer}[],
  *   assets: import('../../../types/index.d.ts').ManifestAssetEntry[],
  *   linkTagsHtml: string,
+ *   canvas: {light: string, dark: string} | undefined,
  *   composition: (typeof import('./template-composition.js').SUPPORTED_COMPOSITIONS)[number],
  * }>} the files to write (already `basePath`-joined), their manifest rows
  *   (same joined paths), and the ready-to-insert `<link>` markup
@@ -672,6 +673,7 @@ export async function loadThemeAssets({
     files,
     assets,
     linkTagsHtml: linkTags.join(''),
+    canvas: paletteSheet.canvas,
     composition: assertSupportedComposition(themeJson.composition),
   };
 }

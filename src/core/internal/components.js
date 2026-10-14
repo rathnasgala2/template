@@ -284,6 +284,9 @@ export function createContentImage({ mediaVariants, publicBasePath }) {
  * @property {(record: import('../../../types/index.d.ts').ContentBuildRecord) => string} recordHref
  *   the record's own joined route
  * @property {(tag: string) => string} tagHref
+ * @property {(tag: string) => boolean} [hasTagPage] whether the tag has a
+ *   listing page (default: every tag does); a tag without one renders as plain
+ *   text, never a dead link
  */
 
 /**
@@ -295,6 +298,7 @@ export function createContentImage({ mediaVariants, publicBasePath }) {
  */
 export function createComponents(context) {
   const { messages, mediaImage, authorsById, recordHref, tagHref } = context;
+  const hasTagPage = context.hasTagPage ?? (() => true);
   /**
    * @param {string} key a plain message key
    * @returns {string} the escaped message text
@@ -315,7 +319,9 @@ export function createComponents(context) {
    * @returns {string}
    */
   const chip = (tag) =>
-    `<a class="g-chip" href="${escapeHtml(tagHref(tag))}">${escapeHtml(tag)}</a>`;
+    hasTagPage(tag)
+      ? `<a class="g-chip" href="${escapeHtml(tagHref(tag))}">${escapeHtml(tag)}</a>`
+      : `<span class="g-chip">${escapeHtml(tag)}</span>`;
 
   /**
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record

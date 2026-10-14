@@ -91,7 +91,7 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
       );
       assert.match(
         html,
-        /aria-label="Breadcrumb"><ol><li><a href="\/fixture-1">Home<\/a><\/li><li>Authors<\/li><li aria-current="page">fixture-author-2<\/li>/,
+        /aria-label="Breadcrumb"><ol><li><a href="\/fixture-1\/">Home<\/a><\/li><li>Authors<\/li><li aria-current="page">fixture-author-2<\/li>/,
       );
       // The author page lists that author's own published articles.
       assert.match(html, /Second article/);
@@ -108,7 +108,7 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
       );
       assert.match(
         html,
-        /<li><a href="\/fixture-1">Home<\/a><\/li><li><a href="\/fixture-1\/tags\/alpha-8ed3f6ad68">alpha<\/a><\/li><li aria-current="page">First article<\/li>/,
+        /<li><a href="\/fixture-1\/">Home<\/a><\/li><li><a href="\/fixture-1\/tags\/alpha\/">alpha<\/a><\/li><li aria-current="page">First article<\/li>/,
       );
       assert.equal((html.match(/<h1>/g) ?? []).length, 1);
     },
@@ -123,7 +123,7 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
       );
       assert.match(
         html,
-        /aria-label="Breadcrumb"><ol><li><a href="\/fixture-1">Home<\/a><\/li><li aria-current="page">Contact<\/li><\/ol>/,
+        /aria-label="Breadcrumb"><ol><li><a href="\/fixture-1\/">Home<\/a><\/li><li aria-current="page">Contact<\/li><\/ol>/,
       );
     },
   );
@@ -151,14 +151,14 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
 
       const alpha = await readRoute(
         outputDirectory,
-        'fixture-1/tags/alpha-8ed3f6ad68/index.html',
+        'fixture-1/tags/alpha/index.html',
       );
       assert.match(alpha, /First article/);
       assert.match(alpha, /Second article/);
 
       const beta = await readRoute(
         outputDirectory,
-        'fixture-1/tags/beta-f44e64e75f/index.html',
+        'fixture-1/tags/beta/index.html',
       );
       assert.match(beta, /Second article/);
       assert.ok(!beta.includes('First article'));
@@ -174,7 +174,7 @@ test('S2-T06 acceptance: every admitted page kind is generated with correct land
     async () => {
       const html = await readRoute(
         outputDirectory,
-        'fixture-1/series/story-c478361e68/index.html',
+        'fixture-1/series/story/index.html',
       );
       const secondIndex = html.indexOf('Second article');
       const firstIndex = html.indexOf('First article');
@@ -287,26 +287,29 @@ test('S2-T06 acceptance: index pagination crosses the page-size boundary with co
 
   const pageOne = await readRoute(outputDirectory, 'fixture-1/index.html');
   assert.match(pageOne, /<span>Previous<\/span>/);
-  assert.match(pageOne, /<a rel="next" href="\/fixture-1\/page\/2">Next<\/a>/);
+  assert.match(
+    pageOne,
+    /<a rel="next" href="\/fixture-1\/page\/2\/">Next<\/a>/,
+  );
   assert.match(pageOne, /Page 1 of 2/);
 
   const pageTwo = await readRoute(
     outputDirectory,
     'fixture-1/page/2/index.html',
   );
-  assert.match(pageTwo, /<a rel="prev" href="\/fixture-1">Previous<\/a>/);
+  assert.match(pageTwo, /<a rel="prev" href="\/fixture-1\/">Previous<\/a>/);
   assert.match(pageTwo, /<span>Next<\/span>/);
   assert.match(pageTwo, /Page 2 of 2/);
 });
 
 test('S2-T06 acceptance: the error page kind is a pure function with exactly one h1 and a link home', () => {
   const messages = getMessages('en');
-  const body = renderErrorPageBody({ messages, homeRoute: '/fixture-1' });
+  const body = renderErrorPageBody({ messages, homeRoute: '/fixture-1/' });
   assert.equal((body.match(/<h1>/g) ?? []).length, 1);
   assert.match(body, /Page not found/);
   assert.match(
     body,
-    /<a class="g-btn" href="\/fixture-1">Return to the home page/,
+    /<a class="g-btn" href="\/fixture-1\/">Return to the home page/,
   );
 });
 

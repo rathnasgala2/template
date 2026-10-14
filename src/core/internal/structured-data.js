@@ -81,6 +81,10 @@ function bound(text, max) {
  * @param {(route: string) => string} context.absolute the absolute URL of a
  *   `basePath`-joined route
  * @param {ImageInfo | undefined} context.brandMark the appearance brand mark
+ * @param {string} [context.siteUrl] the public site root URL (base path
+ *   included), the origin of the `#organization`/`#website`/`#blog` ids;
+ *   defaults to `absolute('/')`, which is only right for a root-hosted site
+ * @param {readonly string[]} [context.sameAs] the publication's profile URLs
  * @returns {{
  *   serialize: (graph: readonly unknown[]) => string,
  *   home: (input: {posts: readonly {url: string, headline: string, datePublished: string}[]}) => unknown[],
@@ -90,14 +94,21 @@ function bound(text, max) {
  *   webPage: (input: {name: string, description?: string, url: string, language: string, trail: readonly CrumbStep[], dateModified?: string}) => unknown[],
  * }}
  */
-export function createStructuredData({ publication, absolute, brandMark }) {
-  const origin = absolute('/');
+export function createStructuredData({
+  publication,
+  absolute,
+  brandMark,
+  siteUrl,
+  sameAs = [],
+}) {
+  const origin = siteUrl ?? absolute('/');
   const organization = {
     '@type': 'Organization',
     '@id': `${origin}#organization`,
     name: publication.title,
     url: origin,
     logo: imageObject(brandMark),
+    sameAs: sameAs.length > 0 ? [...sameAs] : undefined,
   };
 
   /**

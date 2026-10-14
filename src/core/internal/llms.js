@@ -9,11 +9,12 @@
  */
 
 import { derivePublicBasePath, joinPublicRoute } from './route.js';
-import { routeSegmentForLabel } from './route-labels.js';
+import { deriveSeriesSegments } from './route-labels.js';
 import { compareUtf8Bytes } from './source-inventory.js';
 import {
   contentLastModified,
   contentRoute,
+  isSeoNoindex,
   selectPublishedArticles,
 } from './page-kinds.js';
 import { getMessages } from './messages.js';
@@ -86,6 +87,8 @@ export function htmlToText(html) {
  * @param {string} urls.sitemap
  * @param {string} urls.searchIndex
  * @param {string} urls.full this file's `llms-full.txt` sibling
+ * @param {import('./route.js').RouteNormalizationProfile} urls.routeProfile
+ *   the route normalization profile deciding each page link's public form
  * @returns {{llmsTxt: string, llmsFullTxt: string}} the exact UTF-8 texts
  */
 export function buildLlmsDocuments(validatedInput, urls) {
@@ -98,18 +101,26 @@ export function buildLlmsDocuments(validatedInput, urls) {
    */
   const absoluteUrl = (route) =>
     new URL(
-      joinPublicRoute(derivePublicBasePath(baseUrl, basePath), route),
+      joinPublicRoute(
+        derivePublicBasePath(baseUrl, basePath),
+        route,
+        urls.routeProfile,
+      ),
       baseUrl,
     ).toString();
   const oneLine = (/** @type {string} */ value) =>
     value.replace(/\s+/g, ' ').trim();
 
-  const articles = selectPublishedArticles(content);
+  const articles = selectPublishedArticles(content).filter(
+    (record) => !isSeoNoindex(record.frontmatter),
+  );
+  const seriesSegments = deriveSeriesSegments(content);
   const pages = content
     .filter(
       (record) =>
         record.frontmatter.kind === 'page' &&
-        record.frontmatter.status === 'published',
+        record.frontmatter.status === 'published' &&
+        !isSeoNoindex(record.frontmatter),
     )
     .sort((a, b) =>
       compareUtf8Bytes(
@@ -179,7 +190,7 @@ export function buildLlmsDocuments(validatedInput, urls) {
       ...[...seriesCounts.keys()].sort().map((name) =>
         link({
           title: name,
-          url: absoluteUrl(`/series/${routeSegmentForLabel(name)}`),
+          url: absoluteUrl(`/series/${seriesSegments.get(name)}`),
           description:
             /** @type {(c: string, n: string, p: string) => string} */ (
               messages.seriesPageDescription

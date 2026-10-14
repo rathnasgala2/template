@@ -128,7 +128,7 @@ test('an edition renders beside its article, canonical to the article and not in
     addAllEditions(buildInput),
   );
   const article = /** @type {string} */ (files.get(ARTICLE));
-  const articleUrl = 'https://fixture-1.example.com/fixture-1/first-article';
+  const articleUrl = 'https://fixture-1.example.com/fixture-1/first-article/';
   assert.match(
     article,
     new RegExp(`<link rel="canonical" href="${articleUrl}">`),
@@ -170,7 +170,7 @@ test('an edition renders beside its article, canonical to the article and not in
     assert.match(
       html,
       new RegExp(
-        `<li><a href="/fixture-1/first-article">First article</a></li><li aria-current="page">${labels[/** @type {keyof typeof labels} */ (kind)]}</li></ol>`,
+        `<li><a href="/fixture-1/first-article/">First article</a></li><li aria-current="page">${labels[/** @type {keyof typeof labels} */ (kind)]}</li></ol>`,
       ),
     );
     // Structured data describes a page, not a second copy of the article.
@@ -255,10 +255,10 @@ test('editions leave every listing, feed, sitemap, search index and llms documen
 test('the article and each edition offer the same accessible selector in the edition-selector slot', async () => {
   const { files } = await render((buildInput) => addAllEditions(buildInput));
   const expected = [
-    ['Original', '/fixture-1/first-article'],
-    ['Quick read', '/fixture-1/first-article/quick-read'],
-    ['Standard', '/fixture-1/first-article/standard'],
-    ['Deep dive', '/fixture-1/first-article/deep-dive'],
+    ['Original', '/fixture-1/first-article/'],
+    ['Quick read', '/fixture-1/first-article/quick-read/'],
+    ['Standard', '/fixture-1/first-article/standard/'],
+    ['Deep dive', '/fixture-1/first-article/deep-dive/'],
   ];
   /** @type {[string, number][]} */
   const pages = [
@@ -446,7 +446,7 @@ test("an edition's authored redirect leads to the edition", async () => {
   );
   assert.ok(
     /** @type {string} */ (files.get('fixture-1/quick/index.html')).includes(
-      'url=/fixture-1/first-article/quick-read"',
+      'url=/fixture-1/first-article/quick-read/"',
     ),
   );
 });

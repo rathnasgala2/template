@@ -72,6 +72,7 @@ import {
 } from './internal/appearance/contract.js';
 import { APPEARANCE_BOOTSTRAP_SCRIPT_SOURCE } from './internal/appearance/bootstrap-script.js';
 import {
+  GALA_BASE_DEFAULT_TOKENS,
   GALA_BASE_STYLESHEET_MEDIA_TYPE,
   GALA_BASE_STYLESHEET_PATH,
   GALA_BASE_STYLESHEET_SOURCE,
@@ -121,6 +122,7 @@ import {
 import { assertProvenance } from './internal/provenance.js';
 import {
   deriveAuthorSlugs,
+  deriveTagSegments,
   routeSegmentForLabel,
 } from './internal/route-labels.js';
 import {
@@ -133,7 +135,11 @@ import {
   renderRedirectDocument,
 } from './internal/route.js';
 import { buildSearchIndex } from './internal/search-index.js';
-import { resolveSocialImage, twitterCardType } from './internal/seo.js';
+import {
+  resolveOriginalDerivativePath,
+  resolveSocialImage,
+  twitterCardType,
+} from './internal/seo.js';
 import { buildLlmsDocuments } from './internal/llms.js';
 import { buildRobotsTxt, readAiCrawlerPolicy } from './internal/robots.js';
 import { buildSitemap } from './internal/sitemap.js';
@@ -392,7 +398,7 @@ export async function renderPublication(buildInput, options) {
     `/${INTERACTIONS_SCRIPT_PATH}`,
   );
   const urlPrefix = derivePublicBasePath(validatedInput.baseUrl, '/');
-  const homeRoute = joinPublicRoute(publicBasePath, '/');
+  const homeRoute = joinPublicRoute(publicBasePath, '/', routeProfile);
 
   // Admit the selected generation-4 theme and its complete structural
   // composition before any output directory is created. Theme-less calls
@@ -462,6 +468,51 @@ export async function renderPublication(buildInput, options) {
     mediaDimensions,
   });
   const brandMark = mediaImage(validatedInput.appearance.brandMark);
+  // Site icon and browser chrome colour. The icon is the brand mark's original
+  // derivative (already `basePath`-joined) and only exists with a brand mark.
+  // The colour is on every page: the resolved page canvas of each mode the
+  // site allows: the palette sheet's when a theme is supplied, else
+  // the base layer's own default.
+  const canvas = themeAssetsResult
+    ? themeAssetsResult.canvas
+    : {
+        light: GALA_BASE_DEFAULT_TOKENS['color-canvas'][0],
+        dark: GALA_BASE_DEFAULT_TOKENS['color-canvas'][1],
+      };
+  /** @type {{color: string, media?: string}[]} */
+  const themeColors = [];
+  if (canvas) {
+    if (colorMode.colorScheme === 'dark') {
+      themeColors.push({ color: canvas.dark });
+    } else {
+      themeColors.push({ color: canvas.light });
+      if (colorMode.colorScheme !== 'light') {
+        themeColors.push({
+          color: canvas.dark,
+          media: '(prefers-color-scheme: dark)',
+        });
+      }
+    }
+  }
+  // `type` names the mark's media type. `apple-touch-icon` is only emitted for
+  // a PNG or JPEG that the media pipeline measured as square: iOS rejects SVG
+  // and distorts a non-square image, so such a mark gets `rel="icon"` alone.
+  const markPath = resolveOriginalDerivativePath(
+    mediaAssets,
+    validatedInput.appearance.brandMark,
+  );
+  const markType = mediaAssets.find(
+    (asset) => asset.path === markPath,
+  )?.mediaType;
+  const siteHeadData = {
+    iconHref: brandMark?.url,
+    iconType: markType,
+    appleTouchIcon:
+      (markType === 'image/png' || markType === 'image/jpeg') &&
+      brandMark?.width !== undefined &&
+      brandMark.width === brandMark.height,
+    themeColors,
+  };
   const searchIndexHref = joinBasePathAndRoute(
     publicBasePath,
     SEARCH_INDEX_ROUTE,
@@ -488,17 +539,27 @@ export async function renderPublication(buildInput, options) {
     joinPublicRoute(
       publicBasePath,
       `/authors/${authorSlugs.get(author.id) ?? author.id}`,
+      routeProfile,
     );
+  const footerTagSegments = deriveTagSegments(validatedInput.content);
   const footerComponents = createComponents({
     messages: siteMessages,
-    site: (route) => joinPublicRoute(publicBasePath, route),
+    site: (route) => joinPublicRoute(publicBasePath, route, routeProfile),
     mediaImage,
     authorHref,
     authorsById,
     recordHref: (record) =>
-      joinPublicRoute(publicBasePath, contentRoute(record.frontmatter)),
+      joinPublicRoute(
+        publicBasePath,
+        contentRoute(record.frontmatter),
+        routeProfile,
+      ),
     tagHref: (tag) =>
-      joinPublicRoute(publicBasePath, `/tags/${routeSegmentForLabel(tag)}`),
+      joinPublicRoute(
+        publicBasePath,
+        `/tags/${footerTagSegments.get(tag) ?? routeSegmentForLabel(tag)}`,
+        routeProfile,
+      ),
   });
   const footerAuthorHtml = footerAuthor
     ? `<p class="g-label">${footerComponents.text('writtenByLabel')}</p>` +
@@ -521,6 +582,7 @@ export async function renderPublication(buildInput, options) {
     primaryItems: validatedInput.navigation.items,
     footerItems: validatedInput.navigation.footerItems,
     urlPrefix,
+    routeProfile,
     authorHtml: footerAuthorHtml,
     footerProfileHtml,
     copyrightText: `${siteMessages.footerCopyrightPrefix} ${latestYear ? `${latestYear} ` : ''}${publication.title}`,
@@ -550,10 +612,12 @@ export async function renderPublication(buildInput, options) {
         currentRoute,
         messages: siteMessages,
         urlPrefix,
+        routeProfile,
       }),
       navItems: validatedInput.navigation.items,
       currentRoute,
       urlPrefix,
+      routeProfile,
       searchIndexHref,
       appearanceControlHtml,
       messages: siteMessages,
@@ -564,7 +628,7 @@ export async function renderPublication(buildInput, options) {
   // The site-wide feeds, resolved once so every page's feed-discovery
   // `<link>` tags and the feed documents themselves agree on the exact same
   // self URLs.
-  const feeds = buildFeeds(validatedInput, { feedBody });
+  const feeds = buildFeeds(validatedInput, { feedBody, routeProfile });
   const siteName = validatedInput.publication.title;
   const appearanceScriptHrefValue =
     appearanceBootstrapScriptHref(publicBasePath);
@@ -583,6 +647,7 @@ export async function renderPublication(buildInput, options) {
   const redirectProjections = [];
 
   const generatedPages = buildGeneratedPages(validatedInput, {
+    routeProfile,
     pageBody,
     editions,
     mediaAssets,
@@ -620,16 +685,22 @@ export async function renderPublication(buildInput, options) {
       layout: 'skeleton.njk',
       data: {
         title: page.documentTitle ?? page.title,
-        ogTitle: page.title,
+        ogTitle: page.socialTitle ?? page.title,
         lang: page.language,
         dir: page.direction,
         pageKind: page.kind,
         description: page.description,
         robotsContent: page.robotsContent,
-        canonicalUrl: new URL(
-          joinPublicRoute(publicBasePath, page.canonicalRoute ?? page.route),
-          validatedInput.baseUrl,
-        ).toString(),
+        canonicalUrl:
+          page.canonicalUrl ??
+          new URL(
+            joinPublicRoute(
+              publicBasePath,
+              page.canonicalRoute ?? page.route,
+              routeProfile,
+            ),
+            validatedInput.baseUrl,
+          ).toString(),
         siteName,
         ogType: page.ogType ?? 'website',
         ogImage,
@@ -652,6 +723,7 @@ export async function renderPublication(buildInput, options) {
         baseStylesheetHref: baseStylesheetHrefValue,
         themeStylesheetLinksHtml,
         composition,
+        ...siteHeadData,
         ...colorModeData,
       },
     });
@@ -673,6 +745,7 @@ export async function renderPublication(buildInput, options) {
         publicTarget: joinPublicRoute(
           publicBasePath,
           contentRoute(record.frontmatter),
+          routeProfile,
         ),
         filePath: projectRouteToFilePath(joinedSource, routeProfile),
       });
@@ -726,6 +799,7 @@ export async function renderPublication(buildInput, options) {
       baseStylesheetHref: baseStylesheetHrefValue,
       themeStylesheetLinksHtml,
       composition,
+      ...siteHeadData,
       ...colorModeData,
     },
   });
@@ -756,11 +830,12 @@ export async function renderPublication(buildInput, options) {
     generatedPages,
     basePath: publicBasePath,
     baseUrl: validatedInput.baseUrl,
+    routeProfile,
   });
-  const searchIndexJson = buildSearchIndex(validatedInput);
+  const searchIndexJson = buildSearchIndex(validatedInput, routeProfile);
   const absoluteSiteUrl = (/** @type {string} */ route) =>
     new URL(
-      joinPublicRoute(publicBasePath, route),
+      joinPublicRoute(publicBasePath, route, routeProfile),
       validatedInput.baseUrl,
     ).toString();
   const robotsTxt = buildRobotsTxt({
@@ -781,6 +856,7 @@ export async function renderPublication(buildInput, options) {
     sitemap: absoluteSiteUrl(SITEMAP_ROUTE),
     searchIndex: absoluteSiteUrl(SEARCH_INDEX_ROUTE),
     full: absoluteSiteUrl(LLMS_FULL_ROUTE),
+    routeProfile,
   });
   const assetPages = [
     { virtualPath: 'robots.html', content: robotsTxt, permalink: ROBOTS_PATH },

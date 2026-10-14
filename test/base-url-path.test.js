@@ -100,7 +100,7 @@ test('baseUrl with a path: stylesheet, script and internal hrefs, canonical, fee
   assert.ok(html.includes('href="/site/assets/gala-base-v1.css"'));
   assert.match(html, /href="\/site\/assets\/theme\/print\.css"/);
   assert.ok(
-    html.includes('<a href="/site/about"') || html.includes('href="/site/"'),
+    html.includes('<a href="/site/about/"') || html.includes('href="/site/"'),
   );
 
   const canonicals = [

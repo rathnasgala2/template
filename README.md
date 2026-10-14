@@ -270,9 +270,12 @@ output-security pipeline every generated page still passes through:
   as a small static table to add no runtime dependency.
 - **`src/core/internal/route-labels.js`** derives a deterministic,
   collision-free route segment for an arbitrary tag/series label (a
-  `plainLabel`, not a route-safe `slug`): an ASCII-readable prefix plus a
-  content-hash suffix, so two distinct Unicode labels can never collide on the
-  same generated route.
+  `plainLabel`, not a route-safe `slug`): the ASCII-readable prefix alone when
+  it is non-empty and unique (case-insensitive) among the site's labels of that
+  kind, else the prefix plus a content-hash suffix, so two distinct Unicode
+  labels can never collide on the same generated route. The choice is made once
+  per build from the whole label set (`deriveTagSegments`,
+  `deriveSeriesSegments`).
 
 Chrome text is resolved once, in the publication's own `defaultLanguage`, for
 every page (a scoped decision: navigation/footer text does not flip language
@@ -455,6 +458,18 @@ theme-declared SVG icon mark safe to publish.
   and asset hrefs, the appearance script, stylesheet links, canonical/`og:url`,
   feed, sitemap and search-index URLs). Output file paths still use `basePath`
   alone, because the artifact is deployed at the hosting site root.
+- **Public URL form (trailing slash).** Under the default `directory-index`
+  route profile every emitted page URL ends with exactly one `/` (`/about/`,
+  `/archive/2026/`; the site root stays `/`), because each page is written as a
+  directory (`about/index.html`) and a host would otherwise 301 the slash-less
+  form. This covers canonical, `og:url`, sitemap `<loc>`, Atom/RSS links and
+  ids, `llms.txt`/`llms-full.txt`, JSON-LD, the search index, redirect-document
+  targets and every internal `href`. Under `explicit-file` routes are emitted
+  unchanged. Fixed files (`/sitemap.xml`, `/feed/rss.xml`, anything under
+  `/assets/` or with a file extension) never change, and manifest and output
+  paths are unaffected. One helper owns the rule:
+  `internal/route.js#publicRouteForm(route, profile)`, applied by
+  `joinPublicRoute(publicBasePath, route, profile)` for every emitter.
 - **basePath fix (LOCAL-7 follow-up; independent-review finding B2).** Before
   theme integration existed, the appearance bootstrap script's `<script src>`
   and the social-image `og:image`/`twitter:image` URL were both root-absolute,
@@ -564,10 +579,15 @@ brief sits on top of the page kinds above:
   editions and for the generated `404.html`), a canonical link, `og:*`/
   `twitter:*` meta tags (image resolved to an absolute content-addressed media
   derivative URL via `internal/seo.js`, never the raw source path) and the
-  Atom/RSS feed-discovery `<link>`s. **hreflang** is a documented scope
-  decision, not a silent omission: `build-input:2.0.0` has no
-  translation/locale-variant linkage between distinct `content[]` records (see
-  `internal/seo.js`'s module documentation), so no
+  Atom/RSS feed-discovery `<link>`s. A post's optional `seo` object overrides
+  the head (`seo.title`, `seo.description`, `seo.canonicalUrl`; `seo.noindex`
+  adds `noindex, follow` and drops the post from the sitemap, feeds, `llms.txt`
+  and the search index while keeping it listed), a site with an
+  `appearance.brandMark` also gets `rel="icon"` and `apple-touch-icon`, and
+  every page gets `theme-color` (the canvas colour, plus a dark-scheme variant).
+  **hreflang** is a documented scope decision, not a silent omission:
+  `build-input:2.0.0` has no translation/locale-variant linkage between distinct
+  `content[]` records (see `internal/seo.js`'s module documentation), so no
   `<link rel="alternate" hreflang="...">` is ever emitted by this renderer.
 - **Search and assistant discovery** (3.0.0, unpublished). Every page carries
   one `<script type="application/ld+json">` data block
@@ -579,13 +599,17 @@ brief sits on top of the page kinds above:
   `article:published_time`, `article:modified_time`, `article:author`,
   `article:tag`, and every `og:image` carries width, height and alt. `<title>`
   is `<Page> | <Publication>` (home: `<Publication> – <tagline>`, at most 60
-  characters); every indexable page has a meta description. Every `<img>` has
-  `width` and `height` from the media pipeline; the article cover and the home
-  hero are `fetchpriority="high"`, all other images
-  `loading="lazy" decoding="async"`. Feeds carry the full sanitized body
-  (`content:encoded` in RSS, `<content type="html">` in Atom; each image as its
-  absolute media-derivative URL), authors and categories. Author pages live at
-  `/authors/<name-slug>` (the id when two names collide).
+  characters; the tagline is dropped when it repeats the name); every indexable
+  page has a meta description (the subtitle, else the body's opening prose with
+  heading text skipped, else the whole body text, else the publication
+  description). A leading body `<h1>` equal to the title is dropped from the
+  rendered article, since the head prints the title. Every `<img>` has `width`
+  and `height` from the media pipeline; the article cover and the home hero are
+  `fetchpriority="high"`, all other images `loading="lazy" decoding="async"`.
+  Feeds carry the full sanitized body (`content:encoded` in RSS,
+  `<content type="html">` in Atom; each image as its absolute media-derivative
+  URL), authors and categories. Author pages live at `/authors/<name-slug>` (the
+  id when two names collide).
 - **`robots.txt`, `llms.txt`, `llms-full.txt`** (`internal/robots.js`,
   `internal/llms.js`). `robots.txt` allows all crawlers and names the absolute
   sitemap; `publication.crawlers.ai: "block"` (validated by the build-input
@@ -669,7 +693,7 @@ npm run audit               # npm audit --audit-level=high
 ```
 
 Source development does not require a sibling schema checkout. The exact
-`@rathnasgala2/schemas@3.10.0` release is installed from the npm registry, and
+`@rathnasgala2/schemas@3.12.0` release is installed from the npm registry, and
 the lockfile carries its registry integrity. The exact peer is the public
 consumer contract.
 
@@ -696,11 +720,11 @@ editions: they are a rendered content kind (see Editions).
 
 ## Consuming `@rathnasgala2/schemas`
 
-This source targets `@rathnasgala2/schemas@3.10.0` with a `^3.10.0` peer range
-(any 3.x from 3.10.0); the lock installs 3.10.0 exactly. Generation-4
+This source targets `@rathnasgala2/schemas@3.12.0` with a `^3.12.0` peer range
+(any 3.x from 3.12.0); the lock installs 3.12.0 exactly. Generation-4
 development verifies against the schema sibling/packed candidate. The historical
-`package-lock.json` is not a 3.10.0 registry claim: it must be regenerated,
-together with the SBOM, from the authoritative published 3.10.0 artifact before
+`package-lock.json` is not a 3.12.0 registry claim: it must be regenerated,
+together with the SBOM, from the authoritative published 3.12.0 artifact before
 release. The 2.8.0->2.11.0 convergence changes none of the four roots this
 renderer validates, for the same reason the 2.7.0-2.8.0 delta below did not.
 Only the `"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) is consumed;
