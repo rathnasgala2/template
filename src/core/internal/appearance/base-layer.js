@@ -261,7 +261,7 @@ export const GALA_BASE_COMPONENT_CSS = `
   [data-gala-publication-root] img { display: block; max-width: 100%; height: auto; }
   [data-gala-publication-root] :where(a) { color: inherit; text-decoration: none; }
   [data-gala-publication-root] h1, [data-gala-publication-root] h2, [data-gala-publication-root] h3, [data-gala-publication-root] p { margin: 0; }
-  [data-gala-publication-root] button { font: inherit; color: inherit; }
+  [data-gala-publication-root] :where(button) { font: inherit; color: inherit; }
   [data-gala-publication-root] ul, [data-gala-publication-root] ol { margin: 0; padding: 0; list-style: none; }
 
   .g-wrap { width: 100%; max-width: 76rem; margin-inline: auto; padding-inline: clamp(16px, 4vw, 40px); }

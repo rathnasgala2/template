@@ -156,3 +156,18 @@ test('enabled interaction buttons keep a pointer cursor', () => {
     assert.match(match[1], /cursor: pointer/, selector);
   }
 });
+
+// Element resets in gala-base must never outrank component classes: a
+// (0,1,1) `button` reset beat `.g-composer__signin` and broke its contrast.
+test('the root button reset stays below component specificity and order', () => {
+  const css = GALA_BASE_COMPONENT_CSS;
+  const reset = css.indexOf('[data-gala-publication-root] :where(button) {');
+  assert.ok(reset >= 0, 'button reset is wrapped in :where()');
+  assert.doesNotMatch(
+    css.replace(/\[data-gala-publication-root\] :where\(button\)/g, ''),
+    /\[data-gala-publication-root\] button\b/,
+    'no bare element-type button reset',
+  );
+  const component = css.indexOf('.g-composer__submit, .g-composer__signin');
+  assert.ok(component > reset, 'reset precedes the component rule');
+});
