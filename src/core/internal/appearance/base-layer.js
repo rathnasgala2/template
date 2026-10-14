@@ -435,7 +435,7 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-pill:hover { border-color: var(--gala-color-text); transform: translateY(-1px); }
   .g-pill[aria-current="page"] { background: var(--gala-paint-button); color: var(--gala-color-btn-text); border: var(--gala-border-button); }
   .g-pill[aria-current="page"] .g-icon { color: inherit; }
-  .g-pill-count { font-size: .75rem; color: var(--gala-color-text-faint); font-variant-numeric: tabular-nums; padding-left: var(--gala-space-2); border-left: var(--gala-border-width) solid var(--gala-color-border); }
+  .g-pill-count { font-size: .75rem; color: var(--gala-color-text-muted); font-variant-numeric: tabular-nums; padding-left: var(--gala-space-2); border-left: var(--gala-border-width) solid var(--gala-color-border); }
 
   /* ---------- sections ---------- */
   .g-section { padding-block: clamp(2rem, 5vw, 3.5rem); }
@@ -657,14 +657,15 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-search-box { display: flex; align-items: center; gap: var(--gala-space-3); padding: .9rem 1.1rem; border-bottom: var(--gala-border-width) solid var(--gala-color-border); color: var(--gala-color-text-muted); }
   .g-search-input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--gala-color-text); font: inherit; font-family: var(--gala-font-ui); font-size: 1.05rem; outline: none; }
   .g-search-input::-webkit-search-cancel-button { display: none; }
+  .g-search-input::placeholder { color: var(--gala-color-text-muted); opacity: 1; }
   .g-search-results { margin: 0; padding: var(--gala-space-2); overflow-y: auto; max-height: 26rem; }
   .g-search-hit { display: flex; align-items: center; gap: .9rem; padding: .6rem .7rem; border-radius: var(--gala-radius-medium); }
   .g-search-hit > .g-icon { margin-left: auto; color: var(--gala-color-text-faint); opacity: 0; transition: opacity var(--gala-duration-fast) var(--gala-ease-standard); }
   .g-search-hit-text { display: grid; gap: .1rem; min-width: 0; }
   .g-search-hit-title { font-family: var(--gala-font-ui); font-weight: var(--gala-weight-ui); }
   .g-search-hit-meta { font-family: var(--gala-font-ui); font-size: .8125rem; color: var(--gala-color-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  [aria-selected="true"] > .g-search-hit, .g-search-hit:hover { background: var(--gala-color-surface-raised); }
-  [aria-selected="true"] > .g-search-hit > .g-icon { opacity: 1; color: var(--gala-color-accent); }
+  .g-search-hit[aria-selected="true"], .g-search-hit:hover { background: var(--gala-color-surface-raised); }
+  .g-search-hit[aria-selected="true"] > .g-icon { opacity: 1; color: var(--gala-color-accent); }
   .g-search-empty { padding: var(--gala-space-6) var(--gala-space-4); color: var(--gala-color-text-muted); font-family: var(--gala-font-ui); text-align: center; }
 
   /* reader interactions: server-rendered section and the classes the browser script creates */
@@ -686,13 +687,15 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-reaction__icon { display: inline-grid; place-items: center; font-size: 1.1rem; line-height: 1; }
   .g-reaction__icon .g-icon { width: 1.15rem; height: 1.15rem; }
   .g-reaction__label { overflow-wrap: anywhere; }
-  .g-reaction__count { font-variant-numeric: tabular-nums; font-size: .8rem; color: var(--gala-color-text-faint); padding-left: var(--gala-space-2); border-left: var(--gala-border-width) solid var(--gala-color-border); }
+  .g-reaction__count { font-variant-numeric: tabular-nums; font-size: .8rem; color: var(--gala-color-text-muted); padding-left: var(--gala-space-2); border-left: var(--gala-border-width) solid var(--gala-color-border); }
   .g-reaction__count:empty { display: none; }
   .g-reaction[aria-pressed="true"], .g-reaction--active { border-color: var(--gala-color-accent); background: var(--gala-paint-chip); color: var(--gala-color-chip-text); }
   .g-reaction[aria-pressed="true"] .g-icon, .g-reaction--active .g-icon { fill: currentColor; color: var(--gala-color-accent); }
+  /* A count inside a painted chip follows the chip's own paired text colour. */
+  .g-pill[aria-current="page"] .g-pill-count, .g-reaction[aria-pressed="true"] .g-reaction__count, .g-reaction--active .g-reaction__count { color: inherit; }
   .g-comments { display: grid; gap: var(--gala-space-4); min-width: 0; padding-top: var(--gala-space-4); border-top: var(--gala-border-width) solid var(--gala-color-border); }
   .g-comments__title { font-family: var(--gala-font-display); font-weight: var(--gala-weight-title); font-size: 1.05rem; }
-  .g-comments__count { font-family: var(--gala-font-ui); font-weight: var(--gala-weight-normal); font-size: .875rem; color: var(--gala-color-text-faint); font-variant-numeric: tabular-nums; }
+  .g-comments__count { font-family: var(--gala-font-ui); font-weight: var(--gala-weight-normal); font-size: .875rem; color: var(--gala-color-text-muted); font-variant-numeric: tabular-nums; }
   .g-comments__more {
     justify-self: start; min-height: 2.75rem; padding: .5rem 1.1rem; border-radius: var(--gala-radius-pill); border: var(--gala-border-width) solid var(--gala-color-border); background: transparent; color: var(--gala-color-text);
     font-family: var(--gala-font-ui); font-weight: var(--gala-weight-ui); font-size: .9rem; cursor: pointer;
@@ -757,7 +760,7 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-comment__head { display: flex; align-items: center; gap: var(--gala-space-3); min-width: 0; }
   .g-comment__avatar { display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; flex: none; border-radius: var(--gala-radius-avatar); background: var(--gala-paint-button); color: var(--gala-color-btn-text); box-shadow: var(--gala-shadow-avatar-ring); font-family: var(--gala-font-display); font-weight: var(--gala-weight-display); font-size: .8rem; text-transform: uppercase; }
   .g-comment__author { font-weight: var(--gala-weight-ui); font-size: .9375rem; overflow-wrap: anywhere; min-width: 0; }
-  .g-comment__time { font-size: .8125rem; color: var(--gala-color-text-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .g-comment__time { font-size: .8125rem; color: var(--gala-color-text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .g-comment__body { margin: 0; font-family: var(--gala-font-body); font-size: 1rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
   .g-comment__body a { color: var(--gala-color-link); text-decoration: underline; text-decoration-color: var(--gala-color-link-underline); text-underline-offset: var(--gala-link-offset); }
   .g-comment__body a:hover { text-decoration-color: var(--gala-color-link-underline-hover); }
@@ -765,7 +768,7 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-comment__action { min-height: 2.5rem; padding: 0 .5rem; margin-left: -.5rem; border: 0; border-radius: var(--gala-radius-small); background: transparent; color: var(--gala-color-text-muted); font-family: var(--gala-font-ui); font-weight: var(--gala-weight-ui); font-size: .8125rem; cursor: pointer; transition: color var(--gala-duration-fast) var(--gala-ease-standard), background-color var(--gala-duration-fast) var(--gala-ease-standard); }
   .g-comment__action:hover { color: var(--gala-color-text); background: var(--gala-color-surface-raised); }
   .g-comment__replies { display: grid; gap: var(--gala-space-4); min-width: 0; margin-top: var(--gala-space-2); padding-left: var(--gala-space-4); border-left: var(--gala-border-width) solid var(--gala-color-border); }
-  .g-comment--tombstone > .g-comment__body { font-style: italic; color: var(--gala-color-text-faint); }
+  .g-comment--tombstone > .g-comment__body { font-style: italic; color: var(--gala-color-text-muted); }
   .g-comment--mine > .g-comment__head .g-comment__avatar { box-shadow: 0 0 0 2px var(--gala-color-accent); }
   .g-report { width: min(28rem, calc(100% - 2rem)); max-width: 100%; padding: var(--gala-space-6); border-radius: var(--gala-radius-large); border: var(--gala-border-card); background: var(--gala-color-surface); color: var(--gala-color-text); box-shadow: var(--gala-shadow-dialog); font-family: var(--gala-font-ui); }
   .g-report::backdrop { background: var(--gala-color-overlay); }

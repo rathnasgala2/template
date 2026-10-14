@@ -393,9 +393,13 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
         var path = pathOf(doc.route);
         if (!path) return;
         var item = make('li');
-        item.setAttribute('role', 'option');
-        item.id = 'gala-search-hit-' + index;
+        item.setAttribute('role', 'presentation');
+        // The option role lives on the link itself so no interactive role
+        // wraps a focusable descendant; focus stays on the combobox input.
         var link = make('a', 'g-search-hit');
+        link.setAttribute('role', 'option');
+        link.setAttribute('tabindex', '-1');
+        link.id = 'gala-search-hit-' + index;
         link.setAttribute('href', path);
         var body = make('span', 'g-search-hit-text');
         body.appendChild(make('span', 'g-search-hit-title', doc.title));
@@ -406,7 +410,7 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
         link.appendChild(svg(ICON_ARROW));
         item.appendChild(link);
         list.appendChild(item);
-        options.push(item);
+        options.push(link);
       });
       if (options.length === 0) {
         list.appendChild(make('li', 'g-search-empty', text(emptyKey, emptyFallback)));
@@ -459,7 +463,7 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
           event.preventDefault();
           dialog.close();
         } else if (event.key === 'Enter') {
-          var link = options[Math.max(selected, 0)] && options[Math.max(selected, 0)].querySelector('a');
+          var link = options[Math.max(selected, 0)];
           if (link) {
             event.preventDefault();
             window.location.assign(link.getAttribute('href'));

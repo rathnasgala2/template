@@ -177,3 +177,84 @@ test('root element resets stay below component specificity and order', () => {
     'no bare element-type reset at (0,1,1)',
   );
 });
+
+/**
+ * @param {string} selector exact selector text of a rule
+ * @returns {string} the rule's declaration block
+ */
+function ruleBody(selector) {
+  const start = GALA_BASE_COMPONENT_CSS.indexOf(`${selector} {`);
+  assert.ok(start >= 0, `rule ${selector} exists`);
+  return GALA_BASE_COMPONENT_CSS.slice(
+    start,
+    GALA_BASE_COMPONENT_CSS.indexOf('}', start),
+  );
+}
+
+test('informational counts, times and tombstones use text-muted, never text-faint (WCAG 1.4.3)', () => {
+  for (const selector of [
+    '.g-pill-count',
+    '.g-reaction__count',
+    '.g-comments__count',
+    '.g-comment__time',
+    '.g-comment--tombstone > .g-comment__body',
+  ]) {
+    const body = ruleBody(selector);
+    assert.ok(
+      !body.includes('--gala-color-text-faint'),
+      `${selector} avoids text-faint`,
+    );
+    assert.ok(
+      body.includes('--gala-color-text-muted'),
+      `${selector} uses text-muted`,
+    );
+  }
+});
+
+test('a count inside a painted chip inherits the chip text colour', () => {
+  const selectors = [
+    '.g-pill[aria-current="page"] .g-pill-count',
+    '.g-reaction[aria-pressed="true"] .g-reaction__count',
+    '.g-reaction--active .g-reaction__count',
+  ];
+  const at = GALA_BASE_COMPONENT_CSS.indexOf(selectors[0]);
+  assert.ok(at >= 0, 'painted-chip count rule exists');
+  const block = GALA_BASE_COMPONENT_CSS.slice(
+    at,
+    GALA_BASE_COMPONENT_CSS.indexOf('}', at),
+  );
+  for (const selector of selectors)
+    assert.ok(block.includes(selector), selector);
+  assert.match(block, /color:\s*inherit/);
+});
+
+test('the search placeholder is text-muted at full opacity', () => {
+  const body = ruleBody('.g-search-input::placeholder');
+  assert.match(body, /color:\s*var\(--gala-color-text-muted\)/);
+  assert.match(body, /opacity:\s*1/);
+});
+
+test('default text-muted reaches 4.5:1 on canvas and surface in both modes', () => {
+  for (const [name, mode] of MODES) {
+    for (const bg of ['color-canvas', 'color-surface']) {
+      const r = ratio(tok('color-text-muted', mode), tok(bg, mode));
+      assert.ok(r >= 4.5, `${name} text-muted on ${bg}: ${r.toFixed(2)}`);
+    }
+  }
+});
+
+test('the selected search result is styled on the option anchor itself', () => {
+  assert.ok(
+    !GALA_BASE_COMPONENT_CSS.includes('[aria-selected="true"] > .g-search-hit'),
+    'no rule selects a child of the selected element',
+  );
+  assert.match(
+    ruleBody('.g-search-hit[aria-selected="true"], .g-search-hit:hover'),
+    /background:\s*var\(--gala-color-surface-raised\)/,
+  );
+  assert.ok(
+    ruleBody('.g-search-hit[aria-selected="true"] > .g-icon').includes(
+      'opacity: 1',
+    ),
+  );
+});
