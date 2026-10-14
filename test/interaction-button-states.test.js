@@ -159,15 +159,21 @@ test('enabled interaction buttons keep a pointer cursor', () => {
 
 // Element resets in gala-base must never outrank component classes: a
 // (0,1,1) `button` reset beat `.g-composer__signin` and broke its contrast.
-test('the root button reset stays below component specificity and order', () => {
+test('root element resets stay below component specificity and order', () => {
   const css = GALA_BASE_COMPONENT_CSS;
-  const reset = css.indexOf('[data-gala-publication-root] :where(button) {');
-  assert.ok(reset >= 0, 'button reset is wrapped in :where()');
+  const root = '\\[data-gala-publication-root\\]';
+  const firstComponent = css.search(/^\s*\.g-/m);
+  assert.ok(firstComponent > 0, 'has component rules');
+  for (const list of ['img', 'a', 'button', 'h1, h2, h3, p', 'ul, ol']) {
+    const at = css.indexOf(`[data-gala-publication-root] :where(${list}) {`);
+    assert.ok(at >= 0, `${list} reset is wrapped in :where()`);
+    assert.ok(at < firstComponent, `${list} reset precedes component rules`);
+  }
   assert.doesNotMatch(
-    css.replace(/\[data-gala-publication-root\] :where\(button\)/g, ''),
-    /\[data-gala-publication-root\] button\b/,
-    'no bare element-type button reset',
+    css,
+    new RegExp(
+      `${root} (?:button|img|h[1-6]|p|ul|ol|a|input|select|textarea)\\b`,
+    ),
+    'no bare element-type reset at (0,1,1)',
   );
-  const component = css.indexOf('.g-composer__submit, .g-composer__signin');
-  assert.ok(component > reset, 'reset precedes the component rule');
 });
