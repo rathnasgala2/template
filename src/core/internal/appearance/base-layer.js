@@ -335,7 +335,7 @@ export const GALA_BASE_COMPONENT_CSS = `
     transition: filter var(--gala-duration-fast) var(--gala-ease-standard), transform var(--gala-duration-fast) var(--gala-ease-standard);
   }
   .g-chip:hover { filter: brightness(.96) saturate(1.2); }
-  .g-badge { display: inline-flex; align-items: center; gap: .35em; font-family: var(--gala-font-label); font-size: .72rem; font-weight: var(--gala-weight-ui); text-transform: var(--gala-label-transform); letter-spacing: var(--gala-tracking-label); color: var(--gala-color-icon-accent); }
+  .g-badge { display: inline-flex; align-items: center; gap: .35em; font-family: var(--gala-font-label); font-size: .72rem; font-weight: var(--gala-weight-ui); text-transform: var(--gala-label-transform); letter-spacing: var(--gala-tracking-label); color: var(--gala-color-link); }
   .g-series-tag { display: inline-flex; align-items: center; gap: .35em; font-family: var(--gala-font-ui); font-size: .78rem; color: var(--gala-color-text-muted); }
   .g-avatar { display: inline-grid; place-items: center; width: 2.5rem; height: 2.5rem; aspect-ratio: 1 / 1; border-radius: var(--gala-radius-avatar); object-fit: cover; flex: none; box-shadow: var(--gala-shadow-avatar-ring); background: var(--gala-paint-button); color: var(--gala-color-btn-text); font-family: var(--gala-font-display); font-weight: var(--gala-weight-display); font-size: .9rem; overflow: hidden; }
   .g-byline { display: flex; align-items: center; gap: var(--gala-space-3); min-width: 0; }

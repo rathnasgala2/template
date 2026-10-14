@@ -258,3 +258,13 @@ test('the selected search result is styled on the option anchor itself', () => {
     ),
   );
 });
+
+test('the Featured badge text uses the accent text token (link), never the icon-grade token', () => {
+  const body = ruleBody('.g-badge');
+  assert.match(body, /color:\s*var\(--gala-color-link\)/);
+  assert.ok(!body.includes('icon-accent'), 'badge text is not icon-accent');
+  for (const [name, mode] of MODES) {
+    const r = ratio(tok('color-link', mode), tok('color-canvas', mode));
+    assert.ok(r >= 4.5, `${name} link on canvas: ${r.toFixed(2)}`);
+  }
+});
