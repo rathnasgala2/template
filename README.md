@@ -733,6 +733,16 @@ core appearance switch, `build-input.appearance.attribution`
 (`showMadeWith: false` omits the line; absent or `true` shows it). Nor are
 editions: they are a rendered content kind (see Editions).
 
+## Policy pages
+
+Every site carries two generated legal pages, `/terms` and `/privacy` (page kind
+`policy`): short, template-owned English pages that incorporate Galascribe's
+Terms of Service and Privacy Policy. They are indexable, in the sitemap, and
+never in the search index, the feeds or the `llms` documents. A content record
+or redirect that uses either route (compared without a trailing slash and
+ignoring letter case) fails the build closed with `POLICY_ROUTE_CONFLICT`;
+rename or move the document.
+
 ## Consuming `@rathnasgala2/schemas`
 
 This source targets `@rathnasgala2/schemas@3.16.0` with a `^3.16.0` peer range

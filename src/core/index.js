@@ -379,9 +379,10 @@ export async function renderPublication(buildInput, options) {
   // for its document; resolved here, from the verified bodies alone, so an
   // unresolved one fails closed before anything is written.
   const contentImages = resolveContentImages(validatedInput);
+  // No document may take a route the generated policy pages own.
+  assertPolicyRoutesFree(validatedInput.content, contentRoute);
   // Every edition must sit beside an article of this build; placed here for the
   // same reason.
-  assertPolicyRoutesFree(validatedInput.content, contentRoute);
   const editions = resolveEditions(validatedInput.content, contentRoute);
   assertOptions(options);
   const routeProfile = options.routeNormalizationProfile ?? 'directory-index';

@@ -668,7 +668,7 @@ test('analytics module: banner, footer button, privacy paragraph, script and CSP
     );
     assert.ok(
       html.includes(
-        'data-provider-kind="google-analytics-4" data-measurement-id="G-ABC123XYZ" data-privacy-href="/fixture-1/privacy/" hidden aria-label="Privacy choices">',
+        'data-provider-kind="google-analytics-4" data-measurement-id="G-ABC123XYZ" data-privacy-href="/fixture-1/privacy/" tabindex="-1" hidden aria-label="Privacy choices">',
       ),
       route,
     );
@@ -693,10 +693,26 @@ test('analytics module: banner, footer button, privacy paragraph, script and CSP
       '<p>With your consent this site uses Google Analytics 4 (Google LLC) to understand how it is read.',
     ),
   );
-  assert.ok(privacy.includes('<code>gala.consent.v1</code>'));
+  assert.ok(
+    privacy.includes(
+      'Google Analytics sets <code>_ga</code> and <code>_ga_*</code> cookies',
+    ),
+  );
+  assert.ok(
+    privacy.includes(
+      '<code>localStorage</code> under <code>gala.consent.v1</code>',
+    ),
+  );
+  assert.ok(
+    privacy.includes(
+      'Declining removes those cookies and stops the script on the next page load.',
+    ),
+  );
+  assert.ok(!/browser storage is used only/.test(privacy));
   assert.ok(privacy.includes('href="https://policies.google.com/privacy"'));
   const offPrivacy = /** @type {string} */ (
     off.pages.get('fixture-1/privacy/index.html')
   );
   assert.ok(!offPrivacy.includes('gala.consent.v1'));
+  assert.ok(offPrivacy.includes('browser storage is used only for'));
 });

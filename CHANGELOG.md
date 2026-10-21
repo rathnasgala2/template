@@ -27,10 +27,15 @@ and this project adheres to
   footer navigation, and `assets/gala-consent-v1.js` (deferred, with a manifest
   asset row). Nothing from the provider loads until the reader accepts; the
   choice is stored in `localStorage` under `gala.consent.v1` and can be changed
-  from the footer; Google consent mode is set to denied by default and
-  `analytics_storage` is revoked on a later decline. The Privacy page gains a
-  paragraph naming the provider. A site without the module renders
-  byte-identically to before. Everything lives under
+  from the footer; Google consent mode is set to denied by default. Declining
+  after the provider loaded revokes `analytics_storage`, removes the `_ga` and
+  `_ga_*` cookies (best effort) and reloads the page so no loaded script keeps
+  sending; a cancelable `gala:reload` event on `document` precedes the reload.
+  `anonymize_ip` is not sent (it does nothing in GA4). The banner takes focus
+  when shown and focus returns to "Privacy choices" when it closes. The Privacy
+  page gains a paragraph naming the provider, the `_ga`/`_ga_*` cookies and the
+  `localStorage` key, and its storage line no longer says "only". A site without
+  the module renders byte-identically to before. Everything lives under
   `src/core/internal/analytics/`; no `src/modules/` tree is added.
 - The shared module-shape helpers (`exactObject`, `boolean`, `origin`) move from
   `interactions.js` to `internal/module-shape.js`.

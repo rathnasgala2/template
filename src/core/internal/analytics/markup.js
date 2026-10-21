@@ -50,7 +50,7 @@ export function renderConsentBanner({
   return (
     `<aside class="g-consent" data-gala-consent data-provider-kind="${escapeHtml(module.config.provider.kind)}" ` +
     `data-measurement-id="${escapeHtml(module.config.provider.measurementId)}" data-privacy-href="${privacyHref}" ` +
-    `hidden aria-label="${text('consentRegionLabel')}">` +
+    `tabindex="-1" hidden aria-label="${text('consentRegionLabel')}">` +
     `<p class="g-consent-text">${escapeHtml(bannerText)}</p>` +
     `<div class="g-consent-actions">` +
     `<button type="button" class="g-consent-accept">${text('consentAcceptLabel')}</button>` +
@@ -78,8 +78,10 @@ export function renderAnalyticsPrivacyParagraph(module) {
   const provider = providerOf(module);
   return (
     `<p>With your consent this site uses ${escapeHtml(provider.name)} to understand how it is read. ` +
-    `Nothing is loaded before you accept. Your choice is kept in your browser under <code>gala.consent.v1</code>; ` +
+    `Nothing is loaded before you accept. After you accept, Google Analytics sets <code>_ga</code> and <code>_ga_*</code> cookies. ` +
+    `Your choice itself is kept in <code>localStorage</code> under <code>gala.consent.v1</code>; ` +
     `change it any time with "Privacy choices" in the footer. ` +
+    `Declining removes those cookies and stops the script on the next page load. ` +
     `See <a href="${escapeHtml(provider.privacyPolicyUrl)}" rel="noopener">${escapeHtml(provider.privacyPolicyLabel)}</a>.</p>`
   );
 }

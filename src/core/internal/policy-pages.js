@@ -72,11 +72,17 @@ export function renderPrivacyBody(
     `<p>This is what happens to your data when you read ${name}.</p>` +
     `<ul>` +
     `<li>The hosting provider processes ordinary request logs when you load a page.</li>` +
-    `<li>Your browser storage is used only for colour mode, saved posts` +
-    (interactionsOn
-      ? ` and the reader session for reactions and comments`
-      : '') +
-    `.</li>` +
+    (analyticsHtml === ''
+      ? `<li>Your browser storage is used only for colour mode, saved posts` +
+        (interactionsOn
+          ? ` and the reader session for reactions and comments`
+          : '') +
+        `.</li>`
+      : `<li>Your browser storage is used for colour mode, saved posts` +
+        (interactionsOn
+          ? `, the reader session for reactions and comments`
+          : '') +
+        ` and your analytics choice.</li>`) +
     `</ul>` +
     analyticsHtml +
     (interactionsOn
@@ -100,6 +106,12 @@ export function renderPrivacyBody(
  */
 export function assertPolicyRoutesFree(content, routeOf) {
   const reserved = new Set([TERMS_ROUTE, PRIVACY_ROUTE]);
+  // A trailing slash and letter case never make a route a different page.
+  const normalise = (/** @type {string} */ route) =>
+    (route.length > 1 && route.endsWith('/')
+      ? route.slice(0, -1)
+      : route
+    ).toLowerCase();
   /** @type {Record<string, string>[]} */
   const diagnostics = [];
   content.forEach((record, index) => {
@@ -108,7 +120,7 @@ export function assertPolicyRoutesFree(content, routeOf) {
       ...(record.frontmatter.redirects ?? []),
     ];
     for (const route of routes) {
-      if (!reserved.has(route)) continue;
+      if (!reserved.has(normalise(route))) continue;
       diagnostics.push({
         code: 'POLICY_ROUTE_CONFLICT',
         severity: 'ERROR',

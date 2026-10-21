@@ -583,9 +583,7 @@ test('drift gate: every published hook is rendered across all five profiles, and
     // attribute-value hook instead, never the wrapping `div` by type.
     // The template's own inline icons (`<svg>` and its drawing elements) are
     // decorative chrome, themed through `.g-icon`, never by element.
-    // The consent banner's `<aside>` is themed through `.g-consent`.
     const NON_HOOK_STRUCTURAL_TAGS = new Set([
-      'aside',
       'body',
       'div',
       'svg',
@@ -594,7 +592,13 @@ test('drift gate: every published hook is rendered across all five profiles, and
       'rect',
     ]);
     for (const bodyMatch of html.matchAll(/<body[^>]*>([\s\S]*?)<\/body>/g)) {
-      for (const tagMatch of bodyMatch[1].matchAll(/<([a-z][a-z0-9]*)[ >]/g)) {
+      // The consent banner's `<aside data-gala-consent>` is themed through
+      // `.g-consent`; any other `<aside>` stays enforced.
+      const scanned = bodyMatch[1].replace(
+        /<aside [^>]*data-gala-consent[\s\S]*?<\/aside>/g,
+        '',
+      );
+      for (const tagMatch of scanned.matchAll(/<([a-z][a-z0-9]*)[ >]/g)) {
         const tag = tagMatch[1];
         if (NON_HOOK_STRUCTURAL_TAGS.has(tag)) continue;
         assert.ok(

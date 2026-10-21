@@ -88,9 +88,41 @@ test('policy pages are in the sitemap and absent from search, feeds and llms', a
   ]) {
     const text = /** @type {string} */ (files.get(file));
     assert.ok(text, file);
-    assert.ok(!/\/terms|\/privacy/.test(text), file);
+    const urls = file.endsWith('.json')
+      ? jsonStrings(JSON.parse(text))
+      : file.endsWith('.xml')
+        ? [
+            ...text.matchAll(/<(?:link|id|guid)[^>]*>([^<]*)</g),
+            ...text.matchAll(/<link[^>]*href="([^"]*)"/g),
+          ].map((match) => match[1])
+        : [...text.matchAll(/https?:\/\/[^\s)<>"]+|\]\(([^)\s]+)\)/g)].map(
+            (match) => match[1] ?? match[0],
+          );
+    assert.ok(urls.length > 0, `${file} lists URLs`);
+    for (const url of urls) {
+      assert.ok(!isPolicyRoute(url), `${file} lists ${url}`);
+    }
   }
 });
+
+/**
+ * @param {unknown} value parsed JSON
+ * @returns {string[]} every string inside it
+ */
+function jsonStrings(value) {
+  if (typeof value === 'string') return [value];
+  if (value === null || typeof value !== 'object') return [];
+  return Object.values(value).flatMap(jsonStrings);
+}
+
+/**
+ * @param {string} value a URL or route
+ * @returns {boolean} whether its path ends in the Terms or Privacy route
+ */
+function isPolicyRoute(value) {
+  const route = value.replace(/^https?:\/\/[^/]*/, '').replace(/\/$/, '');
+  return /(^|\/)(terms|privacy)$/.test(route);
+}
 
 test('an authored page on /terms fails the build closed', async () => {
   const buildInput = /** @type {any} */ (await buildRichFixture());
@@ -126,13 +158,53 @@ test('an authored page on /terms fails the build closed', async () => {
   }
 });
 
+/**
+ * @param {string[]} redirects redirect routes for the first document
+ * @returns {Promise<any>} the build failure
+ */
+async function redirectFailure(redirects) {
+  const buildInput = /** @type {any} */ (await buildRichFixture());
+  buildInput.content[0].frontmatter.redirects = redirects;
+  const dirs = await createRenderDirectories();
+  try {
+    /** @type {any} */
+    let failure;
+    await assert.rejects(
+      renderPublication(buildInput, {
+        outputDirectory: dirs.outputDirectory,
+        workDirectory: dirs.workDirectory,
+        sourceDirectory: dirs.sourceDirectory,
+        provenance: testProvenance(),
+      }),
+      (error) => {
+        failure = error;
+        return error instanceof BuildInputValidationError;
+      },
+    );
+    return failure;
+  } finally {
+    await dirs.cleanup();
+  }
+}
+
 test('a redirect from /privacy fails the build closed', async () => {
-  await assert.rejects(
-    render(async (buildInput) => {
-      buildInput.content[0].frontmatter.redirects = ['/privacy'];
-    }),
-    BuildInputValidationError,
+  const failure = await redirectFailure(['/privacy']);
+  assert.deepEqual(
+    failure.diagnostics.map((/** @type {any} */ d) => d.code),
+    ['POLICY_ROUTE_CONFLICT'],
   );
+});
+
+test('trailing-slash and upper-case spellings of a policy route conflict too', async () => {
+  // The route format admits both a trailing slash and upper-case letters.
+  for (const route of ['/terms/', '/Terms', '/PRIVACY/']) {
+    const failure = await redirectFailure([route]);
+    assert.deepEqual(
+      failure.diagnostics.map((/** @type {any} */ d) => d.code),
+      ['POLICY_ROUTE_CONFLICT'],
+      route,
+    );
+  }
 });
 
 test('madeWithGalascribeHref names the percent-encoded host', () => {

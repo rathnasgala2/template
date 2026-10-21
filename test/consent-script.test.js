@@ -145,7 +145,7 @@ test('accept stores the choice, hides the banner and loads exactly one loader', 
     { analytics_storage: 'granted' },
   ]);
   assert.equal(layer[2][0], 'js');
-  assert.deepEqual(layer[3], ['config', ID, { anonymize_ip: true }]);
+  assert.deepEqual(layer[3], ['config', ID]);
   assert.equal(window.document.head.querySelector('script')?.async, true);
   assert.deepEqual(events, [{ analytics: true }]);
   // Accepting again never adds a second loader.
@@ -168,8 +168,23 @@ test('decline stores the choice and appends nothing', async () => {
   assert.equal(/** @type {any} */ (window).dataLayer, undefined);
 });
 
+/**
+ * @param {import('jsdom').DOMWindow} window the window
+ * @returns {{cancelable: boolean}[]} every `gala:reload`, each prevented
+ */
+function holdReloads(window) {
+  /** @type {{cancelable: boolean}[]} */
+  const seen = [];
+  window.document.addEventListener('gala:reload', (event) => {
+    seen.push({ cancelable: event.cancelable });
+    event.preventDefault();
+  });
+  return seen;
+}
+
 test('declining after loading revokes analytics storage', async () => {
   const window = await run();
+  holdReloads(window);
   click(window, '.g-consent-accept');
   click(window, '.g-consent-open');
   click(window, '.g-consent-decline');
@@ -227,10 +242,86 @@ test('unavailable storage shows the banner and never throws', async () => {
   assert.equal(bannerOf(window).hasAttribute('hidden'), true);
 });
 
-test('the script uses no eval, Function constructor or cookie', async () => {
+test('the script uses no eval or Function constructor and sets no live cookie', async () => {
   assert.doesNotMatch(CONSENT_SCRIPT_SOURCE, /\beval\s*\(/);
   assert.doesNotMatch(CONSENT_SCRIPT_SOURCE, /new\s+Function/);
-  assert.doesNotMatch(CONSENT_SCRIPT_SOURCE, /document\.cookie/);
-  assert.doesNotMatch(CONSENT_SCRIPT_SOURCE, /\bcookie\b/i);
+  // The only cookie access reads names to expire Google's own cookies and
+  // writes them expired; nothing is ever set live.
+  const writes =
+    CONSENT_SCRIPT_SOURCE.match(/document\.cookie\s*=[^;]*;/g) ?? [];
+  assert.equal(writes.length, 2);
+  assert.ok(
+    writes.every((write) =>
+      /^document\.cookie\s*=\s*(expired|expired \+)/.test(write),
+    ),
+  );
+  assert.ok(CONSENT_SCRIPT_SOURCE.includes('expires=Thu, 01 Jan 1970'));
   assert.doesNotMatch(CONSENT_SCRIPT_SOURCE, /innerHTML/);
+});
+
+test('declining after loading clears Google cookies and asks for a reload', async () => {
+  const window = await run();
+  const reloads = holdReloads(window);
+  click(window, '.g-consent-accept');
+  window.document.cookie = '_ga=GA1.1.1; path=/';
+  window.document.cookie = '_ga_ABC123XYZ=GS1.1.1; path=/';
+  window.document.cookie = '_ga_PARENT=1; path=/; domain=example.test';
+  window.document.cookie = 'keep=1; path=/';
+  assert.equal(reloads.length, 0);
+  click(window, '.g-consent-open');
+  click(window, '.g-consent-decline');
+  assert.equal(window.document.cookie, 'keep=1');
+  assert.deepEqual(reloads, [{ cancelable: true }]);
+  // The provider stays loaded in this window, so declining again reloads again.
+  click(window, '.g-consent-open');
+  click(window, '.g-consent-decline');
+  assert.equal(reloads.length, 2);
+});
+
+test('declining before anything loaded neither reloads nor touches cookies', async () => {
+  const window = await run();
+  const reloads = holdReloads(window);
+  window.document.cookie = '_ga=kept; path=/';
+  click(window, '.g-consent-decline');
+  assert.deepEqual(reloads, []);
+  assert.equal(window.document.cookie, '_ga=kept');
+});
+
+test('the config call carries no anonymize_ip', async () => {
+  const window = await run();
+  click(window, '.g-consent-accept');
+  const config = dataLayer(window).find((entry) => entry[0] === 'config');
+  assert.deepEqual(config, ['config', ID]);
+  assert.ok(!CONSENT_SCRIPT_SOURCE.includes('anonymize_ip'));
+});
+
+test('the banner takes focus when shown and focus returns to the opener when hidden', async () => {
+  const window = await run();
+  const { document } = window;
+  const banner = bannerOf(window);
+  assert.equal(banner.getAttribute('tabindex'), '-1');
+  assert.equal(document.activeElement, banner);
+  click(window, '.g-consent-decline');
+  assert.equal(
+    document.activeElement,
+    document.querySelector('.g-consent-open'),
+  );
+  click(window, '.g-consent-open');
+  assert.equal(document.activeElement, banner);
+  click(window, '.g-consent-accept');
+  assert.equal(
+    document.activeElement,
+    document.querySelector('.g-consent-open'),
+  );
+});
+
+test('hiding leaves focus alone when there is no visible opener', async () => {
+  const window = await run();
+  const { document } = window;
+  document.querySelector('.g-consent-open')?.setAttribute('hidden', '');
+  const other = document.createElement('button');
+  document.body.appendChild(other);
+  other.focus();
+  click(window, '.g-consent-decline');
+  assert.equal(document.activeElement, other);
 });

@@ -2,7 +2,7 @@
  * The reader-consent browser script: an external same-origin file (CSP
  * `script-src 'self'` plus the provider's own origin) emitted only when
  * `build-input.modules.analytics` is present, as `assets/gala-consent-v1.js`.
- * Plain ES2020 in one IIFE: no eval, no `new Function`, no cookie. The
+ * Plain ES2020 in one IIFE: no eval, no `new Function`, no cookie set (it only expires Google's own on decline). The
  * reader's choice lives in `localStorage` under `gala.consent.v1` as
  * `{"version":1,"analytics":true|false,"at":"<ISO>"}`; every storage access is
  * guarded, so unavailable storage simply means "no stored choice".
@@ -48,7 +48,7 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
         });
         window.gtag('consent', 'update', { analytics_storage: 'granted' });
         window.gtag('js', new Date());
-        window.gtag('config', id, { anonymize_ip: true });
+        window.gtag('config', id);
         var script = document.createElement('script');
         script.async = true;
         script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
@@ -59,9 +59,32 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
       },
       revoke: function () {
         window.gtag('consent', 'update', { analytics_storage: 'denied' });
+        clearCookies();
       }
     }
   };
+
+  // Best-effort removal of Google's own cookies: _ga and _ga_*, written
+  // expired for the path with no domain and for the host and each parent
+  // domain down to two labels.
+  function clearCookies() {
+    try {
+      var names = [];
+      var parts = document.cookie ? document.cookie.split(';') : [];
+      for (var i = 0; i < parts.length; i++) {
+        var name = parts[i].split('=')[0].trim();
+        if (name === '_ga' || name.indexOf('_ga_') === 0) names.push(name);
+      }
+      var labels = location.hostname.split('.');
+      var domains = [];
+      for (var d = 0; labels.length - d >= 2; d++) domains.push(labels.slice(d).join('.'));
+      for (var n = 0; n < names.length; n++) {
+        var expired = names[n] + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+        document.cookie = expired;
+        for (var k = 0; k < domains.length; k++) document.cookie = expired + '; domain=' + domains[k];
+      }
+    } catch (error) {}
+  }
 
   function readChoice() {
     try {
@@ -96,9 +119,12 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
 
     function show() {
       banner.removeAttribute('hidden');
+      banner.focus();
     }
     function hide() {
       banner.setAttribute('hidden', '');
+      var opener = document.querySelector('.g-consent-open');
+      if (opener && !opener.hasAttribute('hidden')) opener.focus();
     }
     function enable() {
       if (loaded[kind]) provider.regrant();
@@ -111,8 +137,14 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
       writeChoice(analytics);
       hide();
       if (analytics) enable();
-      else if (loaded[kind]) provider.revoke();
       announce(analytics);
+      if (!analytics && loaded[kind]) {
+        provider.revoke();
+        // A loaded provider script keeps pinging until the page is gone;
+        // the seam lets tests keep the page.
+        var reload = new CustomEvent('gala:reload', { cancelable: true });
+        if (document.dispatchEvent(reload)) location.reload();
+      }
     }
 
     var accept = banner.querySelector('.g-consent-accept');
