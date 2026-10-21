@@ -39,14 +39,19 @@ export const PRIVACY_ROUTE = '/privacy';
 /** The longest policy title, in grapheme clusters (`policyPageNormalized`). */
 const TITLE_MAXIMUM_GRAPHEMES = 80;
 
-const GALASCRIBE_TERMS_URL = 'https://galascribe.com/terms';
-const GALASCRIBE_PRIVACY_URL = 'https://galascribe.com/privacy';
+// The canonical legal documents live on the App's public origin
+// (`PUBLIC_ORIGIN`), not on the marketing apex.
+const GALASCRIBE_TERMS_URL = 'https://app.galascribe.com/terms';
+const GALASCRIBE_PRIVACY_URL = 'https://app.galascribe.com/privacy';
 const DOCUMENTATION_URL =
   'https://github.com/rathnasgala2/template#policy-pages';
 
 /**
  * @typedef {object} PolicyFacts
  * @property {string} publicationName the publication's title (escaped here)
+ * @property {boolean} authoredText whether the page text above the section is
+ *   the site's own (`build-input.policies` present) rather than the shipped
+ *   default text
  * @property {boolean} interactionsOn whether reactions and comments are on
  * @property {import('../../../types/index.d.ts').AnalyticsModule} [analytics]
  *   the validated analytics module, when consent and analytics are on
@@ -150,14 +155,20 @@ export function resolvePolicyPages(policies) {
  */
 export function renderGalascribeSection({
   publicationName,
+  authoredText,
   interactionsOn,
   analytics,
 }) {
   const name = escapeHtml(publicationName);
+  // Only authored text is "written by the site's author"; the shipped default
+  // is Galascribe's own, and the sentence must not claim otherwise.
+  const provenance = authoredText
+    ? `The text above is written by the site's author.`
+    : `The text above is Galascribe's standard text for this site; the site's author can replace it in Galascribe.`;
   return (
     `<section><h2>Galascribe</h2>` +
     `<p>This site is published by ${name} with Galascribe, a service of Rathnas LLC. ` +
-    `The text above is written by the site's author. This section is added by Galascribe to every site it publishes and cannot be changed by the author.</p>` +
+    `${provenance} This section is added by Galascribe to every site it publishes and cannot be changed by the author.</p>` +
     `<p>Use of this site is also subject to ${link(GALASCRIBE_TERMS_URL, "Galascribe's Terms of Service")}, ` +
     `and the handling of your data is described in ${link(GALASCRIBE_PRIVACY_URL, "Galascribe's Privacy Policy")}. ` +
     `Both apply in full and are incorporated here.</p>` +

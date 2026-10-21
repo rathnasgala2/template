@@ -91,7 +91,17 @@ import { canonicalizeJcs, domainDigest } from '../canonical-jcs.js';
 export const TEMPLATE_STYLING_CONTRACT_PACKAGE = '@rathnasgala2/template';
 /** @type {string} */
 export const TEMPLATE_STYLING_CONTRACT_VERSION = '4.1.0';
-/** @type {string} */
+/**
+ * The template version that introduced the current contract: a theme's
+ * `templateRange` is `^` this value, and it is part of the contract digest. It
+ * stays here, through every patch and minor release that does not change the
+ * hook catalog, and moves (with a new contract version) only when the catalog
+ * changes again. A template release therefore never has to match it exactly:
+ * `test/pinned-versions.test.js` asserts only that `package.json`'s version
+ * satisfies `^` this value.
+ *
+ * @type {string}
+ */
 export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '4.4.0';
 
 /** @type {string} the `main-content` landmark's fixed `id`. */

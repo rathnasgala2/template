@@ -372,18 +372,20 @@ selected theme package's stylesheets into every generated page:
   `disabled`; see that module's own documentation for why each is admitted and
   why the token catalog's `color-focus`/`color-link-visited` had no reachable
   application before it), and up to 256 `publicThemeSlotHooks` (contract 3.0.0;
-  exactly 178 today) — one per catalog leaf, so every leaf a theme could validly
-  select is a named, documented hook and no catalog member is orphaned. Every
-  leaf is drawn from what this renderer actually renders: 30 type-selector hooks
-  (every landmark/prose/code/control element `internal/skeleton.js`,
-  `internal/page-kinds.js` and the markdown-it CommonMark pipeline can produce),
-  127 class-selector hooks (112 `g-*` component classes, grouped by component in
-  `COMPONENT_CLASS_GROUPS`, plus the base Prism `.token` class and one
-  `.language-<grammar>` hook per admitted highlight grammar — fine-grained
-  per-token-kind classes are a documented scope exclusion), 2 id-selector hooks
-  (`#main-content`, the appearance toggle button's fixed id) and 19
-  attribute-value hooks (one per `data-gala-slot` value, one per the
-  `data-gala-page-kind` value). `catalogDigest` is
+  exactly 225 today, contract 4.1.0) — one per catalog leaf, so every leaf a
+  theme could validly select is a named, documented hook and no catalog member
+  is orphaned. Every leaf is drawn from what this renderer actually renders: 30
+  type-selector hooks (every landmark/prose/code/control element
+  `internal/skeleton.js`, `internal/page-kinds.js` and the markdown-it
+  CommonMark pipeline can produce), 138 class-selector hooks (123 `g-*`
+  component classes, grouped by component in `COMPONENT_CLASS_GROUPS`, plus the
+  base Prism `.token` class and one `.language-<grammar>` hook per admitted
+  highlight grammar, 14 today — fine-grained per-token-kind classes are a
+  documented scope exclusion), 2 id-selector hooks (`#main-content`, the
+  appearance toggle button's fixed id) and 55 attribute-value hooks (one per
+  value of each `data-gala-*` attribute the markup sets: slot, page kind, the
+  article/author/footer/header/home/ listing layouts, density, media ratio and
+  profile). `catalogDigest` is
   `SHA256(UTF8("GALA-TEMPLATE-STYLING-CONTRACT-V2\0") || JCS(...))`, matching
   the same domain-separated digest construction and the digest profile
   `@rathnasgala2/schemas`' own internal `templateStylingContract` profile uses
@@ -730,7 +732,8 @@ in the footer legal navigation, `assets/gala-consent-v1.js` (deferred; no eval,
 no cookie; the choice is kept in `localStorage` as `gala.consent.v1`), the
 provider's CSP sources and the analytics paragraph of the policy pages'
 Galascribe section. Nothing from the provider loads before the reader accepts,
-and a site without the module is unchanged. A browser that sends the Global
+and a site without the module has none of these (it still carries the legal
+footer navigation and the two policy pages). A browser that sends the Global
 Privacy Control signal (`navigator.globalPrivacyControl === true`) with no
 stored choice is treated as declining, without storing anything and without the
 banner on load; the footer's "Privacy choices" button still opens it, and
@@ -764,8 +767,11 @@ search index, the feeds or the `llms` documents.
 - **The Galascribe section** is hardcoded English and the author's text never
   replaces it. Every fact in it comes from the build input: that the site is
   published with Galascribe (Rathnas LLC) and that Galascribe's Terms of Service
-  and Privacy Policy (`https://galascribe.com/terms`, `/privacy`) apply and are
-  incorporated; with reactions or comments on, that Galascribe provides them,
+  and Privacy Policy (`https://app.galascribe.com/terms`, `/privacy`, the App's
+  public origin) apply and are incorporated; the text above the section is
+  described as the site author's when `policies` is present and as Galascribe's
+  standard text (which the author can replace in Galascribe) when the shipped
+  default renders; with reactions or comments on, that Galascribe provides them,
   processes what readers submit and keeps a reader session in browser storage;
   with `modules.analytics`, the provider, that consent is required, the `_ga`
   and `_ga_*` cookies, the `gala.consent.v1` storage key, the "Privacy choices"

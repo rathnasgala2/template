@@ -96,6 +96,23 @@ export function collectIncludedSources(buildInput) {
     }
   }
 
+  // The authored policy pages' Markdown sources shape the `/terms` and
+  // `/privacy` output exactly as a content document's does, so they are
+  // included sources too. The manifest role enum has no policy member; they
+  // are authored documents, so `content`. The shipped default text (no
+  // `policies`) comes from the schemas package, not the repository.
+  for (const key of /** @type {const} */ (['terms', 'privacy'])) {
+    const page = buildInput.policies?.[key];
+    if (page) {
+      record(
+        page.body.sourcePath,
+        page.body.sourceDigest,
+        'content',
+        rootRevision,
+      );
+    }
+  }
+
   if (buildInput.navigation.source.kind === 'authored') {
     record(
       buildInput.navigation.source.sourcePath,

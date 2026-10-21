@@ -6,11 +6,15 @@
  */
 
 import { strict as assert } from 'node:assert';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
+import { pathToFileURL } from 'node:url';
+import { promisify } from 'node:util';
 
+import { TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION } from '../src/core/internal/appearance/styling-contract.js';
 import { loadThemeAssets } from '../src/core/internal/theme-assets.js';
 import {
   ADMITTED_THEME_IDS,
@@ -50,7 +54,6 @@ test('scaffoldTheme declares every token in the closed 116-entry catalog, each w
   const dir = await mkdtemp(path.join(tmpdir(), 'gala-theme-scaffold-'));
   try {
     await scaffoldTheme({ destinationDirectory: dir });
-    const { readFile } = await import('node:fs/promises');
     const themeJson = JSON.parse(
       await readFile(path.join(dir, 'theme.json'), 'utf8'),
     );
@@ -86,5 +89,55 @@ test('every schema-admitted themeId scaffolds a conformant theme', async () => {
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  }
+});
+
+test('a patch release of the renderer leaves the scaffolded templateRange at the contract-introducing version and still admitted', async () => {
+  const root = path.resolve(import.meta.dirname, '..');
+  const dir = await mkdtemp(path.join(tmpdir(), 'gala-theme-scaffold-'));
+  try {
+    // A fresh process whose renderer version is a hypothetical 4.4.1 (see
+    // `test/helpers/renderer-version-override.mjs`): the scaffold and the
+    // consume-time `templateRange` admission both run unmodified.
+    const script = `
+      const root = ${JSON.stringify(pathToFileURL(root).href + '/')};
+      const { TEMPLATE_RENDERER_VERSION } = await import(root + 'src/core/internal/package-version.js');
+      const { scaffoldTheme } = await import(root + 'scripts/scaffold-theme.mjs');
+      const { loadThemeAssets } = await import(root + 'src/core/internal/theme-assets.js');
+      const directory = process.env.GALA_SCAFFOLD_DIRECTORY;
+      await scaffoldTheme({ destinationDirectory: directory });
+      await loadThemeAssets({ themeDirectory: directory, basePath: '/' });
+      process.stdout.write(TEMPLATE_RENDERER_VERSION);
+    `;
+    const { stdout } = await promisify(execFile)(
+      process.execPath,
+      [
+        '--import',
+        pathToFileURL(
+          path.join(root, 'test/helpers/renderer-version-override.mjs'),
+        ).href,
+        '--input-type=module',
+        '--eval',
+        script,
+      ],
+      {
+        env: {
+          ...process.env,
+          GALA_TEST_RENDERER_VERSION: '4.4.1',
+          GALA_SCAFFOLD_DIRECTORY: dir,
+        },
+      },
+    );
+    assert.equal(stdout, '4.4.1', 'the child ran as renderer 4.4.1');
+    const themeJson = JSON.parse(
+      await readFile(path.join(dir, 'theme.json'), 'utf8'),
+    );
+    assert.equal(
+      themeJson.templateRange,
+      `^${TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION}`,
+    );
+    assert.equal(themeJson.templateRange, '^4.4.0');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
   }
 });

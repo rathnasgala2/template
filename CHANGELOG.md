@@ -34,12 +34,15 @@ and this project adheres to
   of the text.
 - The Galascribe section, computed from the build input: the site is published
   with Galascribe (Rathnas LLC) and Galascribe's Terms of Service and Privacy
-  Policy (`https://galascribe.com/terms`, `/privacy`) apply and are
-  incorporated; with reactions or comments on, that Galascribe provides them and
-  processes what readers submit; with `modules.analytics`, the provider, that
-  consent is required, the `_ga`/`_ga_*` cookies, the `gala.consent.v1` storage
-  key, the "Privacy choices" control and the Global Privacy Control behaviour,
-  otherwise that no analytics or advertising trackers load; and
+  Policy (`https://app.galascribe.com/terms`, `/privacy`, the App's public
+  origin) apply and are incorporated; the text above the section is described as
+  the site author's only when `policies` is present, and as Galascribe's
+  standard text (which the author can replace in Galascribe) when the shipped
+  default renders; with reactions or comments on, that Galascribe provides them
+  and processes what readers submit; with `modules.analytics`, the provider,
+  that consent is required, the `_ga`/`_ga_*` cookies, the `gala.consent.v1`
+  storage key, the "Privacy choices" control and the Global Privacy Control
+  behaviour, otherwise that no analytics or advertising trackers load; and
   `support@galascribe.com` for Galascribe questions.
 - A legal footer navigation (`nav.g-footer-legal`, `aria-label="Legal"`) with
   Terms, Privacy and, unless `appearance.attribution.showMadeWith` is `false`, a
@@ -59,14 +62,22 @@ and this project adheres to
   sending; a cancelable `gala:reload` event on `document` precedes the reload.
   `anonymize_ip` is not sent (it does nothing in GA4). The banner takes focus
   when shown and focus returns to "Privacy choices" when it closes. A site
-  without the module renders byte-identically to before. Everything lives under
-  `src/core/internal/analytics/`; no `src/modules/` tree is added.
+  without the module gets no banner, no consent script and no "Privacy choices"
+  button; like every site it still gains the legal footer navigation and the two
+  policy pages above, so its output is not byte-identical to 4.3.0's. Everything
+  lives under `src/core/internal/analytics/`; no `src/modules/` tree is added.
 - Global Privacy Control: when `navigator.globalPrivacyControl === true` and no
   choice is stored, the consent script treats the reader as declined without
   storing anything and does not show the banner on load. Nothing loads, the
   footer's "Privacy choices" button still opens the banner, and `gala:consent`
   is dispatched with `{analytics: false, source: 'gpc'}`. A stored choice
   outranks the signal.
+- Provenance: when `policies` is present, each page's Markdown source
+  (`policies.terms.body.sourcePath`, `policies.privacy.body.sourcePath`) is an
+  `includedSources` row with its digest (role `content`, the manifest enum has
+  no policy role), so the source inventory and its digest cover the text that
+  shapes the pages. The shipped default text is not a repository file and lists
+  no row.
 - The shared module-shape helpers (`exactObject`, `boolean`, `origin`) move from
   `interactions.js` to `internal/module-shape.js`, which gains `boundedText`.
 
@@ -79,7 +90,12 @@ and this project adheres to
   `g-consent-decline`, `g-consent-open`); additive, 225 public hooks. The
   contract digest changes, so themes are rebuilt against it, declare
   `contractVersion` `4.1.0` and `templateRange` `^4.4.0`, and schemas 3.16.0's
-  `theme-contract` admits exactly that pairing.
+  `theme-contract` admits exactly that pairing. The contract's `templateVersion`
+  is the template version that introduced it and stays 4.4.0 through patch
+  releases until the hook catalog changes again; `scripts/scaffold-theme.mjs`
+  writes `templateRange` `^4.4.0` from it, never from the renderer's own
+  version, and `test/pinned-versions.test.js` asserts only that `package.json`'s
+  version satisfies that range.
 - With `modules.analytics` on, the CSP meta adds the provider's sources to
   `script-src`, `connect-src` and `img-src` (sorted bytewise); the baseline, the
   complete policy and `contracts/render-policy.jcs` are unchanged.

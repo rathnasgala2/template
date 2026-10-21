@@ -6,6 +6,11 @@
  * version the contract was published at and is part of the contract digest:
  * a renderer release that does not change the contract keeps that digest.
  * `test/pinned-versions.test.js` keeps it equal to `package.json`'s `version`.
+ * The contract's `templateVersion` is the version that introduced the current
+ * contract and stays put through patch releases until the hook catalog changes
+ * again, so a theme's `templateRange` is `^` that value, never `^` this one,
+ * and the test asserts only that this version satisfies it (same major,
+ * greater than or equal), not equality.
  *
  * @type {string}
  */

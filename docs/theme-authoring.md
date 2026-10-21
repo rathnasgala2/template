@@ -83,8 +83,9 @@ obvious ones:
   theme's `tokens.css` and `components.css` must not declare them. See
   `@rathnasgala2/schemas/palette`.
 - **`templateRange`** — an exact version or caret range (contract `4.1.0`
-  requires `^4.4.0`) admitting this renderer's own published version. Checked
-  with `satisfiesTemplateRange` (`src/core/internal/semver-range.js`), a
+  requires `^4.4.0`, the template version that introduced it, so later patch
+  releases stay admitted) admitting this renderer's own published version.
+  Checked with `satisfiesTemplateRange` (`src/core/internal/semver-range.js`), a
   deliberately narrow SemVer-range engine: only exact versions and caret ranges
   are supported, nothing else.
 - **`assets[]`** — one row per file the theme ships, stylesheet or passive asset

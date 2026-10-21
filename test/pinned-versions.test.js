@@ -4,6 +4,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 
 import { TEMPLATE_PACKAGE_VERSION } from '../src/core/index.js';
+import { satisfiesTemplateRange } from '../src/core/internal/semver-range.js';
 import {
   TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION,
   TEMPLATE_STYLING_CONTRACT_VERSION,
@@ -78,11 +79,27 @@ test('package.json declares only the documented default-free entry point', async
   assert.equal(packageJson.type, 'module');
 });
 
-test('the renderer version constants equal package.json, and the styling contract names this release', async () => {
+test('the renderer version equals package.json, and package.json satisfies the contract-introducing range', async () => {
   const packageJson = JSON.parse(
     await readFile(path.join(REPO_ROOT, 'package.json'), 'utf8'),
   );
   assert.equal(TEMPLATE_PACKAGE_VERSION, packageJson.version);
-  assert.equal(TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION, packageJson.version);
+  // `TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION` is the version that
+  // introduced the current contract; it does not move on a patch release, so
+  // the package version only has to satisfy `^` it (same major, greater than
+  // or equal), never equal it.
+  const range = `^${TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION}`;
+  assert.ok(
+    satisfiesTemplateRange(packageJson.version, range),
+    `package.json version ${packageJson.version} must satisfy ${range}`,
+  );
+  // The check is not vacuous: a later patch or minor release passes, an
+  // unrelated old version and the next major do not.
+  const [major, minor, patch] =
+    TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION.split('.').map(Number);
+  assert.ok(satisfiesTemplateRange(`${major}.${minor}.${patch + 1}`, range));
+  assert.ok(satisfiesTemplateRange(`${major}.${minor + 1}.0`, range));
+  assert.ok(!satisfiesTemplateRange(`${major + 1}.0.0`, range));
+  assert.ok(!satisfiesTemplateRange('0.0.1', range));
   assert.equal(TEMPLATE_STYLING_CONTRACT_VERSION, '4.1.0');
 });

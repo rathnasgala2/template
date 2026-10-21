@@ -25,6 +25,7 @@ import { digestBytes } from '../src/core/internal/canonical-jcs.js';
 import {
   buildTemplateStylingContract,
   RESOLVED_PALETTE_SELECTORS,
+  TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION,
 } from '../src/core/internal/appearance/styling-contract.js';
 import {
   DEVELOPER_COMPOSITION,
@@ -33,7 +34,6 @@ import {
   PERSONAL_COMPOSITION,
   VISUAL_COMPOSITION,
 } from '../src/core/internal/template-composition.js';
-import { TEMPLATE_RENDERER_VERSION } from '../src/core/internal/package-version.js';
 import { runIfMain } from './run-if-main.mjs';
 
 const require = createRequire(import.meta.url);
@@ -287,7 +287,9 @@ export async function scaffoldTheme({
     themeId,
     package: `@rathnasgala2/theme-${themeId}@${packageVersion}`,
     contractVersion: publishedContract.contractVersion,
-    templateRange: `^${TEMPLATE_RENDERER_VERSION}`,
+    // The version that introduced the contract, not this release: a patch
+    // release must not change what a published theme declares.
+    templateRange: `^${TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION}`,
     composition: { ...COMPOSITION_BY_THEME_ID[themeId] },
     stylesheets: ['tokens.css', 'components.css', 'print.css'],
     cssLayers: ['gala-tokens', 'gala-components', 'gala-print'],

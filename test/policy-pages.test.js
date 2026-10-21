@@ -31,9 +31,10 @@ import {
 
 /**
  * @param {(buildInput: any) => Promise<void>} [prepare] changes the build input
- * @returns {Promise<Map<string, string>>} each route's UTF-8 text
+ * @returns {Promise<{files: Map<string, string>, manifest: any}>} each route's
+ *   UTF-8 text, and the manifest
  */
-async function render(prepare = async () => {}) {
+async function renderWithManifest(prepare = async () => {}) {
   const buildInput = /** @type {any} */ (await buildRichFixture());
   await prepare(buildInput);
   const dirs = await createRenderDirectories();
@@ -52,10 +53,18 @@ async function render(prepare = async () => {}) {
         await readFile(path.join(dirs.outputDirectory, route.path), 'utf8'),
       );
     }
-    return files;
+    return { files, manifest };
   } finally {
     await dirs.cleanup();
   }
+}
+
+/**
+ * @param {(buildInput: any) => Promise<void>} [prepare] changes the build input
+ * @returns {Promise<Map<string, string>>} each route's UTF-8 text
+ */
+async function render(prepare = async () => {}) {
+  return (await renderWithManifest(prepare)).files;
 }
 
 test('both policy pages render with titles, robots, breadcrumb and prose', async () => {
@@ -375,7 +384,11 @@ const analyticsModule = () => ({
 });
 
 test('the Galascribe section computes every fact from the build input', () => {
-  const base = { publicationName: 'My <Notes> & Co', interactionsOn: false };
+  const base = {
+    publicationName: 'My <Notes> & Co',
+    authoredText: false,
+    interactionsOn: false,
+  };
   const off = renderGalascribeSection(base);
   assert.ok(off.startsWith('<section><h2>Galascribe</h2>'));
   assert.ok(off.endsWith('</section>'));
@@ -387,14 +400,16 @@ test('the Galascribe section computes every fact from the build input', () => {
   assert.ok(off.includes('Rathnas LLC'));
   assert.ok(
     off.includes(
-      'href="https://galascribe.com/terms" rel="noopener">Galascribe&#39;s Terms of Service</a>',
+      'href="https://app.galascribe.com/terms" rel="noopener">Galascribe&#39;s Terms of Service</a>',
     ),
   );
   assert.ok(
     off.includes(
-      'href="https://galascribe.com/privacy" rel="noopener">Galascribe&#39;s Privacy Policy</a>',
+      'href="https://app.galascribe.com/privacy" rel="noopener">Galascribe&#39;s Privacy Policy</a>',
     ),
   );
+  // The legal documents are on the App's origin, never the marketing apex.
+  assert.ok(!off.includes('href="https://galascribe.com'));
   assert.ok(
     off.includes(
       '<a href="mailto:support@galascribe.com">support@galascribe.com</a>',
@@ -485,6 +500,7 @@ test('with interactions and analytics on both pages carry the full Galascribe se
   });
   const expected = renderGalascribeSection({
     publicationName,
+    authoredText: false,
     interactionsOn: true,
     analytics: analyticsModule(),
   });
@@ -623,5 +639,177 @@ test('madeWithGalascribeHref names the percent-encoded host', () => {
   assert.equal(
     madeWithGalascribeHref('https://münchen.example/'),
     `https://galascribe.com/?utm_source=xn--mnchen-3ya.example${tail}`,
+  );
+});
+
+const POLICY_FILES = [
+  'fixture-1/terms/index.html',
+  'fixture-1/privacy/index.html',
+];
+
+test("the rendered Galascribe section links the App's legal documents while the footer keeps the apex referral link", async () => {
+  const files = await render();
+  for (const file of POLICY_FILES) {
+    const html = /** @type {string} */ (files.get(file));
+    assert.ok(
+      html.includes('href="https://app.galascribe.com/terms" rel="noopener"'),
+      file,
+    );
+    assert.ok(
+      html.includes('href="https://app.galascribe.com/privacy" rel="noopener"'),
+      file,
+    );
+    assert.ok(!html.includes('href="https://galascribe.com/terms'), file);
+    assert.ok(!html.includes('href="https://galascribe.com/privacy'), file);
+    // The apex 301 preserves the query, so the referral link is unchanged.
+    assert.ok(html.includes('href="https://galascribe.com/?utm_source='), file);
+  }
+});
+
+const AUTHORED_SENTENCE = "The text above is written by the site's author.";
+const DEFAULT_SENTENCE =
+  "The text above is Galascribe's standard text for this site; the site's author can replace it in Galascribe.";
+
+test('the Galascribe section says whose text it follows: authored or the shipped default', async () => {
+  const base = { publicationName: 'N', interactionsOn: false };
+  const authored = renderGalascribeSection({ ...base, authoredText: true });
+  const standard = renderGalascribeSection({ ...base, authoredText: false });
+  assert.ok(authored.includes(AUTHORED_SENTENCE));
+  assert.ok(!authored.includes(DEFAULT_SENTENCE));
+  assert.ok(standard.includes(DEFAULT_SENTENCE));
+  assert.ok(!standard.includes("written by the site's author"));
+  for (const section of [authored, standard]) {
+    assert.ok(
+      section.includes(
+        'This section is added by Galascribe to every site it publishes and cannot be changed by the author.',
+      ),
+    );
+  }
+
+  // Rendered: the defaults claim no authorship; authored policies do.
+  const defaults = await render();
+  const withPolicies = await render(async (buildInput) => {
+    addAuthoredPolicies(buildInput);
+    await applyCurrentRenderPolicy(buildInput);
+  });
+  for (const file of POLICY_FILES) {
+    const byDefault = /** @type {string} */ (defaults.get(file));
+    assert.ok(byDefault.includes(DEFAULT_SENTENCE), file);
+    assert.ok(!byDefault.includes("written by the site's author"), file);
+    const byAuthor = /** @type {string} */ (withPolicies.get(file));
+    assert.ok(byAuthor.includes(AUTHORED_SENTENCE), file);
+    assert.ok(!byAuthor.includes(DEFAULT_SENTENCE), file);
+  }
+});
+
+test('authored policy sources are included sources of the manifest, with their digests; the shipped default lists none', async () => {
+  /** @type {string} */
+  let sourceRevision = '';
+  const authored = await renderWithManifest(async (buildInput) => {
+    sourceRevision = buildInput.sourceRevision;
+    addAuthoredPolicies(buildInput);
+    await applyCurrentRenderPolicy(buildInput);
+  });
+  const rows = /** @type {{path: string}[]} */ (
+    authored.manifest.includedSources
+  );
+  for (const [sourcePath, markdown] of [
+    ['gala/policies/terms.md', AUTHORED_TERMS_MARKDOWN],
+    ['gala/policies/privacy.md', AUTHORED_PRIVACY_MARKDOWN],
+  ]) {
+    assert.deepEqual(
+      rows.filter((row) => row.path === sourcePath),
+      [
+        {
+          path: sourcePath,
+          sha256: sha256Of(Buffer.from(markdown, 'utf8')),
+          sourceRevision,
+          role: 'content',
+        },
+      ],
+      sourcePath,
+    );
+  }
+  const paths = rows.map((row) => row.path);
+  assert.equal(new Set(paths).size, paths.length, 'one row per source');
+  assert.deepEqual(
+    paths,
+    [...paths].sort((a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b))),
+    'rows stay in UTF-8 byte order',
+  );
+
+  // Without `policies` the text comes from the schemas package: no row, and a
+  // different source inventory.
+  const defaults = await renderWithManifest();
+  assert.ok(
+    !defaults.manifest.includedSources.some((/** @type {any} */ row) =>
+      row.path.startsWith('gala/policies/'),
+    ),
+  );
+  assert.notEqual(
+    defaults.manifest.sourceInventoryDigest,
+    authored.manifest.sourceInventoryDigest,
+  );
+});
+
+test('a hostile authored title is escaped in the heading, title, breadcrumb and JSON-LD, and the fixed labels stay Terms and Privacy', async () => {
+  const title = '<b>"T&C"</b>';
+  const escaped = '&lt;b&gt;&quot;T&amp;C&quot;&lt;/b&gt;';
+  const files = await render(async (buildInput) => {
+    addAuthoredPolicies(buildInput);
+    for (const key of ['terms', 'privacy']) {
+      buildInput.policies[key].title = title;
+      buildInput.policies[key].body = authoredBody(
+        'Plain text.\n',
+        `gala/policies/${key}.md`,
+      );
+    }
+    // The consent banner links to the Privacy page as well.
+    buildInput.modules = { analytics: analyticsModule() };
+    await applyCurrentRenderPolicy(buildInput);
+  });
+  for (const file of POLICY_FILES) {
+    const html = /** @type {string} */ (files.get(file));
+    assert.ok(html.includes(`<title>${escaped} | `), `${file} <title>`);
+    assert.ok(
+      html.includes(
+        `<li aria-current="page">${escaped}</li></ol></nav><h1>${escaped}</h1></div>`,
+      ),
+      `${file} breadcrumb and <h1>`,
+    );
+    assert.ok(!html.includes(title), `${file} carries no raw title`);
+    assert.ok(!html.includes('<b>&quot;'), `${file} carries no raw element`);
+
+    const block =
+      /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html);
+    assert.ok(block, `${file} has JSON-LD`);
+    assert.ok(!/[<>&]/.test(block[1]), `${file} JSON-LD is embed-safe`);
+    const graph = JSON.parse(block[1])['@graph'];
+    const page = graph.find(
+      (/** @type {any} */ node) => node['@type'] === 'WebPage',
+    );
+    assert.equal(page.name, title);
+    const trail = graph.find(
+      (/** @type {any} */ node) => node['@type'] === 'BreadcrumbList',
+    ).itemListElement;
+    assert.equal(trail.at(-1).name, title);
+
+    // Footer and consent labels are the template's own, not the page title.
+    assert.match(
+      html,
+      /<li><a href="[^"]*terms[^"]*">Terms<\/a><\/li><li><a href="[^"]*privacy[^"]*">Privacy<\/a><\/li>/,
+      `${file} footer labels`,
+    );
+    assert.match(
+      html,
+      /<a href="[^"]*privacy[^"]*">Privacy<\/a><\/div><\/aside>/,
+      `${file} consent link label`,
+    );
+  }
+  const home = /** @type {string} */ (files.get('fixture-1/index.html'));
+  assert.ok(!home.includes('T&amp;C') && !home.includes('T&C'));
+  assert.match(
+    home,
+    /<li><a href="[^"]*terms[^"]*">Terms<\/a><\/li><li><a href="[^"]*privacy[^"]*">Privacy<\/a><\/li>/,
   );
 });

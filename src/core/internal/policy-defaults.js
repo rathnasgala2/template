@@ -43,7 +43,7 @@ function defaultOf(value, where) {
     typeof candidate.title !== 'string' ||
     candidate.title === '' ||
     typeof candidate.markdown !== 'string' ||
-    candidate.markdown === ''
+    candidate.markdown.trim() === ''
   ) {
     throw new RenderPolicyViolationError(
       `${SPECIFIER}: ${where} must carry a non-empty title and markdown`,
@@ -56,6 +56,35 @@ function defaultOf(value, where) {
 }
 
 /**
+ * Parse and check the defaults document. Never caches, so a failure leaves
+ * nothing behind; exported for tests, which pass a reader that fails or
+ * returns a malformed document. Every failure is a
+ * {@link RenderPolicyViolationError}: a page is never rendered from text that
+ * is missing, malformed or empty.
+ *
+ * @param {() => string} readText returns the defaults document's JSON text
+ * @returns {Readonly<SitePolicyDefaults>} the defaults, checked
+ * @throws {RenderPolicyViolationError} when the document cannot be read or is
+ *   not the documented shape
+ */
+export function readSitePolicyDefaults(readText) {
+  /** @type {unknown} */
+  let document;
+  try {
+    document = JSON.parse(readText());
+  } catch (error) {
+    throw new RenderPolicyViolationError(
+      `${SPECIFIER} could not be read (is @rathnasgala2/schemas 3.16.0 or later installed?): ${/** @type {Error} */ (error).message}`,
+    );
+  }
+  const candidate = /** @type {Record<string, unknown> | null} */ (document);
+  return Object.freeze({
+    terms: defaultOf(candidate?.terms, 'terms'),
+    privacy: defaultOf(candidate?.privacy, 'privacy'),
+  });
+}
+
+/**
  * Read the schemas package's default policy text once per process.
  *
  * @returns {Readonly<SitePolicyDefaults>} the defaults, checked
@@ -64,21 +93,8 @@ function defaultOf(value, where) {
  */
 export function loadSitePolicyDefaults() {
   if (loaded !== undefined) return loaded;
-  /** @type {unknown} */
-  let document;
-  try {
-    document = JSON.parse(
-      readFileSync(fileURLToPath(import.meta.resolve(SPECIFIER)), 'utf8'),
-    );
-  } catch (error) {
-    throw new RenderPolicyViolationError(
-      `${SPECIFIER} could not be read (is @rathnasgala2/schemas 3.16.0 or later installed?): ${/** @type {Error} */ (error).message}`,
-    );
-  }
-  const candidate = /** @type {Record<string, unknown> | null} */ (document);
-  loaded = Object.freeze({
-    terms: defaultOf(candidate?.terms, 'terms'),
-    privacy: defaultOf(candidate?.privacy, 'privacy'),
-  });
+  loaded = readSitePolicyDefaults(() =>
+    readFileSync(fileURLToPath(import.meta.resolve(SPECIFIER)), 'utf8'),
+  );
   return loaded;
 }

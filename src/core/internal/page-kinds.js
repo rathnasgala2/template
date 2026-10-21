@@ -840,6 +840,7 @@ export function buildGeneratedPages(validatedInput, options) {
 
   const galascribeSection = renderGalascribeSection({
     publicationName: publication.title,
+    authoredText: validatedInput.policies !== undefined,
     interactionsOn: Boolean(interactionsModule),
     analytics: options.analytics,
   });

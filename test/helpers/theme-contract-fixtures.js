@@ -13,8 +13,10 @@ import {
   THEME_TOKEN_CATALOG,
 } from '../../scripts/scaffold-theme.mjs';
 import { digestBytes } from '../../src/core/internal/canonical-jcs.js';
-import { buildTemplateStylingContract } from '../../src/core/internal/appearance/styling-contract.js';
-import { TEMPLATE_RENDERER_VERSION } from '../../src/core/internal/package-version.js';
+import {
+  buildTemplateStylingContract,
+  TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION,
+} from '../../src/core/internal/appearance/styling-contract.js';
 import { EDITORIAL_COMPOSITION } from '../../src/core/internal/template-composition.js';
 
 /** @returns {{key: string, type: string, light: string, dark: string}[]} the
@@ -62,7 +64,7 @@ export function buildValidThemeJson({
     themeId: 'editorial',
     package: '@rathnasgala2/theme-editorial@4.0.0',
     contractVersion: publishedContract.contractVersion,
-    templateRange: `^${TEMPLATE_RENDERER_VERSION}`,
+    templateRange: `^${TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION}`,
     composition: { ...EDITORIAL_COMPOSITION },
     stylesheets: [...stylesheets],
     cssLayers: [...cssLayers],

@@ -48,7 +48,10 @@ consent and analytics are a core privacy setting in the same way:
 paragraph of the policy pages' Galascribe section), never in a new
 `src/modules/` tree. The Terms and Privacy pages
 (`src/core/internal/policy-pages.js`) are core for the same reason: the site's
-own text plus a template-owned, non-editable Galascribe section.
+own text plus a template-owned, non-editable Galascribe section. Authored policy
+Markdown sources are manifest `includedSources` rows
+(`internal/source-inventory.js`, role `content`); the shipped default text is
+not a repository file and lists none.
 
 ## Contract sources and generation commands
 
@@ -58,13 +61,19 @@ the release lock remains intentionally unchanged (it still pins 3.12.0) until
 3.16.0 is published and must be regenerated from that authoritative artifact
 before release. Template 4.4.0 publishes styling contract 4.1.0
 (`TEMPLATE_STYLING_CONTRACT_VERSION`; its `templateVersion` is 4.4.0, and
-schemas 3.16.0's `theme-contract` admits it with `templateRange` `^4.4.0`). It
-owns two of its own published contracts, `contracts/render-policy.jcs` and
-`contracts/theme-styling-contract.jcs`, emitted as compact RFC 8785 JCS by
-`npm run contracts:generate` and drift-checked by `npm run contracts:check`.
-`contracts/render-policy.jcs` is S2-T04's real, closed sanitizer/parser catalog,
-generated from `src/core/internal/render-policy-content.js` (the single source
-of truth both the published contract and the runtime output-security pipeline in
+schemas 3.16.0's `theme-contract` admits it with `templateRange` `^4.4.0`).
+`TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION` is the template version that
+introduced the current contract: it stays 4.4.0 through patch releases until the
+hook catalog changes again, the scaffold and test fixtures write `templateRange`
+as `^` that value (never `^` the renderer's own version), and
+`test/pinned-versions.test.js` asserts only that `package.json`'s version
+satisfies it. It owns two of its own published contracts,
+`contracts/render-policy.jcs` and `contracts/theme-styling-contract.jcs`,
+emitted as compact RFC 8785 JCS by `npm run contracts:generate` and
+drift-checked by `npm run contracts:check`. `contracts/render-policy.jcs` is
+S2-T04's real, closed sanitizer/parser catalog, generated from
+`src/core/internal/render-policy-content.js` (the single source of truth both
+the published contract and the runtime output-security pipeline in
 `src/core/internal/content-security.js` read from);
 `contracts/theme-styling-contract.jcs` is S2-T12's real, closed
 `templateStylingContract` catalog (DEC-097 section 4), generated from
