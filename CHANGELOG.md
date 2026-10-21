@@ -8,6 +8,28 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Generated policy pages: every site now carries `/terms` and `/privacy` (page
+  kind `policy`), short English pages that incorporate Galascribe's Terms of
+  Service and Privacy Policy. They are indexable and in the sitemap, and stay
+  out of the search index, the feeds and `llms.txt`/`llms-full.txt`.
+- A legal footer navigation (`nav.g-footer-legal`, `aria-label="Legal"`) with
+  Terms, Privacy and, unless `appearance.attribution.showMadeWith` is `false`, a
+  "Made with Galascribe" link to galascribe.com carrying a referral `utm_source`
+  set to the site's host.
+
+### Changed
+
+- The styling contract gains the `g-footer-legal` component hook and the
+  `policy` page-kind hook (additive; 219 public hooks). Its version stays 4.0.0
+  because the schemas package's `theme-contract` schema admits only that
+  `contractVersion`.
+- New build finding `POLICY_ROUTE_CONFLICT`: a document or redirect on `/terms`
+  or `/privacy` fails the build closed.
+- The "Made with Galascribe" attribution is now a link inside the legal
+  navigation rather than a bare `<span>`.
+
 ## [4.3.0] - 2026-10-13
 
 ### Added

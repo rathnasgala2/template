@@ -431,8 +431,9 @@ test('golden output: the canonical S2 fixture renders its document head byte-exa
     // total, not just the content record's own page. S2-T08 adds five more:
     // the generated `404.html`, the Atom and RSS feeds, the sitemap and the
     // static search index; the discovery files add `robots.txt`, `llms.txt`
-    // and `llms-full.txt` — fifteen routes in total.
-    assert.equal(manifest.routes.length, 15);
+    // and `llms-full.txt` — fifteen routes in total, plus the generated
+    // `/terms` and `/privacy` policy pages — seventeen.
+    assert.equal(manifest.routes.length, 17);
     const route = manifest.routes.find(
       (candidate) => candidate.path === 'fixture-1/fixture-1/index.html',
     );

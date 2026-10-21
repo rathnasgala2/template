@@ -229,21 +229,22 @@ output-security pipeline every generated page still passes through:
   page's own single `<h1>`), and one `<footer>` (publication name, footer
   navigation, the `footer-profile` slot, the remaining footer slots
   (`footer-auxiliary`, `account-intent`, `conversation`, `newsletter`), and the
-  "Made with Galascribe" attribution line, which
-  `appearance.attribution.showMadeWith: false` omits). Core owns nine versioned
-  semantic slots (`header-actions`, `article-preamble`, `article-end`,
-  `footer-profile`, `footer-auxiliary`, `account-intent`, `conversation`,
-  `newsletter`, `edition-selector`) plus the collapsed `article-footer-ad` slot:
-  every slot is one `data-gala-slot="<name>"` attribute on an otherwise empty,
-  non-landmark `<div>`, and the collapsed slot additionally carries `hidden`.
-  This renderer has no module system, so every slot except `footer-profile`
-  (which always wraps the publication's own footer card), `header-actions` (the
-  appearance control, core content rather than a module) and `edition-selector`
-  (see Editions) renders empty. `edition-selector` is rendered by the article
-  page kind at the end of the article head, only where there is an edition to
-  offer, not in the footer. This module also renders breadcrumbs and
-  deterministic pagination controls (`rel="prev"`/`rel="next"`, an
-  `aria-current="page"` status).
+  "Legal" navigation: Terms, Privacy and the "Made with Galascribe" referral
+  link, which `appearance.attribution.showMadeWith: false` omits; Terms and
+  Privacy always render). Core owns nine versioned semantic slots
+  (`header-actions`, `article-preamble`, `article-end`, `footer-profile`,
+  `footer-auxiliary`, `account-intent`, `conversation`, `newsletter`,
+  `edition-selector`) plus the collapsed `article-footer-ad` slot: every slot is
+  one `data-gala-slot="<name>"` attribute on an otherwise empty, non-landmark
+  `<div>`, and the collapsed slot additionally carries `hidden`. This renderer
+  has no module system, so every slot except `footer-profile` (which always
+  wraps the publication's own footer card), `header-actions` (the appearance
+  control, core content rather than a module) and `edition-selector` (see
+  Editions) renders empty. `edition-selector` is rendered by the article page
+  kind at the end of the article head, only where there is an edition to offer,
+  not in the footer. This module also renders breadcrumbs and deterministic
+  pagination controls (`rel="prev"`/`rel="next"`, an `aria-current="page"`
+  status).
 - **`src/core/internal/page-kinds.js`** builds every generated page kind from a
   validated `build-input:2.0.0`: `profile` (the optional publication profile),
   `author` (one page per `build-input.authors` entry, at `/authors/<id>`),
@@ -254,11 +255,14 @@ output-security pipeline every generated page still passes through:
   direct route, never through a generated listing), `tag`/`series` (one listing
   page per distinct authored value, plus a `/tags`/`/series` root page linking
   to each), and `archive` (one listing page per UTC calendar year, plus a
-  `/archive` root page). The `error` page kind (`renderErrorPageBody`) is
-  exported as a pure function for the `404.html` caller (see below), not wired
-  into any generated route here. Listing page size (10), sort tie-break, and the
-  tag/series/archive root pages are documented scoped decisions this renderer's
-  own governing brief does not fix verbatim.
+  `/archive` root page), and `policy` (the generated `/terms` and `/privacy`
+  pages, in the sitemap but not the search index, feeds or `llms` documents; a
+  document or redirect on either route fails with `POLICY_ROUTE_CONFLICT`). The
+  `error` page kind (`renderErrorPageBody`) is exported as a pure function for
+  the `404.html` caller (see below), not wired into any generated route here.
+  Listing page size (10), sort tie-break, and the tag/series/archive root pages
+  are documented scoped decisions this renderer's own governing brief does not
+  fix verbatim.
 - **`src/core/internal/messages.js`** is the message catalog every user-visible
   chrome string above is looked up from (never an inline literal), keyed by
   BCP-47 tag with a fixed `en` fallback — the only catalog S2 authors;
@@ -714,7 +718,7 @@ read from disk and emitted as `assets/gala-interactions-v1.js` when
 `no-restricted-imports` rule enforce this. `newsletter` and `prism` have no
 module directory, package, configuration schema, stub, output or runtime code in
 this MVP. Whitelabel is not a module either: the footer's "Made with Galascribe"
-line is a core appearance switch, `build-input.appearance.attribution`
+link is a core appearance switch, `build-input.appearance.attribution`
 (`showMadeWith: false` omits the line; absent or `true` shows it). Nor are
 editions: they are a rendered content kind (see Editions).
 

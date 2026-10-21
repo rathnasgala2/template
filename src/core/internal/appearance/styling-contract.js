@@ -316,6 +316,7 @@ export const COMPONENT_CLASS_GROUPS = Object.freeze({
     'g-footer-about',
     'g-footer-col',
     'g-footer-base',
+    'g-footer-legal',
     'g-social',
   ],
   card: [

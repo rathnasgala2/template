@@ -7,8 +7,22 @@
  */
 
 import { escapeHtml, renderNavItem, renderSlot } from './skeleton.js';
+import { joinPublicRoute } from './route.js';
 import { icon } from './icons.js';
 import { monogram, renderImage } from './components.js';
+
+/**
+ * The "Made with Galascribe" referral link, naming the site's host so
+ * Galascribe can see which site a visit came from.
+ *
+ * @param {string} baseUrl the build input's `baseUrl` (an https URL)
+ * @returns {string} the unescaped `https://galascribe.com/` URL with
+ *   `utm_source` set to the percent-encoded host of `baseUrl`
+ */
+export function madeWithGalascribeHref(baseUrl) {
+  const host = encodeURIComponent(new URL(baseUrl).hostname);
+  return `https://galascribe.com/?utm_source=${host}&utm_medium=referral&utm_campaign=made-with-galascribe&utm_content=footer`;
+}
 
 /** @type {Readonly<Record<string, string>>} */
 const SOCIAL_ICONS = Object.freeze({
@@ -166,6 +180,10 @@ function renderSocialLinks(socialLinks, rssHref, messages) {
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
  * @param {string} options.profile the admitted composition profile
  * @param {string} options.footerLayout the admitted composition's footer layout
+ * @param {string} options.publicBasePath the public base path
+ *   (`route.js#derivePublicBasePath`) the generated legal pages sit under
+ * @param {string} options.baseUrl the build input's `baseUrl` (https URL), whose
+ *   host the "Made with Galascribe" referral link names
  * @returns {string} the rendered footer
  */
 export function renderFooter({
@@ -186,6 +204,8 @@ export function renderFooter({
   messages,
   profile,
   footerLayout,
+  baseUrl,
+  publicBasePath,
 }) {
   const label = (/** @type {string} */ key) =>
     escapeHtml(/** @type {string} */ (messages[key]));
@@ -212,6 +232,14 @@ export function renderFooter({
     `<div class="g-footer-col">` +
     renderSlot('footer-profile', { html: authorHtml + footerProfileHtml }) +
     `</div>`;
+  const legalItem = (/** @type {string} */ route, /** @type {string} */ key) =>
+    `<li><a href="${escapeHtml(joinPublicRoute(publicBasePath, route, routeProfile))}">${label(key)}</a></li>`;
+  const legalItems =
+    legalItem('/terms', 'termsLinkLabel') +
+    legalItem('/privacy', 'privacyLinkLabel') +
+    (showAttribution
+      ? `<li><a href="${escapeHtml(madeWithGalascribeHref(baseUrl))}" target="_blank" rel="noopener">${label('footerAttributionLabel')}</a></li>`
+      : '');
   const grid =
     profile === 'newsletter'
       ? brand + profileCard + primary + secondary
@@ -230,7 +258,8 @@ export function renderFooter({
     renderSlot('newsletter') +
     `<div class="g-wrap g-footer-base">` +
     (copyrightText ? `<span>${escapeHtml(copyrightText)}</span>` : '') +
-    (showAttribution ? `<span>${label('footerAttributionLabel')}</span>` : '') +
-    `</div></footer>`
+    `<nav class="g-footer-legal" aria-label="${label('footerLegalLabel')}"><ul>` +
+    legalItems +
+    `</ul></nav></div></footer>`
   );
 }

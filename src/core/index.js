@@ -14,7 +14,9 @@
  * (`MEDIA_REFERENCE_UNRESOLVED`) before anything is written, an edition that
  * names no article in the build, repeats another edition or takes another
  * document's route is rejected the same way (`EDITION_ORIGINAL_UNRESOLVED`,
- * `EDITION_DUPLICATE`, `EDITION_ROUTE_CONFLICT`), and a rejected image or font
+ * `EDITION_DUPLICATE`, `EDITION_ROUTE_CONFLICT`), a document or redirect on the
+ * generated `/terms` or `/privacy` route is rejected the same way
+ * (`POLICY_ROUTE_CONFLICT`), and a rejected image or font
  * is rejected with {@link MediaPipelineError} before anything is written.
  *
  * `normalizeAuthoredMarkdown` (re-exported here from
@@ -94,6 +96,7 @@ import {
   contentSecurityPolicyMetaTag,
 } from './internal/content-security.js';
 import { resolveEditions } from './internal/editions.js';
+import { assertPolicyRoutesFree } from './internal/policy-pages.js';
 import { renderPagesWithEleventy } from './internal/eleventy-render.js';
 import {
   INTERACTIONS_SCRIPT_MEDIA_TYPE,
@@ -365,6 +368,7 @@ export async function renderPublication(buildInput, options) {
   const contentImages = resolveContentImages(validatedInput);
   // Every edition must sit beside an article of this build; placed here for the
   // same reason.
+  assertPolicyRoutesFree(validatedInput.content, contentRoute);
   const editions = resolveEditions(validatedInput.content, contentRoute);
   assertOptions(options);
   const routeProfile = options.routeNormalizationProfile ?? 'directory-index';
@@ -592,6 +596,8 @@ export async function renderPublication(buildInput, options) {
     messages: siteMessages,
     profile: composition.profile,
     footerLayout: composition.footerLayout,
+    baseUrl: validatedInput.baseUrl,
+    publicBasePath,
   });
 
   /**

@@ -9,6 +9,9 @@
  *
  * - `profile` — the publication's own optional profile page
  *   (`publication.profile`);
+ * - `policy` — the two generated legal pages, `/terms` and `/privacy`
+ *   (`internal/policy-pages.js`), indexable but never searched, fed or listed
+ *   in `llms`;
  * - `author` — one page per entry in `build-input.authors` (this array is
  *   already exactly the set of authors referenced by the selected content,
  *   publication contact or footer card — never an unreferenced author), at
@@ -78,6 +81,12 @@ import {
   renderEditionSelector,
   resolveEditions,
 } from './editions.js';
+import {
+  PRIVACY_ROUTE,
+  TERMS_ROUTE,
+  renderPrivacyBody,
+  renderTermsBody,
+} from './policy-pages.js';
 import { truncateAtWord } from './seo.js';
 import { cardMediaOf } from './first-body-image.js';
 import { createStructuredData } from './structured-data.js';
@@ -136,6 +145,7 @@ export const PAGE_KIND_VALUES = Object.freeze(
     'error',
     'index',
     'page',
+    'policy',
     'profile',
     'series',
     'tag',
@@ -175,7 +185,7 @@ function paginate(items, pageSize) {
 
 /**
  * @typedef {object} GeneratedPage
- * @property {'profile' | 'author' | 'article' | 'page' | 'index' | 'tag' | 'series' | 'archive'} kind
+ * @property {'profile' | 'policy' | 'author' | 'article' | 'page' | 'index' | 'tag' | 'series' | 'archive'} kind
  * @property {string} route an un-joined `canonicalRoute` (caller joins with
  *   `basePath`)
  * @property {string} [canonicalRoute] the un-joined route the page's
@@ -826,6 +836,43 @@ export function buildGeneratedPages(validatedInput, options) {
         `<article class="g-article"><div class="g-wrap g-article-head">` +
         `<h1>${escapeHtml(publication.title)}</h1></div>` +
         `<div class="g-wrap g-article-grid"><div class="g-prose">${options.pageBody(publication.profile.body.body)}</div></div></article>`,
+    });
+  }
+
+  const policyFacts = {
+    publicationName: publication.title,
+    interactionsOn: Boolean(interactionsModule),
+  };
+  for (const [policyRoute, policyTitle, policyBody] of /** @type {const} */ ([
+    [TERMS_ROUTE, text0('termsLinkLabel'), renderTermsBody(policyFacts)],
+    [
+      PRIVACY_ROUTE,
+      text0('privacyLinkLabel'),
+      // The empty string is the insertion point for the analytics paragraph.
+      renderPrivacyBody(policyFacts, ''),
+    ],
+  ])) {
+    pages.push({
+      kind: 'policy',
+      route: policyRoute,
+      title: policyTitle,
+      documentTitle: documentTitleOf(policyTitle),
+      language: publication.defaultLanguage,
+      description: publication.description,
+      robotsContent: 'index, follow',
+      ...defaultSocial,
+      jsonLd: sd.serialize(
+        sd.webPage({
+          name: policyTitle,
+          description: publication.description,
+          url: absolute(site(policyRoute)),
+          language: publication.defaultLanguage,
+          trail: [homeStep, { label: policyTitle, route: site(policyRoute) }],
+        }),
+      ),
+      bodyHtml:
+        `<article class="g-article"><div class="g-wrap g-article-head">${crumbs([{ label: policyTitle }])}</div>` +
+        `<div class="g-wrap g-article-grid"><div class="g-prose">${policyBody}</div></div></article>`,
     });
   }
 

@@ -798,6 +798,9 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-footer-col a { color: var(--gala-color-text-muted); width: fit-content; transition: color var(--gala-duration-fast) var(--gala-ease-standard); }
   .g-footer-col a:hover { color: var(--gala-color-text); }
   .g-footer-col .g-label { margin-bottom: var(--gala-space-1); }
+  .g-footer-legal ul { display: flex; flex-wrap: wrap; gap: var(--gala-space-1) var(--gala-space-4); }
+  .g-footer-legal a { color: var(--gala-color-text-muted); transition: color var(--gala-duration-fast) var(--gala-ease-standard); }
+  .g-footer-legal a:hover { color: var(--gala-color-text); }
   .g-footer-base { display: flex; justify-content: space-between; gap: var(--gala-space-4); flex-wrap: wrap; padding-block: 1.25rem var(--gala-space-8); border-top: var(--gala-border-width) solid var(--gala-color-border); font-family: var(--gala-font-ui); font-size: .8125rem; color: var(--gala-color-text-muted); }
 
   /* ---------- responsive ---------- */

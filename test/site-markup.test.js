@@ -396,7 +396,7 @@ test('header, home, article, listings and footer render the redesigned structure
       );
       assert.match(
         home,
-        /<div class="g-wrap g-footer-base"><span>© 2026 fixture-1<\/span>/,
+        /<div class="g-wrap g-footer-base"><span>© 2026 fixture-1<\/span><nav class="g-footer-legal" aria-label="Legal"><ul><li><a href="\/fixture-1\/terms\/">Terms<\/a><\/li><li><a href="\/fixture-1\/privacy\/">Privacy<\/a><\/li><li><a href="https:\/\/galascribe\.com\/\?utm_source=[^"]+&amp;utm_medium=referral&amp;utm_campaign=made-with-galascribe&amp;utm_content=footer" target="_blank" rel="noopener">Made with Galascribe<\/a><\/li><\/ul><\/nav><\/div><\/footer>/,
       );
     },
   );
@@ -499,8 +499,8 @@ test('hero images: cover figure with alt on the article, media on cards; decorat
 });
 
 test('the footer attribution follows appearance.attribution.showMadeWith; absent shows it', async (t) => {
-  const attribution = `<span>${getMessages('en').footerAttributionLabel}</span>`;
-  assert.equal(attribution, '<span>Made with Galascribe</span>');
+  const attribution = `>${getMessages('en').footerAttributionLabel}</a>`;
+  assert.equal(attribution, '>Made with Galascribe</a>');
   const footer = (/** @type {boolean} */ showAttribution) =>
     renderFooter({
       homeRoute: '/',
@@ -518,11 +518,19 @@ test('the footer attribution follows appearance.attribution.showMadeWith; absent
       showAttribution,
       messages: getMessages('en'),
       footerLayout: 'expanded',
+      baseUrl: 'https://notes.example.test/',
+      publicBasePath: '/',
     });
-  assert.ok(footer(true).includes(attribution));
+  const legal =
+    '<nav class="g-footer-legal" aria-label="Legal"><ul><li><a href="/terms/">Terms</a></li><li><a href="/privacy/">Privacy</a></li>';
+  assert.ok(
+    footer(true).endsWith(
+      `<div class="g-wrap g-footer-base"><span>© Notes</span>${legal}<li><a href="https://galascribe.com/?utm_source=notes.example.test&amp;utm_medium=referral&amp;utm_campaign=made-with-galascribe&amp;utm_content=footer" target="_blank" rel="noopener">Made with Galascribe</a></li></ul></nav></div></footer>`,
+    ),
+  );
   assert.ok(
     footer(false).endsWith(
-      '<div class="g-wrap g-footer-base"><span>© Notes</span></div></footer>',
+      `<div class="g-wrap g-footer-base"><span>© Notes</span>${legal}</ul></nav></div></footer>`,
     ),
   );
 
@@ -548,6 +556,11 @@ test('the footer attribution follows appearance.attribution.showMadeWith; absent
         html.includes(attribution),
         shown,
         `${route}: ${JSON.stringify(setting)}`,
+      );
+      assert.equal(count(html, /<li><a href="[^"]+\/(terms|privacy)\/">/g), 2);
+      assert.equal(
+        count(html, /<nav class="g-footer-legal" aria-label="Legal"><ul>/g),
+        1,
       );
     }
   }

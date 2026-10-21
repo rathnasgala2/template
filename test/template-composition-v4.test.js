@@ -271,6 +271,8 @@ test('all generation-4 profiles compose header and footer chrome distinctly with
       messages,
       profile: composition.profile,
       footerLayout: composition.footerLayout,
+      baseUrl: 'https://example.test/',
+      publicBasePath: '/',
     });
     for (const text of ['Publication', 'Navigation', 'Appearance']) {
       assert.ok(header.includes(text));
