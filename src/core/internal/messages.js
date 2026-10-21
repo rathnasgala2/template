@@ -50,6 +50,15 @@ const CATALOGS = Object.freeze({
     footerLegalLabel: 'Legal',
     termsLinkLabel: 'Terms',
     privacyLinkLabel: 'Privacy',
+    consentRegionLabel: 'Privacy choices',
+    /** @type {(providerName: string) => string} */
+    consentText: (providerName) =>
+      `This site would like to use ${providerName} to understand readership. ` +
+      'Nothing is loaded until you accept, and you can change your choice any ' +
+      'time from the footer.',
+    consentAcceptLabel: 'Accept analytics',
+    consentDeclineLabel: 'Decline',
+    consentOpenLabel: 'Privacy choices',
     errorPageHeading: 'Page not found',
     errorPageBody:
       'The page you were looking for could not be found. It may have been ' +

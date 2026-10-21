@@ -10,6 +10,7 @@ import { escapeHtml, renderNavItem, renderSlot } from './skeleton.js';
 import { joinPublicRoute } from './route.js';
 import { icon } from './icons.js';
 import { monogram, renderImage } from './components.js';
+import { renderConsentOpenItem } from './analytics/markup.js';
 
 /**
  * The "Made with Galascribe" referral link, naming the site's host so
@@ -184,6 +185,8 @@ function renderSocialLinks(socialLinks, rssHref, messages) {
  *   (`route.js#derivePublicBasePath`) the generated legal pages sit under
  * @param {string} options.baseUrl the build input's `baseUrl` (https URL), whose
  *   host the "Made with Galascribe" referral link names
+ * @param {boolean} [options.consentOn] whether the analytics module is on, which
+ *   adds the script-revealed "Privacy choices" item to the legal navigation
  * @returns {string} the rendered footer
  */
 export function renderFooter({
@@ -206,6 +209,7 @@ export function renderFooter({
   footerLayout,
   baseUrl,
   publicBasePath,
+  consentOn = false,
 }) {
   const label = (/** @type {string} */ key) =>
     escapeHtml(/** @type {string} */ (messages[key]));
@@ -239,7 +243,8 @@ export function renderFooter({
     legalItem('/privacy', 'privacyLinkLabel') +
     (showAttribution
       ? `<li><a href="${escapeHtml(madeWithGalascribeHref(baseUrl))}" target="_blank" rel="noopener">${label('footerAttributionLabel')}</a></li>`
-      : '');
+      : '') +
+    (consentOn ? renderConsentOpenItem(messages) : '');
   const grid =
     profile === 'newsletter'
       ? brand + profileCard + primary + secondary

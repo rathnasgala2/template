@@ -13,6 +13,9 @@
  * structurally impossible.
  */
 
+import { RenderPolicyViolationError } from '../errors.js';
+import { analyticsProvider } from './analytics/providers.js';
+
 /** @type {string} */
 export const RENDER_POLICY_NAME = 'gala-render-policy';
 
@@ -303,26 +306,61 @@ export const CONTENT_SECURITY_POLICY_COMPLETE =
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
 /**
+ * @param {readonly string[]} sources source expressions
+ * @returns {string[]} the de-duplicated sources, sorted bytewise
+ */
+function sortedSources(sources) {
+  return [...new Set(sources)].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+}
+
+/**
  * The meta-safe CSP for one build. Identical to
  * {@link CONTENT_SECURITY_POLICY_META_BASELINE} unless the interactions
  * module names a different API origin (local stack only), in which case that
- * origin is added to `connect-src`, sorted bytewise with the other sources
- * and de-duplicated.
+ * origin is added to `connect-src`, or the analytics module names a provider
+ * kind, in which case the provider's catalog sources are added to
+ * `script-src`, `connect-src` and `img-src`. Each changed directive's value
+ * list is sorted bytewise and de-duplicated.
  *
  * @param {string | undefined} [apiOrigin] the interactions module's
  *   `apiOrigin`, when the module is on
+ * @param {string | undefined} [analyticsProviderKind] the analytics module's
+ *   `provider.kind`, when the module is on
  * @returns {string} the CSP directive string for the `<meta>` tag
  */
-export function contentSecurityPolicyMeta(apiOrigin) {
-  if (apiOrigin === undefined || apiOrigin === PRODUCTION_API_ORIGIN) {
-    return CONTENT_SECURITY_POLICY_META_BASELINE;
+export function contentSecurityPolicyMeta(apiOrigin, analyticsProviderKind) {
+  const provider =
+    analyticsProviderKind === undefined
+      ? undefined
+      : analyticsProvider(analyticsProviderKind);
+  if (analyticsProviderKind !== undefined && provider === undefined) {
+    throw new RenderPolicyViolationError(
+      `unknown analytics provider kind ${JSON.stringify(analyticsProviderKind)}`,
+    );
   }
-  const sources = [...new Set(["'self'", PRODUCTION_API_ORIGIN, apiOrigin])];
-  sources.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-  return CONTENT_SECURITY_POLICY_META_BASELINE.replace(
-    `connect-src 'self' ${PRODUCTION_API_ORIGIN};`,
-    `connect-src ${sources.join(' ')};`,
-  );
+  const extraApi =
+    apiOrigin === undefined || apiOrigin === PRODUCTION_API_ORIGIN
+      ? []
+      : [apiOrigin];
+  /** @type {[string, string[], readonly string[]][]} */
+  const directives = [
+    ['script-src', ["'self'"], provider?.scriptSources ?? []],
+    ['img-src', ["'self'"], provider?.imageSources ?? []],
+    [
+      'connect-src',
+      ["'self'", PRODUCTION_API_ORIGIN],
+      [...extraApi, ...(provider?.connectSources ?? [])],
+    ],
+  ];
+  let policy = CONTENT_SECURITY_POLICY_META_BASELINE;
+  for (const [name, base, extra] of directives) {
+    if (extra.length === 0) continue;
+    policy = policy.replace(
+      `${name} ${base.join(' ')};`,
+      `${name} ${sortedSources([...base, ...extra]).join(' ')};`,
+    );
+  }
+  return policy;
 }
 
 /**

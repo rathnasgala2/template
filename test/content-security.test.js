@@ -16,7 +16,10 @@ import {
   contentSecurityPolicyHeaderOnlyDirectives,
   contentSecurityPolicyMetaTag,
 } from '../src/core/internal/content-security.js';
-import { HIGHLIGHT_GRAMMARS } from '../src/core/internal/render-policy-content.js';
+import {
+  HIGHLIGHT_GRAMMARS,
+  contentSecurityPolicyMeta,
+} from '../src/core/internal/render-policy-content.js';
 import {
   createRenderDirectories,
   testProvenance,
@@ -507,4 +510,41 @@ test('golden output: the canonical S2 fixture renders its document head byte-exa
   } finally {
     await cleanup();
   }
+});
+
+test('analytics provider sources join script-src, connect-src and img-src, sorted; baseline when off', () => {
+  const baseline =
+    "default-src 'none'; base-uri 'none'; object-src 'none'; form-action 'none'; " +
+    "script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; " +
+    "connect-src 'self' https://api.galascribe.com; media-src 'self'; " +
+    "manifest-src 'self'; worker-src 'none'";
+  assert.equal(contentSecurityPolicyMeta(undefined, undefined), baseline);
+  assert.equal(
+    contentSecurityPolicyMeta(undefined, 'google-analytics-4'),
+    baseline
+      .replace(
+        "script-src 'self';",
+        "script-src 'self' https://www.googletagmanager.com;",
+      )
+      .replace(
+        "img-src 'self';",
+        "img-src 'self' https://*.google-analytics.com https://*.googletagmanager.com;",
+      )
+      .replace(
+        "connect-src 'self' https://api.galascribe.com;",
+        "connect-src 'self' https://*.analytics.google.com https://*.google-analytics.com https://*.googletagmanager.com https://api.galascribe.com;",
+      ),
+  );
+  // With a local API origin as well: still sorted bytewise and de-duplicated.
+  assert.match(
+    contentSecurityPolicyMeta('http://localhost:8787', 'google-analytics-4'),
+    /connect-src 'self' http:\/\/localhost:8787 https:\/\/\*\.analytics\.google\.com https:\/\/\*\.google-analytics\.com https:\/\/\*\.googletagmanager\.com https:\/\/api\.galascribe\.com;/,
+  );
+  assert.equal(
+    contentSecurityPolicyMetaTag(undefined, 'google-analytics-4').includes(
+      'https://www.googletagmanager.com',
+    ),
+    true,
+  );
+  assert.throws(() => contentSecurityPolicyMeta(undefined, 'unknown-kind'));
 });

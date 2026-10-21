@@ -41,21 +41,25 @@ Do not add any `src/modules/` tree other than `interactions`, provider adapters,
 deployment or publish-kernel logic (owned by `publish`), theme presentation
 CSS/assets (owned by `theme-*`), schema authoring (owned by `schema`), a `bin`
 named `gala`, or any `interactions`/`whitelabel`/`newsletter`/`prism` module
-boundary (the attribution switch above stays a core appearance setting).
+boundary (the attribution switch above stays a core appearance setting). Reader
+consent and analytics are a core privacy setting in the same way:
+`build-input.modules.analytics` is handled under `src/core/internal/analytics/`
+(banner, footer button, consent script, provider CSP sources, Privacy page
+paragraph), never in a new `src/modules/` tree.
 
 ## Contract sources and generation commands
 
-This source targets `@rathnasgala2/schemas@3.12.0` (installed exactly by the
-lock); the peer range is `^3.12.0`. Generation-4 development verifies against
-the schema sibling/packed candidate; the release lock remains intentionally
-unchanged until 3.12.0 is published and must be regenerated from that
-authoritative artifact before release. It owns two of its own published
-contracts, `contracts/render-policy.jcs` and
-`contracts/theme-styling-contract.jcs`, emitted as compact RFC 8785 JCS by
-`npm run contracts:generate` and drift-checked by `npm run contracts:check`.
-`contracts/render-policy.jcs` is S2-T04's real, closed sanitizer/parser catalog,
-generated from `src/core/internal/render-policy-content.js` (the single source
-of truth both the published contract and the runtime output-security pipeline in
+This source targets `@rathnasgala2/schemas@3.16.0`; the peer range is `^3.16.0`.
+Generation-4 development verifies against the schema sibling/packed candidate;
+the release lock remains intentionally unchanged (it still pins 3.12.0) until
+3.16.0 is published and must be regenerated from that authoritative artifact
+before release. It owns two of its own published contracts,
+`contracts/render-policy.jcs` and `contracts/theme-styling-contract.jcs`,
+emitted as compact RFC 8785 JCS by `npm run contracts:generate` and
+drift-checked by `npm run contracts:check`. `contracts/render-policy.jcs` is
+S2-T04's real, closed sanitizer/parser catalog, generated from
+`src/core/internal/render-policy-content.js` (the single source of truth both
+the published contract and the runtime output-security pipeline in
 `src/core/internal/content-security.js` read from);
 `contracts/theme-styling-contract.jcs` is S2-T12's real, closed
 `templateStylingContract` catalog (DEC-097 section 4), generated from

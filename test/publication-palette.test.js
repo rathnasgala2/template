@@ -317,6 +317,6 @@ test('the published styling contract digest is still the 4.0.0 one', () => {
   assert.equal(contract.contractVersion, '4.0.0');
   assert.equal(
     contract.catalogDigest,
-    'sha256:2da8c1384b8f8c7f8c622b4b07dd99809c9d7de369f8d340bd8a9a29e521af07',
+    'sha256:fbe511fd3ac2f9e9fc4e1120aaca3c31ff7040ea8e8f1483c88250de15c0a9ba',
   );
 });

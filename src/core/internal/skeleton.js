@@ -379,14 +379,23 @@ export function renderToast(messages) {
  * @param {string} options.footerHtml the already-rendered footer
  * @param {string} options.mainHtml the page kind's own inner markup,
  *   including its breadcrumb (when it has one) and exactly one `<h1>`
+ * @param {string} [options.consentHtml] the already-rendered consent banner
+ *   (analytics module on), appended after the footer; empty otherwise
  * @returns {string} the complete `<body>` inner HTML
  */
-export function renderPageBody({ messages, headerHtml, footerHtml, mainHtml }) {
+export function renderPageBody({
+  messages,
+  headerHtml,
+  footerHtml,
+  mainHtml,
+  consentHtml = '',
+}) {
   return (
     renderSkipLink(messages) +
     renderToast(messages) +
     headerHtml +
     `<main id="main-content" class="g-main" tabindex="-1">${mainHtml}</main>` +
-    footerHtml
+    footerHtml +
+    consentHtml
   );
 }

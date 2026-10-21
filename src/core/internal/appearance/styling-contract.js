@@ -370,6 +370,14 @@ export const COMPONENT_CLASS_GROUPS = Object.freeze({
     'g-pager-next',
   ],
   listing: ['g-topic-hero', 'g-topic-head', 'g-topic-icon'],
+  consent: [
+    'g-consent',
+    'g-consent-text',
+    'g-consent-actions',
+    'g-consent-accept',
+    'g-consent-decline',
+    'g-consent-open',
+  ],
   // Created at runtime by the optional site script (never server-rendered):
   // the search dialog and its results, and the code block chrome. Published
   // all the same so a theme can restyle them.

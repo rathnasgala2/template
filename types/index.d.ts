@@ -245,6 +245,19 @@ export interface InteractionsModule {
   appOrigin: string;
 }
 
+/** The repository's `gala/modules/analytics.json` (`analytics-config:2.0.0`). */
+export interface AnalyticsConfig {
+  schemaId: 'urn:gala:schema:analytics-config:2.0.0';
+  schemaVersion: '2.0.0';
+  provider: { kind: 'google-analytics-4'; measurementId: string };
+  consent: { policy: 'opt-in' };
+}
+
+/** `build-input.modules.analytics`: consent plus one gated analytics provider. */
+export interface AnalyticsModule {
+  config: AnalyticsConfig;
+}
+
 export interface NormalizedBuildInput {
   schemaId: string;
   schemaVersion: string;
@@ -268,7 +281,10 @@ export interface NormalizedBuildInput {
   content: ContentBuildRecord[];
   navigation: NavigationNormalized;
   appearance: AppearanceNormalized;
-  modules: { interactions?: InteractionsModule };
+  modules: {
+    interactions?: InteractionsModule;
+    analytics?: AnalyticsModule;
+  };
   buildEpoch: string;
   baseUrl: string;
   basePath: string;

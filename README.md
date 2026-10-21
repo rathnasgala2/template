@@ -325,7 +325,10 @@ Every page is fully readable with JavaScript off; the script only enhances:
   fetched data. Localized strings are rendered by the server as `data-*`
   attributes on the `.g-toast` element.
 - The CSP is `connect-src 'self'` (so the script can read the static search
-  index) and otherwise unchanged and strict.
+  index) and otherwise unchanged and strict. When
+  `build-input.modules.analytics` is present the one analytics provider's
+  catalog sources (`internal/analytics/providers.js`) are added to `script-src`,
+  `connect-src` and `img-src` of that build's CSP meta tag only.
 - `src/core/index.js` writes the script into the candidate output directory and
   enters it into the manifest as an ordinary `manifestAsset` row
   (`{path, byteLength, sha256}` plus its fixed
@@ -717,23 +720,32 @@ read from disk and emitted as `assets/gala-interactions-v1.js` when
 `test/module-tree-absence.test.js`, `.dependency-cruiser.cjs` and the ESLint
 `no-restricted-imports` rule enforce this. `newsletter` and `prism` have no
 module directory, package, configuration schema, stub, output or runtime code in
-this MVP. Whitelabel is not a module either: the footer's "Made with Galascribe"
-link is a core appearance switch, `build-input.appearance.attribution`
+this MVP. Reader consent and analytics are not a module either: they are a core
+privacy setting. `build-input.modules.analytics` (schemas 3.16.0, Google
+Analytics 4 with an opt-in policy) adds, under `src/core/internal/analytics/`, a
+consent banner after the footer of every HTML page, a "Privacy choices" button
+in the footer legal navigation, `assets/gala-consent-v1.js` (deferred; no eval,
+no cookie; the choice is kept in `localStorage` as `gala.consent.v1`), the
+provider's CSP sources and a Privacy page paragraph. Nothing from the provider
+loads before the reader accepts, and a site without the module is unchanged.
+Whitelabel is not a module either: the footer's "Made with Galascribe" link is a
+core appearance switch, `build-input.appearance.attribution`
 (`showMadeWith: false` omits the line; absent or `true` shows it). Nor are
 editions: they are a rendered content kind (see Editions).
 
 ## Consuming `@rathnasgala2/schemas`
 
-This source targets `@rathnasgala2/schemas@3.12.0` with a `^3.12.0` peer range
-(any 3.x from 3.12.0); the lock installs 3.12.0 exactly. Generation-4
-development verifies against the schema sibling/packed candidate. The historical
-`package-lock.json` is not a 3.12.0 registry claim: it must be regenerated,
-together with the SBOM, from the authoritative published 3.12.0 artifact before
-release. The 2.8.0->2.11.0 convergence changes none of the four roots this
-renderer validates, for the same reason the 2.7.0-2.8.0 delta below did not.
-Only the `"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) is consumed;
-the 2.6.0 `./runtime-origins` narrow export and every other addition through
-2.6.1 (new OpenAPI operations, App route/catalog copy, the
+This source targets `@rathnasgala2/schemas@3.16.0` with a `^3.16.0` peer range
+(any 3.x from 3.16.0; 3.16.0 adds `modules.analytics`); the lock still installs
+3.12.0 exactly. Generation-4 development verifies against the schema
+sibling/packed candidate. The historical `package-lock.json` is not a 3.12.0
+registry claim: it must be regenerated, together with the SBOM, from the
+authoritative published 3.12.0 artifact before release. The 2.8.0->2.11.0
+convergence changes none of the four roots this renderer validates, for the same
+reason the 2.7.0-2.8.0 delta below did not. Only the `"."` export
+(`validateGalaDocument`, `GALA_SCHEMA_IDS`) is consumed; the 2.6.0
+`./runtime-origins` narrow export and every other addition through 2.6.1 (new
+OpenAPI operations, App route/catalog copy, the
 `PrincipalSummary`/`AuthenticatorSummary`/keyset field additions) are
 App/API-surface changes this renderer does not read. The `"."` export's 2.2.2
 browser-safety refactor (Node builtins replaced with browser-safe equivalents

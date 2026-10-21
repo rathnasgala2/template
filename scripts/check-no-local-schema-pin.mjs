@@ -44,11 +44,13 @@ async function main() {
   const diagnostics = (await Promise.all(FILES.map(checkFile))).flat();
   const manifest = JSON.parse(await readFile('package.json', 'utf8'));
   const lock = JSON.parse(await readFile('package-lock.json', 'utf8'));
-  if (manifest.peerDependencies?.['@rathnasgala2/schemas'] !== '^3.12.0') {
+  if (manifest.peerDependencies?.['@rathnasgala2/schemas'] !== '^3.16.0') {
     diagnostics.push(
-      'package.json: @rathnasgala2/schemas must be the ^3.12.0 peer for portable source-only installation.',
+      'package.json: @rathnasgala2/schemas must be the ^3.16.0 peer for portable source-only installation.',
     );
   }
+  // The lock intentionally still records the 3.12.0 release until 3.16.0 is
+  // published and the lock is regenerated from it.
   if (
     lock.packages?.['']?.peerDependencies?.['@rathnasgala2/schemas'] !==
     '^3.12.0'

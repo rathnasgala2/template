@@ -384,6 +384,17 @@ async function buildCoverageFixture(sourceDirectory) {
   }
   buildInput.authors[0].avatar = image;
   buildInput.appearance.brandMark = image;
+  // The consent banner and its footer button are published hooks too.
+  buildInput.modules = {
+    analytics: {
+      config: {
+        schemaId: 'urn:gala:schema:analytics-config:2.0.0',
+        schemaVersion: '2.0.0',
+        provider: { kind: 'google-analytics-4', measurementId: 'G-ABC123XYZ' },
+        consent: { policy: 'opt-in' },
+      },
+    },
+  };
   buildInput.publication.newsletter = {
     url: 'https://example.test/subscribe',
     title: 'Stay in touch',
@@ -508,6 +519,10 @@ test('drift gate: every published hook is rendered across all five profiles, and
       // are not part of the published contract.
       'data-gala-color-mode-default',
       'data-gala-color-mode-allowed',
+      // Template-internal, server-rendered on the consent banner when the
+      // analytics module is on: the script's lookup hook, not a theme hook
+      // (the banner's `g-consent*` classes are the published hooks).
+      'data-gala-consent',
     ]);
     const foundAttributeNames = new Set(
       [...html.matchAll(/data-gala-[a-z-]+/g)].map((m) => m[0]),
@@ -568,7 +583,9 @@ test('drift gate: every published hook is rendered across all five profiles, and
     // attribute-value hook instead, never the wrapping `div` by type.
     // The template's own inline icons (`<svg>` and its drawing elements) are
     // decorative chrome, themed through `.g-icon`, never by element.
+    // The consent banner's `<aside>` is themed through `.g-consent`.
     const NON_HOOK_STRUCTURAL_TAGS = new Set([
+      'aside',
       'body',
       'div',
       'svg',

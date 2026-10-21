@@ -95,6 +95,16 @@ import {
   computeRenderPolicyIdentity,
   contentSecurityPolicyMetaTag,
 } from './internal/content-security.js';
+import {
+  CONSENT_SCRIPT_MEDIA_TYPE,
+  CONSENT_SCRIPT_PATH,
+  CONSENT_SCRIPT_SOURCE,
+} from './internal/analytics/consent-script.js';
+import { renderConsentBanner } from './internal/analytics/markup.js';
+import {
+  analyticsActive,
+  validateAnalyticsModule,
+} from './internal/analytics/module.js';
 import { resolveEditions } from './internal/editions.js';
 import { assertPolicyRoutesFree } from './internal/policy-pages.js';
 import { renderPagesWithEleventy } from './internal/eleventy-render.js';
@@ -288,9 +298,9 @@ function assertOptions(options) {
  */
 async function assertRenderPolicyCompliance(validatedInput) {
   const moduleKeys = Object.keys(validatedInput.modules);
-  if (moduleKeys.some((key) => key !== 'interactions')) {
+  if (moduleKeys.some((key) => key !== 'interactions' && key !== 'analytics')) {
     throw new RenderPolicyViolationError(
-      'build-input.modules may only carry interactions',
+      'build-input.modules may only carry interactions and analytics',
     );
   }
   if (validatedInput.placements.length !== 0) {
@@ -300,6 +310,9 @@ async function assertRenderPolicyCompliance(validatedInput) {
   }
   if (validatedInput.modules.interactions !== undefined) {
     validateInteractionsModule(validatedInput.modules.interactions);
+  }
+  if (validatedInput.modules.analytics !== undefined) {
+    validateAnalyticsModule(validatedInput.modules.analytics);
   }
 
   const identity = await computeRenderPolicyIdentity();
@@ -394,9 +407,27 @@ export async function renderPublication(buildInput, options) {
   const interactionsOn = interactionsActive(interactionsModule);
   // One CSP per build: the production policy, plus (local stack only) the
   // interactions module's differing API origin in `connect-src`.
+  // Consent and analytics are a core privacy setting: when the analytics
+  // module is on, its provider's sources join the CSP and the consent banner,
+  // footer button and script render on every HTML page.
+  const analyticsModule = validatedInput.modules.analytics;
+  const analyticsOn = analyticsActive(analyticsModule);
   const cspMetaTag = contentSecurityPolicyMetaTag(
     interactionsModule?.apiOrigin,
+    analyticsModule?.config.provider.kind,
   );
+  const consentScriptHref = analyticsOn
+    ? joinBasePathAndRoute(publicBasePath, `/${CONSENT_SCRIPT_PATH}`)
+    : undefined;
+  const consentHtml =
+    analyticsOn && analyticsModule
+      ? renderConsentBanner({
+          module: analyticsModule,
+          messages: siteMessages,
+          publicBasePath,
+          routeProfile,
+        })
+      : '';
   const interactionsScriptHref = joinBasePathAndRoute(
     publicBasePath,
     `/${INTERACTIONS_SCRIPT_PATH}`,
@@ -598,6 +629,7 @@ export async function renderPublication(buildInput, options) {
     footerLayout: composition.footerLayout,
     baseUrl: validatedInput.baseUrl,
     publicBasePath,
+    consentOn: analyticsOn,
   });
 
   /**
@@ -659,6 +691,7 @@ export async function renderPublication(buildInput, options) {
     mediaAssets,
     mediaDimensions,
     interactions: interactionsOn ? interactionsModule : undefined,
+    analytics: analyticsOn ? analyticsModule : undefined,
     composition,
   });
   /** @type {Set<string>} output paths of the interaction-bearing routes */
@@ -673,6 +706,7 @@ export async function renderPublication(buildInput, options) {
       headerHtml: headerFor(joinedRoute),
       footerHtml,
       mainHtml: page.bodyHtml,
+      consentHtml,
     });
     const ogImageInfo = resolveSocialImage({
       mediaAssets,
@@ -725,6 +759,7 @@ export async function renderPublication(buildInput, options) {
         interactionsScriptHref: page.interactionBearing
           ? interactionsScriptHref
           : undefined,
+        consentScriptHref,
         cspMetaTag,
         baseStylesheetHref: baseStylesheetHrefValue,
         themeStylesheetLinksHtml,
@@ -779,6 +814,7 @@ export async function renderPublication(buildInput, options) {
     headerHtml: headerFor(undefined),
     footerHtml,
     mainHtml: renderErrorPageBody({ messages: siteMessages, homeRoute }),
+    consentHtml,
   });
   const errorFilePath = errorDocumentPath(validatedInput.basePath);
   contentPages.push({
@@ -801,6 +837,7 @@ export async function renderPublication(buildInput, options) {
       atomFeedUrl: feeds.atomSelfUrl,
       rssFeedUrl: feeds.rssSelfUrl,
       appearanceScriptHref: appearanceScriptHrefValue,
+      consentScriptHref,
       cspMetaTag,
       baseStylesheetHref: baseStylesheetHrefValue,
       themeStylesheetLinksHtml,
@@ -1109,11 +1146,37 @@ export async function renderPublication(buildInput, options) {
     });
   }
 
+  // The consent script, only when the analytics module is on: the template's
+  // own constant source, so the row is a pure function of the template version.
+  /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
+  const consentAssets = [];
+  if (analyticsOn) {
+    const consentScriptBytes = Buffer.from(CONSENT_SCRIPT_SOURCE, 'utf8');
+    const joinedConsentScriptPath = projectFixedAssetPath(
+      validatedInput.basePath,
+      `/${CONSENT_SCRIPT_PATH}`,
+    );
+    const consentScriptDestination = path.join(
+      outputDirectory,
+      joinedConsentScriptPath,
+    );
+    await mkdir(path.dirname(consentScriptDestination), { recursive: true });
+    await writeFile(consentScriptDestination, consentScriptBytes);
+    consentAssets.push({
+      path: joinedConsentScriptPath,
+      mediaType: CONSENT_SCRIPT_MEDIA_TYPE,
+      byteLength: String(consentScriptBytes.byteLength),
+      sha256: digestBytes(consentScriptBytes),
+      immutable: false,
+    });
+  }
+
   const assets = [
     ...joinedMediaAssets,
     appearanceScriptAsset,
     baseStylesheetAsset,
     ...interactionsAssets,
+    ...consentAssets,
     ...(themeAssetsResult ? themeAssetsResult.assets : []),
   ].sort((a, b) => compareUtf8Bytes(a.path, b.path));
 

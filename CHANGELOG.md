@@ -19,8 +19,31 @@ and this project adheres to
   "Made with Galascribe" link to galascribe.com carrying a referral `utm_source`
   set to the site's host.
 
+- Reader consent and the first gated tracker. A build input carrying
+  `modules.analytics` (schemas 3.16.0: `provider.kind` `google-analytics-4`,
+  `measurementId` `G-XXXX`, `consent.policy` `opt-in`) renders a consent banner
+  (`aside.g-consent`, hidden until the script reveals it) after the footer of
+  every HTML page, a script-revealed "Privacy choices" button in the legal
+  footer navigation, and `assets/gala-consent-v1.js` (deferred, with a manifest
+  asset row). Nothing from the provider loads until the reader accepts; the
+  choice is stored in `localStorage` under `gala.consent.v1` and can be changed
+  from the footer; Google consent mode is set to denied by default and
+  `analytics_storage` is revoked on a later decline. The Privacy page gains a
+  paragraph naming the provider. A site without the module renders
+  byte-identically to before. Everything lives under
+  `src/core/internal/analytics/`; no `src/modules/` tree is added.
+- The shared module-shape helpers (`exactObject`, `boolean`, `origin`) move from
+  `interactions.js` to `internal/module-shape.js`.
+
 ### Changed
 
+- With `modules.analytics` on, the CSP meta adds the provider's sources to
+  `script-src`, `connect-src` and `img-src` (sorted bytewise); the baseline, the
+  complete policy and `contracts/render-policy.jcs` are unchanged.
+- The styling contract gains six `consent` component hooks (`g-consent`,
+  `g-consent-text`, `g-consent-actions`, `g-consent-accept`,
+  `g-consent-decline`, `g-consent-open`; additive, 225 public hooks).
+- Targets schemas 3.16.0 (peer range `^3.16.0`).
 - The styling contract gains the `g-footer-legal` component hook and the
   `policy` page-kind hook (additive; 219 public hooks). Its version stays 4.0.0
   because the schemas package's `theme-contract` schema admits only that

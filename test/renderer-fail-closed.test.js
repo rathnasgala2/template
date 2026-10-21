@@ -18,7 +18,7 @@ import {
 
 test('C. module absence: every empty-modules-placements S2 fixture case behaves exactly as its expectedDiagnostics say', async () => {
   const family = await loadS2FixtureFamily('empty-modules-placements');
-  assert.equal(family.cases.length, 4);
+  assert.equal(family.cases.length, 5);
   assert.ok(
     family.cases.some(
       (fixtureCase) =>

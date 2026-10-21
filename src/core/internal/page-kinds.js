@@ -81,6 +81,7 @@ import {
   renderEditionSelector,
   resolveEditions,
 } from './editions.js';
+import { renderAnalyticsPrivacyParagraph } from './analytics/markup.js';
 import {
   PRIVACY_ROUTE,
   TERMS_ROUTE,
@@ -448,6 +449,9 @@ export function homeDocumentTitle(name, tagline) {
  * @param {import('../../../types/index.d.ts').InteractionsModule} [options.interactions]
  *   the validated interactions module; when set, every article page carries
  *   the interactions section and is interaction-bearing
+ * @param {import('../../../types/index.d.ts').AnalyticsModule} [options.analytics]
+ *   the validated analytics module; when set, the Privacy page carries the
+ *   analytics and consent paragraph
  * @param {import('./route.js').RouteNormalizationProfile} [options.routeProfile]
  *   the route normalization profile deciding every emitted page URL's form
  *   (default `directory-index`)
@@ -848,8 +852,12 @@ export function buildGeneratedPages(validatedInput, options) {
     [
       PRIVACY_ROUTE,
       text0('privacyLinkLabel'),
-      // The empty string is the insertion point for the analytics paragraph.
-      renderPrivacyBody(policyFacts, ''),
+      renderPrivacyBody(
+        policyFacts,
+        options.analytics
+          ? renderAnalyticsPrivacyParagraph(options.analytics)
+          : '',
+      ),
     ],
   ])) {
     pages.push({

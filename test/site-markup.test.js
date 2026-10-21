@@ -565,3 +565,138 @@ test('the footer attribution follows appearance.attribution.showMadeWith; absent
     }
   }
 });
+
+test('analytics module: banner, footer button, privacy paragraph, script and CSP only when on', async (t) => {
+  /**
+   * @param {boolean} on whether the analytics module is selected
+   * @returns {Promise<{pages: Map<string, string>, manifest: any, script: string | undefined}>}
+   */
+  const build = async (on) => {
+    const buildInput = /** @type {any} */ (await buildRichFixture());
+    if (on) {
+      buildInput.modules = {
+        analytics: {
+          config: {
+            schemaId: 'urn:gala:schema:analytics-config:2.0.0',
+            schemaVersion: '2.0.0',
+            provider: {
+              kind: 'google-analytics-4',
+              measurementId: 'G-ABC123XYZ',
+            },
+            consent: { policy: 'opt-in' },
+          },
+        },
+      };
+    }
+    await applyCurrentRenderPolicy(buildInput);
+    const dirs = await createRenderDirectories();
+    t.after(dirs.cleanup);
+    const { manifest } = await renderPublication(buildInput, {
+      outputDirectory: dirs.outputDirectory,
+      workDirectory: dirs.workDirectory,
+      sourceDirectory: dirs.sourceDirectory,
+      provenance: testProvenance(),
+    });
+    /** @type {Map<string, string>} */
+    const pages = new Map();
+    for (const route of manifest.routes) {
+      if (route.routeClass !== 'html' && route.routeClass !== 'error') continue;
+      pages.set(
+        route.path,
+        await readFile(path.join(dirs.outputDirectory, route.path), 'utf8'),
+      );
+    }
+    const asset = manifest.assets.find((/** @type {any} */ a) =>
+      a.path.endsWith('assets/gala-consent-v1.js'),
+    );
+    return {
+      pages,
+      manifest,
+      script: asset
+        ? await readFile(path.join(dirs.outputDirectory, asset.path), 'utf8')
+        : undefined,
+    };
+  };
+  const off = await build(false);
+  const on = await build(true);
+
+  assert.equal(off.script, undefined);
+  assert.ok(typeof on.script === 'string' && on.script.length > 0);
+  const row = on.manifest.assets.find((/** @type {any} */ a) =>
+    a.path.endsWith('assets/gala-consent-v1.js'),
+  );
+  assert.equal(row.mediaType, 'application/javascript; charset=utf-8');
+  assert.equal(row.byteLength, String(Buffer.byteLength(on.script)));
+
+  for (const [route, html] of off.pages) {
+    assert.ok(!html.includes('g-consent'), route);
+    assert.ok(!html.includes('gala-consent-v1.js'), route);
+    assert.ok(!html.includes('googletagmanager'), route);
+    assert.ok(
+      html.includes(
+        `content="default-src 'none'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://api.galascribe.com; media-src 'self'; manifest-src 'self'; worker-src 'none'"`,
+      ),
+      route,
+    );
+  }
+  assert.ok(on.pages.size > 5);
+  for (const [route, html] of on.pages) {
+    assert.equal(
+      count(html, /<aside class="g-consent" data-gala-consent /g),
+      1,
+      route,
+    );
+    assert.equal(
+      count(
+        html,
+        /<button type="button" class="g-consent-open" hidden>Privacy choices<\/button>/g,
+      ),
+      1,
+      route,
+    );
+    assert.equal(
+      count(
+        html,
+        /<script src="[^"]*assets\/gala-consent-v1\.js" defer><\/script>/g,
+      ),
+      1,
+      route,
+    );
+    assert.ok(
+      html.includes("script-src 'self' https://www.googletagmanager.com;"),
+      route,
+    );
+    assert.ok(
+      html.includes(
+        'data-provider-kind="google-analytics-4" data-measurement-id="G-ABC123XYZ" data-privacy-href="/fixture-1/privacy/" hidden aria-label="Privacy choices">',
+      ),
+      route,
+    );
+    assert.ok(
+      html.includes(
+        '<p class="g-consent-text">This site would like to use Google Analytics 4 (Google LLC) to understand readership. Nothing is loaded until you accept, and you can change your choice any time from the footer.</p>',
+      ),
+      route,
+    );
+    assert.ok(html.includes('</footer><aside class="g-consent"'), route);
+    // The footer tail is the off-build's tail plus the one added list item.
+    assert.ok(
+      html.includes('</li><li><button type="button" class="g-consent-open"'),
+      route,
+    );
+  }
+  const privacy = /** @type {string} */ (
+    on.pages.get('fixture-1/privacy/index.html')
+  );
+  assert.ok(
+    privacy.includes(
+      '<p>With your consent this site uses Google Analytics 4 (Google LLC) to understand how it is read.',
+    ),
+  );
+  assert.ok(privacy.includes('<code>gala.consent.v1</code>'));
+  assert.ok(privacy.includes('href="https://policies.google.com/privacy"'));
+  const offPrivacy = /** @type {string} */ (
+    off.pages.get('fixture-1/privacy/index.html')
+  );
+  assert.ok(!offPrivacy.includes('gala.consent.v1'));
+});
