@@ -55,19 +55,16 @@ not a repository file and lists none.
 
 ## Contract sources and generation commands
 
-This source targets `@rathnasgala2/schemas@3.16.0`; the peer range is `^3.16.0`.
-Generation-4 development verifies against the schema sibling/packed candidate;
-the release lock remains intentionally unchanged (it still pins 3.12.0) until
-3.16.0 is published and must be regenerated from that authoritative artifact
-before release. Template 4.4.0 publishes styling contract 4.1.0
-(`TEMPLATE_STYLING_CONTRACT_VERSION`; its `templateVersion` is 4.4.0, and
-schemas 3.16.0's `theme-contract` admits it with `templateRange` `^4.4.0`).
-`TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION` is the template version that
-introduced the current contract: it stays 4.4.0 through patch releases until the
-hook catalog changes again, the scaffold and test fixtures write `templateRange`
-as `^` that value (never `^` the renderer's own version), and
-`test/pinned-versions.test.js` asserts only that `package.json`'s version
-satisfies it. It owns two of its own published contracts,
+This source targets `@rathnasgala2/schemas@3.16.0` (installed exactly by the
+lock, from the npm registry); the peer range is `^3.16.0`. Template 4.4.0
+publishes styling contract 4.1.0 (`TEMPLATE_STYLING_CONTRACT_VERSION`; its
+`templateVersion` is 4.4.0, and schemas 3.16.0's `theme-contract` admits it with
+`templateRange` `^4.4.0`). `TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION` is the
+template version that introduced the current contract: it stays 4.4.0 through
+patch releases until the hook catalog changes again, the scaffold and test
+fixtures write `templateRange` as `^` that value (never `^` the renderer's own
+version), and `test/pinned-versions.test.js` asserts only that `package.json`'s
+version satisfies it. It owns two of its own published contracts,
 `contracts/render-policy.jcs` and `contracts/theme-styling-contract.jcs`,
 emitted as compact RFC 8785 JCS by `npm run contracts:generate` and
 drift-checked by `npm run contracts:check`. `contracts/render-policy.jcs` is

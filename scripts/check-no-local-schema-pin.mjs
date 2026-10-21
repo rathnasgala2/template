@@ -16,7 +16,7 @@ const FORBIDDEN = [
 ];
 const FILES = ['package.json', 'package-lock.json'];
 const REGISTRY_TARBALL =
-  'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.12.0.tgz';
+  'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.16.0.tgz';
 
 /**
  * @param {string} path the file to scan
@@ -49,20 +49,18 @@ async function main() {
       'package.json: @rathnasgala2/schemas must be the ^3.16.0 peer for portable source-only installation.',
     );
   }
-  // The lock intentionally still records the 3.12.0 release until 3.16.0 is
-  // published and the lock is regenerated from it.
   if (
     lock.packages?.['']?.peerDependencies?.['@rathnasgala2/schemas'] !==
-    '^3.12.0'
+    '^3.16.0'
   ) {
     diagnostics.push(
-      'package-lock.json: @rathnasgala2/schemas must be the ^3.12.0 peer.',
+      'package-lock.json: @rathnasgala2/schemas must be the ^3.16.0 peer.',
     );
   }
   const schemaLock = lock.packages?.['node_modules/@rathnasgala2/schemas'];
-  if (schemaLock?.version !== '3.12.0') {
+  if (schemaLock?.version !== '3.16.0') {
     diagnostics.push(
-      'package-lock.json: the installed @rathnasgala2/schemas entry must be version 3.12.0.',
+      'package-lock.json: the installed @rathnasgala2/schemas entry must be version 3.16.0.',
     );
   }
   if (schemaLock?.resolved !== REGISTRY_TARBALL) {
@@ -79,7 +77,7 @@ async function main() {
     throw new Error(diagnostics.join('\n'));
   }
   console.log(
-    'schema is a caret-range registry peer (installed 3.12.0 pinned by the lock).',
+    'schema is a caret-range registry peer (installed 3.16.0 pinned by the lock).',
   );
 }
 

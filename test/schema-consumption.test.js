@@ -25,10 +25,10 @@ test('package-lock.json resolves schemas from the registry', async () => {
   );
   const entry = lock.packages['node_modules/@rathnasgala2/schemas'];
   assert.ok(entry, '@rathnasgala2/schemas must be present in the lockfile');
-  assert.equal(entry.version, '3.12.0');
+  assert.equal(entry.version, '3.16.0');
   assert.equal(
     entry.resolved,
-    'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.12.0.tgz',
+    'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.16.0.tgz',
   );
   assert.equal(entry.link, undefined);
   assert.match(entry.integrity, /^sha512-/u);

@@ -704,9 +704,9 @@ npm run audit               # npm audit --audit-level=high
 ```
 
 Source development does not require a sibling schema checkout. The lockfile pins
-a `@rathnasgala2/schemas` release installed from the npm registry (3.12.0 until
-3.16.0 is published; see "Consuming `@rathnasgala2/schemas`") and carries its
-registry integrity. The exact peer is the public consumer contract.
+a `@rathnasgala2/schemas` release installed from the npm registry (3.16.0; see
+"Consuming `@rathnasgala2/schemas`") and carries its registry integrity. The
+exact peer is the public consumer contract.
 
 ## Package layout
 
@@ -788,14 +788,11 @@ slash and ignoring letter case) fails the build closed with
 This source targets `@rathnasgala2/schemas@3.16.0` with a `^3.16.0` peer range
 (any 3.x from 3.16.0; 3.16.0 adds `modules.analytics`, `build-input.policies`
 and the `site-policy-defaults` export, and its `theme-contract` admits styling
-contract 4.1.0); the lock still installs 3.12.0 exactly. Generation-4
-development verifies against the schema sibling/packed candidate. The historical
-`package-lock.json` is not a 3.16.0 registry claim: it must be regenerated,
-together with the SBOM, from the authoritative published 3.16.0 artifact before
-release. The 2.8.0->2.11.0 convergence changes none of the four roots this
-renderer validates, for the same reason the 2.7.0-2.8.0 delta below did not.
-Only the `"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) and, since
-4.4.0, the `./site-policy-defaults` export (the default policy text) are
+contract 4.1.0); the lock installs 3.16.0 exactly from the npm registry, with
+its registry integrity. The 2.8.0->2.11.0 convergence changes none of the four
+roots this renderer validates, for the same reason the 2.7.0-2.8.0 delta below
+did not. Only the `"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) and,
+since 4.4.0, the `./site-policy-defaults` export (the default policy text) are
 consumed; the 2.6.0 `./runtime-origins` narrow export and every other addition
 through 2.6.1 (new OpenAPI operations, App route/catalog copy, the
 `PrincipalSummary`/`AuthenticatorSummary`/keyset field additions) are
