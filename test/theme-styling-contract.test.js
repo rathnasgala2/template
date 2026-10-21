@@ -134,7 +134,7 @@ test('a mutated catalogDigest, layer order or attribute row is rejected', () => 
 
 test('public theme-slot hooks stay within the 256 cap, sorted by hookId, each atom and id appearing exactly once', () => {
   const hooks = templateStylingContractHooks();
-  assert.ok(hooks.length > 64, 'contract 4.0.0 publishes the component hooks');
+  assert.ok(hooks.length > 64, 'contract 4.1.0 publishes the component hooks');
   assert.ok(hooks.length <= MAX_PUBLIC_HOOKS);
   assert.equal(MAX_PUBLIC_HOOKS, 256);
   const atoms = new Set(hooks.map((hook) => hook.selectorAtom));
@@ -211,8 +211,8 @@ function buildThemeContractFixture({ light, dark }) {
     schemaVersion: '2.0.0',
     themeId: 'editorial',
     package: `@rathnasgala2/theme-editorial@4.0.0`,
-    contractVersion: '4.0.0',
-    templateRange: '^4.0.0',
+    contractVersion: '4.1.0',
+    templateRange: '^4.4.0',
     composition: { ...EDITORIAL_COMPOSITION },
     stylesheets: ['tokens.css', 'components.css', 'print.css'],
     cssLayers: ['gala-tokens', 'gala-components', 'gala-print'],

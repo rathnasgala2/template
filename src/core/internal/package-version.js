@@ -5,7 +5,8 @@
  * `templateVersion` (`appearance/styling-contract.js`), which records the
  * version the contract was published at and is part of the contract digest:
  * a renderer release that does not change the contract keeps that digest.
+ * `test/pinned-versions.test.js` keeps it equal to `package.json`'s `version`.
  *
  * @type {string}
  */
-export const TEMPLATE_RENDERER_VERSION = '4.1.0';
+export const TEMPLATE_RENDERER_VERSION = '4.4.0';

@@ -1,6 +1,7 @@
 /**
  * Server-rendered consent markup: the banner `<aside>`, the footer "Privacy
- * choices" button and the Privacy page paragraph. The browser script
+ * choices" button and the analytics paragraph of the policy pages' Galascribe
+ * section. The browser script
  * (`consent-script.js`) reveals and drives them; with JavaScript off the
  * banner stays hidden and nothing from the provider ever loads.
  */
@@ -72,7 +73,7 @@ export function renderConsentOpenItem(messages) {
 /**
  * @param {import('../../../../types/index.d.ts').AnalyticsModule} module
  *   the validated module
- * @returns {string} the trusted Privacy page paragraph
+ * @returns {string} the trusted analytics paragraph of the Galascribe section
  */
 export function renderAnalyticsPrivacyParagraph(module) {
   const provider = providerOf(module);
@@ -82,6 +83,7 @@ export function renderAnalyticsPrivacyParagraph(module) {
     `Your choice itself is kept in <code>localStorage</code> under <code>gala.consent.v1</code>; ` +
     `change it any time with "Privacy choices" in the footer. ` +
     `Declining removes those cookies and stops the script on the next page load. ` +
+    `If your browser sends the Global Privacy Control signal and you have made no choice, this site treats it as a decline and does not show the banner. ` +
     `See <a href="${escapeHtml(provider.privacyPolicyUrl)}" rel="noopener">${escapeHtml(provider.privacyPolicyLabel)}</a>.</p>`
   );
 }

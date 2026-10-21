@@ -708,11 +708,21 @@ test('analytics module: banner, footer button, privacy paragraph, script and CSP
       'Declining removes those cookies and stops the script on the next page load.',
     ),
   );
-  assert.ok(!/browser storage is used only/.test(privacy));
+  assert.ok(
+    privacy.includes(
+      'If your browser sends the Global Privacy Control signal and you have made no choice, this site treats it as a decline and does not show the banner.',
+    ),
+  );
+  assert.ok(!privacy.includes('loads no analytics or advertising trackers'));
   assert.ok(privacy.includes('href="https://policies.google.com/privacy"'));
   const offPrivacy = /** @type {string} */ (
     off.pages.get('fixture-1/privacy/index.html')
   );
   assert.ok(!offPrivacy.includes('gala.consent.v1'));
-  assert.ok(offPrivacy.includes('browser storage is used only for'));
+  assert.ok(!offPrivacy.includes('Global Privacy Control'));
+  assert.ok(
+    offPrivacy.includes(
+      'This site loads no analytics or advertising trackers.',
+    ),
+  );
 });

@@ -3,8 +3,8 @@
   "schemaVersion": "2.0.0",
   "themeId": "editorial",
   "package": "@rathnasgala2/theme-editorial@4.0.0",
-  "contractVersion": "4.0.0",
-  "templateRange": "^4.0.0",
+  "contractVersion": "4.1.0",
+  "templateRange": "^4.4.0",
   "composition": {
     "schemaId": "urn:gala:schema:template-composition:2.0.0",
     "schemaVersion": "2.0.0",
@@ -748,5 +748,5 @@
   },
   "fixtureDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
   "evidenceDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-  "stylingContractDigest": "sha256:fbe511fd3ac2f9e9fc4e1120aaca3c31ff7040ea8e8f1483c88250de15c0a9ba"
+  "stylingContractDigest": "sha256:4afdcb555d21fc205ab332a9e8996a09e1eb607053353c399eb070d0f0525f29"
 }

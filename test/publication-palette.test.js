@@ -4,7 +4,8 @@
  * `THEME_PALETTE_INVALID`), the default palette (`{}`), presets from the
  * schemas package's golden vectors, the stress corpus's recorded failures
  * (`APPEARANCE_PALETTE_CONTRAST`), the sheet's name, SRI link and manifest
- * row, and the styling contract digest staying the 4.0.0 one.
+ * row, and the published styling contract's version and digest (pinned in the
+ * final test).
  *
  * All palette mathematics is the schemas package's own
  * (`@rathnasgala2/schemas/palette`); these tests only assert what the
@@ -312,11 +313,12 @@ test('sites on the same theme and palette share identical palette sheet bytes', 
   );
 });
 
-test('the published styling contract digest is still the 4.0.0 one', () => {
+test('the published styling contract is 4.1.0 at template 4.4.0, with its pinned digest', () => {
   const contract = buildTemplateStylingContract();
-  assert.equal(contract.contractVersion, '4.0.0');
+  assert.equal(contract.contractVersion, '4.1.0');
+  assert.equal(contract.templateVersion, '4.4.0');
   assert.equal(
     contract.catalogDigest,
-    'sha256:fbe511fd3ac2f9e9fc4e1120aaca3c31ff7040ea8e8f1483c88250de15c0a9ba',
+    'sha256:4afdcb555d21fc205ab332a9e8996a09e1eb607053353c399eb070d0f0525f29',
   );
 });

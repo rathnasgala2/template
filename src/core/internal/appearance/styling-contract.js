@@ -65,6 +65,12 @@
  * `figcaption` — is likewise excluded from `typeSelectors`: this
  * catalog is every hook the template actually renders, not the sanitizer's
  * own defence-in-depth superset.
+ *
+ * Contract 4.1.0 (template 4.4.0): publishes the hooks template 4.4.0 added to
+ * the markup (the `policy` page-kind value, the `g-footer-legal` class and the
+ * six `g-consent*` classes). The additions are backward-compatible, so the
+ * contract takes a minor bump; schemas 3.16.0's `theme-contract` admits it,
+ * with `templateRange` `^4.4.0`.
  */
 
 import { HIGHLIGHT_GRAMMARS } from '../render-policy-content.js';
@@ -84,9 +90,9 @@ import { canonicalizeJcs, domainDigest } from '../canonical-jcs.js';
 /** @type {string} */
 export const TEMPLATE_STYLING_CONTRACT_PACKAGE = '@rathnasgala2/template';
 /** @type {string} */
-export const TEMPLATE_STYLING_CONTRACT_VERSION = '4.0.0';
+export const TEMPLATE_STYLING_CONTRACT_VERSION = '4.1.0';
 /** @type {string} */
-export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '4.0.0';
+export const TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION = '4.4.0';
 
 /** @type {string} the `main-content` landmark's fixed `id`. */
 const MAIN_CONTENT_ID = 'main-content';
@@ -678,7 +684,9 @@ export function assertTemplateStylingContractShape(contract) {
   if (contract.profile !== 'gala-template-styling-contract-v2') {
     fail('profile');
   }
-  if (contract.contractVersion !== '4.0.0') fail('contractVersion');
+  if (contract.contractVersion !== TEMPLATE_STYLING_CONTRACT_VERSION) {
+    fail('contractVersion');
+  }
   if (contract.templatePackage !== '@rathnasgala2/template') {
     fail('templatePackage');
   }

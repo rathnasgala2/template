@@ -9,9 +9,10 @@
  *
  * - `profile` — the publication's own optional profile page
  *   (`publication.profile`);
- * - `policy` — the two generated legal pages, `/terms` and `/privacy`
- *   (`internal/policy-pages.js`), indexable but never searched, fed or listed
- *   in `llms`;
+ * - `policy` — the two legal pages, `/terms` and `/privacy`
+ *   (`internal/policy-pages.js`): the site's own text (`build-input.policies`,
+ *   else the shipped defaults) followed by the template-owned Galascribe
+ *   section; indexable but never searched, fed or listed in `llms`;
  * - `author` — one page per entry in `build-input.authors` (this array is
  *   already exactly the set of authors referenced by the selected content,
  *   publication contact or footer card — never an unreferenced author), at
@@ -81,13 +82,7 @@ import {
   renderEditionSelector,
   resolveEditions,
 } from './editions.js';
-import { renderAnalyticsPrivacyParagraph } from './analytics/markup.js';
-import {
-  PRIVACY_ROUTE,
-  TERMS_ROUTE,
-  renderPrivacyBody,
-  renderTermsBody,
-} from './policy-pages.js';
+import { renderGalascribeSection, resolvePolicyPages } from './policy-pages.js';
 import { truncateAtWord } from './seo.js';
 import { cardMediaOf } from './first-body-image.js';
 import { createStructuredData } from './structured-data.js';
@@ -450,8 +445,8 @@ export function homeDocumentTitle(name, tagline) {
  *   the validated interactions module; when set, every article page carries
  *   the interactions section and is interaction-bearing
  * @param {import('../../../types/index.d.ts').AnalyticsModule} [options.analytics]
- *   the validated analytics module; when set, the Privacy page carries the
- *   analytics and consent paragraph
+ *   the validated analytics module; when set, the Galascribe section of both
+ *   policy pages carries the analytics and consent paragraph
  * @param {import('./route.js').RouteNormalizationProfile} [options.routeProfile]
  *   the route normalization profile deciding every emitted page URL's form
  *   (default `directory-index`)
@@ -843,44 +838,38 @@ export function buildGeneratedPages(validatedInput, options) {
     });
   }
 
-  const policyFacts = {
+  const galascribeSection = renderGalascribeSection({
     publicationName: publication.title,
     interactionsOn: Boolean(interactionsModule),
-  };
-  for (const [policyRoute, policyTitle, policyBody] of /** @type {const} */ ([
-    [TERMS_ROUTE, text0('termsLinkLabel'), renderTermsBody(policyFacts)],
-    [
-      PRIVACY_ROUTE,
-      text0('privacyLinkLabel'),
-      renderPrivacyBody(
-        policyFacts,
-        options.analytics
-          ? renderAnalyticsPrivacyParagraph(options.analytics)
-          : '',
-      ),
-    ],
-  ])) {
+    analytics: options.analytics,
+  });
+  for (const policy of resolvePolicyPages(validatedInput.policies)) {
     pages.push({
       kind: 'policy',
-      route: policyRoute,
-      title: policyTitle,
-      documentTitle: documentTitleOf(policyTitle),
+      route: policy.route,
+      title: policy.title,
+      documentTitle: documentTitleOf(policy.title),
       language: publication.defaultLanguage,
       description: publication.description,
       robotsContent: 'index, follow',
       ...defaultSocial,
       jsonLd: sd.serialize(
         sd.webPage({
-          name: policyTitle,
+          name: policy.title,
           description: publication.description,
-          url: absolute(site(policyRoute)),
+          url: absolute(site(policy.route)),
           language: publication.defaultLanguage,
-          trail: [homeStep, { label: policyTitle, route: site(policyRoute) }],
+          trail: [homeStep, { label: policy.title, route: site(policy.route) }],
         }),
       ),
+      // The title is the one `<h1>`; the site's own text goes in as an
+      // article or page body does, then the template-owned section.
       bodyHtml:
-        `<article class="g-article"><div class="g-wrap g-article-head">${crumbs([{ label: policyTitle }])}</div>` +
-        `<div class="g-wrap g-article-grid"><div class="g-prose">${policyBody}</div></div></article>`,
+        `<article class="g-article"><div class="g-wrap g-article-head">${crumbs([{ label: policy.title }])}` +
+        `<h1>${escapeHtml(policy.title)}</h1></div>` +
+        `<div class="g-wrap g-article-grid"><div class="g-prose">` +
+        options.pageBody(dropLeadingTitleHeading(policy.body, policy.title)) +
+        `${galascribeSection}</div></div></article>`,
     });
   }
 

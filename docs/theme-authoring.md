@@ -64,7 +64,7 @@ obvious ones:
   schema closes this to exactly those two combinations — there is no other valid
   pairing.
 - **`contractVersion`** — must byte-equal this template's own published styling
-  contract version (currently `4.0.0`). A theme built against a different
+  contract version (currently `4.1.0`). A theme built against a different
   contract version fails to load, on purpose: the token/hook/ pseudo-class
   catalogs a theme was authored against are the catalogs it is checked against.
 - **`stylingContractDigest`** — must byte-equal the published contract's own
@@ -82,10 +82,11 @@ obvious ones:
   template writes every bound token to the build's palette stylesheet, so a
   theme's `tokens.css` and `components.css` must not declare them. See
   `@rathnasgala2/schemas/palette`.
-- **`templateRange`** — an exact version or caret range (`^4.1.0`) admitting
-  this renderer's own published version. Checked with `satisfiesTemplateRange`
-  (`src/core/internal/semver-range.js`), a deliberately narrow SemVer-range
-  engine: only exact versions and caret ranges are supported, nothing else.
+- **`templateRange`** — an exact version or caret range (contract `4.1.0`
+  requires `^4.4.0`) admitting this renderer's own published version. Checked
+  with `satisfiesTemplateRange` (`src/core/internal/semver-range.js`), a
+  deliberately narrow SemVer-range engine: only exact versions and caret ranges
+  are supported, nothing else.
 - **`assets[]`** — one row per file the theme ships, stylesheet or passive asset
   alike, each with its own `mediaType`, `byteLength` and `sha256`. Every value
   here is verified against the bytes actually read

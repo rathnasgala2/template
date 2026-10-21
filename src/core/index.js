@@ -24,11 +24,12 @@
  * point: the upstream normalization step a `build-input:2.0.0` producer
  * (`publish-kernel`/`publish-action`) calls once per authored Markdown
  * source to produce the exact `renderableBody.body`/`bodyDigest` pair this
- * renderer expects to receive. `renderPublication` never calls it itself —
- * see `internal/content-security.js`'s module documentation for why a
- * `renderableBody.body` is already policy-conformant HTML by the time it
- * reaches this renderer, and how `renderPublication` verifies that instead
- * of re-deriving it.
+ * renderer expects to receive. `renderPublication` never calls it on a body
+ * it receives — see `internal/content-security.js`'s module documentation for
+ * why a `renderableBody.body` is already policy-conformant HTML by the time
+ * it reaches this renderer, and how `renderPublication` verifies that instead
+ * of re-deriving it. Its one call is on the shipped default policy Markdown
+ * (`internal/policy-pages.js`), which is source, not a received body.
  *
  * `options.sourceDirectory` is the caller-mounted, read-only repository
  * source tree `build-input`'s `resolvedFile` references point into.
@@ -106,7 +107,10 @@ import {
   validateAnalyticsModule,
 } from './internal/analytics/module.js';
 import { resolveEditions } from './internal/editions.js';
-import { assertPolicyRoutesFree } from './internal/policy-pages.js';
+import {
+  assertPolicyRoutesFree,
+  validatePolicies,
+} from './internal/policy-pages.js';
 import { renderPagesWithEleventy } from './internal/eleventy-render.js';
 import {
   INTERACTIONS_SCRIPT_MEDIA_TYPE,
@@ -283,7 +287,7 @@ function assertOptions(options) {
 
 /**
  * Verify every `renderableBody.renderPolicy` in the publication profile,
- * footer card and every content record byte-equals the currently published
+ * footer card, policy pages and every content record byte-equals the currently published
  * render-policy identity, and that no module or placement value leaked
  * through (belt-and-suspenders on top of the `build-input` schema's module
  * closure: only a valid `interactions` module is admitted, `placements` stays
@@ -342,6 +346,15 @@ async function assertRenderPolicyCompliance(validatedInput) {
       body.bodyDigest,
       'publication.footerCard.body',
     );
+  }
+  if (validatedInput.policies !== undefined) {
+    const policies = validatePolicies(validatedInput.policies);
+    for (const key of /** @type {const} */ (['terms', 'privacy'])) {
+      const { body } = policies[key];
+      const location = `policies.${key}.body`;
+      assertRenderPolicyIdentity(body.renderPolicy, identity, location);
+      assertPolicyConformantHtml(body.body, body.bodyDigest, location);
+    }
   }
   for (const record of validatedInput.content) {
     const location = `content[${record.frontmatter.id}]`;

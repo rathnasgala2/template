@@ -94,8 +94,8 @@ export async function loadCanonicalBuildInput() {
 
 /**
  * Overwrite every `renderableBody.renderPolicy`/`bodyDigest` in a
- * build-input-shaped fixture (publication profile, footer card, every
- * content record) with the currently published render-policy identity and
+ * build-input-shaped fixture (publication profile, footer card, policy pages,
+ * every content record) with the currently published render-policy identity and
  * a `bodyDigest` matching that record's own existing `body` text.
  *
  * The upstream `@rathnasgala2/schemas` fixture corpus uses the same
@@ -130,6 +130,12 @@ export async function applyCurrentRenderPolicy(buildInput) {
     publication.footerCard.body.bodyDigest = computeBodyDigest(
       publication.footerCard.body.body,
     );
+  }
+  for (const page of Object.values(
+    /** @type {any} */ (buildInput).policies ?? {},
+  )) {
+    page.body.renderPolicy = { ...identity };
+    page.body.bodyDigest = computeBodyDigest(page.body.body);
   }
   for (const record of /** @type {any[]} */ (buildInput).content ?? []) {
     record.renderPolicy = { ...identity };

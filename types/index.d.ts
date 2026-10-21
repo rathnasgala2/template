@@ -258,6 +258,18 @@ export interface AnalyticsModule {
   config: AnalyticsConfig;
 }
 
+/** A `policyPageNormalized`-shaped page: its title and rendered body. */
+export interface PolicyPageNormalized {
+  title: string;
+  body: RenderableBody;
+}
+
+/** `build-input.policies` (schemas 3.16.0): the site's own Terms and Privacy text. */
+export interface PoliciesNormalized {
+  terms: PolicyPageNormalized;
+  privacy: PolicyPageNormalized;
+}
+
 export interface NormalizedBuildInput {
   schemaId: string;
   schemaVersion: string;
@@ -285,6 +297,7 @@ export interface NormalizedBuildInput {
     interactions?: InteractionsModule;
     analytics?: AnalyticsModule;
   };
+  policies?: PoliciesNormalized;
   buildEpoch: string;
   baseUrl: string;
   basePath: string;

@@ -172,15 +172,17 @@ distinct public entry points:
   `renderableBody.body` it receives — re-parsing already-rendered HTML under
   `html:false` would double-escape every tag (`<p>` becoming `&lt;p&gt;`).
   Instead it verifies, before any directory is created: every
-  `renderableBody.renderPolicy` (publication profile, footer card, every content
-  record) byte-equals
+  `renderableBody.renderPolicy` (publication profile, footer card, the policy
+  pages, every content record) byte-equals
   `SHA256(UTF8("GALA-RENDER-POLICY-V2\0") || <contract file bytes>)`; every
   `bodyDigest` byte-equals a plain SHA-256 of its `body` bytes; and
   re-sanitizing `body` reproduces it byte-for-byte (an idempotence check —
   genuinely policy-conformant output cannot change under its own sanitizer). Any
   mismatch, or a non-empty `modules`/`placements` value, fails closed with
   `RenderPolicyViolationError` before anything is written. A verified body is
-  then inserted into the page verbatim.
+  then inserted into the page verbatim. The one Markdown the renderer renders
+  itself is the shipped default policy text (see Policy pages): Markdown source
+  from the schemas package, not a received body.
 
 `contracts/render-policy.jcs` is the real, closed sanitizer/parser catalog
 (name, version, CSP baseline, markdown-it options, sanitizer allowlist,
@@ -255,14 +257,14 @@ output-security pipeline every generated page still passes through:
   direct route, never through a generated listing), `tag`/`series` (one listing
   page per distinct authored value, plus a `/tags`/`/series` root page linking
   to each), and `archive` (one listing page per UTC calendar year, plus a
-  `/archive` root page), and `policy` (the generated `/terms` and `/privacy`
-  pages, in the sitemap but not the search index, feeds or `llms` documents; a
-  document or redirect on either route fails with `POLICY_ROUTE_CONFLICT`). The
-  `error` page kind (`renderErrorPageBody`) is exported as a pure function for
-  the `404.html` caller (see below), not wired into any generated route here.
-  Listing page size (10), sort tie-break, and the tag/series/archive root pages
-  are documented scoped decisions this renderer's own governing brief does not
-  fix verbatim.
+  `/archive` root page), and `policy` (the `/terms` and `/privacy` pages: the
+  site's own text, then the Galascribe section; in the sitemap but not the
+  search index, feeds or `llms` documents; a document or redirect on either
+  route fails with `POLICY_ROUTE_CONFLICT`). The `error` page kind
+  (`renderErrorPageBody`) is exported as a pure function for the `404.html`
+  caller (see below), not wired into any generated route here. Listing page size
+  (10), sort tie-break, and the tag/series/archive root pages are documented
+  scoped decisions this renderer's own governing brief does not fix verbatim.
 - **`src/core/internal/messages.js`** is the message catalog every user-visible
   chrome string above is looked up from (never an inline literal), keyed by
   BCP-47 tag with a fixed `en` fallback — the only catalog S2 authors;
@@ -699,10 +701,10 @@ npm run workflows:drift     # fail if workflow files diverge from their own base
 npm run audit               # npm audit --audit-level=high
 ```
 
-Source development does not require a sibling schema checkout. The exact
-`@rathnasgala2/schemas@3.12.0` release is installed from the npm registry, and
-the lockfile carries its registry integrity. The exact peer is the public
-consumer contract.
+Source development does not require a sibling schema checkout. The lockfile pins
+a `@rathnasgala2/schemas` release installed from the npm registry (3.12.0 until
+3.16.0 is published; see "Consuming `@rathnasgala2/schemas`") and carries its
+registry integrity. The exact peer is the public consumer contract.
 
 ## Package layout
 
@@ -726,36 +728,70 @@ Analytics 4 with an opt-in policy) adds, under `src/core/internal/analytics/`, a
 consent banner after the footer of every HTML page, a "Privacy choices" button
 in the footer legal navigation, `assets/gala-consent-v1.js` (deferred; no eval,
 no cookie; the choice is kept in `localStorage` as `gala.consent.v1`), the
-provider's CSP sources and a Privacy page paragraph. Nothing from the provider
-loads before the reader accepts, and a site without the module is unchanged.
-Whitelabel is not a module either: the footer's "Made with Galascribe" link is a
-core appearance switch, `build-input.appearance.attribution`
-(`showMadeWith: false` omits the line; absent or `true` shows it). Nor are
-editions: they are a rendered content kind (see Editions).
+provider's CSP sources and the analytics paragraph of the policy pages'
+Galascribe section. Nothing from the provider loads before the reader accepts,
+and a site without the module is unchanged. A browser that sends the Global
+Privacy Control signal (`navigator.globalPrivacyControl === true`) with no
+stored choice is treated as declining, without storing anything and without the
+banner on load; the footer's "Privacy choices" button still opens it, and
+`gala:consent` carries `{analytics: false, source: 'gpc'}`. Whitelabel is not a
+module either: the footer's "Made with Galascribe" link is a core appearance
+switch, `build-input.appearance.attribution` (`showMadeWith: false` omits the
+line; absent or `true` shows it). Nor are editions: they are a rendered content
+kind (see Editions).
 
 ## Policy pages
 
-Every site carries two generated legal pages, `/terms` and `/privacy` (page kind
-`policy`): short, template-owned English pages that incorporate Galascribe's
-Terms of Service and Privacy Policy. They are indexable, in the sitemap, and
-never in the search index, the feeds or the `llms` documents. A content record
-or redirect that uses either route (compared without a trailing slash and
-ignoring letter case) fails the build closed with `POLICY_ROUTE_CONFLICT`;
-rename or move the document.
+Every site carries two legal pages, `/terms` and `/privacy` (page kind
+`policy`). Each is the site's own text followed by the template-owned
+"Galascribe" section. They are indexable, in the sitemap, and never in the
+search index, the feeds or the `llms` documents.
+
+- **The site's own text** is `build-input.policies` when present (schemas
+  3.16.0): `{terms: {title, body}, privacy: {title, body}}`, each `body` a
+  `renderableBody` produced upstream. The `title` is the page title and its one
+  `<h1>`, and the `body` is placed as an article or page body is, with a leading
+  `<h1>` that repeats the title dropped. It is verified like every other body
+  before anything is written: its `renderPolicy` must equal the published
+  identity, its `bodyDigest` the digest of its bytes, and re-sanitizing it must
+  reproduce it (`RenderPolicyViolationError` otherwise). An image in a policy
+  body never resolves (`MEDIA_REFERENCE_UNRESOLVED`). When `policies` is absent
+  the text is the English default the schemas package publishes as
+  `@rathnasgala2/schemas/site-policy-defaults`
+  (`{terms: {title, markdown}, privacy: {title, markdown}}`), rendered through
+  this package's own `normalizeAuthoredMarkdown`. The renderer carries no copy
+  of that text.
+- **The Galascribe section** is hardcoded English and the author's text never
+  replaces it. Every fact in it comes from the build input: that the site is
+  published with Galascribe (Rathnas LLC) and that Galascribe's Terms of Service
+  and Privacy Policy (`https://galascribe.com/terms`, `/privacy`) apply and are
+  incorporated; with reactions or comments on, that Galascribe provides them,
+  processes what readers submit and keeps a reader session in browser storage;
+  with `modules.analytics`, the provider, that consent is required, the `_ga`
+  and `_ga_*` cookies, the `gala.consent.v1` storage key, the "Privacy choices"
+  footer control and the Global Privacy Control behaviour, otherwise that no
+  analytics or advertising trackers load; and the contact for Galascribe,
+  `support@galascribe.com`.
+
+A content record or redirect that uses either route (compared without a trailing
+slash and ignoring letter case) fails the build closed with
+`POLICY_ROUTE_CONFLICT`; rename or move the document.
 
 ## Consuming `@rathnasgala2/schemas`
 
 This source targets `@rathnasgala2/schemas@3.16.0` with a `^3.16.0` peer range
-(any 3.x from 3.16.0; 3.16.0 adds `modules.analytics`); the lock still installs
-3.12.0 exactly. Generation-4 development verifies against the schema
-sibling/packed candidate. The historical `package-lock.json` is not a 3.12.0
-registry claim: it must be regenerated, together with the SBOM, from the
-authoritative published 3.12.0 artifact before release. The 2.8.0->2.11.0
-convergence changes none of the four roots this renderer validates, for the same
-reason the 2.7.0-2.8.0 delta below did not. Only the `"."` export
-(`validateGalaDocument`, `GALA_SCHEMA_IDS`) is consumed; the 2.6.0
-`./runtime-origins` narrow export and every other addition through 2.6.1 (new
-OpenAPI operations, App route/catalog copy, the
+(any 3.x from 3.16.0; 3.16.0 adds `modules.analytics`, `build-input.policies`
+and the `site-policy-defaults` export, and its `theme-contract` admits styling
+contract 4.1.0); the lock still installs 3.12.0 exactly. Generation-4
+development verifies against the schema sibling/packed candidate. The historical
+`package-lock.json` is not a 3.16.0 registry claim: it must be regenerated,
+together with the SBOM, from the authoritative published 3.16.0 artifact before
+release. The 2.8.0->2.11.0 convergence changes none of the four roots this
+renderer validates, for the same reason the 2.7.0-2.8.0 delta below did not.
+Only the `"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) and, since
+4.4.0, the `./site-policy-defaults` export (the default policy text) are
+consumed; the 2.6.0 `./runtime-origins` narrow export and every other addition
+through 2.6.1 (new OpenAPI operations, App route/catalog copy, the
 `PrincipalSummary`/`AuthenticatorSummary`/keyset field additions) are
 App/API-surface changes this renderer does not read. The `"."` export's 2.2.2
 browser-safety refactor (Node builtins replaced with browser-safe equivalents

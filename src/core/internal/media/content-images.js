@@ -139,9 +139,10 @@ function inventoryOf(media) {
 
 /**
  * Every body this renderer renders, with the image assets each may
- * reference: the publication profile, the footer card when enabled, and
- * every content record. The profile and footer card have no media inventory
- * of their own, so an image in either never resolves.
+ * reference: the publication profile, the footer card when enabled, the two
+ * policy pages when authored, and every content record. The profile, footer
+ * card and policy pages have no media inventory of their own, so an image in
+ * any of them never resolves.
  *
  * @param {import('../../../../types/index.d.ts').NormalizedBuildInput} buildInput
  *   the validated build input
@@ -166,6 +167,17 @@ function bodyScopes(buildInput) {
       body: footerCard.body.body,
       inventory: new Map(),
     });
+  }
+  for (const key of /** @type {const} */ (['terms', 'privacy'])) {
+    const page = buildInput.policies?.[key];
+    if (page) {
+      scopes.push({
+        pointer: `/policies/${key}/body/body`,
+        sourcePath: page.body.sourcePath,
+        body: page.body.body,
+        inventory: new Map(),
+      });
+    }
   }
   buildInput.content.forEach((record, index) => {
     scopes.push({

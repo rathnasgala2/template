@@ -44,8 +44,11 @@ named `gala`, or any `interactions`/`whitelabel`/`newsletter`/`prism` module
 boundary (the attribution switch above stays a core appearance setting). Reader
 consent and analytics are a core privacy setting in the same way:
 `build-input.modules.analytics` is handled under `src/core/internal/analytics/`
-(banner, footer button, consent script, provider CSP sources, Privacy page
-paragraph), never in a new `src/modules/` tree.
+(banner, footer button, consent script, provider CSP sources, the analytics
+paragraph of the policy pages' Galascribe section), never in a new
+`src/modules/` tree. The Terms and Privacy pages
+(`src/core/internal/policy-pages.js`) are core for the same reason: the site's
+own text plus a template-owned, non-editable Galascribe section.
 
 ## Contract sources and generation commands
 
@@ -53,13 +56,15 @@ This source targets `@rathnasgala2/schemas@3.16.0`; the peer range is `^3.16.0`.
 Generation-4 development verifies against the schema sibling/packed candidate;
 the release lock remains intentionally unchanged (it still pins 3.12.0) until
 3.16.0 is published and must be regenerated from that authoritative artifact
-before release. It owns two of its own published contracts,
-`contracts/render-policy.jcs` and `contracts/theme-styling-contract.jcs`,
-emitted as compact RFC 8785 JCS by `npm run contracts:generate` and
-drift-checked by `npm run contracts:check`. `contracts/render-policy.jcs` is
-S2-T04's real, closed sanitizer/parser catalog, generated from
-`src/core/internal/render-policy-content.js` (the single source of truth both
-the published contract and the runtime output-security pipeline in
+before release. Template 4.4.0 publishes styling contract 4.1.0
+(`TEMPLATE_STYLING_CONTRACT_VERSION`; its `templateVersion` is 4.4.0, and
+schemas 3.16.0's `theme-contract` admits it with `templateRange` `^4.4.0`). It
+owns two of its own published contracts, `contracts/render-policy.jcs` and
+`contracts/theme-styling-contract.jcs`, emitted as compact RFC 8785 JCS by
+`npm run contracts:generate` and drift-checked by `npm run contracts:check`.
+`contracts/render-policy.jcs` is S2-T04's real, closed sanitizer/parser catalog,
+generated from `src/core/internal/render-policy-content.js` (the single source
+of truth both the published contract and the runtime output-security pipeline in
 `src/core/internal/content-security.js` read from);
 `contracts/theme-styling-contract.jcs` is S2-T12's real, closed
 `templateStylingContract` catalog (DEC-097 section 4), generated from
@@ -101,12 +106,16 @@ inside a validated `build-input:2.0.0` instance is already the render policy's
 markdown-it/sanitize-html/highlighter output, produced once upstream by
 `publish-kernel`/`publish-action`. `normalizeAuthoredMarkdown` (exported from
 `src/core/index.js`) is that upstream normalization step; `renderPublication`
-itself never calls it and never runs markdown-it on a `body` it receives — it
-only verifies `bodyDigest` and re-sanitization idempotence
+itself never calls it on, and never runs markdown-it on, a `body` it receives —
+it only verifies `bodyDigest` and re-sanitization idempotence
 (`assertPolicyConformantHtml` in `src/core/internal/content-security.js`) before
-inserting the body verbatim. Do not reintroduce a markdown-it call inside the
-`renderPublication` code path; that would double-escape every already-rendered
-tag.
+inserting the body verbatim. That includes `build-input.policies` bodies, which
+are verified exactly like content bodies. The one exception is the shipped
+default policy text: when `policies` is absent, `internal/policy-pages.js`
+renders `@rathnasgala2/schemas/site-policy-defaults` (Markdown source, not a
+received body) with `normalizeAuthoredMarkdown`. Do not add any other
+markdown-it call inside the `renderPublication` code path; that would
+double-escape every already-rendered tag.
 
 **Content images:** every body `<img src>` must resolve, by the one rule in
 `src/core/internal/media/content-images.js`, to an image entry in its document's

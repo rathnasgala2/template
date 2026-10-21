@@ -1,8 +1,8 @@
 /**
- * Shared shape checks for `build-input.modules.*` validation
- * (`interactions.js`, `analytics/module.js`): exact-key objects, booleans and
- * origins. Each module re-checks its own enums and patterns because this
- * renderer fails closed on its own.
+ * Shared shape checks for `build-input.modules.*` and `build-input.policies`
+ * validation (`interactions.js`, `analytics/module.js`, `policy-pages.js`):
+ * exact-key objects, booleans, origins and bounded text. Each caller re-checks
+ * its own enums and patterns because this renderer fails closed on its own.
  */
 
 import { RenderPolicyViolationError } from '../errors.js';
@@ -78,6 +78,29 @@ export function origin(value, where) {
   ) {
     throw new RenderPolicyViolationError(
       `${where} must be an https origin (or an http localhost origin) with no path`,
+    );
+  }
+  return value;
+}
+
+/**
+ * A string of one to `maximum` grapheme clusters.
+ *
+ * @param {unknown} value candidate
+ * @param {number} maximum the most grapheme clusters allowed
+ * @param {string} where location for the message
+ * @returns {string} the text
+ */
+export function boundedText(value, maximum, where) {
+  if (typeof value !== 'string') {
+    throw new RenderPolicyViolationError(`${where} must be a string`);
+  }
+  const length = Array.from(
+    new Intl.Segmenter('en', { granularity: 'grapheme' }).segment(value),
+  ).length;
+  if (length < 1 || length > maximum) {
+    throw new RenderPolicyViolationError(
+      `${where} must be 1 to ${maximum} characters`,
     );
   }
   return value;

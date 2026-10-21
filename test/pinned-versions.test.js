@@ -3,6 +3,12 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { test } from 'node:test';
 
+import { TEMPLATE_PACKAGE_VERSION } from '../src/core/index.js';
+import {
+  TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION,
+  TEMPLATE_STYLING_CONTRACT_VERSION,
+} from '../src/core/internal/appearance/styling-contract.js';
+
 const REPO_ROOT = path.resolve(import.meta.dirname, '..');
 
 const EXACT_PINS = {
@@ -70,4 +76,13 @@ test('package.json declares only the documented default-free entry point', async
   );
   assert.equal(packageJson.exports['.'].import, './src/core/index.js');
   assert.equal(packageJson.type, 'module');
+});
+
+test('the renderer version constants equal package.json, and the styling contract names this release', async () => {
+  const packageJson = JSON.parse(
+    await readFile(path.join(REPO_ROOT, 'package.json'), 'utf8'),
+  );
+  assert.equal(TEMPLATE_PACKAGE_VERSION, packageJson.version);
+  assert.equal(TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION, packageJson.version);
+  assert.equal(TEMPLATE_STYLING_CONTRACT_VERSION, '4.1.0');
 });

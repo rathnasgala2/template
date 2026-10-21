@@ -18,14 +18,16 @@ import {
 
 test('C. module absence: every empty-modules-placements S2 fixture case behaves exactly as its expectedDiagnostics say', async () => {
   const family = await loadS2FixtureFamily('empty-modules-placements');
-  assert.equal(family.cases.length, 5);
-  assert.ok(
-    family.cases.some(
-      (fixtureCase) =>
-        fixtureCase.caseId === 'build-input-valid-interactions-module',
-    ),
-    'fixture corpus must carry the valid interactions-module case',
-  );
+  assert.equal(family.cases.length, 6);
+  for (const caseId of [
+    'build-input-valid-interactions-module',
+    'build-input-valid-policies',
+  ]) {
+    assert.ok(
+      family.cases.some((fixtureCase) => fixtureCase.caseId === caseId),
+      `fixture corpus must carry the ${caseId} case`,
+    );
+  }
 
   for (const fixtureCase of family.cases) {
     if (fixtureCase.schemaId !== 'urn:gala:schema:build-input:2.0.0') continue;

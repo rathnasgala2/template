@@ -7,7 +7,9 @@
  * `{"version":1,"analytics":true|false,"at":"<ISO>"}`; every storage access is
  * guarded, so unavailable storage simply means "no stored choice".
  *
- * Nothing from the provider is requested before the reader accepts. The
+ * Nothing from the provider is requested before the reader accepts. A Global
+ * Privacy Control signal with no stored choice is treated as a decline that is
+ * not stored (no banner on load; `gala:consent` carries `source: 'gpc'`). The
  * per-kind loader table (`PROVIDERS`) is the only provider-specific code, so a
  * second provider is one entry there and one in `providers.js`.
  */
@@ -105,8 +107,18 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
     } catch (error) {}
   }
 
-  function announce(analytics) {
-    document.dispatchEvent(new CustomEvent('gala:consent', { detail: { analytics: analytics } }));
+  // The browser's Global Privacy Control signal: a decline that is never stored.
+  function gpcSignalled() {
+    try {
+      return window.navigator.globalPrivacyControl === true;
+    } catch (error) {}
+    return false;
+  }
+
+  function announce(analytics, source) {
+    var detail = { analytics: analytics };
+    if (source) detail.source = source;
+    document.dispatchEvent(new CustomEvent('gala:consent', { detail: detail }));
   }
 
   function start() {
@@ -160,7 +172,11 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
 
     var stored = readChoice();
     if (!stored) {
-      show();
+      // With no stored choice, a Global Privacy Control signal counts as a
+      // decline: nothing loads, nothing is stored and the banner stays hidden
+      // on load. The footer button still opens it, so the reader can accept.
+      if (gpcSignalled()) announce(false, 'gpc');
+      else show();
       return;
     }
     if (stored.analytics) enable();

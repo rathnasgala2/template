@@ -27,7 +27,7 @@ import {
 } from './helpers/render-fixtures.js';
 import { loadCanonicalBuildInput } from './helpers/schema-fixtures.js';
 
-test('contract 4.0.0 publishes the closed five-member pseudo-class catalog', () => {
+test('contract 4.1.0 publishes the closed five-member pseudo-class catalog', () => {
   const contract = buildTemplateStylingContract();
   assert.deepEqual(contract.pseudoClasses, [...PSEUDO_CLASSES]);
   assert.deepEqual(
@@ -37,7 +37,7 @@ test('contract 4.0.0 publishes the closed five-member pseudo-class catalog', () 
   assert.deepEqual(contract.composition.functionalPseudoKeywordArguments, [
     ...FUNCTIONAL_PSEUDO_KEYWORD_ARGUMENTS,
   ]);
-  assert.equal(contract.contractVersion, '4.0.0');
+  assert.equal(contract.contractVersion, '4.1.0');
 });
 
 test('the gala-base stylesheet source declares the fixed layer order as its own first line', () => {

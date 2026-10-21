@@ -8,17 +8,43 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.4.0] - 2026-10-20
+
 ### Added
 
-- Generated policy pages: every site now carries `/terms` and `/privacy` (page
-  kind `policy`), short English pages that incorporate Galascribe's Terms of
-  Service and Privacy Policy. They are indexable and in the sitemap, and stay
-  out of the search index, the feeds and `llms.txt`/`llms-full.txt`.
+- Legal pages: every site carries `/terms` and `/privacy` (page kind `policy`).
+  Each is the site's own text followed by a template-owned "Galascribe" section
+  that the author's text never replaces. The pages are indexable and in the
+  sitemap, and stay out of the search index, the feeds and
+  `llms.txt`/`llms-full.txt`.
+- `build-input.policies` (optional; schemas 3.16.0):
+  `{terms: {title, body}, privacy: {title, body}}`, each `body` a
+  `renderableBody`. The `title` is the page title and its one `<h1>`; the `body`
+  is placed the way an article or page body is, with a leading `<h1>` that
+  repeats the title dropped. Each body is verified like every other body before
+  anything is written (`renderPolicy` identity, `bodyDigest`, re-sanitization
+  idempotence; `RenderPolicyViolationError`), and an image in one fails the
+  build closed (`MEDIA_REFERENCE_UNRESOLVED`). `policies` is validated in the
+  module style (`validatePolicies`, built on `internal/module-shape.js`).
+- Default policy text: when `policies` is absent the pages carry the English
+  default the schemas package publishes as
+  `@rathnasgala2/schemas/site-policy-defaults`
+  (`{terms: {title, markdown}, privacy: {title, markdown}}`), rendered through
+  this package's own `normalizeAuthoredMarkdown`. The renderer carries no copy
+  of the text.
+- The Galascribe section, computed from the build input: the site is published
+  with Galascribe (Rathnas LLC) and Galascribe's Terms of Service and Privacy
+  Policy (`https://galascribe.com/terms`, `/privacy`) apply and are
+  incorporated; with reactions or comments on, that Galascribe provides them and
+  processes what readers submit; with `modules.analytics`, the provider, that
+  consent is required, the `_ga`/`_ga_*` cookies, the `gala.consent.v1` storage
+  key, the "Privacy choices" control and the Global Privacy Control behaviour,
+  otherwise that no analytics or advertising trackers load; and
+  `support@galascribe.com` for Galascribe questions.
 - A legal footer navigation (`nav.g-footer-legal`, `aria-label="Legal"`) with
   Terms, Privacy and, unless `appearance.attribution.showMadeWith` is `false`, a
   "Made with Galascribe" link to galascribe.com carrying a referral `utm_source`
   set to the site's host.
-
 - Reader consent and the first gated tracker. A build input carrying
   `modules.analytics` (schemas 3.16.0: `provider.kind` `google-analytics-4`,
   `measurementId` `G-XXXX`, `consent.policy` `opt-in`) renders a consent banner
@@ -32,31 +58,42 @@ and this project adheres to
   `_ga_*` cookies (best effort) and reloads the page so no loaded script keeps
   sending; a cancelable `gala:reload` event on `document` precedes the reload.
   `anonymize_ip` is not sent (it does nothing in GA4). The banner takes focus
-  when shown and focus returns to "Privacy choices" when it closes. The Privacy
-  page gains a paragraph naming the provider, the `_ga`/`_ga_*` cookies and the
-  `localStorage` key, and its storage line no longer says "only". A site without
-  the module renders byte-identically to before. Everything lives under
+  when shown and focus returns to "Privacy choices" when it closes. A site
+  without the module renders byte-identically to before. Everything lives under
   `src/core/internal/analytics/`; no `src/modules/` tree is added.
+- Global Privacy Control: when `navigator.globalPrivacyControl === true` and no
+  choice is stored, the consent script treats the reader as declined without
+  storing anything and does not show the banner on load. Nothing loads, the
+  footer's "Privacy choices" button still opens the banner, and `gala:consent`
+  is dispatched with `{analytics: false, source: 'gpc'}`. A stored choice
+  outranks the signal.
 - The shared module-shape helpers (`exactObject`, `boolean`, `origin`) move from
-  `interactions.js` to `internal/module-shape.js`.
+  `interactions.js` to `internal/module-shape.js`, which gains `boundedText`.
 
 ### Changed
 
+- The styling contract is now 4.1.0 (template version 4.4.0): it publishes the
+  hooks added since 4.0.0, the `g-footer-legal` component hook, the `policy`
+  page-kind hook and six `consent` component hooks (`g-consent`,
+  `g-consent-text`, `g-consent-actions`, `g-consent-accept`,
+  `g-consent-decline`, `g-consent-open`); additive, 225 public hooks. The
+  contract digest changes, so themes are rebuilt against it, declare
+  `contractVersion` `4.1.0` and `templateRange` `^4.4.0`, and schemas 3.16.0's
+  `theme-contract` admits exactly that pairing.
 - With `modules.analytics` on, the CSP meta adds the provider's sources to
   `script-src`, `connect-src` and `img-src` (sorted bytewise); the baseline, the
   complete policy and `contracts/render-policy.jcs` are unchanged.
-- The styling contract gains six `consent` component hooks (`g-consent`,
-  `g-consent-text`, `g-consent-actions`, `g-consent-accept`,
-  `g-consent-decline`, `g-consent-open`; additive, 225 public hooks).
 - Targets schemas 3.16.0 (peer range `^3.16.0`).
-- The styling contract gains the `g-footer-legal` component hook and the
-  `policy` page-kind hook (additive; 219 public hooks). Its version stays 4.0.0
-  because the schemas package's `theme-contract` schema admits only that
-  `contractVersion`.
 - New build finding `POLICY_ROUTE_CONFLICT`: a document or redirect on `/terms`
   or `/privacy` fails the build closed.
 - The "Made with Galascribe" attribution is now a link inside the legal
   navigation rather than a bare `<span>`.
+
+### Fixed
+
+- `TEMPLATE_PACKAGE_VERSION`, the renderer version that theme `templateRange`
+  admission checks, had stayed at 4.1.0 since that release; it now equals
+  `package.json`'s `version` and `test/pinned-versions.test.js` keeps it so.
 
 ## [4.3.0] - 2026-10-13
 

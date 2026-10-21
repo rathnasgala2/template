@@ -25,9 +25,13 @@ const LOADER = ANALYTICS_PROVIDERS['google-analytics-4'].loaderUrl(ID);
  * @param {object} [options] setup options
  * @param {string} [options.stored] a raw stored value
  * @param {boolean} [options.throwingStorage] make `localStorage` throw
+ * @param {unknown} [options.gpc] the value `navigator.globalPrivacyControl`
+ *   carries (the property is absent when omitted)
+ * @param {any[]} [options.events] collects every `gala:consent` detail,
+ *   including the one the script dispatches while it starts
  * @returns {Promise<import('jsdom').DOMWindow>} the window with the script run
  */
-async function run({ stored, throwingStorage = false } = {}) {
+async function run({ stored, throwingStorage = false, gpc, events } = {}) {
   const messages = getMessages('en');
   const banner = renderConsentBanner({
     module: /** @type {any} */ ({
@@ -55,6 +59,19 @@ async function run({ stored, throwingStorage = false } = {}) {
     });
   } else if (stored !== undefined) {
     window.localStorage.setItem(CONSENT_STORAGE_KEY, stored);
+  }
+  if (gpc !== undefined) {
+    Object.defineProperty(window.navigator, 'globalPrivacyControl', {
+      value: gpc,
+      configurable: true,
+    });
+  }
+  if (events) {
+    window.document.addEventListener('gala:consent', (event) =>
+      events.push(
+        JSON.parse(JSON.stringify(/** @type {any} */ (event).detail)),
+      ),
+    );
   }
   window.eval(CONSENT_SCRIPT_SOURCE);
   return window;
@@ -324,4 +341,97 @@ test('hiding leaves focus alone when there is no visible opener', async () => {
   other.focus();
   click(window, '.g-consent-decline');
   assert.equal(document.activeElement, other);
+});
+
+/**
+ * @param {boolean} analytics the stored choice
+ * @returns {string} the raw value `gala.consent.v1` holds
+ */
+function storedChoice(analytics) {
+  return JSON.stringify({
+    version: 1,
+    analytics,
+    at: '2026-01-01T00:00:00.000Z',
+  });
+}
+
+test('Global Privacy Control with no stored choice declines without storing and without the banner', async () => {
+  /** @type {any[]} */
+  const events = [];
+  const window = await run({ gpc: true, events });
+  assert.equal(bannerOf(window).hasAttribute('hidden'), true);
+  assert.deepEqual(loaders(window), []);
+  assert.equal(/** @type {any} */ (window).dataLayer, undefined);
+  assert.equal(window.localStorage.getItem(CONSENT_STORAGE_KEY), null);
+  assert.deepEqual(events, [{ analytics: false, source: 'gpc' }]);
+  // The footer button is still offered.
+  assert.equal(
+    window.document.querySelector('.g-consent-open')?.hasAttribute('hidden'),
+    false,
+  );
+});
+
+test('under Global Privacy Control the footer button opens the banner and an accept still loads and stores', async () => {
+  /** @type {any[]} */
+  const events = [];
+  const window = await run({ gpc: true, events });
+  click(window, '.g-consent-open');
+  assert.equal(bannerOf(window).hasAttribute('hidden'), false);
+  assert.deepEqual(loaders(window), []);
+  click(window, '.g-consent-accept');
+  assert.equal(bannerOf(window).hasAttribute('hidden'), true);
+  assert.deepEqual(loaders(window), [LOADER]);
+  assert.equal(
+    JSON.parse(
+      /** @type {string} */ (window.localStorage.getItem(CONSENT_STORAGE_KEY)),
+    ).analytics,
+    true,
+  );
+  assert.deepEqual(events, [
+    { analytics: false, source: 'gpc' },
+    { analytics: true },
+  ]);
+});
+
+test('a stored choice outranks Global Privacy Control', async () => {
+  /** @type {any[]} */
+  const acceptedEvents = [];
+  const accepted = await run({
+    gpc: true,
+    stored: storedChoice(true),
+    events: acceptedEvents,
+  });
+  assert.equal(bannerOf(accepted).hasAttribute('hidden'), true);
+  assert.deepEqual(loaders(accepted), [LOADER]);
+  assert.deepEqual(acceptedEvents, [{ analytics: true }]);
+  /** @type {any[]} */
+  const declinedEvents = [];
+  const declined = await run({
+    gpc: true,
+    stored: storedChoice(false),
+    events: declinedEvents,
+  });
+  assert.equal(bannerOf(declined).hasAttribute('hidden'), true);
+  assert.deepEqual(loaders(declined), []);
+  assert.deepEqual(declinedEvents, [{ analytics: false }]);
+});
+
+test('only a Global Privacy Control value of exactly true counts', async () => {
+  for (const gpc of [false, 'true', 1, null, undefined]) {
+    /** @type {any[]} */
+    const events = [];
+    const window = await run({ gpc, events });
+    assert.equal(bannerOf(window).hasAttribute('hidden'), false, String(gpc));
+    assert.deepEqual(loaders(window), [], String(gpc));
+    assert.deepEqual(events, [], String(gpc));
+  }
+});
+
+test('Global Privacy Control with unavailable storage declines quietly', async () => {
+  /** @type {any[]} */
+  const events = [];
+  const window = await run({ gpc: true, throwingStorage: true, events });
+  assert.equal(bannerOf(window).hasAttribute('hidden'), true);
+  assert.deepEqual(loaders(window), []);
+  assert.deepEqual(events, [{ analytics: false, source: 'gpc' }]);
 });
