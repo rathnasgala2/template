@@ -8,6 +8,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.4.2] - 2026-10-22
+
+### Security
+
+- Dependency refresh: `ip-address` updated to 10.7.4 for GHSA-rxp7-6hxx-x8q5.
+  The stale `sprintf-js` audit exception is dropped, and the SBOM and license
+  inventory are regenerated. No change to rendered output or the styling
+  contract.
+
 ## [4.4.1] - 2026-10-22
 
 ### Fixed
