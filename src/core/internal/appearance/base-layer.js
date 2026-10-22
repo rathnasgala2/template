@@ -792,7 +792,8 @@ export const GALA_BASE_COMPONENT_CSS = `
   /* One track per rendered column (1 to 4); the first is wider only when it holds the brand text. An empty profile column takes no track. */
   .g-footer-grid > .g-footer-col:has(> [data-gala-slot]:empty) { display: none; }
   .g-footer-grid:has(> .g-footer-brand:first-child) { grid-auto-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); }
-  .g-footer-brand { display: grid; gap: var(--gala-space-4); justify-items: start; align-content: start; }
+  .g-footer-brand { min-width: 0; display: grid; gap: var(--gala-space-4); justify-items: start; align-content: start; }
+  .g-footer-brand .g-brand { max-width: 100%; }
   .g-footer-about { color: var(--gala-color-text-muted); font-size: .9375rem; max-width: 26rem; }
   .g-social { display: flex; gap: var(--gala-space-1); margin-left: -.5rem; }
   .g-footer-col { display: grid; align-content: start; gap: .65rem; font-family: var(--gala-font-ui); font-size: .9rem; min-width: 0; }

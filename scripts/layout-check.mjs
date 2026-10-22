@@ -143,6 +143,12 @@ function measure() {
   };
   const out = {
     overflow: document.documentElement.scrollWidth - window.innerWidth,
+    wide: [...document.body.querySelectorAll('*')]
+      .filter(
+        (el) => el.getBoundingClientRect().right > window.innerWidth + 0.5,
+      )
+      .slice(0, 3)
+      .map((el) => el.tagName.toLowerCase() + '.' + el.className),
     header: null,
     footer: null,
     article: null,
@@ -210,7 +216,7 @@ const same = (a, b) => Math.abs(a - b) <= TOLERANCE;
 /**
  * Footer variants: the same site with fewer footer columns.
  *
- * @type {readonly {label: string, onlyHome: boolean, hasNav: boolean, mutate: (input: Record<string, any>) => void}[]}
+ * @type {readonly {label: string, onlyHome: boolean, hasNav: boolean, widen?: boolean, mutate: (input: Record<string, any>) => void}[]}
  */
 const VARIANTS = [
   { label: '', onlyHome: false, hasNav: true, mutate: () => {} },
@@ -218,6 +224,8 @@ const VARIANTS = [
     label: 'long brand, 7-item nav',
     onlyHome: true,
     hasNav: true,
+    // Wider text than any one platform's fonts, so every OS catches overflow.
+    widen: true,
     mutate: (input) => {
       input.publication.title = 'A Very Long Publication Name Of Forty';
       input.navigation.items = [
@@ -306,6 +314,8 @@ async function checkSite(browser, variant, report) {
         const context = await browser.newContext({
           viewport: { width: viewport.width, height: viewport.height },
           colorScheme: /** @type {'light' | 'dark'} */ (scheme),
+          // The injected widening style is the check's own, not the site's.
+          bypassCSP: Boolean(variant.widen),
         });
         for (const target of targets) {
           const tag = `${viewport.name} ${scheme} ${target.name}${variant.label ? ` (${variant.label})` : ''}`;
@@ -316,12 +326,17 @@ async function checkSite(browser, variant, report) {
           const page = await context.newPage();
           const url = `http://127.0.0.1:${port}/${target.file.replace(/index\.html$/, '')}`;
           await page.goto(url, { waitUntil: 'load' });
+          if (variant.widen)
+            await page.addStyleTag({
+              content:
+                '[data-gala-publication-root] * { letter-spacing: .06em !important; }',
+            });
           const m = await page.evaluate(measure);
           await page.close();
           report(
             m.overflow <= 0,
             `${tag} no horizontal overflow`,
-            `scrollWidth-innerWidth=${m.overflow}`,
+            `scrollWidth-innerWidth=${m.overflow}${m.overflow > 0 ? ` past-edge=${m.wide.join(' ')}` : ''}`,
           );
           const h = m.header;
           if (!h || !h.brand || !h.actions) {

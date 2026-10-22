@@ -22,6 +22,8 @@ and this project adheres to
   with three columns no longer leaves an empty fourth track. The first column is
   wider only when it holds the brand text; an empty profile column takes no
   track.
+- Footer: a long publication name no longer widens the footer past the viewport;
+  the name truncates inside its column.
 - Footer: the divider above the copyright line spans exactly the content box
   instead of overhanging it by the wrap's padding.
 - Article: the heading block, byline and body share one left edge at every
