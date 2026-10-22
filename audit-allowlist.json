@@ -12,18 +12,6 @@
     "expires": "2026-11-04"
   },
   {
-    "advisory": "GHSA-hp3w-g68c-fv3c",
-    "packages": [
-      "sprintf-js",
-      "argparse",
-      "js-yaml",
-      "gray-matter",
-      "@11ty/eleventy"
-    ],
-    "reason": "sprintf-js precision-specifier denial of service reached only through argparse, the command-line parser of js-yaml's own CLI; gray-matter and Eleventy call js-yaml as a library and never parse arguments, and the renderer runs in a network-disabled, time-bounded sandbox. npm's only proposed fix is a major downgrade of @11ty/eleventy to 0.6.0, which is not a fix. Revisit when gray-matter or js-yaml drop argparse 1.x.",
-    "expires": "2026-11-04"
-  },
-  {
     "advisory": "GHSA-r7fv-28h4-cvq7",
     "packages": ["markdown-it"],
     "reason": "markdown-it quadratic-time smartquotes on unmatched closing quotes. The renderer pins markdown-it with typographer set to false (MARKDOWN_IT_OPTIONS in render-policy-content), which leaves the smartquotes rule inactive, and it runs markdown-it only inside the network-disabled, time-bounded build on author content the intake already size-limits. The pinned 14.3.1 is part of the published render-policy identity (contracts/render-policy.jcs), so the upgrade is a render-policy revision, not a dependency bump. Revisit with the next render-policy revision, which moves markdown-it to 14.3.3 or later.",
