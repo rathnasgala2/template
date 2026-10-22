@@ -8,6 +8,42 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.4.1] - 2026-10-22
+
+### Fixed
+
+- Header: one row at every width, in reading order brand, primary navigation,
+  actions. The navigation now follows the brand (it no longer floats between the
+  brand and the actions), the actions sit at the inline end, and the navigation
+  moves into the menu at 760px and below. The markup order is the same for every
+  composition profile.
+- Footer: the grid has one track per rendered column (one to four), so a site
+  with three columns no longer leaves an empty fourth track. The first column is
+  wider only when it holds the brand text; an empty profile column takes no
+  track.
+- Footer: the divider above the copyright line spans exactly the content box
+  instead of overhanging it by the wrap's padding.
+- Article: the heading block, byline and body share one left edge at every
+  width, with or without the Contents rail.
+- A series of one part reads "1 part" (was "1 parts"), and the tags index
+  description reads "1 topic". Every count label was checked for the same
+  mistake.
+
+### Changed
+
+- The footer credit is a link reading "Galascribe" (opens in a new tab; the
+  accessible name is "Galascribe, opens in a new tab"). Its address carries
+  `utm_source` (the site's full base URL), `utm_content=footer`,
+  `utm_medium=site-promo`, `utm_campaign=implicit` and `utm_term` (the page's
+  tags, comma-separated; empty when there are none). It replaces "Made with
+  Galascribe". The styling contract is unchanged.
+
+### Added
+
+- `npm run layout:check` builds the test fixture site and measures the layout
+  rules above in Chromium at 1440 and 390 pixels, light and dark. It is part of
+  `npm run verify` and of CI. Development dependency: `playwright` 1.64.1.
+
 ## [4.4.0] - 2026-10-20
 
 ### Added

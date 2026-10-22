@@ -396,7 +396,7 @@ test('header, home, article, listings and footer render the redesigned structure
       );
       assert.match(
         home,
-        /<div class="g-wrap g-footer-base"><span>© 2026 fixture-1<\/span><nav class="g-footer-legal" aria-label="Legal"><ul><li><a href="\/fixture-1\/terms\/">Terms<\/a><\/li><li><a href="\/fixture-1\/privacy\/">Privacy<\/a><\/li><li><a href="https:\/\/galascribe\.com\/\?utm_source=[^"]+&amp;utm_medium=referral&amp;utm_campaign=made-with-galascribe&amp;utm_content=footer" target="_blank" rel="noopener">Made with Galascribe<\/a><\/li><\/ul><\/nav><\/div><\/footer>/,
+        /<div class="g-wrap g-footer-base"><span>© 2026 fixture-1<\/span><nav class="g-footer-legal" aria-label="Legal"><ul><li><a href="\/fixture-1\/terms\/">Terms<\/a><\/li><li><a href="\/fixture-1\/privacy\/">Privacy<\/a><\/li><li><a href="https:\/\/galascribe\.com\/\?utm_source=[^"&]+&amp;utm_content=footer&amp;utm_medium=site-promo&amp;utm_campaign=implicit&amp;utm_term=[^"&]*" target="_blank" rel="noopener" aria-label="Galascribe, opens in a new tab">Galascribe<\/a><\/li><\/ul><\/nav><\/div><\/footer>/,
       );
     },
   );
@@ -500,7 +500,7 @@ test('hero images: cover figure with alt on the article, media on cards; decorat
 
 test('the footer attribution follows appearance.attribution.showMadeWith; absent shows it', async (t) => {
   const attribution = `>${getMessages('en').footerAttributionLabel}</a>`;
-  assert.equal(attribution, '>Made with Galascribe</a>');
+  assert.equal(attribution, '>Galascribe</a>');
   const footer = (/** @type {boolean} */ showAttribution) =>
     renderFooter({
       homeRoute: '/',
@@ -525,7 +525,7 @@ test('the footer attribution follows appearance.attribution.showMadeWith; absent
     '<nav class="g-footer-legal" aria-label="Legal"><ul><li><a href="/terms/">Terms</a></li><li><a href="/privacy/">Privacy</a></li>';
   assert.ok(
     footer(true).endsWith(
-      `<div class="g-wrap g-footer-base"><span>© Notes</span>${legal}<li><a href="https://galascribe.com/?utm_source=notes.example.test&amp;utm_medium=referral&amp;utm_campaign=made-with-galascribe&amp;utm_content=footer" target="_blank" rel="noopener">Made with Galascribe</a></li></ul></nav></div></footer>`,
+      `<div class="g-wrap g-footer-base"><span>© Notes</span>${legal}<li><a href="https://galascribe.com/?utm_source=https%3A%2F%2Fnotes.example.test%2F&amp;utm_content=footer&amp;utm_medium=site-promo&amp;utm_campaign=implicit&amp;utm_term=" target="_blank" rel="noopener" aria-label="Galascribe, opens in a new tab">Galascribe</a></li></ul></nav></div></footer>`,
     ),
   );
   assert.ok(
@@ -725,4 +725,19 @@ test('analytics module: banner, footer button, privacy paragraph, script and CSP
       'This site loads no analytics or advertising trackers.',
     ),
   );
+});
+
+test('count labels are singular for one and plural otherwise', () => {
+  const m = /** @type {Record<string, (...a: string[]) => string>} */ (
+    /** @type {unknown} */ (getMessages('en'))
+  );
+  assert.equal(m.partsCountLabel('1'), '1 part');
+  assert.equal(m.partsCountLabel('2'), '2 parts');
+  assert.equal(m.articleCountLabel('1'), '1 article');
+  assert.equal(m.articleCountLabel('3'), '3 articles');
+  assert.match(m.tagsRootDescription('1', 'P'), /Browse the 1 topic covered/);
+  assert.match(m.tagsRootDescription('4', 'P'), /Browse the 4 topics covered/);
+  assert.match(m.seriesPageDescription('1', 'S', 'P'), /1 part on/);
+  assert.match(m.tagPageDescription('1', 't', 'P'), /^1 article tagged/);
+  assert.match(m.archivePageDescription('1', '2025', 'P'), /^1 article /);
 });

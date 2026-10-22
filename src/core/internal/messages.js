@@ -46,7 +46,8 @@ const CATALOGS = Object.freeze({
     /** @type {(displayName: string) => string} */
     byLineLabel: (displayName) => `By ${displayName}`,
     footerCopyrightPrefix: '©',
-    footerAttributionLabel: 'Made with Galascribe',
+    footerAttributionLabel: 'Galascribe',
+    footerAttributionAriaLabel: 'Galascribe, opens in a new tab',
     footerLegalLabel: 'Legal',
     termsLinkLabel: 'Terms',
     privacyLinkLabel: 'Privacy',
@@ -89,7 +90,7 @@ const CATALOGS = Object.freeze({
     browseByTagLabel: 'Browse by tag',
     seriesCardLabel: 'Series',
     /** @type {(count: string) => string} */
-    partsCountLabel: (count) => `${count} parts`,
+    partsCountLabel: (count) => (count === '1' ? '1 part' : `${count} parts`),
     startSeriesLabel: 'Start with part 1',
     newsletterLabel: 'Newsletter',
     newsletterActionLabel: 'Subscribe',
@@ -155,7 +156,7 @@ const CATALOGS = Object.freeze({
       `Articles written by ${name} on ${publication}.`,
     /** @type {(count: string, publication: string) => string} */
     tagsRootDescription: (count, publication) =>
-      `Browse the ${count} topics covered on ${publication}.`,
+      `Browse the ${count === '1' ? '1 topic' : `${count} topics`} covered on ${publication}.`,
     /** @type {(count: string, publication: string) => string} */
     seriesRootDescription: (count, publication) =>
       `Browse the ${count} series published on ${publication}.`,

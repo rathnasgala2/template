@@ -1855,6 +1855,16 @@
     "license": "MIT"
   },
   {
+    "name": "playwright",
+    "version": "1.64.1",
+    "license": "Apache-2.0"
+  },
+  {
+    "name": "playwright-core",
+    "version": "1.64.1",
+    "license": "Apache-2.0"
+  },
+  {
     "name": "please-upgrade-node",
     "version": "3.2.0",
     "license": "MIT"

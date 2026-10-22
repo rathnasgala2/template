@@ -629,16 +629,21 @@ test('trailing-slash and upper-case spellings of a policy route conflict too', a
   }
 });
 
-test('madeWithGalascribeHref names the percent-encoded host', () => {
+test('madeWithGalascribeHref names the encoded base URL and the page tags', () => {
+  const head = 'https://galascribe.com/?utm_source=';
   const tail =
-    '&utm_medium=referral&utm_campaign=made-with-galascribe&utm_content=footer';
+    '&utm_content=footer&utm_medium=site-promo&utm_campaign=implicit';
   assert.equal(
     madeWithGalascribeHref('https://my-notes.example.com/blog/'),
-    `https://galascribe.com/?utm_source=my-notes.example.com${tail}`,
+    `${head}https%3A%2F%2Fmy-notes.example.com%2Fblog%2F${tail}&utm_term=`,
   );
   assert.equal(
-    madeWithGalascribeHref('https://münchen.example/'),
-    `https://galascribe.com/?utm_source=xn--mnchen-3ya.example${tail}`,
+    madeWithGalascribeHref('https://my-notes.example.com/', [
+      'alpha',
+      'two words',
+      'a,b',
+    ]),
+    `${head}https%3A%2F%2Fmy-notes.example.com%2F${tail}&utm_term=alpha,two%20words,a%2Cb`,
   );
 });
 

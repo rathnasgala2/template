@@ -13,16 +13,18 @@ import { monogram, renderImage } from './components.js';
 import { renderConsentOpenItem } from './analytics/markup.js';
 
 /**
- * The "Made with Galascribe" referral link, naming the site's host so
- * Galascribe can see which site a visit came from.
+ * The footer's Galascribe link: the site's full base URL as `utm_source` and
+ * the page's own tags (comma-separated, each percent-encoded) as `utm_term`,
+ * so Galascribe can see which site and which subject a visit came from.
  *
  * @param {string} baseUrl the build input's `baseUrl` (an https URL)
- * @returns {string} the unescaped `https://galascribe.com/` URL with
- *   `utm_source` set to the percent-encoded host of `baseUrl`
+ * @param {readonly string[]} [tags] the page's tags (none when absent)
+ * @returns {string} the unescaped `https://galascribe.com/` URL
  */
-export function madeWithGalascribeHref(baseUrl) {
-  const host = encodeURIComponent(new URL(baseUrl).hostname);
-  return `https://galascribe.com/?utm_source=${host}&utm_medium=referral&utm_campaign=made-with-galascribe&utm_content=footer`;
+export function madeWithGalascribeHref(baseUrl, tags = []) {
+  const source = encodeURIComponent(baseUrl);
+  const term = tags.map((tag) => encodeURIComponent(tag)).join(',');
+  return `https://galascribe.com/?utm_source=${source}&utm_content=footer&utm_medium=site-promo&utm_campaign=implicit&utm_term=${term}`;
 }
 
 /** @type {Readonly<Record<string, string>>} */
@@ -69,7 +71,6 @@ function renderMark(name, mark) {
  * @param {string} [options.appearanceControlHtml] the already-rendered
  *   appearance control, inserted into the `header-actions` slot
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
- * @param {string} options.profile the admitted composition profile
  * @param {string} options.headerLayout the admitted composition's header layout
  * @returns {string} the rendered header
  */
@@ -86,7 +87,6 @@ export function renderHeader({
   searchIndexHref,
   appearanceControlHtml,
   messages,
-  profile,
   headerLayout,
 }) {
   const label = (/** @type {string} */ key) =>
@@ -107,16 +107,9 @@ export function renderHeader({
     renderSlot('header-actions', { html: appearanceControlHtml }) +
     menu +
     `</div>`;
-  const content =
-    profile === 'newsletter'
-      ? actions + brand + navHtml
-      : profile === 'visual'
-        ? brand + actions + navHtml
-        : profile === 'personal'
-          ? navHtml + brand + actions
-          : profile === 'developer'
-            ? navHtml + actions + brand
-            : brand + navHtml + actions;
+  // One reading order for every composition: brand, primary navigation,
+  // actions. The visual order is the same (the actions sit at the inline end).
+  const content = brand + navHtml + actions;
   return `<header class="g-header" data-gala-header-layout="${escapeHtml(headerLayout)}"><div class="g-wrap g-header-row">${content}</div></header>`;
 }
 
@@ -184,7 +177,9 @@ function renderSocialLinks(socialLinks, rssHref, messages) {
  * @param {string} options.publicBasePath the public base path
  *   (`route.js#derivePublicBasePath`) the generated legal pages sit under
  * @param {string} options.baseUrl the build input's `baseUrl` (https URL), whose
- *   host the "Made with Galascribe" referral link names
+ *   the Galascribe link names as its `utm_source`
+ * @param {readonly string[]} [options.pageTags] the page's tags, the link's
+ *   `utm_term` (none when absent)
  * @param {boolean} [options.consentOn] whether the analytics module is on, which
  *   adds the script-revealed "Privacy choices" item to the legal navigation
  * @returns {string} the rendered footer
@@ -208,6 +203,7 @@ export function renderFooter({
   profile,
   footerLayout,
   baseUrl,
+  pageTags = [],
   publicBasePath,
   consentOn = false,
 }) {
@@ -242,7 +238,7 @@ export function renderFooter({
     legalItem('/terms', 'termsLinkLabel') +
     legalItem('/privacy', 'privacyLinkLabel') +
     (showAttribution
-      ? `<li><a href="${escapeHtml(madeWithGalascribeHref(baseUrl))}" target="_blank" rel="noopener">${label('footerAttributionLabel')}</a></li>`
+      ? `<li><a href="${escapeHtml(madeWithGalascribeHref(baseUrl, pageTags))}" target="_blank" rel="noopener" aria-label="${label('footerAttributionAriaLabel')}">${label('footerAttributionLabel')}</a></li>`
       : '') +
     (consentOn ? renderConsentOpenItem(messages) : '');
   const grid =

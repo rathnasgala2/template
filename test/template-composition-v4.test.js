@@ -242,7 +242,6 @@ test('all generation-4 profiles compose header and footer chrome distinctly with
       searchIndexHref: '/search.json',
       appearanceControlHtml: '<button>Appearance</button>',
       messages,
-      profile: composition.profile,
       headerLayout: composition.headerLayout,
     });
     const footer = renderFooter({

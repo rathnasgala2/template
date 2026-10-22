@@ -621,30 +621,50 @@ export async function renderPublication(buildInput, options) {
     .map((record) => record.frontmatter.publishedAt.slice(0, 4))
     .sort()
     .at(-1);
-  const footerHtml = renderFooter({
-    homeRoute,
-    publicationName: publication.title,
-    description: publication.description,
-    brandMark,
-    socialLinks: publication.socialLinks,
-    rssHref,
-    primaryItems: validatedInput.navigation.items,
-    footerItems: validatedInput.navigation.footerItems,
-    urlPrefix,
-    routeProfile,
-    authorHtml: footerAuthorHtml,
-    footerProfileHtml,
-    copyrightText: `${siteMessages.footerCopyrightPrefix} ${latestYear ? `${latestYear} ` : ''}${publication.title}`,
-    // The whitelabel switch: a core appearance setting, not a module.
-    showAttribution:
-      validatedInput.appearance.attribution?.showMadeWith !== false,
-    messages: siteMessages,
-    profile: composition.profile,
-    footerLayout: composition.footerLayout,
-    baseUrl: validatedInput.baseUrl,
-    publicBasePath,
-    consentOn: analyticsOn,
-  });
+  /** @type {Map<string, string>} */
+  const footerCache = new Map();
+  /**
+   * The footer for a page carrying the given tags (the Galascribe link names
+   * them); one render per distinct tag list.
+   *
+   * @param {readonly string[]} [pageTags] the page's tags
+   * @returns {string}
+   */
+  const footerFor = (pageTags = []) => {
+    const key = JSON.stringify(pageTags);
+    let html = footerCache.get(key);
+    if (html === undefined) {
+      html = renderFooterFor(pageTags);
+      footerCache.set(key, html);
+    }
+    return html;
+  };
+  const renderFooterFor = (/** @type {readonly string[]} */ pageTags) =>
+    renderFooter({
+      homeRoute,
+      publicationName: publication.title,
+      description: publication.description,
+      brandMark,
+      socialLinks: publication.socialLinks,
+      rssHref,
+      primaryItems: validatedInput.navigation.items,
+      footerItems: validatedInput.navigation.footerItems,
+      urlPrefix,
+      routeProfile,
+      authorHtml: footerAuthorHtml,
+      footerProfileHtml,
+      copyrightText: `${siteMessages.footerCopyrightPrefix} ${latestYear ? `${latestYear} ` : ''}${publication.title}`,
+      // The whitelabel switch: a core appearance setting, not a module.
+      showAttribution:
+        validatedInput.appearance.attribution?.showMadeWith !== false,
+      messages: siteMessages,
+      profile: composition.profile,
+      footerLayout: composition.footerLayout,
+      baseUrl: validatedInput.baseUrl,
+      publicBasePath,
+      pageTags,
+      consentOn: analyticsOn,
+    });
 
   /**
    * One page's `<header>`, with the primary navigation marking that page's
@@ -673,7 +693,6 @@ export async function renderPublication(buildInput, options) {
       searchIndexHref,
       appearanceControlHtml,
       messages: siteMessages,
-      profile: composition.profile,
       headerLayout: composition.headerLayout,
     });
 
@@ -718,7 +737,7 @@ export async function renderPublication(buildInput, options) {
     const bodyHtml = renderPageBody({
       messages: siteMessages,
       headerHtml: headerFor(joinedRoute),
-      footerHtml,
+      footerHtml: footerFor(page.articleMeta?.tags),
       mainHtml: page.bodyHtml,
       consentHtml,
     });
@@ -826,7 +845,7 @@ export async function renderPublication(buildInput, options) {
   const errorBodyHtml = renderPageBody({
     messages: siteMessages,
     headerHtml: headerFor(undefined),
-    footerHtml,
+    footerHtml: footerFor(),
     mainHtml: renderErrorPageBody({ messages: siteMessages, homeRoute }),
     consentHtml,
   });

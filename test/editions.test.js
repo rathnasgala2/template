@@ -546,7 +546,7 @@ test("two editions of one depth, or an edition on another document's route, fail
   );
 });
 
-test('the selector and notice come from the message catalog; the footer says Made with Galascribe', () => {
+test('the selector and notice come from the message catalog; the footer link reads Galascribe', () => {
   const messages = getMessages('en');
   assert.equal(messages.editionsNavigationLabel, 'Editions');
   assert.equal(messages.editionOriginalLabel, 'Original');
@@ -554,5 +554,9 @@ test('the selector and notice come from the message catalog; the footer says Mad
   assert.equal(messages.editionStandardLabel, 'Standard');
   assert.equal(messages.editionDeepDiveLabel, 'Deep dive');
   assert.equal(messages.editionNoticeLabel, NOTICE);
-  assert.equal(messages.footerAttributionLabel, 'Made with Galascribe');
+  assert.equal(messages.footerAttributionLabel, 'Galascribe');
+  assert.equal(
+    messages.footerAttributionAriaLabel,
+    'Galascribe, opens in a new tab',
+  );
 });

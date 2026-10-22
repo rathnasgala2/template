@@ -1,6 +1,6 @@
 {
   "name": "@rathnasgala2/template",
-  "version": "4.4.0",
+  "version": "4.4.1",
   "description": "Deterministic Eleventy-backed static publication renderer for Galascribe portable repositories.",
   "type": "module",
   "license": "Apache-2.0",
@@ -58,6 +58,7 @@
     "duplication": "jscpd src scripts test eslint.config.js",
     "contracts:generate": "node scripts/generate-contracts.mjs",
     "contracts:check": "node scripts/generate-contracts.mjs --check",
+    "layout:check": "node scripts/layout-check.mjs",
     "test": "node --test",
     "licenses:generate": "node scripts/generate-license-inventory.mjs",
     "licenses:check": "node scripts/generate-license-inventory.mjs --check",
@@ -67,7 +68,7 @@
     "workflows:drift": "node scripts/check-workflow-drift.mjs",
     "schema-pin:check": "node scripts/check-no-local-schema-pin.mjs",
     "audit": "node scripts/npm-audit.mjs",
-    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run architecture && npm run duplication && npm run contracts:check && npm run schema-pin:check && npm test && npm run licenses:check && npm run sbom:check && npm run workflows:check && npm run audit"
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run architecture && npm run duplication && npm run contracts:check && npm run schema-pin:check && npm test && npm run layout:check && npm run licenses:check && npm run sbom:check && npm run workflows:check && npm run audit"
   },
   "dependencies": {
     "@11ty/eleventy": "3.1.6",
@@ -92,6 +93,7 @@
     "jscpd": "5.2.0",
     "jsdom": "30.0.1",
     "parse5": "8.0.1",
+    "playwright": "1.64.1",
     "prettier": "3.9.6",
     "typescript": "5.9.3"
   }

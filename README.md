@@ -231,13 +231,13 @@ output-security pipeline every generated page still passes through:
   page's own single `<h1>`), and one `<footer>` (publication name, footer
   navigation, the `footer-profile` slot, the remaining footer slots
   (`footer-auxiliary`, `account-intent`, `conversation`, `newsletter`), and the
-  "Legal" navigation: Terms, Privacy and the "Made with Galascribe" referral
-  link, which `appearance.attribution.showMadeWith: false` omits; Terms and
-  Privacy always render). Core owns nine versioned semantic slots
-  (`header-actions`, `article-preamble`, `article-end`, `footer-profile`,
-  `footer-auxiliary`, `account-intent`, `conversation`, `newsletter`,
-  `edition-selector`) plus the collapsed `article-footer-ad` slot: every slot is
-  one `data-gala-slot="<name>"` attribute on an otherwise empty, non-landmark
+  "Legal" navigation: Terms, Privacy and the "Galascribe" credit link, which
+  `appearance.attribution.showMadeWith: false` omits; Terms and Privacy always
+  render). Core owns nine versioned semantic slots (`header-actions`,
+  `article-preamble`, `article-end`, `footer-profile`, `footer-auxiliary`,
+  `account-intent`, `conversation`, `newsletter`, `edition-selector`) plus the
+  collapsed `article-footer-ad` slot: every slot is one
+  `data-gala-slot="<name>"` attribute on an otherwise empty, non-landmark
   `<div>`, and the collapsed slot additionally carries `hidden`. This renderer
   has no module system, so every slot except `footer-profile` (which always
   wraps the publication's own footer card), `header-actions` (the appearance
@@ -738,7 +738,7 @@ Privacy Control signal (`navigator.globalPrivacyControl === true`) with no
 stored choice is treated as declining, without storing anything and without the
 banner on load; the footer's "Privacy choices" button still opens it, and
 `gala:consent` carries `{analytics: false, source: 'gpc'}`. Whitelabel is not a
-module either: the footer's "Made with Galascribe" link is a core appearance
+module either: the footer's "Galascribe" credit link is a core appearance
 switch, `build-input.appearance.attribution` (`showMadeWith: false` omits the
 line; absent or `true` shows it). Nor are editions: they are a rendered content
 kind (see Editions).

@@ -7,12 +7,12 @@ validated `build-input:2.0.0` instance into a candidate output directory plus an
 `artifact-manifest:2.0.0` instance. Never own deployment, provider credentials,
 theme presentation bytes, or any `interactions` / `newsletter` / `prism` module
 boundary (document 32 section 3.1; brief S2 section 1). Whitelabel is not a
-module: the footer's attribution line ("Made with Galascribe") is a core
-appearance switch, `appearance.attribution.showMadeWith` (absent or `true` shows
-it, `false` omits it), read in `src/core/index.js` and applied by
-`renderFooter`. Editions (`kind: "edition"` documents) are a core content kind
-too, not a Prism module: `internal/editions.js` places them beside their article
-and the page kinds render them; nothing here generates one.
+module: the footer's credit link ("Galascribe") is a core appearance switch,
+`appearance.attribution.showMadeWith` (absent or `true` shows it, `false` omits
+it), read in `src/core/index.js` and applied by `renderFooter`. Editions
+(`kind: "edition"` documents) are a core content kind too, not a Prism module:
+`internal/editions.js` places them beside their article and the page kinds
+render them; nothing here generates one.
 
 ## Commands
 
