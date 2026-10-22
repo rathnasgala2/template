@@ -1,0 +1,3 @@
+# The consent storage key constant ('gala.consent.v1') is a localStorage key
+# name, not a secret. Scoped to the exact commit, file, rule and line.
+541ce3720988be99e19f813e81d90d77fcf4f217:src/core/internal/analytics/consent-script.js:generic-api-key:25
