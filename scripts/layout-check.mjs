@@ -27,8 +27,14 @@ import { runIfMain } from './run-if-main.mjs';
 const TOLERANCE = 0.75;
 const VIEWPORTS = [
   { name: '1440x900', width: 1440, height: 900 },
+  { name: '1280x800', width: 1280, height: 800 },
+  { name: '1024x768', width: 1024, height: 768 },
+  { name: '960x800', width: 960, height: 800 },
+  { name: '800x900', width: 800, height: 900 },
   { name: '390x844', width: 390, height: 844 },
 ];
+/** The widest viewport at which the primary navigation is in the menu. */
+const MENU_MAX_WIDTH = 960;
 const SCHEMES = ['light', 'dark'];
 const CONTENT_TYPES = new Map([
   ['.html', 'text/html; charset=utf-8'],
@@ -209,6 +215,28 @@ const same = (a, b) => Math.abs(a - b) <= TOLERANCE;
 const VARIANTS = [
   { label: '', onlyHome: false, hasNav: true, mutate: () => {} },
   {
+    label: 'long brand, 7-item nav',
+    onlyHome: true,
+    hasNav: true,
+    mutate: (input) => {
+      input.publication.title = 'A Very Long Publication Name Of Forty';
+      input.navigation.items = [
+        'Archive',
+        'Tags',
+        'Series',
+        'About',
+        'Authors',
+        'Contact',
+        'Elsewhere',
+      ].map((label) => ({
+        type: 'internal',
+        label,
+        route: `/${label.toLowerCase()}`,
+        children: [],
+      }));
+    },
+  },
+  {
     label: '3-column footer',
     onlyHome: true,
     hasNav: true,
@@ -330,7 +358,7 @@ async function checkSite(browser, variant, report) {
             );
             if (!variant.hasNav) {
               // No primary navigation in this variant: nothing to order or move.
-            } else if (viewport.width >= 1000) {
+            } else if (viewport.width > MENU_MAX_WIDTH) {
               const nav = h.nav;
               const order =
                 nav !== null &&
@@ -370,18 +398,21 @@ async function checkSite(browser, variant, report) {
               `${tag} footer-base border == content box`,
               `${f.borderLeft.toFixed(1)}..${f.borderRight.toFixed(1)} vs ${f.content.left.toFixed(1)}..${f.content.right.toFixed(1)}`,
             );
-            if (viewport.width >= 1000)
+            if (viewport.width > MENU_MAX_WIDTH)
               report(
                 f.tracks === f.columns,
                 `${tag} footer tracks == rendered columns`,
                 `tracks=${f.tracks} columns=${f.columns}`,
               );
-            else
+            else {
+              const expected =
+                viewport.width > 640 ? Math.min(2, f.columns) : 1;
               report(
-                f.tracks === 1,
-                `${tag} footer stacks to one track`,
+                f.tracks === expected,
+                `${tag} footer stacks to ${expected} track(s)`,
                 `tracks=${f.tracks}`,
               );
+            }
           }
           if (target.name.startsWith('article')) {
             const a = m.article;

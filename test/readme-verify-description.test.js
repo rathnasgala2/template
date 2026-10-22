@@ -51,7 +51,8 @@ const README_GATE_PHRASE = Object.freeze({
   'contracts:check': /the `contracts\/\*\.jcs` canonical-form check/,
   'schema-pin:check': /the no-local-schema-pin check/,
   test: /`node --test`/,
-  'licenses:check': /the license inventory check/,
+  'layout:check': /the Chromium layout check \(`layout:check`\)/,
+  'licenses:check': /the license\s+inventory check/,
   'sbom:check':
     /the SBOM currency check \(`sbom:check` compares `sbom\.cdx\.json` against the current lockfile — it is not a presence check\)/,
   'workflows:check': /the workflow-pin check/,

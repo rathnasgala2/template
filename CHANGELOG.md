@@ -14,9 +14,10 @@ and this project adheres to
 
 - Header: one row at every width, in reading order brand, primary navigation,
   actions. The navigation now follows the brand (it no longer floats between the
-  brand and the actions), the actions sit at the inline end, and the navigation
-  moves into the menu at 760px and below. The markup order is the same for every
-  composition profile.
+  brand and the actions), the actions sit at the inline end, a long brand name
+  truncates with an ellipsis, the search field collapses to its icon at 1100px
+  and below, and the navigation moves into the menu at 960px and below. The
+  markup order is the same for every composition profile.
 - Footer: the grid has one track per rendered column (one to four), so a site
   with three columns no longer leaves an empty fourth track. The first column is
   wider only when it holds the brand text; an empty profile column takes no

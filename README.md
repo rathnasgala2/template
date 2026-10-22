@@ -677,9 +677,10 @@ hand-maintained) runs, in order: Prettier format check, ESLint,
 `tsc --checkJs --noEmit`, the dependency-cruiser
 architecture/module-tree-absence gate, `jscpd` duplication scan, the
 `contracts/*.jcs` canonical-form check, the no-local-schema-pin check, the
-`node --test`, the license inventory check, the SBOM currency check
-(`sbom:check` compares `sbom.cdx.json` against the current lockfile — it is not
-a presence check), the workflow-pin check, and `npm audit --audit-level=high`.
+`node --test`, the Chromium layout check (`layout:check`), the license inventory
+check, the SBOM currency check (`sbom:check` compares `sbom.cdx.json` against
+the current lockfile — it is not a presence check), the workflow-pin check, and
+`npm audit --audit-level=high`.
 
 Individual gates:
 
