@@ -1,17 +1,5 @@
 [
   {
-    "advisory": "GHSA-vfj7-8cjw-p6xm",
-    "packages": [
-      "braces",
-      "chokidar",
-      "nunjucks",
-      "@11ty/eleventy-dev-server",
-      "@11ty/eleventy"
-    ],
-    "reason": "braces regex stack exhaustion reached only through chokidar, the file watcher behind @11ty/eleventy-dev-server and nunjucks' watch mode; the renderer never watches files and runs in a network-disabled, time-bounded sandbox on author content it already size-limits. npm's only proposed fix is a major downgrade of @11ty/eleventy to 0.6.0, which is not a fix. Revisit when Eleventy 3.x ships a chokidar >=3.6.1 line.",
-    "expires": "2026-11-04"
-  },
-  {
     "advisory": "GHSA-r7fv-28h4-cvq7",
     "packages": ["markdown-it"],
     "reason": "markdown-it quadratic-time smartquotes on unmatched closing quotes. The renderer pins markdown-it with typographer set to false (MARKDOWN_IT_OPTIONS in render-policy-content), which leaves the smartquotes rule inactive, and it runs markdown-it only inside the network-disabled, time-bounded build on author content the intake already size-limits. The pinned 14.3.1 is part of the published render-policy identity (contracts/render-policy.jcs), so the upgrade is a render-policy revision, not a dependency bump. Revisit with the next render-policy revision, which moves markdown-it to 14.3.3 or later.",
