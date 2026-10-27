@@ -78,7 +78,7 @@
     "sanitize-html": "2.17.7"
   },
   "peerDependencies": {
-    "@rathnasgala2/schemas": "^3.16.0"
+    "@rathnasgala2/schemas": "^3.21.0"
   },
   "devDependencies": {
     "@cyclonedx/cyclonedx-npm": "6.0.1",

@@ -822,10 +822,10 @@ slash and ignoring letter case) fails the build closed with
 
 ## Consuming `@rathnasgala2/schemas`
 
-This source targets `@rathnasgala2/schemas@3.16.0` with a `^3.16.0` peer range
+This source targets `@rathnasgala2/schemas@3.21.0` with a `^3.21.0` peer range
 (any 3.x from 3.16.0; 3.16.0 adds `modules.analytics`, `build-input.policies`
 and the `site-policy-defaults` export, and its `theme-contract` admits styling
-contract 4.1.0); the lock installs 3.16.0 exactly from the npm registry, with
+contract 4.1.0); the lock installs 3.21.0 exactly from the npm registry, with
 its registry integrity. The 2.8.0->2.11.0 convergence changes none of the four
 roots this renderer validates, for the same reason the 2.7.0-2.8.0 delta below
 did not. Only the `"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) and,
