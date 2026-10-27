@@ -8,6 +8,24 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.5.0] - 2026-10-27
+
+### Added
+
+- Language variants: an article may name the article it translates with
+  `translationOf: <slug>`. A translation renders at `/<language>/<slug>`;
+  listings show one card per group with language chips (`g-chip g-lang-chip`);
+  article pages carry the chips and `hreflang` alternates plus `x-default`; each
+  non-default language gets a `/<language>/` section, a header and footer
+  switcher, and its own Atom and RSS feeds; the sitemap adds `xhtml:link`
+  alternates. A slug or route equal to a language segment fails the build
+  (`LANGUAGE_SEGMENT_CONFLICT`). Sites without `translationOf` render
+  byte-identically. Needs `@rathnasgala2/schemas` 3.21.0 to validate the key.
+- A `ta` (Tamil) chrome catalog with every key translated, with Intl dates and
+  reading time; pages in a language with a catalog render their chrome in it.
+  The styling contract is unchanged (`g-lang-chip` and `g-lang-switch` are not
+  published hooks; they only add to the tag-chip classes).
+
 ## [4.4.2] - 2026-10-22
 
 ### Security

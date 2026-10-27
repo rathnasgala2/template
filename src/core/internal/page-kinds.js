@@ -92,6 +92,11 @@ import {
   renderInteractionsSection,
 } from './interactions.js';
 import { getMessages } from './messages.js';
+import {
+  languageName,
+  languageSegment,
+  resolveTranslations,
+} from './translations.js';
 import { resolveTextDirection } from './text-direction.js';
 import {
   deriveAuthorSlugs,
@@ -157,7 +162,11 @@ export function contentRoute(frontmatter) {
   if (frontmatter.kind === 'edition' && frontmatter.edition) {
     return editionRoute(frontmatter.edition);
   }
-  return frontmatter.route ?? `/${frontmatter.slug}`;
+  if (frontmatter.route) return frontmatter.route;
+  if (frontmatter.translationOf) {
+    return `/${languageSegment(frontmatter.language)}/${frontmatter.translationOf}`;
+  }
+  return `/${frontmatter.slug}`;
 }
 
 /**
@@ -189,6 +198,11 @@ function paginate(items, pageSize) {
  *   names its article)
  * @property {string} title the page's `<title>` text
  * @property {string} language the page's BCP-47 language tag
+ * @property {{language: string, route: string}[]} [alternates] every
+ *   language variant of the page's group, itself included (un-joined routes);
+ *   absent outside a group
+ * @property {string} [xDefaultRoute] the group's primary, the `x-default`
+ *   alternate (un-joined route)
  * @property {string} [direction] the page's resolved base text direction (assigned by buildGeneratedPages's own return mapping)
  * @property {string} bodyHtml the page's complete `<main>` inner HTML
  *   (breadcrumb included), containing exactly one `<h1>`
@@ -447,6 +461,8 @@ export function homeDocumentTitle(name, tagline) {
  * @param {import('../../../types/index.d.ts').AnalyticsModule} [options.analytics]
  *   the validated analytics module; when set, the Galascribe section of both
  *   policy pages carries the analytics and consent paragraph
+ * @param {import('./translations.js').TranslationResolution} [options.translations]
+ *   the language-variant resolution (default: resolved from `content`)
  * @param {import('./route.js').RouteNormalizationProfile} [options.routeProfile]
  *   the route normalization profile deciding every emitted page URL's form
  *   (default `directory-index`)
@@ -495,7 +511,11 @@ export function buildGeneratedPages(validatedInput, options) {
     : undefined;
   const publicBasePath = derivePublicBasePath(baseUrl, basePath);
   const routeProfile = options.routeProfile ?? 'directory-index';
-  const messages = getMessages(publication.defaultLanguage);
+  const translations =
+    options.translations ??
+    resolveTranslations(content, publication.defaultLanguage);
+  const defaultMessages = getMessages(publication.defaultLanguage);
+  let messages = defaultMessages;
   const authorsById = new Map(authors.map((author) => [author.id, author]));
   const editions = options.editions ?? resolveEditions(content, contentRoute);
 
@@ -531,18 +551,44 @@ export function buildGeneratedPages(validatedInput, options) {
     publicBasePath,
     mediaDimensions: options.mediaDimensions,
   });
-  const ui = createComponents({
-    messages,
-    site,
-    mediaImage,
-    authorHref,
-    authorsById,
-    recordHref,
-    tagHref,
-    // A tag only unlisted posts carry has no listing page: plain text.
-    hasTagPage: (tag) => tagSegments.has(tag),
-  });
-  const { text, call, chip, byline, card, avatar } = ui;
+  /**
+   * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} catalog
+   * @returns {ReturnType<typeof createComponents>}
+   */
+  const createUi = (catalog) =>
+    createComponents({
+      messages: catalog,
+      site,
+      mediaImage,
+      authorHref,
+      authorsById,
+      recordHref,
+      tagHref,
+      // A tag only unlisted posts carry has no listing page: plain text.
+      hasTagPage: (tag) => tagSegments.has(tag),
+      variantsOf: translations.variantsOf,
+    });
+  /** @type {Map<unknown, ReturnType<typeof createUi>>} */
+  const uiByCatalog = new Map();
+  let ui = createUi(messages);
+  uiByCatalog.set(messages, ui);
+  let { text, call, chip, langChips, byline, card, avatar } = ui;
+  /**
+   * Render the following pages' chrome strings in a page's own language: its
+   * catalog when it has one, else the site's.
+   *
+   * @param {string} language a BCP-47 tag
+   */
+  const useChrome = (language) => {
+    messages = getMessages(language);
+    ui = uiByCatalog.get(messages) ?? createUi(messages);
+    uiByCatalog.set(messages, ui);
+    ({ text, call, chip, langChips, byline, card, avatar } = ui);
+    homeStep = {
+      label: /** @type {string} */ (messages.homeLinkLabel),
+      route: site('/'),
+    };
+  };
 
   const msg = (/** @type {string} */ key, /** @type {string[]} */ ...args) =>
     /** @type {(...a: string[]) => string} */ (messages[key])(...args);
@@ -616,7 +662,7 @@ export function buildGeneratedPages(validatedInput, options) {
 
   const text0 = (/** @type {string} */ key) =>
     /** @type {string} */ (messages[key]);
-  const homeStep = {
+  let homeStep = {
     label: /** @type {string} */ (messages.homeLinkLabel),
     route: site('/'),
   };
@@ -624,13 +670,34 @@ export function buildGeneratedPages(validatedInput, options) {
     /** @type {import('./skeleton.js').BreadcrumbStep[][]} */ ...groups
   ) => renderBreadcrumbs({ trail: [homeStep, ...groups.flat()], messages });
 
-  const publishedArticles = selectPublishedArticles(content);
+  // A group of language variants is listed once, by its primary.
+  const allPublishedArticles = selectPublishedArticles(content);
+  const publishedArticles = allPublishedArticles.filter(translations.isListed);
+  /**
+   * The articles a page's pager and "Keep reading" draw from: the listed
+   * ones, each in the page's own language when its group has a variant in it.
+   *
+   * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
+   * @returns {import('../../../types/index.d.ts').ContentBuildRecord[]}
+   */
+  const poolFor = (record) => {
+    if (!translations.active) return publishedArticles;
+    const language = record.frontmatter.language.toLowerCase();
+    return publishedArticles.map(
+      (listed) =>
+        translations
+          .variantsOf(listed)
+          .find((v) => v.frontmatter.language.toLowerCase() === language) ??
+        listed,
+    );
+  };
   const byTag = groupBy(publishedArticles, (r) => r.frontmatter.tags);
   const bySeries = groupBy(
     content.filter(
       (r) =>
         r.frontmatter.kind !== 'edition' &&
-        r.frontmatter.status === 'published',
+        r.frontmatter.status === 'published' &&
+        translations.isListed(r),
     ),
     (r) => (r.frontmatter.series ? [r.frontmatter.series] : []),
   );
@@ -779,9 +846,17 @@ export function buildGeneratedPages(validatedInput, options) {
    * @param {string} spec.route the un-joined route
    * @param {readonly {label: string, route?: string}[]} [spec.parents]
    *   breadcrumb steps between home and this page (joined routes)
+   * @param {string} [spec.language] the page's language (default: the
+   *   publication's)
    * @returns {Pick<GeneratedPage, 'title' | 'documentTitle' | 'description' | 'ogType' | 'socialImageRef' | 'socialImageAlt' | 'jsonLd'>}
    */
-  const listingMeta = ({ name, description, route, parents = [] }) => ({
+  const listingMeta = ({
+    name,
+    description,
+    route,
+    parents = [],
+    language = publication.defaultLanguage,
+  }) => ({
     title: name,
     documentTitle: documentTitleOf(name),
     description,
@@ -792,7 +867,7 @@ export function buildGeneratedPages(validatedInput, options) {
         name,
         description,
         url: absolute(site(route)),
-        language: publication.defaultLanguage,
+        language,
         trail: [homeStep, ...parents, { label: name, route: site(route) }],
       }),
     ),
@@ -951,8 +1026,27 @@ export function buildGeneratedPages(validatedInput, options) {
     });
   }
 
+  /**
+   * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
+   * @returns {{alternates?: {language: string, route: string}[], xDefaultRoute?: string}}
+   */
+  const alternatesOf = (record) => {
+    const group = translations.groupOf.get(record);
+    return group &&
+      group.members.length > 1 &&
+      record.frontmatter.kind === 'article'
+      ? {
+          alternates: group.members.map((member) => ({
+            language: member.frontmatter.language,
+            route: contentRoute(member.frontmatter),
+          })),
+          xDefaultRoute: contentRoute(group.primary.frontmatter),
+        }
+      : {};
+  };
   for (const record of content) {
     const { frontmatter } = record;
+    useChrome(frontmatter.language);
     const isArticle = frontmatter.kind === 'article';
     // An edition restates `original`; a document that is not one is its own.
     const edition = editions.byRecord.get(record);
@@ -1017,7 +1111,7 @@ export function buildGeneratedPages(validatedInput, options) {
         ? `<p class="g-dek">${escapeHtml(frontmatter.description)}</p>`
         : '') +
       (isArticle || isEdition
-        ? `<div class="g-article-meta">${byline(record, true)}${isArticle ? share : ''}</div>`
+        ? `<div class="g-article-meta">${byline(record, true)}${isArticle ? langChips(record) : ''}${isArticle ? share : ''}</div>`
         : '') +
       editionSelector +
       `</div>`;
@@ -1087,9 +1181,10 @@ export function buildGeneratedPages(validatedInput, options) {
               .join('') +
             `</ol></section>`
           : '';
-      const position = publishedArticles.indexOf(record);
-      const newer = position > 0 ? publishedArticles[position - 1] : undefined;
-      const older = position >= 0 ? publishedArticles[position + 1] : undefined;
+      const pool = poolFor(record);
+      const position = pool.indexOf(record);
+      const newer = position > 0 ? pool[position - 1] : undefined;
+      const older = position >= 0 ? pool[position + 1] : undefined;
       const pagerLink = (
         /** @type {import('../../../types/index.d.ts').ContentBuildRecord} */ target,
         /** @type {boolean} */ isOlder,
@@ -1111,7 +1206,7 @@ export function buildGeneratedPages(validatedInput, options) {
           })
         : '';
       foot = `<div class="g-wrap g-article-foot">${authorCards}${interactions}${seriesBox}${pager}</div>`;
-      const related = selectRelatedArticles(record, publishedArticles);
+      const related = selectRelatedArticles(record, poolFor(record));
       after =
         related.length > 0
           ? `<section class="g-wrap g-section" aria-labelledby="related-title"><div class="g-section-head">` +
@@ -1194,6 +1289,7 @@ export function buildGeneratedPages(validatedInput, options) {
       socialTitle: seoTitle,
       canonicalUrl: seoCanonical,
       language: frontmatter.language,
+      ...alternatesOf(record),
       description: contentDescription(record),
       ogType: isArticle || isEdition ? 'article' : 'website',
       ...social,
@@ -1224,6 +1320,8 @@ export function buildGeneratedPages(validatedInput, options) {
         (isArticle ? newsletterHtml : ''),
     });
   }
+
+  useChrome(publication.defaultLanguage);
 
   // Index: page 1 is the home page (featured, tag pills, latest cards, series
   // card, newsletter); every index page carries a slice of the older
@@ -1258,6 +1356,7 @@ export function buildGeneratedPages(validatedInput, options) {
             : `<span class="g-card-placeholder">${icon('sparkle')}</span>`) +
           `</div><div class="g-hero-body"><p class="g-eyebrow"><span class="g-badge">${icon('sparkle')}${text('featuredLabel')}</span>` +
           (fm.tags[0] ? chip(fm.tags[0]) : '') +
+          langChips(featured) +
           `</p><h2 id="hero-title"><a href="${href}">${escapeHtml(fm.title)}</a></h2>` +
           (fm.description
             ? `<p class="g-dek">${escapeHtml(fm.description)}</p>`
@@ -1651,6 +1750,60 @@ export function buildGeneratedPages(validatedInput, options) {
       });
     });
   }
+
+  // One section per non-default language with a published article: its own
+  // chrome catalog, every article of the language newest first (no grouping).
+  for (const section of translations.sections) {
+    useChrome(section.language);
+    const items = allPublishedArticles.filter(
+      (r) => languageSegment(r.frontmatter.language) === section.segment,
+    );
+    const name = languageName(section.language);
+    const sectionPages = paginate(items, LISTING_PAGE_SIZE);
+    const sectionRoute = (/** @type {number} */ n) =>
+      n === 1 ? `/${section.segment}` : `/${section.segment}/page/${n}`;
+    sectionPages.forEach((pageItems, pageIndex) => {
+      const pageNumber = pageIndex + 1;
+      pages.push({
+        kind: 'index',
+        route: sectionRoute(pageNumber),
+        ...listingMeta({
+          name:
+            pageNumber === 1
+              ? name
+              : `${name} \u2013 ${msg('pageStatusLabel', String(pageNumber), String(sectionPages.length))}`,
+          description: msg(
+            'languageIndexDescription',
+            String(items.length),
+            name,
+            publicationTitle,
+          ),
+          route: sectionRoute(pageNumber),
+          language: section.language,
+        }),
+        language: section.language,
+        lastModified: latestContentTimestamp(pageItems),
+        bodyHtml:
+          listingHead({
+            breadcrumbHtml: crumbs([{ label: name }]),
+            kicker: /** @type {string} */ (messages.languageKickerLabel),
+            count: items.length,
+            title: name,
+            iconName: 'layers',
+          }) +
+          rowList(
+            pageItems,
+            renderPagination({
+              currentPage: pageNumber,
+              totalPages: sectionPages.length,
+              routeForPage: (n) => site(sectionRoute(n)),
+              messages,
+            }),
+          ),
+      });
+    });
+  }
+  useChrome(publication.defaultLanguage);
 
   return pages.map((page) => ({
     ...page,

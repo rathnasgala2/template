@@ -19,6 +19,7 @@
 
 import { escapeHtml } from './skeleton.js';
 import { joinPublicRoute } from './route.js';
+import { hreflangAlternates } from './seo.js';
 import { compareUtf8Bytes } from './source-inventory.js';
 
 /**
@@ -66,6 +67,7 @@ export function buildSitemap({
     .map((page) => ({
       loc: absoluteUrl(page.route),
       lastmod: page.lastModified,
+      alternates: hreflangAlternates(page, absoluteUrl),
     }))
     .sort((a, b) => compareUtf8Bytes(a.loc, b.loc));
 
@@ -74,13 +76,23 @@ export function buildSitemap({
       const lastmodTag = entry.lastmod
         ? `<lastmod>${escapeHtml(entry.lastmod)}</lastmod>`
         : '';
-      return `<url><loc>${escapeHtml(entry.loc)}</loc>${lastmodTag}</url>`;
+      const alternatesXml = entry.alternates
+        .map(
+          (alternate) =>
+            `<xhtml:link rel="alternate" hreflang="${escapeHtml(alternate.hreflang)}" href="${escapeHtml(alternate.href)}"/>`,
+        )
+        .join('');
+      return `<url><loc>${escapeHtml(entry.loc)}</loc>${lastmodTag}${alternatesXml}</url>`;
     })
     .join('');
+  // The xhtml namespace is declared only when a page names alternates.
+  const xhtmlNamespace = entries.some((entry) => entry.alternates.length > 0)
+    ? ' xmlns:xhtml="http://www.w3.org/1999/xhtml"'
+    : '';
 
   return (
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${xhtmlNamespace}>` +
     urlXml +
     '</urlset>\n'
   );

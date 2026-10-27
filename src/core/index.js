@@ -124,6 +124,11 @@ import {
   RSS_FEED_ROUTE,
   buildFeeds,
 } from './internal/feeds.js';
+import {
+  assertLanguageSegmentsFree,
+  languageName,
+  resolveTranslations,
+} from './internal/translations.js';
 import { listFilesSortedByUtf8Bytes } from './internal/fs-walk.js';
 import { getMessages } from './internal/messages.js';
 import {
@@ -153,6 +158,8 @@ import {
 } from './internal/route.js';
 import { buildSearchIndex } from './internal/search-index.js';
 import {
+  hreflangAlternates,
+  renderHreflangLinks,
   resolveOriginalDerivativePath,
   resolveSocialImage,
   twitterCardType,
@@ -397,6 +404,18 @@ export async function renderPublication(buildInput, options) {
   // Every edition must sit beside an article of this build; placed here for the
   // same reason.
   const editions = resolveEditions(validatedInput.content, contentRoute);
+  // Language variants: groups of `translationOf` articles, and the language
+  // segments (`/ta/`) no document may take.
+  const translations = resolveTranslations(
+    validatedInput.content,
+    validatedInput.publication.defaultLanguage,
+  );
+  assertLanguageSegmentsFree(
+    validatedInput.content,
+    validatedInput.publication.defaultLanguage,
+    contentRoute,
+    translations,
+  );
   assertOptions(options);
   const routeProfile = options.routeNormalizationProfile ?? 'directory-index';
 
@@ -433,15 +452,42 @@ export async function renderPublication(buildInput, options) {
   const consentScriptHref = analyticsOn
     ? joinBasePathAndRoute(publicBasePath, `/${CONSENT_SCRIPT_PATH}`)
     : undefined;
-  const consentHtml =
-    analyticsOn && analyticsModule
-      ? renderConsentBanner({
-          module: analyticsModule,
-          messages: siteMessages,
-          publicBasePath,
-          routeProfile,
-        })
-      : '';
+  /**
+   * The chrome a page of the given language renders with: its message
+   * catalog (the site's own when the language has none), consent banner and
+   * appearance control. One per distinct catalog.
+   *
+   * @type {Map<unknown, {messages: typeof siteMessages, consentHtml: string, appearanceControlHtml: string}>}
+   */
+  const chromeByCatalog = new Map();
+  /**
+   * @param {string} language a BCP-47 tag
+   * @returns {{messages: typeof siteMessages, consentHtml: string, appearanceControlHtml: string}}
+   */
+  const chromeFor = (language) => {
+    const messages = getMessages(language);
+    let chrome = chromeByCatalog.get(messages);
+    if (!chrome) {
+      chrome = {
+        messages,
+        consentHtml:
+          analyticsOn && analyticsModule
+            ? renderConsentBanner({
+                module: analyticsModule,
+                messages,
+                publicBasePath,
+                routeProfile,
+              })
+            : '',
+        appearanceControlHtml: renderAppearanceControl({
+          messages,
+          toggle: colorMode.toggle,
+        }),
+      };
+      chromeByCatalog.set(messages, chrome);
+    }
+    return chrome;
+  };
   const interactionsScriptHref = joinBasePathAndRoute(
     publicBasePath,
     `/${INTERACTIONS_SCRIPT_PATH}`,
@@ -477,11 +523,6 @@ export async function renderPublication(buildInput, options) {
     ? themeAssetsResult.linkTagsHtml
     : defaultThemeStylesheetLinksHtml(publicBasePath);
   const composition = themeAssetsResult?.composition ?? EDITORIAL_COMPOSITION;
-
-  const appearanceControlHtml = renderAppearanceControl({
-    messages: siteMessages,
-    toggle: colorMode.toggle,
-  });
 
   // Run before page assembly, not after: resolving each page's own images
   // (`og:image`, hero, avatar, brand mark) needs the media pipeline's own
@@ -610,12 +651,15 @@ export async function renderPublication(buildInput, options) {
         routeProfile,
       ),
   });
-  const footerAuthorHtml = footerAuthor
-    ? `<p class="g-label">${footerComponents.text('writtenByLabel')}</p>` +
-      `<div class="g-byline">${footerComponents.avatar(footerAuthor)}<div class="g-byline-text">` +
-      `<a href="${escapeHtml(authorHref(footerAuthor))}">${escapeHtml(footerAuthor.displayName)}</a>` +
-      `</div></div>`
-    : '';
+  const footerAuthorHtmlFor = (
+    /** @type {typeof siteMessages} */ pageMessages,
+  ) =>
+    footerAuthor
+      ? `<p class="g-label">${escapeHtml(/** @type {string} */ (pageMessages.writtenByLabel))}</p>` +
+        `<div class="g-byline">${footerComponents.avatar(footerAuthor)}<div class="g-byline-text">` +
+        `<a href="${escapeHtml(authorHref(footerAuthor))}">${escapeHtml(footerAuthor.displayName)}</a>` +
+        `</div></div>`
+      : '';
   const latestYear = validatedInput.content
     .filter((record) => record.frontmatter.kind !== 'edition')
     .map((record) => record.frontmatter.publishedAt.slice(0, 4))
@@ -625,21 +669,37 @@ export async function renderPublication(buildInput, options) {
   const footerCache = new Map();
   /**
    * The footer for a page carrying the given tags (the Galascribe link names
-   * them); one render per distinct tag list.
+   * them), in the page's language; one render per distinct tag list,
+   * language and language switcher.
    *
    * @param {readonly string[]} [pageTags] the page's tags
+   * @param {string} [language] the page's language (default: the site's)
+   * @param {string} [languageSwitcherHtml] the language switcher markup
    * @returns {string}
    */
-  const footerFor = (pageTags = []) => {
-    const key = JSON.stringify(pageTags);
+  const footerFor = (
+    pageTags = [],
+    language = validatedInput.publication.defaultLanguage,
+    languageSwitcherHtml = '',
+  ) => {
+    const pageMessages = chromeFor(language).messages;
+    const key = JSON.stringify([
+      pageTags,
+      pageMessages === siteMessages ? '' : language,
+      languageSwitcherHtml,
+    ]);
     let html = footerCache.get(key);
     if (html === undefined) {
-      html = renderFooterFor(pageTags);
+      html = renderFooterFor(pageTags, pageMessages, languageSwitcherHtml);
       footerCache.set(key, html);
     }
     return html;
   };
-  const renderFooterFor = (/** @type {readonly string[]} */ pageTags) =>
+  const renderFooterFor = (
+    /** @type {readonly string[]} */ pageTags,
+    /** @type {typeof siteMessages} */ pageMessages,
+    /** @type {string} */ languageSwitcherHtml,
+  ) =>
     renderFooter({
       homeRoute,
       publicationName: publication.title,
@@ -651,13 +711,14 @@ export async function renderPublication(buildInput, options) {
       footerItems: validatedInput.navigation.footerItems,
       urlPrefix,
       routeProfile,
-      authorHtml: footerAuthorHtml,
+      authorHtml: footerAuthorHtmlFor(pageMessages),
       footerProfileHtml,
-      copyrightText: `${siteMessages.footerCopyrightPrefix} ${latestYear ? `${latestYear} ` : ''}${publication.title}`,
+      copyrightText: `${pageMessages.footerCopyrightPrefix} ${latestYear ? `${latestYear} ` : ''}${publication.title}`,
       // The whitelabel switch: a core appearance setting, not a module.
       showAttribution:
         validatedInput.appearance.attribution?.showMadeWith !== false,
-      messages: siteMessages,
+      messages: pageMessages,
+      languageSwitcherHtml,
       profile: composition.profile,
       footerLayout: composition.footerLayout,
       baseUrl: validatedInput.baseUrl,
@@ -671,10 +732,17 @@ export async function renderPublication(buildInput, options) {
    * own route current.
    *
    * @param {string | undefined} currentRoute the page's joined route
+   * @param {string} [language] the page's language (default: the site's)
+   * @param {string} [languageSwitcherHtml] the language switcher markup
    * @returns {string}
    */
-  const headerFor = (currentRoute) =>
-    renderHeader({
+  const headerFor = (
+    currentRoute,
+    language = validatedInput.publication.defaultLanguage,
+    languageSwitcherHtml = '',
+  ) => {
+    const chrome = chromeFor(language);
+    return renderHeader({
       homeRoute,
       publicationName: publication.title,
       tagline: publication.description,
@@ -682,7 +750,7 @@ export async function renderPublication(buildInput, options) {
       navHtml: renderPrimaryNavigation({
         items: validatedInput.navigation.items,
         currentRoute,
-        messages: siteMessages,
+        messages: chrome.messages,
         urlPrefix,
         routeProfile,
       }),
@@ -691,16 +759,67 @@ export async function renderPublication(buildInput, options) {
       urlPrefix,
       routeProfile,
       searchIndexHref,
-      appearanceControlHtml,
-      messages: siteMessages,
+      appearanceControlHtml: chrome.appearanceControlHtml,
+      languageSwitcherHtml,
+      messages: chrome.messages,
       headerLayout: composition.headerLayout,
     });
+  };
 
   // The site-wide feeds, resolved once so every page's feed-discovery
   // `<link>` tags and the feed documents themselves agree on the exact same
   // self URLs.
-  const feeds = buildFeeds(validatedInput, { feedBody, routeProfile });
   const siteName = validatedInput.publication.title;
+  const feeds = buildFeeds(validatedInput, {
+    feedBody,
+    routeProfile,
+    translations,
+  });
+  const absoluteSiteUrl = (/** @type {string} */ route) =>
+    new URL(
+      joinPublicRoute(publicBasePath, route, routeProfile),
+      validatedInput.baseUrl,
+    ).toString();
+  // Per-language feeds, advertised in every page's `<head>` with `hreflang`.
+  const languageFeedLinksHtml = feeds.languageFeeds
+    .map(
+      (feed) =>
+        `<link rel="alternate" type="application/atom+xml" hreflang="${escapeHtml(feed.language)}" href="${escapeHtml(feed.atomSelfUrl)}" title="${escapeHtml(siteName)}">` +
+        `<link rel="alternate" type="application/rss+xml" hreflang="${escapeHtml(feed.language)}" href="${escapeHtml(feed.rssSelfUrl)}" title="${escapeHtml(siteName)}">`,
+    )
+    .join('');
+  const defaultLanguage = validatedInput.publication.defaultLanguage;
+  /**
+   * The compact language switcher of a page: the variants of its article
+   * group, else the home page and each language's section. Empty unless the
+   * site has more than one language.
+   *
+   * @param {import('./internal/page-kinds.js').GeneratedPage} page
+   * @returns {string}
+   */
+  const languageSwitcherFor = (page) => {
+    if (!translations.active || translations.sections.length === 0) return '';
+    const entries = page.alternates ?? [
+      { language: defaultLanguage, route: '/' },
+      ...translations.sections.map((section) => ({
+        language: section.language,
+        route: `/${section.segment}`,
+      })),
+    ];
+    const pageMessages = chromeFor(page.language).messages;
+    const links = entries
+      .map((entry) => {
+        const current =
+          entry.language.toLowerCase() === page.language.toLowerCase();
+        const attrs = `class="g-chip g-lang-chip" lang="${escapeHtml(entry.language)}"`;
+        const label = escapeHtml(languageName(entry.language));
+        return current
+          ? `<span ${attrs} aria-current="true">${label}</span>`
+          : `<a ${attrs} hreflang="${escapeHtml(entry.language)}" href="${escapeHtml(joinPublicRoute(publicBasePath, entry.route, routeProfile))}">${label}</a>`;
+      })
+      .join('');
+    return `<nav class="g-lang-switch" aria-label="${escapeHtml(/** @type {string} */ (pageMessages.languageSwitcherLabel))}">${links}</nav>`;
+  };
   const appearanceScriptHrefValue =
     appearanceBootstrapScriptHref(publicBasePath);
   // TPL-H3/TPL-M7: the template-owned gala-base stylesheet's own basePath-
@@ -734,12 +853,18 @@ export async function renderPublication(buildInput, options) {
       validatedInput.basePath,
       page.route,
     );
+    const pageChrome = chromeFor(page.language);
+    const switcherHtml = languageSwitcherFor(page);
     const bodyHtml = renderPageBody({
-      messages: siteMessages,
-      headerHtml: headerFor(joinedRoute),
-      footerHtml: footerFor(page.articleMeta?.tags),
+      messages: pageChrome.messages,
+      headerHtml: headerFor(joinedRoute, page.language, switcherHtml),
+      footerHtml: footerFor(
+        page.articleMeta?.tags,
+        page.language,
+        switcherHtml,
+      ),
       mainHtml: page.bodyHtml,
-      consentHtml,
+      consentHtml: pageChrome.consentHtml,
     });
     const ogImageInfo = resolveSocialImage({
       mediaAssets,
@@ -788,6 +913,10 @@ export async function renderPublication(buildInput, options) {
         twitterCard: twitterCardType(Boolean(ogImage)),
         atomFeedUrl: feeds.atomSelfUrl,
         rssFeedUrl: feeds.rssSelfUrl,
+        languageFeedLinksHtml,
+        hreflangLinksHtml: renderHreflangLinks(
+          hreflangAlternates(page, absoluteSiteUrl),
+        ),
         appearanceScriptHref: appearanceScriptHrefValue,
         interactionsScriptHref: page.interactionBearing
           ? interactionsScriptHref
@@ -847,7 +976,7 @@ export async function renderPublication(buildInput, options) {
     headerHtml: headerFor(undefined),
     footerHtml: footerFor(),
     mainHtml: renderErrorPageBody({ messages: siteMessages, homeRoute }),
-    consentHtml,
+    consentHtml: chromeFor(defaultLanguage).consentHtml,
   });
   const errorFilePath = errorDocumentPath(validatedInput.basePath);
   contentPages.push({
@@ -869,6 +998,8 @@ export async function renderPublication(buildInput, options) {
       twitterCard: twitterCardType(false),
       atomFeedUrl: feeds.atomSelfUrl,
       rssFeedUrl: feeds.rssSelfUrl,
+      languageFeedLinksHtml,
+      hreflangLinksHtml: '',
       appearanceScriptHref: appearanceScriptHrefValue,
       consentScriptHref,
       cspMetaTag,
@@ -909,11 +1040,6 @@ export async function renderPublication(buildInput, options) {
     routeProfile,
   });
   const searchIndexJson = buildSearchIndex(validatedInput, routeProfile);
-  const absoluteSiteUrl = (/** @type {string} */ route) =>
-    new URL(
-      joinPublicRoute(publicBasePath, route, routeProfile),
-      validatedInput.baseUrl,
-    ).toString();
   const robotsTxt = buildRobotsTxt({
     aiPolicy: readAiCrawlerPolicy(validatedInput.publication),
     sitemapUrl: absoluteSiteUrl(SITEMAP_ROUTE),
@@ -952,6 +1078,24 @@ export async function renderPublication(buildInput, options) {
       content: feeds.rssXml,
       permalink: rssFilePath,
     },
+    ...feeds.languageFeeds.flatMap((feed, feedIndex) => [
+      {
+        virtualPath: `feeds/language-${feedIndex}-atom.html`,
+        content: feed.atomXml,
+        permalink: projectFixedAssetPath(
+          validatedInput.basePath,
+          feed.atomRoute,
+        ),
+      },
+      {
+        virtualPath: `feeds/language-${feedIndex}-rss.html`,
+        content: feed.rssXml,
+        permalink: projectFixedAssetPath(
+          validatedInput.basePath,
+          feed.rssRoute,
+        ),
+      },
+    ]),
     {
       virtualPath: 'sitemap.html',
       content: sitemapXml,
@@ -1008,6 +1152,22 @@ export async function renderPublication(buildInput, options) {
       { routeClass: 'asset', mediaType: 'text/plain; charset=utf-8' },
     ],
   ]);
+  for (const feed of feeds.languageFeeds) {
+    specialRoutes.set(
+      projectFixedAssetPath(validatedInput.basePath, feed.atomRoute),
+      {
+        routeClass: 'feed',
+        mediaType: 'application/atom+xml; charset=utf-8',
+      },
+    );
+    specialRoutes.set(
+      projectFixedAssetPath(validatedInput.basePath, feed.rssRoute),
+      {
+        routeClass: 'feed',
+        mediaType: 'application/rss+xml; charset=utf-8',
+      },
+    );
+  }
 
   const outputFilePaths = await listFilesSortedByUtf8Bytes(outputDirectory);
   /** @type {import('../../types/index.d.ts').ManifestRouteEntry[]} */

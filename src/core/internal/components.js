@@ -20,6 +20,7 @@ import { icon } from './icons.js';
 import { joinBasePathAndRoute } from './route.js';
 import { resolveOriginalDerivativePath } from './seo.js';
 import { cardMediaOf } from './first-body-image.js';
+import { languageName } from './translations.js';
 
 /** Reading speed used for every reading-time estimate. */
 export const WORDS_PER_MINUTE = 230;
@@ -284,6 +285,9 @@ export function createContentImage({ mediaVariants, publicBasePath }) {
  * @property {(record: import('../../../types/index.d.ts').ContentBuildRecord) => string} recordHref
  *   the record's own joined route
  * @property {(tag: string) => string} tagHref
+ * @property {(record: import('../../../types/index.d.ts').ContentBuildRecord) => import('../../../types/index.d.ts').ContentBuildRecord[]} [variantsOf]
+ *   the language variants of a record (itself included); default: the record
+ *   alone, which renders no language chips
  * @property {(tag: string) => boolean} [hasTagPage] whether the tag has a
  *   listing page (default: every tag does); a tag without one renders as plain
  *   text, never a dead link
@@ -293,12 +297,13 @@ export function createContentImage({ mediaVariants, publicBasePath }) {
  * Build the component renderers bound to one build's context.
  *
  * @param {ComponentContext} context
- * @returns {{text: (key: string) => string, call: (key: string, ...args: string[]) => string, chip: (tag: string) => string, meta: (record: import('../../../types/index.d.ts').ContentBuildRecord, showUpdated?: boolean) => string, avatar: (author: import('../../../types/index.d.ts').AuthorNormalized | undefined) => string, byline: (record: import('../../../types/index.d.ts').ContentBuildRecord, showUpdated?: boolean) => string, card: (record: import('../../../types/index.d.ts').ContentBuildRecord, options?: {partLabel?: string, headingLevel?: number}, variant?: 'grid' | 'row') => string, recordAuthors: (record: import('../../../types/index.d.ts').ContentBuildRecord) => import('../../../types/index.d.ts').AuthorNormalized[]}}
+ * @returns {{text: (key: string) => string, call: (key: string, ...args: string[]) => string, chip: (tag: string) => string, langChips: (record: import('../../../types/index.d.ts').ContentBuildRecord) => string, meta: (record: import('../../../types/index.d.ts').ContentBuildRecord, showUpdated?: boolean) => string, avatar: (author: import('../../../types/index.d.ts').AuthorNormalized | undefined) => string, byline: (record: import('../../../types/index.d.ts').ContentBuildRecord, showUpdated?: boolean) => string, card: (record: import('../../../types/index.d.ts').ContentBuildRecord, options?: {partLabel?: string, headingLevel?: number}, variant?: 'grid' | 'row') => string, recordAuthors: (record: import('../../../types/index.d.ts').ContentBuildRecord) => import('../../../types/index.d.ts').AuthorNormalized[]}}
  *   the bound renderers
  */
 export function createComponents(context) {
   const { messages, mediaImage, authorsById, recordHref, tagHref } = context;
   const hasTagPage = context.hasTagPage ?? (() => true);
+  const variantsOf = context.variantsOf ?? ((record) => [record]);
   /**
    * @param {string} key a plain message key
    * @returns {string} the escaped message text
@@ -322,6 +327,30 @@ export function createComponents(context) {
     hasTagPage(tag)
       ? `<a class="g-chip" href="${escapeHtml(tagHref(tag))}">${escapeHtml(tag)}</a>`
       : `<span class="g-chip">${escapeHtml(tag)}</span>`;
+
+  /**
+   * One chip per language variant of a record (its own language included, the
+   * record's own marked current), in the tag chips' classes plus
+   * `g-lang-chip`; empty for a record with no variants.
+   *
+   * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
+   * @returns {string}
+   */
+  const langChips = (record) => {
+    const variants = variantsOf(record);
+    if (variants.length < 2) return '';
+    const chips = variants
+      .map((variant) => {
+        const tag = variant.frontmatter.language;
+        const label = escapeHtml(languageName(tag));
+        const attrs = `lang="${escapeHtml(tag)}"`;
+        return variant === record
+          ? `<span class="g-chip g-lang-chip" ${attrs} aria-current="true">${label}</span>`
+          : `<a class="g-chip g-lang-chip" ${attrs} hreflang="${escapeHtml(tag)}" href="${escapeHtml(recordHref(variant))}">${label}</a>`;
+      })
+      .join('');
+    return `<span role="group" aria-label="${text('languageChipsLabel')}">${chips}</span>`;
+  };
 
   /**
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
@@ -415,7 +444,7 @@ export function createComponents(context) {
       `<article class="g-card${variant === 'row' ? ' g-card-row' : ''}">` +
       media +
       `<div class="g-card-body">` +
-      `<div class="g-card-top">${firstTag ? chip(firstTag) : ''}${seriesTag}</div>` +
+      `<div class="g-card-top">${firstTag ? chip(firstTag) : ''}${seriesTag}${langChips(record)}</div>` +
       `<h${options.headingLevel ?? 3}><a class="g-card-link" href="${href}">${escapeHtml(fm.title)}</a></h${options.headingLevel ?? 3}>` +
       (fm.description
         ? `<p class="g-card-excerpt">${escapeHtml(fm.description)}</p>`
@@ -429,6 +458,7 @@ export function createComponents(context) {
     text,
     call,
     chip,
+    langChips,
     meta,
     avatar,
     byline,

@@ -99,6 +99,8 @@ export interface ContentFrontmatterNormalized {
   seo?: ContentSeo;
   /** Present exactly when `kind` is `edition`. */
   edition?: ContentEdition;
+  /** The slug of the article this article translates (schemas 3.21.0). */
+  translationOf?: string;
 }
 
 /**

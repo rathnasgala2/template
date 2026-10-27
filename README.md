@@ -102,6 +102,34 @@ are processed and written once. Images use the base layer's existing `img`
 rules; no class is added. The front-matter `hero` renders as the article's cover
 `<figure>` above the body (`role: "decorative"` renders `alt=""`).
 
+### Language variants
+
+An `article` may name the article it translates with the optional front-matter
+key `translationOf: <slug>` (schemas 3.21.0). The group is that article plus
+every published document naming its slug; its primary is the member in the
+publication's default language, otherwise the root. A `translationOf` that names
+no article of the build renders as a standalone article. A site with no
+`translationOf` renders exactly as before.
+
+- **Route.** A translation renders at `/<language>/<translationOf>` (language
+  lower-cased); everything else keeps `route` or `/<slug>`. An article whose
+  slug or route equals a language segment in use fails the build
+  (`LANGUAGE_SEGMENT_CONFLICT`).
+- **Listings** (home, archive, tags, series, authors, keep-reading) show one
+  card per group, by its primary, with one `g-chip g-lang-chip` per variant (its
+  language's own name; the current one is a marked span). The article page shows
+  the same chips in the meta row. A group whose primary is unpublished shows its
+  earliest published variant.
+- **Sections.** Each non-default language with a published article gets
+  `/<lang>/` (paginated, newest first, one card per article, that language's
+  chrome), and a compact switcher in the header and footer.
+- **Feeds and sitemap.** The default feeds list a group once; each non-default
+  language has `/feed/<lang>/atom.xml` and `/feed/<lang>/rss.xml`, advertised
+  with `hreflang`. The sitemap adds `xhtml:link` alternates for group members.
+- **Chrome language.** A page whose own language has a message catalog (`en`,
+  `ta`) renders its chrome, dates and reading time in it; other languages keep
+  the site's catalog.
+
 ### Editions
 
 A document of `kind: "edition"` restates one article at another depth. Its front
@@ -596,10 +624,10 @@ brief sits on top of the page kinds above:
   and the search index while keeping it listed), a site with an
   `appearance.brandMark` also gets `rel="icon"` and `apple-touch-icon`, and
   every page gets `theme-color` (the canvas colour, plus a dark-scheme variant).
-  **hreflang** is a documented scope decision, not a silent omission:
-  `build-input:2.0.0` has no translation/locale-variant linkage between distinct
-  `content[]` records (see `internal/seo.js`'s module documentation), so no
-  `<link rel="alternate" hreflang="...">` is ever emitted by this renderer.
+  **hreflang** follows language variants (see "Language variants"): a page of a
+  translation group carries `<link rel="alternate" hreflang="...">` for every
+  member plus `x-default` for the primary; a page outside any group carries
+  none.
 - **Search and assistant discovery** (3.0.0, unpublished). Every page carries
   one `<script type="application/ld+json">` data block
   (`internal/ structured-data.js`: `WebSite` + `Blog` on the home page,

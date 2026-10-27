@@ -172,7 +172,7 @@ const SKELETON_LAYOUT_SOURCE = [
   // embedding (`<`, `>`, `&`, U+2028/9 as \uXXXX).
   '{% if jsonLd %}<script type="application/ld+json">{{ jsonLd | safe }}</script>{% endif %}',
   '<link rel="alternate" type="application/atom+xml" href="{{ atomFeedUrl }}" title="{{ siteName }}">',
-  '<link rel="alternate" type="application/rss+xml" href="{{ rssFeedUrl }}" title="{{ siteName }}">',
+  '<link rel="alternate" type="application/rss+xml" href="{{ rssFeedUrl }}" title="{{ siteName }}">{{ languageFeedLinksHtml | safe }}{{ hreflangLinksHtml | safe }}',
   // TPL-H3/TPL-M7: the template-owned gala-base layer's own `<link>`,
   // always first among the stylesheets — before any theme `<link>` — so its
   // own first-line `@layer` order statement (`internal/appearance/

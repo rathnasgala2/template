@@ -22,22 +22,14 @@
  * `basePath` publication (`internal/theme-assets.js` applies the equivalent
  * fix for the theme/print stylesheet and appearance-script hrefs).
  *
- * hreflang note (documented scope decision, not a silent omission):
- * `build-input:2.0.0` has no translation/locale-variant linkage between
- * distinct `content[]` records (checked against
- * `node_modules/@rathnasgala2/schemas/schemas/build-input.schema.json`: no
- * `$defs` entry named anything like `translation`/`localizedContent`/
- * `alternateLanguage` exists anywhere in the schema; `authorNormalized`'s own
- * `localized` array carries only a translated author bio, never a route). A
- * page's own `<html lang>` already carries its resolved language, which is
- * the entire localization signal this build-input shape declares.
- * `<link rel="alternate" hreflang="...">` is therefore correctly *empty*
- * here — the requirement to emit hreflang/localization metadata where the
- * input declares translations is satisfied vacuously, since the input never
- * declares one. This module has no `hreflang` export for that reason; a
- * later build-input major version that adds translation linkage is the
- * natural place to add one, at which point every page-kind call site below
- * gains a `translations` field the same way `socialImageRef` was added here.
+ * hreflang (language variants): a published article may name the article it
+ * translates with the optional front-matter key `translationOf`
+ * (`internal/translations.js` resolves the groups). Every page of such a group
+ * carries `<link rel="alternate" hreflang="...">` for each member, plus
+ * `hreflang="x-default"` for the group's primary
+ * ({@link hreflangAlternates}, {@link renderHreflangLinks}); the sitemap
+ * repeats the same set as `xhtml:link` entries. A page outside any group
+ * carries none, and its `<html lang>` stays its whole localization signal.
  */
 
 import { joinBasePathAndRoute } from './route.js';
@@ -164,4 +156,55 @@ export function resolveSocialImage({
       )
     ];
   return { url, width: size?.width, height: size?.height };
+}
+
+/**
+ * The hreflang alternates of one page: one per group member plus
+ * `x-default`, each an absolute URL.
+ *
+ * @param {object} page
+ * @param {readonly {language: string, route: string}[]} [page.alternates]
+ *   every member of the page's group (self included), un-joined routes
+ * @param {string} [page.xDefaultRoute] the primary's un-joined route
+ * @param {(route: string) => string} absoluteUrl turns an un-joined route
+ *   into the absolute public URL
+ * @returns {{hreflang: string, href: string}[]} empty for a page outside any
+ *   group
+ */
+export function hreflangAlternates({ alternates, xDefaultRoute }, absoluteUrl) {
+  if (!alternates || alternates.length < 2) return [];
+  const entries = alternates.map((alternate) => ({
+    hreflang: alternate.language,
+    href: absoluteUrl(alternate.route),
+  }));
+  if (xDefaultRoute !== undefined) {
+    entries.push({ hreflang: 'x-default', href: absoluteUrl(xDefaultRoute) });
+  }
+  return entries;
+}
+
+/**
+ * @param {readonly {hreflang: string, href: string}[]} entries
+ * @returns {string} the `<link rel="alternate" hreflang>` tags (HTML-escaped),
+ *   empty for no entries
+ */
+export function renderHreflangLinks(entries) {
+  return entries
+    .map(
+      (entry) =>
+        `<link rel="alternate" hreflang="${escapeAttribute(entry.hreflang)}" href="${escapeAttribute(entry.href)}">`,
+    )
+    .join('');
+}
+
+/**
+ * @param {string} value
+ * @returns {string}
+ */
+function escapeAttribute(value) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
 }

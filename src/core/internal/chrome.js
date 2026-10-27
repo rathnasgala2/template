@@ -70,6 +70,8 @@ function renderMark(name, mark) {
  *   by the site script
  * @param {string} [options.appearanceControlHtml] the already-rendered
  *   appearance control, inserted into the `header-actions` slot
+ * @param {string} [options.languageSwitcherHtml] the already-rendered language
+ *   switcher, shown before the appearance control (empty on a one-language site)
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
  * @param {string} options.headerLayout the admitted composition's header layout
  * @returns {string} the rendered header
@@ -86,6 +88,7 @@ export function renderHeader({
   routeProfile = 'directory-index',
   searchIndexHref,
   appearanceControlHtml,
+  languageSwitcherHtml = '',
   messages,
   headerLayout,
 }) {
@@ -104,6 +107,7 @@ export function renderHeader({
     `<div class="g-actions">` +
     `<button class="g-search-btn" type="button" hidden data-action="search" data-search-index="${escapeHtml(searchIndexHref)}" aria-label="${label('searchButtonAriaLabel')}">` +
     `${icon('search')}<span>${label('searchButtonLabel')}</span></button>` +
+    languageSwitcherHtml +
     renderSlot('header-actions', { html: appearanceControlHtml }) +
     menu +
     `</div>`;
@@ -180,6 +184,8 @@ function renderSocialLinks(socialLinks, rssHref, messages) {
  *   the Galascribe link names as its `utm_source`
  * @param {readonly string[]} [options.pageTags] the page's tags, the link's
  *   `utm_term` (none when absent)
+ * @param {string} [options.languageSwitcherHtml] the already-rendered language
+ *   switcher, shown in the base row (empty on a one-language site)
  * @param {boolean} [options.consentOn] whether the analytics module is on, which
  *   adds the script-revealed "Privacy choices" item to the legal navigation
  * @returns {string} the rendered footer
@@ -206,6 +212,7 @@ export function renderFooter({
   pageTags = [],
   publicBasePath,
   consentOn = false,
+  languageSwitcherHtml = '',
 }) {
   const label = (/** @type {string} */ key) =>
     escapeHtml(/** @type {string} */ (messages[key]));
@@ -259,6 +266,7 @@ export function renderFooter({
     renderSlot('newsletter') +
     `<div class="g-wrap g-footer-base">` +
     (copyrightText ? `<span>${escapeHtml(copyrightText)}</span>` : '') +
+    languageSwitcherHtml +
     `<nav class="g-footer-legal" aria-label="${label('footerLegalLabel')}"><ul>` +
     legalItems +
     `</ul></nav></div></footer>`
