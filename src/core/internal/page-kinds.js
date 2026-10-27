@@ -201,6 +201,8 @@ function paginate(items, pageSize) {
  * @property {{language: string, route: string}[]} [alternates] every
  *   language variant of the page's group, itself included (un-joined routes);
  *   absent outside a group
+ * @property {{language: string, route: string}[]} [variants] every variant
+ *   of the page's group, `seo.noindex` ones included (the language switcher)
  * @property {string} [xDefaultRoute] the group's primary, the `x-default`
  *   alternate (un-joined route)
  * @property {string} [direction] the page's resolved base text direction (assigned by buildGeneratedPages's own return mapping)
@@ -580,7 +582,10 @@ export function buildGeneratedPages(validatedInput, options) {
    * @param {string} language a BCP-47 tag
    */
   const useChrome = (language) => {
-    messages = getMessages(language);
+    // Per-page catalogs apply only to sites with language variants.
+    messages = getMessages(
+      translations.active ? language : publication.defaultLanguage,
+    );
     ui = uiByCatalog.get(messages) ?? createUi(messages);
     uiByCatalog.set(messages, ui);
     ({ text, call, chip, langChips, byline, card, avatar } = ui);
@@ -682,16 +687,35 @@ export function buildGeneratedPages(validatedInput, options) {
    */
   const poolFor = (record) => {
     if (!translations.active) return publishedArticles;
-    const language = record.frontmatter.language.toLowerCase();
-    return publishedArticles.map(
-      (listed) =>
-        translations
-          .variantsOf(listed)
-          .find((v) => v.frontmatter.language.toLowerCase() === language) ??
-        listed,
+    return publishedArticles.map((listed) =>
+      variantIn(listed, record.frontmatter.language),
     );
   };
-  const byTag = groupBy(publishedArticles, (r) => r.frontmatter.tags);
+  /**
+   * @param {import('../../../types/index.d.ts').ContentBuildRecord} listed a listed record
+   * @param {string} language a BCP-47 tag
+   * @returns {import('../../../types/index.d.ts').ContentBuildRecord} the
+   *   group's variant in that language, else the listed record itself
+   */
+  function variantIn(listed, language) {
+    const wanted = language.toLowerCase();
+    return (
+      translations
+        .variantsOf(listed)
+        .find((v) => v.frontmatter.language.toLowerCase() === wanted) ?? listed
+    );
+  }
+  // A tag or series carried by any member of a group lists the group (shown
+  // by its primary).
+  /**
+   * @param {import('../../../types/index.d.ts').ContentBuildRecord} r
+   * @param {(f: import('../../../types/index.d.ts').ContentFrontmatterNormalized) => readonly string[]} pick
+   * @returns {string[]}
+   */
+  const unionOf = (r, pick) => [
+    ...new Set(translations.variantsOf(r).flatMap((v) => pick(v.frontmatter))),
+  ];
+  const byTag = groupBy(publishedArticles, (r) => unionOf(r, (f) => f.tags));
   const bySeries = groupBy(
     content.filter(
       (r) =>
@@ -699,14 +723,34 @@ export function buildGeneratedPages(validatedInput, options) {
         r.frontmatter.status === 'published' &&
         translations.isListed(r),
     ),
-    (r) => (r.frontmatter.series ? [r.frontmatter.series] : []),
+    (r) => unionOf(r, (f) => (f.series ? [f.series] : [])),
   );
-  for (const bucket of bySeries.values()) {
-    bucket.sort(
-      (a, b) =>
-        (a.frontmatter.seriesOrder ?? 0) - (b.frontmatter.seriesOrder ?? 0),
-    );
+  /**
+   * @param {import('../../../types/index.d.ts').ContentBuildRecord} r
+   * @param {string} name
+   * @returns {number}
+   */
+  const seriesOrderIn = (r, name) =>
+    translations
+      .variantsOf(r)
+      .find((v) => v.frontmatter.series === name && v.frontmatter.seriesOrder)
+      ?.frontmatter.seriesOrder ?? 0;
+  for (const [name, bucket] of bySeries) {
+    bucket.sort((a, b) => seriesOrderIn(a, name) - seriesOrderIn(b, name));
   }
+  /**
+   * The members of a series as the given record's language shows them.
+   *
+   * @param {string | undefined} series
+   * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
+   * @returns {import('../../../types/index.d.ts').ContentBuildRecord[] | undefined}
+   */
+  const seriesMembersFor = (series, record) =>
+    series
+      ? bySeries
+          .get(series)
+          ?.map((member) => variantIn(member, record.frontmatter.language))
+      : undefined;
   const sortedTags = [...byTag.keys()].sort();
   const sortedSeries = [...bySeries.keys()].sort();
   const byYear = groupBy(publishedArticles, (r) => [
@@ -721,7 +765,7 @@ export function buildGeneratedPages(validatedInput, options) {
    */
   const partLabelOf = (record) => {
     const series = record.frontmatter.series;
-    const members = series ? bySeries.get(series) : undefined;
+    const members = seriesMembersFor(series, record);
     const index = members ? members.indexOf(record) : -1;
     return members && index >= 0
       ? /** @type {(a: string, b: string) => string} */ (
@@ -951,7 +995,9 @@ export function buildGeneratedPages(validatedInput, options) {
 
   for (const author of authors) {
     const authored = publishedArticles.filter((record) =>
-      record.frontmatter.authorIds.includes(author.id),
+      translations
+        .variantsOf(record)
+        .some((variant) => variant.frontmatter.authorIds.includes(author.id)),
     );
     const links =
       author.links.length > 0
@@ -1028,21 +1074,38 @@ export function buildGeneratedPages(validatedInput, options) {
 
   /**
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
-   * @returns {{alternates?: {language: string, route: string}[], xDefaultRoute?: string}}
+   * @returns {{alternates?: {language: string, route: string}[], variants?: {language: string, route: string}[], xDefaultRoute?: string}}
    */
   const alternatesOf = (record) => {
     const group = translations.groupOf.get(record);
-    return group &&
-      group.members.length > 1 &&
-      record.frontmatter.kind === 'article'
-      ? {
-          alternates: group.members.map((member) => ({
-            language: member.frontmatter.language,
-            route: contentRoute(member.frontmatter),
-          })),
-          xDefaultRoute: contentRoute(group.primary.frontmatter),
-        }
-      : {};
+    if (
+      !group ||
+      group.members.length < 2 ||
+      record.frontmatter.kind !== 'article'
+    ) {
+      return {};
+    }
+    const routed = (/** @type {typeof group.members} */ members) =>
+      members.map((member) => ({
+        language: member.frontmatter.language,
+        route: contentRoute(member.frontmatter),
+      }));
+    // Alternates must be reciprocal: a `seo.noindex` member neither carries
+    // nor receives them.
+    const indexable = group.members.filter(
+      (member) => !isSeoNoindex(member.frontmatter),
+    );
+    return {
+      variants: routed(group.members),
+      ...(isSeoNoindex(record.frontmatter) || indexable.length < 2
+        ? {}
+        : {
+            alternates: routed(indexable),
+            ...(isSeoNoindex(group.primary.frontmatter)
+              ? {}
+              : { xDefaultRoute: contentRoute(group.primary.frontmatter) }),
+          }),
+    };
   };
   for (const record of content) {
     const { frontmatter } = record;
@@ -1162,7 +1225,7 @@ export function buildGeneratedPages(validatedInput, options) {
             `</div></section>`,
         )
         .join('');
-      const members = series ? bySeries.get(series) : undefined;
+      const members = seriesMembersFor(series, record);
       const seriesBox =
         series && members && members.includes(record)
           ? `<section class="g-series-box" aria-label="${escapeHtml(series)}"><p class="g-label">${icon('book')}${escapeHtml(series)}</p><ol class="g-series-list">` +

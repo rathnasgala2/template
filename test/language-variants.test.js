@@ -307,3 +307,194 @@ test('language variants: an unresolved translationOf renders as a standalone art
   );
   assert.ok(!html.includes('hreflang="x-default"'));
 });
+
+/**
+ * @param {object} buildInput
+ * @param {import('node:test').TestContext} t
+ * @returns {Promise<{outputDirectory: string, manifest: any}>}
+ */
+async function renderFixture(buildInput, t) {
+  const { outputDirectory, workDirectory, sourceDirectory, cleanup } =
+    await createRenderDirectories();
+  t.after(cleanup);
+  const { manifest } = await renderPublication(buildInput, {
+    outputDirectory,
+    workDirectory,
+    sourceDirectory,
+    provenance: testProvenance(),
+  });
+  return { outputDirectory, manifest };
+}
+
+/**
+ * @param {Promise<unknown>} promise
+ * @param {string} code
+ * @returns {Promise<void>}
+ */
+const rejectsWith = (promise, code) =>
+  assert.rejects(promise, (error) =>
+    JSON.stringify(error.diagnostics ?? error).includes(code),
+  );
+
+/**
+ * @param {object} buildInput
+ * @param {number} n
+ * @param {Record<string, unknown>} frontmatter
+ * @returns {Promise<object>}
+ */
+function addTamil(buildInput, n, frontmatter) {
+  return addEditions(buildInput, [
+    cloneRecord(
+      buildInput.content[0],
+      n,
+      {
+        title: `Tamil ${n}`,
+        slug: `tamil-${n}`,
+        language: 'ta',
+        tags: [],
+        publishedAt: `2025-02-${String(n - 700).padStart(2, '0')}T09:00:00.000Z`,
+        createdAt: '2025-02-01T09:00:00.000Z',
+        ...frontmatter,
+      },
+      '<p>Tamil body</p>',
+    ),
+  ]);
+}
+
+test('language variants: a ta article without translations keeps English chrome and no switcher', async (t) => {
+  const input = await addTamil(await buildRichFixture(), 701, {});
+  const { outputDirectory, manifest } = await renderFixture(input, t);
+  const html = await read(outputDirectory, 'fixture-1/tamil-701/index.html');
+  assert.ok(html.includes('Skip to content'));
+  assert.ok(!html.includes('g-lang-switch'));
+  assert.ok(!manifest.routes.some((r) => r.path === 'fixture-1/ta/index.html'));
+});
+
+test('language variants: a ta default-language site renders Tamil chrome', async (t) => {
+  const input = await buildRichFixture();
+  input.publication.defaultLanguage = 'ta';
+  const { outputDirectory } = await renderFixture(input, t);
+  const html = await read(outputDirectory, 'fixture-1/index.html');
+  assert.ok(html.includes('உள்ளடக்கத்திற்குச் செல்'));
+});
+
+test('language variants: two members in one language fail the build', async (t) => {
+  const input = await addTamil(
+    await bilingualFixture(await buildRichFixture()),
+    703,
+    {
+      translationOf: 'first-article',
+    },
+  );
+  const { outputDirectory, workDirectory, sourceDirectory, cleanup } =
+    await createRenderDirectories();
+  t.after(cleanup);
+  await rejectsWith(
+    renderPublication(input, {
+      outputDirectory,
+      workDirectory,
+      sourceDirectory,
+      provenance: testProvenance(),
+    }),
+    'LANGUAGE_VARIANT_DUPLICATE',
+  );
+});
+
+test('language variants: a redirect under a language segment fails the build', async (t) => {
+  const input = await bilingualFixture(await buildRichFixture());
+  input.content[1].frontmatter.redirects = ['/ta/first-article'];
+  const { outputDirectory, workDirectory, sourceDirectory, cleanup } =
+    await createRenderDirectories();
+  t.after(cleanup);
+  await rejectsWith(
+    renderPublication(input, {
+      outputDirectory,
+      workDirectory,
+      sourceDirectory,
+      provenance: testProvenance(),
+    }),
+    'LANGUAGE_SEGMENT_CONFLICT',
+  );
+});
+
+test('language variants: ta and ta-IN are two languages with two sections', async (t) => {
+  const input = await addTamil(
+    await bilingualFixture(await buildRichFixture()),
+    704,
+    {
+      language: 'ta-IN',
+    },
+  );
+  const { manifest } = await renderFixture(input, t);
+  const paths = manifest.routes.map((r) => r.path);
+  assert.ok(paths.includes('fixture-1/ta/index.html'));
+  assert.ok(paths.includes('fixture-1/ta-in/index.html'));
+});
+
+test('language variants: a long language section paginates with its own canonical', async (t) => {
+  let input = await bilingualFixture(await buildRichFixture());
+  for (let n = 705; n < 716; n += 1) input = await addTamil(input, n, {});
+  const { outputDirectory } = await renderFixture(input, t);
+  const html = await read(outputDirectory, 'fixture-1/ta/page/2/index.html');
+  assert.match(html, /<link rel="canonical" href="[^"]*\/ta\/page\/2\/">/);
+});
+
+test('language variants: an unpublished primary lists its first published variant', async (t) => {
+  const input = await bilingualFixture(await buildRichFixture());
+  input.content[0].frontmatter.status = 'unlisted';
+  const { outputDirectory } = await renderFixture(input, t);
+  const home = await read(outputDirectory, 'fixture-1/index.html');
+  assert.ok(home.includes('முதல் கட்டுரை'));
+});
+
+test('language variants: a translation of a series part gets the series box', async (t) => {
+  const input = await bilingualFixture(await buildRichFixture());
+  Object.assign(input.content[4].frontmatter, {
+    series: 'story',
+    seriesOrder: 2,
+  });
+  const { outputDirectory } = await renderFixture(input, t);
+  const html = await read(
+    outputDirectory,
+    'fixture-1/ta/first-article/index.html',
+  );
+  assert.match(html, /class="g-series-box"/);
+});
+
+test('language variants: a tag only on the translation lists the group once', async (t) => {
+  const input = await bilingualFixture(await buildRichFixture());
+  input.content[4].frontmatter.tags = ['gamma'];
+  const { outputDirectory } = await renderFixture(input, t);
+  const html = await read(outputDirectory, 'fixture-1/tags/gamma/index.html');
+  assert.equal(html.split('class="g-card-link"').length - 1, 1);
+  assert.ok(html.includes('First article'));
+});
+
+test('language variants: a noindex variant is left out of every alternate', async (t) => {
+  const input = await bilingualFixture(await buildRichFixture());
+  input.content[4].frontmatter.seo = { noindex: true };
+  const { outputDirectory } = await renderFixture(input, t);
+  for (const route of [
+    'fixture-1/first-article/index.html',
+    'fixture-1/ta/first-article/index.html',
+  ]) {
+    const html = await read(outputDirectory, route);
+    assert.ok(!html.includes('<link rel="alternate" hreflang='));
+  }
+  const sitemap = await read(outputDirectory, 'fixture-1/sitemap.xml');
+  assert.ok(!sitemap.includes('xhtml:link'));
+});
+
+test('language variants: cards carry language chips and the Tamil feed entry carries its body', async (t) => {
+  const input = await bilingualFixture(await buildRichFixture());
+  const { outputDirectory } = await renderFixture(input, t);
+  const archive = await read(
+    outputDirectory,
+    'fixture-1/archive/2025/index.html',
+  );
+  assert.match(archive, /<div class="g-card-top">[^]*?g-chip g-lang-chip/);
+  const atom = await read(outputDirectory, 'fixture-1/feed/ta/atom.xml');
+  assert.ok(atom.includes('&lt;p&gt;தமிழ் உள்ளடக்கம்&lt;/p&gt;'));
+  const rss = await read(outputDirectory, 'fixture-1/feed/ta/rss.xml');
+  assert.ok(rss.includes('<language>ta</language>'));
+});

@@ -19,12 +19,15 @@ and this project adheres to
   non-default language gets a `/<language>/` section, a header and footer
   switcher, and its own Atom and RSS feeds; the sitemap adds `xhtml:link`
   alternates. A slug or route equal to a language segment fails the build
-  (`LANGUAGE_SEGMENT_CONFLICT`). Sites without `translationOf` render
-  byte-identically. Needs `@rathnasgala2/schemas` 3.21.0 to validate the key.
+  (`LANGUAGE_SEGMENT_CONFLICT`). Output is byte-identical for publications whose
+  default language has no new catalog and that carry no `translationOf`. Needs
+  `@rathnasgala2/schemas` 3.21.0 to validate the key.
 - A `ta` (Tamil) chrome catalog with every key translated, with Intl dates and
-  reading time; pages in a language with a catalog render their chrome in it.
-  The styling contract is unchanged (`g-lang-chip` and `g-lang-switch` are not
-  published hooks; they only add to the tag-chip classes).
+  reading time. On a site with `translationOf`, each page renders its chrome in
+  its own language's catalog. A publication whose `defaultLanguage` is `ta` now
+  gets Tamil chrome site-wide, because a `ta` catalog exists. The styling
+  contract is unchanged (`g-lang-chip` and `g-lang-switch` are not published
+  hooks; they only add to the tag-chip classes).
 
 ## [4.4.2] - 2026-10-22
 

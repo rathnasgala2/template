@@ -36,6 +36,8 @@ const DOCUMENTATION_URL =
  *   `translationOf`
  * @property {ReadonlyMap<ContentBuildRecord, TranslationGroup>} groupOf each
  *   grouped record's group
+ * @property {{record: ContentBuildRecord, language: string}[]} duplicates
+ *   group members repeating another member's language (a build error)
  * @property {string[]} orphans source paths of published articles whose
  *   `translationOf` names no article of the build
  * @property {{language: string, segment: string}[]} sections one entry per
@@ -69,14 +71,6 @@ export function languageName(tag) {
   } catch {
     return tag;
   }
-}
-
-/**
- * @param {string} tag
- * @returns {string} the primary language subtag, lower-cased
- */
-function primarySubtag(tag) {
-  return (tag.split('-')[0] ?? '').toLowerCase();
 }
 
 /**
@@ -116,9 +110,10 @@ export function resolveTranslations(content, defaultLanguage) {
   }
 
   const defaultFull = defaultLanguage.toLowerCase();
-  const defaultPrimary = primarySubtag(defaultLanguage);
   /** @type {Map<ContentBuildRecord, TranslationGroup>} */
   const groupOf = new Map();
+  /** @type {{record: ContentBuildRecord, language: string}[]} */
+  const duplicates = [];
   /**
    * @param {ContentBuildRecord} a
    * @param {ContentBuildRecord} b
@@ -140,8 +135,6 @@ export function resolveTranslations(content, defaultLanguage) {
     ];
     const inDefault = (/** @type {ContentBuildRecord} */ r) =>
       r.frontmatter.language.toLowerCase() === defaultFull;
-    const inDefaultPrimary = (/** @type {ContentBuildRecord} */ r) =>
-      primarySubtag(r.frontmatter.language) === defaultPrimary;
     const earliest = [...members].sort((a, b) =>
       a.frontmatter.publishedAt !== b.frontmatter.publishedAt
         ? a.frontmatter.publishedAt < b.frontmatter.publishedAt
@@ -154,8 +147,16 @@ export function resolveTranslations(content, defaultLanguage) {
     const primary =
       members.find(inDefault) ??
       (root.frontmatter.status === 'published' ? root : undefined) ??
-      members.find(inDefaultPrimary) ??
       earliest;
+    /** @type {Set<string>} */
+    const seen = new Set();
+    for (const member of [primary, ...members.filter((r) => r !== primary)]) {
+      const tag = languageSegment(member.frontmatter.language);
+      if (seen.has(tag)) {
+        duplicates.push({ record: member, language: tag });
+      }
+      seen.add(tag);
+    }
     const ordered = [
       primary,
       ...members.filter((r) => r !== primary).sort(byLanguage),
@@ -183,6 +184,7 @@ export function resolveTranslations(content, defaultLanguage) {
   return {
     active,
     groupOf,
+    duplicates,
     orphans,
     sections,
     isListed: (record) => {
@@ -194,8 +196,10 @@ export function resolveTranslations(content, defaultLanguage) {
 }
 
 /**
- * Fail closed when a language's `/<lang>/` segment is already a document's
- * route or slug (an article with slug `ta` beside `/ta/...` translations).
+ * Fail closed when a group repeats a language, or when a language's
+ * `/<lang>/` segment is already taken: any document whose slug, route or
+ * redirect equals `/<segment>` or sits under `/<segment>/`. A language is its
+ * whole BCP-47 tag, lower-cased (`ta` and `ta-in` are two languages).
  *
  * @param {readonly ContentBuildRecord[]} content
  * @param {string} defaultLanguage
@@ -210,23 +214,46 @@ export function assertLanguageSegmentsFree(
   resolution,
 ) {
   if (!resolution.active) return;
+  /** @type {Record<string, string>[]} */
+  const diagnostics = [];
+  const indexOf = new Map(content.map((record, index) => [record, index]));
+  for (const { record, language } of resolution.duplicates) {
+    diagnostics.push({
+      code: 'LANGUAGE_VARIANT_DUPLICATE',
+      severity: 'ERROR',
+      instancePointer: `/content/${indexOf.get(record)}`,
+      actualValueClass: 'object',
+      rule: 'template:translation',
+      sourcePath: record.sourcePath,
+      remediation: `The document ${record.sourcePath} is a second "${language}" variant of "${record.frontmatter.translationOf ?? record.frontmatter.slug}". Keep one document per language in a translation group.`,
+      documentationUrl: DOCUMENTATION_URL,
+    });
+  }
   const segments = new Set(resolution.sections.map((s) => s.segment));
   for (const record of resolution.groupOf.keys()) {
     const segment = languageSegment(record.frontmatter.language);
     if (segment !== defaultLanguage.toLowerCase()) segments.add(segment);
   }
-  /** @type {Record<string, string>[]} */
-  const diagnostics = [];
+  /**
+   * @param {string} value a slug, route or redirect
+   * @returns {string} the lower-cased, slash-led, slash-trimmed path
+   */
+  const normalise = (value) =>
+    `/${value.replace(/^\/+/, '').replace(/\/+$/, '')}`.toLowerCase();
   content.forEach((record, index) => {
     const { frontmatter } = record;
-    const route = routeOf(frontmatter)
-      .replace(/\/+$/, '')
-      .replace(/^\//, '')
-      .toLowerCase();
+    // A translation's derived route legitimately sits under its segment.
+    const derived = !frontmatter.route && frontmatter.translationOf;
+    const claims = [
+      frontmatter.slug,
+      ...(derived ? [] : [routeOf(frontmatter)]),
+      ...(frontmatter.redirects ?? []),
+    ].map(normalise);
     for (const segment of segments) {
-      if (frontmatter.slug.toLowerCase() !== segment && route !== segment) {
-        continue;
-      }
+      const taken = claims.find(
+        (claim) => claim === `/${segment}` || claim.startsWith(`/${segment}/`),
+      );
+      if (taken === undefined) continue;
       diagnostics.push({
         code: 'LANGUAGE_SEGMENT_CONFLICT',
         severity: 'ERROR',
@@ -234,7 +261,7 @@ export function assertLanguageSegmentsFree(
         actualValueClass: 'object',
         rule: 'template:translation',
         sourcePath: record.sourcePath,
-        remediation: `The document ${record.sourcePath} takes /${segment}, which the generated "${segment}" language pages own. Rename its slug or route.`,
+        remediation: `The document ${record.sourcePath} uses ${taken}, which the generated "${segment}" language pages own. Rename its slug, route or redirect.`,
         documentationUrl: DOCUMENTATION_URL,
       });
     }

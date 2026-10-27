@@ -107,14 +107,20 @@ rules; no class is added. The front-matter `hero` renders as the article's cover
 An `article` may name the article it translates with the optional front-matter
 key `translationOf: <slug>` (schemas 3.21.0). The group is that article plus
 every published document naming its slug; its primary is the member in the
-publication's default language, otherwise the root. A `translationOf` that names
-no article of the build renders as a standalone article. A site with no
+publication's default language, otherwise the published root, otherwise the
+earliest published member. A language is its whole BCP-47 tag, lower-cased,
+everywhere: `ta` and `ta-IN` are different languages with their own sections,
+and `en` on an `en-US` site is a non-default language. Two members of a group in
+one language fail the build (`LANGUAGE_VARIANT_DUPLICATE`). A group is listed
+under every tag, series and author any member carries. A `translationOf` that
+names no article of the build renders as a standalone article. A site with no
 `translationOf` renders exactly as before.
 
 - **Route.** A translation renders at `/<language>/<translationOf>` (language
   lower-cased); everything else keeps `route` or `/<slug>`. An article whose
-  slug or route equals a language segment in use fails the build
-  (`LANGUAGE_SEGMENT_CONFLICT`).
+  slug, route or redirect equal to a language segment in use (`/ta`) or under it
+  (`/ta/...`) fails the build (`LANGUAGE_SEGMENT_CONFLICT`). Alternates skip
+  `seo.noindex` members, so every emitted one is reciprocal.
 - **Listings** (home, archive, tags, series, authors, keep-reading) show one
   card per group, by its primary, with one `g-chip g-lang-chip` per variant (its
   language's own name; the current one is a marked span). The article page shows
@@ -126,9 +132,11 @@ no article of the build renders as a standalone article. A site with no
 - **Feeds and sitemap.** The default feeds list a group once; each non-default
   language has `/feed/<lang>/atom.xml` and `/feed/<lang>/rss.xml`, advertised
   with `hreflang`. The sitemap adds `xhtml:link` alternates for group members.
-- **Chrome language.** A page whose own language has a message catalog (`en`,
-  `ta`) renders its chrome, dates and reading time in it; other languages keep
-  the site's catalog.
+- **Chrome language.** On a site with `translationOf`, a page whose own language
+  has a message catalog (`en`, `ta`) renders its chrome, dates and reading time
+  in it; other languages keep the site's catalog. A site without `translationOf`
+  uses its default language's catalog on every page (so a `ta` default language
+  gets Tamil chrome).
 
 ### Editions
 

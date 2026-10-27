@@ -465,7 +465,9 @@ export async function renderPublication(buildInput, options) {
    * @returns {{messages: typeof siteMessages, consentHtml: string, appearanceControlHtml: string}}
    */
   const chromeFor = (language) => {
-    const messages = getMessages(language);
+    const messages = getMessages(
+      translations.active ? language : defaultLanguage,
+    );
     let chrome = chromeByCatalog.get(messages);
     if (!chrome) {
       chrome = {
@@ -799,7 +801,7 @@ export async function renderPublication(buildInput, options) {
    */
   const languageSwitcherFor = (page) => {
     if (!translations.active || translations.sections.length === 0) return '';
-    const entries = page.alternates ?? [
+    const entries = page.variants ?? [
       { language: defaultLanguage, route: '/' },
       ...translations.sections.map((section) => ({
         language: section.language,
