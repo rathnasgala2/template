@@ -93,8 +93,9 @@ import {
 } from './interactions.js';
 import { getMessages } from './messages.js';
 import {
-  languageName,
+  languageLabel,
   languageSegment,
+  localizeAuthor,
   resolveTranslations,
 } from './translations.js';
 import { resolveTextDirection } from './text-direction.js';
@@ -569,6 +570,11 @@ export function buildGeneratedPages(validatedInput, options) {
       // A tag only unlisted posts carry has no listing page: plain text.
       hasTagPage: (tag) => tagSegments.has(tag),
       variantsOf: translations.variantsOf,
+      languageLabel: (tag) => languageLabel(tag, translations.languages),
+      localizeAuthor: translations.active
+        ? (author, record) =>
+            localizeAuthor(author, record.frontmatter.language)
+        : undefined,
     });
   /** @type {Map<unknown, ReturnType<typeof createUi>>} */
   const uiByCatalog = new Map();
@@ -1821,7 +1827,7 @@ export function buildGeneratedPages(validatedInput, options) {
     const items = allPublishedArticles.filter(
       (r) => languageSegment(r.frontmatter.language) === section.segment,
     );
-    const name = languageName(section.language);
+    const name = languageLabel(section.language, translations.languages);
     const sectionPages = paginate(items, LISTING_PAGE_SIZE);
     const sectionRoute = (/** @type {number} */ n) =>
       n === 1 ? `/${section.segment}` : `/${section.segment}/page/${n}`;

@@ -38,6 +38,8 @@ const DOCUMENTATION_URL =
  *   grouped record's group
  * @property {{record: ContentBuildRecord, language: string}[]} duplicates
  *   group members repeating another member's language (a build error)
+ * @property {ReadonlySet<string>} languages every lower-cased language tag of
+ *   the published articles
  * @property {string[]} orphans source paths of published articles whose
  *   `translationOf` names no article of the build
  * @property {{language: string, segment: string}[]} sections one entry per
@@ -71,6 +73,61 @@ export function languageName(tag) {
   } catch {
     return tag;
   }
+}
+
+/**
+ * The label a language shows under: its own name for its primary subtag
+ * ("English"), unless another language on the site shares that subtag, then
+ * the full-tag name ("American English").
+ *
+ * @param {string} tag a BCP-47 tag
+ * @param {ReadonlySet<string>} siteLanguages every lower-cased language tag
+ *   of the site's published articles
+ * @returns {string}
+ */
+export function languageLabel(tag, siteLanguages) {
+  const primary = tag.split('-')[0] ?? tag;
+  const lower = tag.toLowerCase();
+  const shared = [...siteLanguages].some(
+    (other) =>
+      other !== lower &&
+      (other.split('-')[0] ?? other) === primary.toLowerCase(),
+  );
+  return shared || primary === tag ? languageName(tag) : languageName(primary);
+}
+
+/**
+ * The author as a page in `language` shows them: the matching `localized[]`
+ * entry's display name and biography (exact lower-cased tag, else a unique
+ * primary-subtag match), the author unchanged when none matches.
+ *
+ * @param {import('../../../types/index.d.ts').AuthorNormalized} author
+ * @param {string} language a BCP-47 tag
+ * @returns {import('../../../types/index.d.ts').AuthorNormalized}
+ */
+export function localizeAuthor(author, language) {
+  const entries =
+    /** @type {{language?: string, displayName?: string, biography?: string}[]} */ (
+      author.localized ?? []
+    ).filter(
+      (entry) => typeof entry?.language === 'string' && entry.displayName,
+    );
+  const wanted = language.toLowerCase();
+  const primary = wanted.split('-')[0];
+  const match =
+    entries.find((e) => e.language?.toLowerCase() === wanted) ??
+    (() => {
+      const same = entries.filter(
+        (e) => e.language?.toLowerCase().split('-')[0] === primary,
+      );
+      return same.length === 1 ? same[0] : undefined;
+    })();
+  if (!match) return author;
+  return {
+    ...author,
+    displayName: match.displayName ?? author.displayName,
+    biography: match.biography || author.biography,
+  };
 }
 
 /**
@@ -184,6 +241,9 @@ export function resolveTranslations(content, defaultLanguage) {
   return {
     active,
     groupOf,
+    languages: new Set(
+      published.map((r) => languageSegment(r.frontmatter.language)),
+    ),
     duplicates,
     orphans,
     sections,

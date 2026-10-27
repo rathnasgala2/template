@@ -8,6 +8,19 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.5.1] - 2026-10-27
+
+### Fixed
+
+- Language labels (chips, switcher, section heading) use the language's own name
+  for its primary subtag ("English"), and the full-tag name ("American English")
+  only when another language on the site shares that subtag.
+- On a site with `translationOf`, a page uses the author's `localized[]` display
+  name and biography for its own language (exact tag, else a unique primary
+  subtag): byline, author card, footer, JSON-LD and `/<lang>/` cards. Author
+  pages and every author link are unchanged. Sites without `translationOf` are
+  untouched.
+
 ## [4.5.0] - 2026-10-27
 
 ### Added

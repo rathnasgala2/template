@@ -288,6 +288,10 @@ export function createContentImage({ mediaVariants, publicBasePath }) {
  * @property {(record: import('../../../types/index.d.ts').ContentBuildRecord) => import('../../../types/index.d.ts').ContentBuildRecord[]} [variantsOf]
  *   the language variants of a record (itself included); default: the record
  *   alone, which renders no language chips
+ * @property {(tag: string) => string} [languageLabel] a language's chip label
+ *   (default: its full-tag name)
+ * @property {(author: import('../../../types/index.d.ts').AuthorNormalized, record: import('../../../types/index.d.ts').ContentBuildRecord) => import('../../../types/index.d.ts').AuthorNormalized} [localizeAuthor]
+ *   the author as the record's page shows them (default: unchanged)
  * @property {(tag: string) => boolean} [hasTagPage] whether the tag has a
  *   listing page (default: every tag does); a tag without one renders as plain
  *   text, never a dead link
@@ -303,6 +307,8 @@ export function createContentImage({ mediaVariants, publicBasePath }) {
 export function createComponents(context) {
   const { messages, mediaImage, authorsById, recordHref, tagHref } = context;
   const hasTagPage = context.hasTagPage ?? (() => true);
+  const languageLabel = context.languageLabel ?? languageName;
+  const localizeAuthor = context.localizeAuthor ?? ((author) => author);
   const variantsOf = context.variantsOf ?? ((record) => [record]);
   /**
    * @param {string} key a plain message key
@@ -342,7 +348,7 @@ export function createComponents(context) {
     const chips = variants
       .map((variant) => {
         const tag = variant.frontmatter.language;
-        const label = escapeHtml(languageName(tag));
+        const label = escapeHtml(languageLabel(tag));
         const attrs = `lang="${escapeHtml(tag)}"`;
         return variant === record
           ? `<span class="g-chip g-lang-chip" ${attrs} aria-current="true">${label}</span>`
@@ -399,7 +405,7 @@ export function createComponents(context) {
   const recordAuthors = (record) =>
     record.frontmatter.authorIds.flatMap((id) => {
       const author = authorsById.get(id);
-      return author ? [author] : [];
+      return author ? [localizeAuthor(author, record)] : [];
     });
 
   /**

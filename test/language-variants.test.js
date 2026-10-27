@@ -147,7 +147,7 @@ test('language variants: a bilingual pair and a standalone Tamil article', async
     // The current variant is a marked span, the other a link.
     assert.match(
       en,
-      /<span class="g-chip g-lang-chip" lang="en-US" aria-current="true">American English<\/span>/,
+      /<span class="g-chip g-lang-chip" lang="en-US" aria-current="true">English<\/span>/,
     );
     assert.match(
       en,
@@ -497,4 +497,73 @@ test('language variants: cards carry language chips and the Tamil feed entry car
   assert.ok(atom.includes('&lt;p&gt;தமிழ் உள்ளடக்கம்&lt;/p&gt;'));
   const rss = await read(outputDirectory, 'fixture-1/feed/ta/rss.xml');
   assert.ok(rss.includes('<language>ta</language>'));
+});
+
+test('language variants: labels are primary-subtag names unless the site shares the subtag', async (t) => {
+  const plain = await bilingualFixture(await buildRichFixture());
+  const { outputDirectory } = await renderFixture(plain, t);
+  const html = await read(
+    outputDirectory,
+    'fixture-1/first-article/index.html',
+  );
+  assert.ok(html.includes('>English</span>'));
+  assert.ok(!html.includes('American English'));
+  assert.match(html, /<nav class="g-lang-switch"[^>]*>[^]*?English[^]*?தமிழ்/);
+  assert.match(html, /lang="en-US"/);
+
+  const dialects = await addTamil(
+    await bilingualFixture(await buildRichFixture()),
+    720,
+    { language: 'en-GB', title: 'British piece' },
+  );
+  const out = await renderFixture(dialects, t);
+  const home = await read(out.outputDirectory, 'fixture-1/index.html');
+  assert.ok(home.includes('American English'));
+  assert.ok(home.includes('British English'));
+});
+
+const LOCAL_NAME = 'நீலாம்பூர்';
+
+/**
+ * @param {object} input
+ * @returns {object} the same input with the first author localized to Tamil
+ */
+function withLocalizedAuthor(input) {
+  input.authors[0].localized = [
+    { language: 'ta', displayName: LOCAL_NAME, biography: 'தமிழ் சுயவிவரம்' },
+  ];
+  return input;
+}
+
+test('language variants: a Tamil page shows the localized author, the English page the canonical one', async (t) => {
+  const input = withLocalizedAuthor(
+    await bilingualFixture(await buildRichFixture()),
+  );
+  const canonical = input.authors[0].displayName;
+  const { outputDirectory } = await renderFixture(input, t);
+  const en = await read(outputDirectory, 'fixture-1/first-article/index.html');
+  const ta = await read(
+    outputDirectory,
+    'fixture-1/ta/first-article/index.html',
+  );
+  assert.ok(ta.includes(`>${LOCAL_NAME}</a>`));
+  assert.ok(ta.includes(`"name":"${LOCAL_NAME}"`));
+  assert.ok(!en.includes(LOCAL_NAME));
+  assert.ok(en.includes(`>${canonical}</a>`));
+  const href = (html) =>
+    html.match(/<div class="g-byline-text"><span><a href="([^"]*)"/)?.[1];
+  assert.ok(href(en));
+  assert.equal(href(en), href(ta));
+  const section = await read(outputDirectory, 'fixture-1/ta/index.html');
+  assert.ok(section.includes(LOCAL_NAME));
+});
+
+test('language variants: without translationOf a localized author is ignored', async (t) => {
+  const input = withLocalizedAuthor(
+    await addTamil(await buildRichFixture(), 721, {}),
+  );
+  const { outputDirectory } = await renderFixture(input, t);
+  const html = await read(outputDirectory, 'fixture-1/tamil-721/index.html');
+  assert.ok(!html.includes(LOCAL_NAME));
+  assert.ok(html.includes(`>${input.authors[0].displayName}</a>`));
 });

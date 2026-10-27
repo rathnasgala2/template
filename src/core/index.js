@@ -126,7 +126,8 @@ import {
 } from './internal/feeds.js';
 import {
   assertLanguageSegmentsFree,
-  languageName,
+  languageLabel,
+  localizeAuthor,
   resolveTranslations,
 } from './internal/translations.js';
 import { listFilesSortedByUtf8Bytes } from './internal/fs-walk.js';
@@ -654,14 +655,20 @@ export async function renderPublication(buildInput, options) {
       ),
   });
   const footerAuthorHtmlFor = (
+    /** @type {string} */ language,
     /** @type {typeof siteMessages} */ pageMessages,
-  ) =>
-    footerAuthor
-      ? `<p class="g-label">${escapeHtml(/** @type {string} */ (pageMessages.writtenByLabel))}</p>` +
-        `<div class="g-byline">${footerComponents.avatar(footerAuthor)}<div class="g-byline-text">` +
-        `<a href="${escapeHtml(authorHref(footerAuthor))}">${escapeHtml(footerAuthor.displayName)}</a>` +
-        `</div></div>`
-      : '';
+  ) => {
+    if (!footerAuthor) return '';
+    const shownAuthor = translations.active
+      ? localizeAuthor(footerAuthor, language)
+      : footerAuthor;
+    return (
+      `<p class="g-label">${escapeHtml(/** @type {string} */ (pageMessages.writtenByLabel))}</p>` +
+      `<div class="g-byline">${footerComponents.avatar(shownAuthor)}<div class="g-byline-text">` +
+      `<a href="${escapeHtml(authorHref(footerAuthor))}">${escapeHtml(shownAuthor.displayName)}</a>` +
+      `</div></div>`
+    );
+  };
   const latestYear = validatedInput.content
     .filter((record) => record.frontmatter.kind !== 'edition')
     .map((record) => record.frontmatter.publishedAt.slice(0, 4))
@@ -687,12 +694,17 @@ export async function renderPublication(buildInput, options) {
     const pageMessages = chromeFor(language).messages;
     const key = JSON.stringify([
       pageTags,
-      pageMessages === siteMessages ? '' : language,
+      pageMessages === siteMessages && !translations.active ? '' : language,
       languageSwitcherHtml,
     ]);
     let html = footerCache.get(key);
     if (html === undefined) {
-      html = renderFooterFor(pageTags, pageMessages, languageSwitcherHtml);
+      html = renderFooterFor(
+        pageTags,
+        pageMessages,
+        languageSwitcherHtml,
+        language,
+      );
       footerCache.set(key, html);
     }
     return html;
@@ -701,6 +713,7 @@ export async function renderPublication(buildInput, options) {
     /** @type {readonly string[]} */ pageTags,
     /** @type {typeof siteMessages} */ pageMessages,
     /** @type {string} */ languageSwitcherHtml,
+    /** @type {string} */ language,
   ) =>
     renderFooter({
       homeRoute,
@@ -713,7 +726,7 @@ export async function renderPublication(buildInput, options) {
       footerItems: validatedInput.navigation.footerItems,
       urlPrefix,
       routeProfile,
-      authorHtml: footerAuthorHtmlFor(pageMessages),
+      authorHtml: footerAuthorHtmlFor(language, pageMessages),
       footerProfileHtml,
       copyrightText: `${pageMessages.footerCopyrightPrefix} ${latestYear ? `${latestYear} ` : ''}${publication.title}`,
       // The whitelabel switch: a core appearance setting, not a module.
@@ -814,7 +827,9 @@ export async function renderPublication(buildInput, options) {
         const current =
           entry.language.toLowerCase() === page.language.toLowerCase();
         const attrs = `class="g-chip g-lang-chip" lang="${escapeHtml(entry.language)}"`;
-        const label = escapeHtml(languageName(entry.language));
+        const label = escapeHtml(
+          languageLabel(entry.language, translations.languages),
+        );
         return current
           ? `<span ${attrs} aria-current="true">${label}</span>`
           : `<a ${attrs} hreflang="${escapeHtml(entry.language)}" href="${escapeHtml(joinPublicRoute(publicBasePath, entry.route, routeProfile))}">${label}</a>`;
