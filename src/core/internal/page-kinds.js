@@ -1056,14 +1056,16 @@ export function buildGeneratedPages(validatedInput, options) {
   // is the optional `gala/theme-pages/contact.md` body, else a short default.
   if (publication.contactForm?.enabled) {
     const contactTitle = text0('contactPageTitle');
-    const contactIntro = publication.contactForm.intro
-      ? options.pageBody(
-          dropLeadingTitleHeading(
-            publication.contactForm.intro.body,
-            contactTitle,
-          ),
+    const authoredIntro = publication.contactForm.intro
+      ? dropLeadingTitleHeading(
+          publication.contactForm.intro.body,
+          contactTitle,
         )
-      : `<p>${text('contactDefaultIntro')}</p>`;
+      : undefined;
+    const contactIntro =
+      authoredIntro !== undefined
+        ? options.pageBody(authoredIntro)
+        : `<p>${text('contactDefaultIntro')}</p>`;
     pages.push({
       kind: 'policy',
       route: CONTACT_ROUTE,
@@ -1071,8 +1073,10 @@ export function buildGeneratedPages(validatedInput, options) {
       documentTitle: documentTitleOf(contactTitle),
       language: publication.defaultLanguage,
       description:
-        truncateAtWord(plainText(contactIntro), DESCRIPTION_MAX) ||
-        publication.description,
+        truncateAtWord(
+          plainText(authoredIntro ?? contactIntro),
+          DESCRIPTION_MAX,
+        ) || publication.description,
       robotsContent: 'index, follow',
       ...defaultSocial,
       jsonLd: sd.serialize(

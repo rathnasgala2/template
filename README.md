@@ -906,6 +906,41 @@ The panel appears where it always did (the home page and article pages). On a
 site with language variants the Galascribe-mode panel on an article is in the
 article's language, like the sentences the script announces.
 
+### Contact page
+
+`publication.contactForm` (`{enabled, fields: {website, phone}}`, plus the
+optional rendered body of `gala/theme-pages/contact.md` as `intro`) adds, only
+while `enabled` is true:
+
+- `/contact/`, a system page like the policy pages: page kind `policy` (no new
+  hook value), titled "Contact", `index, follow`, in the sitemap like About, in
+  no feed, search index or `llms` file. Its intro is the authored body (verified
+  like every other body; its source is a manifest included source, role
+  `content`) or, when the file is absent, "Have a question or something to say?
+  Send a message and the author will reply by email." The route is reserved: a
+  document or redirect on `/contact` fails the build closed with
+  `POLICY_ROUTE_CONFLICT`.
+- The form (`g-form g-contact-form`, hidden until the script runs, with a
+  `<noscript>` note that it needs JavaScript): name, email and message always,
+  Website and Phone when `fields` asks, each with a label, the API's length
+  limit and an inline `g-field-error` slot linked by `aria-describedby`; a
+  honeypot named `trap` (see the newsletter); Send message; a polite status
+  line. Every submit is a `fetch`; the CSP keeps `form-action 'none'`.
+- A Contact link after Privacy in the footer's legal navigation.
+
+On Send the script checks the required fields and the address in the browser
+(errors beside the fields, the first focused, nothing sent), then posts
+`{name, email, message, trap, elapsedMs, website?, phone?}` to
+`POST .../contact-messages`; `elapsedMs` is whole milliseconds since the page
+loaded (`performance.now()`, at most 24 hours), and `website`/`phone` are sent
+only when the form has them and they are filled. 202 reads "Thanks, your message
+was sent." and clears the form (the API answers a honeypot hit or a too-fast
+submit the same way). `CONTACT_FORM_UNAVAILABLE` reads "This form isn't
+accepting messages right now."; `RATE_LIMITED` "Too many messages from here. Try
+again later."; a `400` marks the fields named by its `errors[].pointer` (a
+`/message` pointer reads "Your message can have at most two links."). The API,
+not the template, limits the form to the Pro and Business plans.
+
 ## Policy pages
 
 Every site carries two legal pages, `/terms` and `/privacy` (page kind

@@ -61,6 +61,18 @@ and this project adheres to
   Link mode, with or without `mode: "link"`, is byte-identical. English and
   Tamil sentences.
 
+- Contact page: `publication.contactForm.enabled` emits `/contact/` (page kind
+  `policy`, titled "Contact", indexable, in the sitemap, in no feed, search
+  index or `llms` file) with the optional `gala/theme-pages/contact.md` body as
+  its intro (else a short default), a Contact link after Privacy in the footer's
+  legal navigation, and a hidden form that `assets/gala-audience-v1.js` reveals
+  (a `<noscript>` note says it needs JavaScript): name, email and message, plus
+  Website and Phone per `contactForm.fields`, a `trap` honeypot and the elapsed
+  time since page load. Field problems show inline; `CONTACT_FORM_UNAVAILABLE`
+  and `RATE_LIMITED` have their own sentences. `/contact` is reserved while the
+  form is on (`POLICY_ROUTE_CONFLICT`). The intro's source joins the manifest's
+  included sources. English and Tamil sentences.
+
 ### Fixed
 
 - The `email` share target is a `mailto:` link without `target="_blank"` or

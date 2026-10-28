@@ -64,6 +64,7 @@ export function audiencePage(bodyHtml, language = 'en') {
  * @param {Record<string, unknown>} [options.session] stored reader session
  * @param {Record<string, unknown>} [options.pending] stored pending sign-in
  * @param {boolean} [options.blockStorage] make both storages throw
+ * @param {number} [options.now] what `performance.now()` reads (ms since load)
  * @param {(call: {url: string, method: string, init: any, body: any, headers: any}) => any} [options.handler]
  *   answers a request with `{status, body}`, or an `Error` to simulate no network
  * @returns {Promise<any>} the harness
@@ -128,6 +129,13 @@ export async function bootAudience(html, options = {}) {
   window.document.addEventListener('gala:reader-session', () => {
     events.push('gala:reader-session');
   });
+  if (options.now !== undefined) {
+    const now = options.now;
+    Object.defineProperty(window.performance, 'now', {
+      value: () => now,
+      configurable: true,
+    });
+  }
   window.eval(AUDIENCE_SOURCE);
   const sleep = (/** @type {number} */ ms) =>
     new Promise((resolve) => setTimeout(resolve, ms));
