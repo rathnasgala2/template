@@ -582,8 +582,11 @@ test('the shipped site script is minified: no comments, smaller, still parseable
   assert.ok(!/^\s*\/\//m.test(script));
   assert.ok(!script.includes('/*'));
   assert.ok(!/^[ \t]/m.test(script));
+  // Byte budget for the one script every page loads. Raised from 18000 when
+  // share buttons (native share sheet, script-revealed copy and bookmark
+  // buttons) legitimately added ~490 B; about 2.5% headroom, as before.
   assert.ok(
-    Buffer.byteLength(script) < 18000,
+    Buffer.byteLength(script) < 18500,
     String(Buffer.byteLength(script)),
   );
   assert.ok(script.includes("'http://www.w3.org/2000/svg'"));

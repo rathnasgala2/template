@@ -18,10 +18,14 @@ import {
 
 test('C. module absence: every empty-modules-placements S2 fixture case behaves exactly as its expectedDiagnostics say', async () => {
   const family = await loadS2FixtureFamily('empty-modules-placements');
-  assert.equal(family.cases.length, 6);
+  assert.equal(family.cases.length, 10);
   for (const caseId of [
     'build-input-valid-interactions-module',
     'build-input-valid-policies',
+    'build-input-valid-follows-module',
+    'build-input-rejects-follows-unknown-member',
+    'build-input-rejects-follows-without-enabled',
+    'build-input-rejects-follows-enabled-not-boolean',
   ]) {
     assert.ok(
       family.cases.some((fixtureCase) => fixtureCase.caseId === caseId),
@@ -70,8 +74,23 @@ test('C. module absence: every empty-modules-placements S2 fixture case behaves 
               sourceDirectory,
               provenance: testProvenance(),
             }),
-          BuildInputValidationError,
-          `${fixtureCase.caseId}: expected rejection before any render`,
+          (error) => {
+            assert.ok(
+              error instanceof BuildInputValidationError,
+              `${fixtureCase.caseId}: expected rejection before any render`,
+            );
+            for (const expected of fixtureCase.expectedDiagnostics) {
+              assert.ok(
+                error.diagnostics.some(
+                  (diagnostic) =>
+                    diagnostic.code === expected.code &&
+                    diagnostic.instancePointer === expected.instancePointer,
+                ),
+                `${fixtureCase.caseId}: expected diagnostic ${expected.code} at ${expected.instancePointer}`,
+              );
+            }
+            return true;
+          },
         );
       }
     } finally {

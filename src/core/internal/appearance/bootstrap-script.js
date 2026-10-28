@@ -363,11 +363,14 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
       });
       scored.sort(function (a, b) {
         if (b.score !== a.score) return b.score - a.score;
-        return String(b.doc.publishedAt || '').localeCompare(String(a.doc.publishedAt || ''));
+        return newest(a.doc, b.doc);
       });
       return scored.slice(0, 8).map(function (entry) {
         return entry.doc;
       });
+    }
+    function newest(a, b) {
+      return String(b.publishedAt || '').localeCompare(String(a.publishedAt || ''));
     }
     function pathOf(route) {
       var url = resolveUrl(route);
@@ -426,9 +429,7 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
       var query = input.value.trim();
       var results = query
         ? search(query)
-        : documents.slice().sort(function (a, b) {
-            return String(b.publishedAt || '').localeCompare(String(a.publishedAt || ''));
-          }).slice(0, 6);
+        : documents.slice().sort(newest).slice(0, 6);
       show(results, 'search-empty', 'No articles match your search.');
     }
     function build() {
@@ -600,10 +601,8 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
     var bookmark = group.querySelector('[data-action="bookmark"]');
     var nativeShare = group.querySelector('[data-action="native-share"]');
     // A group with link targets is visible before this runs and keeps its
-    // script-only buttons hidden until now; the native button stays hidden
-    // where the browser has no share sheet.
-    if (copyLink) copyLink.hidden = false;
-    if (bookmark) bookmark.hidden = false;
+    // script-only buttons hidden until their handler is attached; the native
+    // button stays hidden where the browser has no share sheet.
     if (nativeShare && navigator.share) {
       nativeShare.hidden = false;
       nativeShare.addEventListener('click', function () {
@@ -622,6 +621,7 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
       });
     }
     if (copyLink) {
+      copyLink.hidden = false;
       copyLink.addEventListener('click', function () {
         writeClipboard(window.location.href).then(
           function () {
@@ -634,6 +634,7 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
       });
     }
     if (bookmark) {
+      bookmark.hidden = false;
       bookmark.setAttribute('aria-pressed', String(readSaved().indexOf(path) !== -1));
       bookmark.addEventListener('click', function () {
         var on = bookmark.getAttribute('aria-pressed') !== 'true';
