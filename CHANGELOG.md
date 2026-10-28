@@ -34,6 +34,12 @@ and this project adheres to
   as before. `g-counts`/`g-count` are base-layer classes (tokens only), not new
   theme hooks.
 
+### Fixed
+
+- The `email` share target is a `mailto:` link without `target="_blank"` or
+  `rel`: opening it in a new tab left a blank tab behind once the mail client
+  took over. The network targets are unchanged.
+
 ## [4.5.1] - 2026-10-27
 
 ### Fixed

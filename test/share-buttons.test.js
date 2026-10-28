@@ -101,7 +101,14 @@ test('four targets render in the author order, Bookmark last, as links that need
   assert.equal(links.length, 3);
   for (const link of links) {
     assert.match(link, /^<a class="g-icon-btn" href="[^"]+"/);
-    assert.match(link, / target="_blank" rel="noopener noreferrer"/);
+    // A `mailto:` link opens no tab (a new tab for it is left blank once the
+    // mail client takes over); every network link does.
+    if (link.includes('data-share="email"')) {
+      assert.ok(!/ target=/.test(link), 'email: no target');
+      assert.ok(!/ rel=/.test(link), 'email: no rel');
+    } else {
+      assert.match(link, / target="_blank" rel="noopener noreferrer"/);
+    }
     assert.match(link, / aria-label="[^"]+" title="[^"]+"/);
   }
   assert.match(html, /aria-label="Share on X"/);

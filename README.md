@@ -796,10 +796,11 @@ last.
 - Every target except `copy-link` and `native` is a plain `<a>` on the network's
   documented share URL (`internal/share.js` cites each source), with the post
   title and canonical URL encoded, `target="_blank"`,
-  `rel="noopener noreferrer"` and an accessible name such as "Share on X". It
-  works with JavaScript off, so a group with a link target is visible without
-  the script and only its script-dependent buttons (copy link, native, Bookmark)
-  carry `hidden`.
+  `rel="noopener noreferrer"` and an accessible name such as "Share on X"; the
+  `email` target is a `mailto:` link and carries neither attribute (a new tab
+  for it is left blank once the mail client opens). It works with JavaScript
+  off, so a group with a link target is visible without the script and only its
+  script-dependent buttons (copy link, native, Bookmark) carry `hidden`.
 - `native` is hidden until the site script finds `navigator.share`.
 - The brand marks are monochrome Simple Icons paths (CC0) in the inline icon
   set.

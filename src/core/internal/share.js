@@ -5,7 +5,9 @@
  * Every target except `copy-link` and `native` is a plain `<a>` built from the
  * network's documented share URL with the post title and canonical URL
  * encoded into it, so it works with JavaScript off (`target="_blank"`,
- * `rel="noopener noreferrer"`, an accessible name such as "Share on X").
+ * `rel="noopener noreferrer"`, an accessible name such as "Share on X"). The
+ * `email` target is a `mailto:` link and opens no tab: it has neither
+ * attribute.
  * `copy-link`, `native` and the always-present Bookmark need the site script;
  * the script (`appearance/bootstrap-script.js`, `enhanceShare`) reveals them.
  *
@@ -226,6 +228,7 @@ export function renderShareGroup({ sharing, title, url, messages }) {
         emailHref(content),
         text('shareByEmailLabel'),
         'mail',
+        false,
       );
     }
     const network = NETWORKS[target];
@@ -252,8 +255,12 @@ export function renderShareGroup({ sharing, title, url, messages }) {
  * @param {string} href the intent URL (raw, escaped here)
  * @param {string} label the already-escaped accessible name
  * @param {string} iconName a key of the icon set
+ * @param {boolean} [newTab] open in a new tab (default); a `mailto:` link
+ *   passes `false`, because a new tab for it is left blank once the mail
+ *   client takes over
  * @returns {string} the `<a>` markup
  */
-function anchor(target, href, label, iconName) {
-  return `<a class="g-icon-btn" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" data-share="${target}" aria-label="${label}" title="${label}">${icon(iconName)}</a>`;
+function anchor(target, href, label, iconName, newTab = true) {
+  const opening = newTab ? ' target="_blank" rel="noopener noreferrer"' : '';
+  return `<a class="g-icon-btn" href="${escapeHtml(href)}"${opening} data-share="${target}" aria-label="${label}" title="${label}">${icon(iconName)}</a>`;
 }
