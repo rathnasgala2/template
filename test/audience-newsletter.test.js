@@ -19,6 +19,7 @@ import { icon } from '../src/core/internal/icons.js';
 import { getMessages } from '../src/core/internal/messages.js';
 import { buildGeneratedPages } from '../src/core/internal/page-kinds.js';
 import { buildRichFixture } from './helpers/page-kind-fixtures.js';
+import { renderSite } from './helpers/render-fixtures.js';
 import {
   APP,
   PUBLICATION,
@@ -230,6 +231,48 @@ test('the run-time sentences are one JSON block, English exactly as specified, s
 });
 
 // ------------------------------------------------------------------ script ---
+
+test('full render: the schemas admit newsletter mode "galascribe", and the built home and article pages carry the panel, the Subscribe link and the audience script', async (t) => {
+  const input = /** @type {any} */ (await buildRichFixture());
+  // Plain copy: the schemas refuse the angle brackets the unit tests use to
+  // probe escaping.
+  input.publication.newsletter = {
+    ...GALASCRIBE,
+    title: 'The Weekly',
+    text: 'One email a week.',
+  };
+  const site = await renderSite(input);
+  t.after(site.cleanup);
+  const subscribe = `href="${APP}/t/newsletter/request/${input.publication.id}"`;
+  for (const route of [
+    'fixture-1/index.html',
+    'fixture-1/first-article/index.html',
+  ]) {
+    const html = await site.htmlOf(route);
+    assert.equal(count(html, AUDIENCE_MARKER), 1, route);
+    assert.ok(html.includes('data-gala-newsletter-form'), route);
+    assert.ok(html.includes(subscribe), route);
+    assert.match(
+      html,
+      /<script src="[^"]*\/assets\/gala-audience-v1\.js" defer data-gala-audience-script /,
+      route,
+    );
+  }
+  const tags = await site.htmlOf('fixture-1/tags/index.html');
+  assert.ok(!tags.includes(AUDIENCE_MARKER), 'listing pages have no panel');
+  assert.ok(
+    site.manifest.assets.some((/** @type {any} */ asset) =>
+      asset.path.endsWith('assets/gala-audience-v1.js'),
+    ),
+    'the audience script is a manifest asset',
+  );
+  assert.ok(
+    !site.manifest.routes.some((/** @type {any} */ route) =>
+      route.path.includes('/_gala/email/'),
+    ),
+    'a card-mode newsletter mails no fragments',
+  );
+});
 
 /**
  * @param {string} [language]

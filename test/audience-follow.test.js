@@ -22,7 +22,9 @@ import {
 import { getMessages } from '../src/core/internal/messages.js';
 import { buildGeneratedPages } from '../src/core/internal/page-kinds.js';
 import { buildRichFixture } from './helpers/page-kind-fixtures.js';
+import { renderSite } from './helpers/render-fixtures.js';
 import {
+  API,
   APP,
   AUDIENCE_SOURCE,
   AUTHOR,
@@ -232,6 +234,51 @@ test('the interactions module admits the optional follows member and checks its 
 });
 
 // ------------------------------------------------------------------ script ---
+
+test('full render: the schemas admit interactions-config follows, and the built pages carry the controls, the messages and the audience script', async (t) => {
+  const input = /** @type {any} */ (await buildRichFixture());
+  input.modules = {
+    interactions: {
+      config: {
+        schemaId: 'urn:gala:schema:interactions-config:2.0.0',
+        schemaVersion: '2.0.0',
+        reactions: { enabled: false, definitions: [] },
+        comments: { enabled: false, allowReplies: false, maxDepth: 1 },
+        publicCounts: { reactions: false, comments: false },
+        follows: { enabled: true },
+      },
+      apiOrigin: API,
+      appOrigin: APP,
+    },
+  };
+  const site = await renderSite(input);
+  t.after(site.cleanup);
+  const article = await site.htmlOf('fixture-1/first-article/index.html');
+  assert.equal(count(article, AUDIENCE_MARKER), 2, 'byline and author card');
+  assert.match(
+    article,
+    new RegExp(
+      `<script src="[^"]*/assets/gala-audience-v1\\.js" defer data-gala-audience-script data-api-origin="${API}" data-app-origin="${APP}" data-publication-id="[^"]+"`,
+    ),
+  );
+  assert.ok(article.includes('data-gala-audience-messages'));
+  assert.ok(
+    site.manifest.assets.some((/** @type {any} */ asset) =>
+      asset.path.endsWith('assets/gala-audience-v1.js'),
+    ),
+    'the audience script is a manifest asset',
+  );
+  const authorRoutes = site.manifest.routes.filter((/** @type {any} */ route) =>
+    route.path.includes('/authors/'),
+  );
+  assert.ok(authorRoutes.length >= input.authors.length, 'author pages built');
+  for (const route of authorRoutes) {
+    const html = (await site.read(route.path)).toString('utf8');
+    assert.equal(count(html, AUDIENCE_MARKER), 1, route.path);
+  }
+  const home = await site.htmlOf('fixture-1/index.html');
+  assert.ok(!home.includes(AUDIENCE_MARKER), 'the home page has no control');
+});
 
 /**
  * A page with a byline control and an author-card control for one author, and

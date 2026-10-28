@@ -28,6 +28,7 @@ import { buildSearchIndex } from '../src/core/internal/search-index.js';
 import { buildSitemap } from '../src/core/internal/sitemap.js';
 import { collectIncludedSources } from '../src/core/internal/source-inventory.js';
 import { buildRichFixture } from './helpers/page-kind-fixtures.js';
+import { renderSite } from './helpers/render-fixtures.js';
 import {
   PUBLICATION,
   audiencePage,
@@ -385,6 +386,54 @@ test('while the form is on, /contact is reserved: a document or redirect that ta
 });
 
 // ------------------------------------------------------------------ script ---
+
+test('full render: the schemas admit contactForm, and the built site has /contact/ with the form, the footer link, the audience script and a sitemap entry', async (t) => {
+  const input = await inputWith({
+    enabled: true,
+    fields: { website: true, phone: false },
+  });
+  const site = await renderSite(input);
+  t.after(site.cleanup);
+  const contact = await site.htmlOf('fixture-1/contact/index.html');
+  assert.equal(count(contact, AUDIENCE_MARKER), 1);
+  assert.deepEqual(
+    [...contact.matchAll(/<(?:input|textarea) [^>]*name="([a-z]+)"/g)].map(
+      (match) => match[1],
+    ),
+    ['name', 'email', 'website', 'message', 'trap'],
+  );
+  assert.match(
+    contact,
+    /<script src="[^"]*\/assets\/gala-audience-v1\.js" defer data-gala-audience-script /,
+  );
+  assert.match(
+    contact,
+    /<meta name="robots" content="index, follow"|<meta name="robots" content="index,follow"/,
+  );
+  const article = await site.htmlOf('fixture-1/first-article/index.html');
+  assert.ok(
+    article.includes(
+      '<li><a href="/fixture-1/privacy/">Privacy</a></li><li><a href="/fixture-1/contact/">Contact</a></li>',
+    ),
+    'the footer links Contact after Privacy',
+  );
+  assert.ok(
+    !article.includes(AUDIENCE_MARKER),
+    'an article carries no contact form',
+  );
+  const sitemap = (await site.read('fixture-1/sitemap.xml')).toString('utf8');
+  assert.ok(
+    sitemap.includes(
+      `<loc>${new URL('/fixture-1/contact/', input.baseUrl)}</loc>`,
+    ),
+    'contact is in the sitemap',
+  );
+  assert.ok(
+    site.manifest.assets.some((/** @type {any} */ asset) =>
+      asset.path.endsWith('assets/gala-audience-v1.js'),
+    ),
+  );
+});
 
 /**
  * @param {{website: boolean, phone: boolean}} [fields]

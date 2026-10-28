@@ -2,14 +2,12 @@
  * Email fragments (`/_gala/email/<content id>.html`): when they exist, what a
  * fragment holds (email-safe markup, absolute addresses, the largest image,
  * `noindex`), that they are in no sitemap, feed, search index or llms file,
- * and, while the pinned schemas validate the new publication members, a full
- * render of everything the audience features add to a site.
+ * and a full render of everything the audience features add to a site.
  */
 
 import { strict as assert } from 'node:assert';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
 import { renderPublication } from '../src/core/index.js';
@@ -319,16 +317,6 @@ test('fragments are no pages: sitemap, feeds, search index and llms files never 
 
 // -------------------------------------------------------------- full render --
 
-const schemasVersion = JSON.parse(
-  await readFile(
-    fileURLToPath(import.meta.resolve('@rathnasgala2/schemas/package.json')),
-    'utf8',
-  ),
-).version;
-const [major, minor] = String(schemasVersion).split('.').map(Number);
-/** The pinned schemas validate the 3.22.0 publication members only from 3.22.0. */
-const SCHEMAS_VALIDATE_AUDIENCE = major > 3 || (major === 3 && minor >= 22);
-
 /**
  * Render the rich fixture after `prepare`, with a staged PNG in the first
  * post's body.
@@ -415,178 +403,154 @@ const FEATURES = (/** @type {any} */ input, /** @type {string} */ content) => {
   };
 };
 
-test(
-  'full render with every audience feature on: fragments, script, pages and manifest rows',
-  {
-    skip:
-      !SCHEMAS_VALIDATE_AUDIENCE &&
-      `pinned schemas ${schemasVersion} do not validate the 3.22.0 members`,
-  },
-  async (t) => {
-    const site = await render((input) => FEATURES(input, 'full'));
-    t.after(site.cleanup);
-    const [first, second] = site.input.content;
-    const directory = 'fixture-1/_gala/email';
-    assert.deepEqual(
-      await exists(path.join(site.outputDirectory, directory)),
-      [`${first.frontmatter.id}.html`, `${second.frontmatter.id}.html`].sort(),
-    );
+test('full render with every audience feature on: fragments, script, pages and manifest rows', async (t) => {
+  const site = await render((input) => FEATURES(input, 'full'));
+  t.after(site.cleanup);
+  const [first, second] = site.input.content;
+  const directory = 'fixture-1/_gala/email';
+  assert.deepEqual(
+    await exists(path.join(site.outputDirectory, directory)),
+    [`${first.frontmatter.id}.html`, `${second.frontmatter.id}.html`].sort(),
+  );
 
-    // The manifest lists them like other outputs.
-    const row = site.manifest.routes.find(
+  // The manifest lists them like other outputs.
+  const row = site.manifest.routes.find(
+    (/** @type {any} */ route) =>
+      route.path === `${directory}/${first.frontmatter.id}.html`,
+  );
+  assert.deepEqual(
+    { ...row, byteLength: undefined, sha256: undefined },
+    {
+      path: `${directory}/${first.frontmatter.id}.html`,
+      mediaType: 'text/html; charset=utf-8',
+      byteLength: undefined,
+      sha256: undefined,
+      routeClass: 'asset',
+      interactionBearing: false,
+    },
+  );
+
+  // What a fragment holds.
+  const html = await site.read(`${directory}/${first.frontmatter.id}.html`);
+  assert.match(
+    html,
+    /^<!doctype html>\n<html lang="[^"]+" dir="ltr"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>First article<\/title><\/head><body><div data-gala-email-body /,
+  );
+  assert.ok(!html.includes('<h1'), 'the repeated title is gone');
+  assert.ok(
+    html.includes('href="https://fixture-1.example.com/"'),
+    'a root-relative link resolves exactly as it does on the site',
+  );
+  assert.ok(
+    html.includes(
+      'href="https://fixture-1.example.com/fixture-1/second-article/"',
+    ),
+  );
+  assert.match(
+    html,
+    /<pre style="[^"]*"><code style="[^"]*">const a = 1;\n?<\/code><\/pre>/,
+  );
+  assert.ok(!/<(?:script|form|iframe|link|style)\b/i.test(html));
+  const image = html.match(
+    /<img src="(https:\/\/[^"]+)" alt="A chart" width="(\d+)" height="(\d+)" style="/,
+  );
+  assert.ok(image, 'the image is absolute with its size and a style');
+  assert.ok(
+    image[1].startsWith(
+      'https://fixture-1.example.com/fixture-1/assets/media/',
+    ),
+  );
+  // The staged 1000 x 500 source: its largest output file is the original.
+  assert.deepEqual([image[2], image[3]], ['1000', '500']);
+  // The file it names is part of the build.
+  await readFile(
+    path.join(
+      site.outputDirectory,
+      image[1].replace('https://fixture-1.example.com/', ''),
+    ),
+  );
+
+  // Excluded everywhere a crawler or a reader looks.
+  for (const file of [
+    'fixture-1/sitemap.xml',
+    'fixture-1/feed/atom.xml',
+    'fixture-1/feed/rss.xml',
+    'fixture-1/search-index.json',
+    'fixture-1/llms.txt',
+    'fixture-1/llms-full.txt',
+    'fixture-1/index.html',
+    'fixture-1/first-article/index.html',
+  ]) {
+    assert.ok(!(await site.read(file)).includes('_gala'), file);
+  }
+  const sitemap = await site.read('fixture-1/sitemap.xml');
+  assert.ok(
+    sitemap.includes(
+      '<loc>https://fixture-1.example.com/fixture-1/contact/</loc>',
+    ),
+  );
+
+  // The script, its sentences and its asset.
+  const article = await site.read('fixture-1/first-article/index.html');
+  assert.match(
+    article,
+    /<script type="application\/json" data-gala-audience-messages>\{[^<]*\}<\/script><script src="\/fixture-1\/assets\/gala-audience-v1\.js" defer data-gala-audience-script data-api-origin="https:\/\/api\.galascribe\.com" data-app-origin="https:\/\/app\.galascribe\.com" data-publication-id="[^"]+" data-canonical-url="https:\/\/fixture-1\.example\.com\/fixture-1\/first-article\/"><\/script>/,
+  );
+  assert.ok(
+    site.manifest.assets.some(
+      (/** @type {any} */ asset) =>
+        asset.path === 'fixture-1/assets/gala-audience-v1.js',
+    ),
+  );
+  await readFile(
+    path.join(site.outputDirectory, 'fixture-1/assets/gala-audience-v1.js'),
+  );
+  const contact = await site.read('fixture-1/contact/index.html');
+  assert.ok(contact.includes('data-gala-contact-form'));
+  assert.ok(contact.includes('data-gala-audience-script'));
+  assert.ok(
+    contact.includes(
+      '<link rel="canonical" href="https://fixture-1.example.com/fixture-1/contact/">',
+    ),
+  );
+  assert.ok(
+    contact.includes('<a href="/fixture-1/contact/">Contact</a>'),
+    'footer link',
+  );
+  const home = await site.read('fixture-1/index.html');
+  assert.ok(home.includes('data-gala-newsletter-form'));
+  const author = site.input.authors[0];
+  assert.ok(
+    (await site.read('fixture-1/first-article/index.html')).includes(
+      `data-author-id="${author.id}"`,
+    ),
+  );
+});
+
+test('full render, card mode: the contact page and script are there, no fragment is', async (t) => {
+  const site = await render((input) => FEATURES(input, 'card'));
+  t.after(site.cleanup);
+  assert.equal(
+    await exists(path.join(site.outputDirectory, 'fixture-1/_gala')),
+    undefined,
+  );
+  assert.ok(
+    site.manifest.routes.some(
       (/** @type {any} */ route) =>
-        route.path === `${directory}/${first.frontmatter.id}.html`,
-    );
-    assert.deepEqual(
-      { ...row, byteLength: undefined, sha256: undefined },
-      {
-        path: `${directory}/${first.frontmatter.id}.html`,
-        mediaType: 'text/html; charset=utf-8',
-        byteLength: undefined,
-        sha256: undefined,
-        routeClass: 'asset',
-        interactionBearing: false,
-      },
-    );
+        route.path === 'fixture-1/contact/index.html',
+    ),
+  );
+});
 
-    // What a fragment holds.
-    const html = await site.read(`${directory}/${first.frontmatter.id}.html`);
-    assert.match(
-      html,
-      /^<!doctype html>\n<html lang="[^"]+" dir="ltr"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>First article<\/title><\/head><body><div data-gala-email-body /,
-    );
-    assert.ok(!html.includes('<h1'), 'the repeated title is gone');
-    assert.ok(
-      html.includes('href="https://fixture-1.example.com/"'),
-      'a root-relative link resolves exactly as it does on the site',
-    );
-    assert.ok(
-      html.includes(
-        'href="https://fixture-1.example.com/fixture-1/second-article/"',
+test('full render: a document on /contact fails the build closed while the form is on', async () => {
+  await assert.rejects(
+    render((input) => {
+      FEATURES(input, 'card');
+      input.content[1].frontmatter.route = '/contact';
+    }),
+    (/** @type {any} */ error) =>
+      error.diagnostics?.some(
+        (/** @type {any} */ d) => d.code === 'POLICY_ROUTE_CONFLICT',
       ),
-    );
-    assert.match(
-      html,
-      /<pre style="[^"]*"><code style="[^"]*">const a = 1;\n?<\/code><\/pre>/,
-    );
-    assert.ok(!/<(?:script|form|iframe|link|style)\b/i.test(html));
-    const image = html.match(
-      /<img src="(https:\/\/[^"]+)" alt="A chart" width="(\d+)" height="(\d+)" style="/,
-    );
-    assert.ok(image, 'the image is absolute with its size and a style');
-    assert.ok(
-      image[1].startsWith(
-        'https://fixture-1.example.com/fixture-1/assets/media/',
-      ),
-    );
-    // The staged 1000 x 500 source: its largest output file is the original.
-    assert.deepEqual([image[2], image[3]], ['1000', '500']);
-    // The file it names is part of the build.
-    await readFile(
-      path.join(
-        site.outputDirectory,
-        image[1].replace('https://fixture-1.example.com/', ''),
-      ),
-    );
-
-    // Excluded everywhere a crawler or a reader looks.
-    for (const file of [
-      'fixture-1/sitemap.xml',
-      'fixture-1/feed/atom.xml',
-      'fixture-1/feed/rss.xml',
-      'fixture-1/search-index.json',
-      'fixture-1/llms.txt',
-      'fixture-1/llms-full.txt',
-      'fixture-1/index.html',
-      'fixture-1/first-article/index.html',
-    ]) {
-      assert.ok(!(await site.read(file)).includes('_gala'), file);
-    }
-    const sitemap = await site.read('fixture-1/sitemap.xml');
-    assert.ok(
-      sitemap.includes(
-        '<loc>https://fixture-1.example.com/fixture-1/contact/</loc>',
-      ),
-    );
-
-    // The script, its sentences and its asset.
-    const article = await site.read('fixture-1/first-article/index.html');
-    assert.match(
-      article,
-      /<script type="application\/json" data-gala-audience-messages>\{[^<]*\}<\/script><script src="\/fixture-1\/assets\/gala-audience-v1\.js" defer data-gala-audience-script data-api-origin="https:\/\/api\.galascribe\.com" data-app-origin="https:\/\/app\.galascribe\.com" data-publication-id="[^"]+" data-canonical-url="https:\/\/fixture-1\.example\.com\/fixture-1\/first-article\/"><\/script>/,
-    );
-    assert.ok(
-      site.manifest.assets.some(
-        (/** @type {any} */ asset) =>
-          asset.path === 'fixture-1/assets/gala-audience-v1.js',
-      ),
-    );
-    await readFile(
-      path.join(site.outputDirectory, 'fixture-1/assets/gala-audience-v1.js'),
-    );
-    const contact = await site.read('fixture-1/contact/index.html');
-    assert.ok(contact.includes('data-gala-contact-form'));
-    assert.ok(contact.includes('data-gala-audience-script'));
-    assert.ok(
-      contact.includes(
-        '<link rel="canonical" href="https://fixture-1.example.com/fixture-1/contact/">',
-      ),
-    );
-    assert.ok(
-      contact.includes('<a href="/fixture-1/contact/">Contact</a>'),
-      'footer link',
-    );
-    const home = await site.read('fixture-1/index.html');
-    assert.ok(home.includes('data-gala-newsletter-form'));
-    const author = site.input.authors[0];
-    assert.ok(
-      (await site.read('fixture-1/first-article/index.html')).includes(
-        `data-author-id="${author.id}"`,
-      ),
-    );
-  },
-);
-
-test(
-  'full render, card mode: the contact page and script are there, no fragment is',
-  {
-    skip:
-      !SCHEMAS_VALIDATE_AUDIENCE &&
-      `pinned schemas ${schemasVersion} do not validate the 3.22.0 members`,
-  },
-  async (t) => {
-    const site = await render((input) => FEATURES(input, 'card'));
-    t.after(site.cleanup);
-    assert.equal(
-      await exists(path.join(site.outputDirectory, 'fixture-1/_gala')),
-      undefined,
-    );
-    assert.ok(
-      site.manifest.routes.some(
-        (/** @type {any} */ route) =>
-          route.path === 'fixture-1/contact/index.html',
-      ),
-    );
-  },
-);
-
-test(
-  'full render: a document on /contact fails the build closed while the form is on',
-  {
-    skip:
-      !SCHEMAS_VALIDATE_AUDIENCE &&
-      `pinned schemas ${schemasVersion} do not validate the 3.22.0 members`,
-  },
-  async () => {
-    await assert.rejects(
-      render((input) => {
-        FEATURES(input, 'card');
-        input.content[1].frontmatter.route = '/contact';
-      }),
-      (/** @type {any} */ error) =>
-        error.diagnostics?.some(
-          (/** @type {any} */ d) => d.code === 'POLICY_ROUTE_CONFLICT',
-        ),
-    );
-  },
-);
+  );
+});

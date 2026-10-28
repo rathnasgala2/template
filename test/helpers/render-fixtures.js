@@ -5,9 +5,12 @@
  * output/work directory management.
  */
 
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { strict as assert } from 'node:assert';
+import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+
+import { renderPublication } from '../../src/core/index.js';
 
 /**
  * A schema-valid, deterministic placeholder `provenance` bundle, matching
@@ -100,4 +103,45 @@ export async function createRenderDirectories() {
     sourceDirectory,
     cleanup: () => rm(root, { recursive: true, force: true }),
   };
+}
+
+/**
+ * Render a build input through the whole renderer (`renderPublication`, so the
+ * schemas validate it first) into fresh temporary directories.
+ *
+ * @param {any} input the build input
+ * @returns {Promise<{manifest: any, htmlOf: (routePath: string) => Promise<string>, read: (file: string) => Promise<Buffer>, cleanup: () => Promise<void>}>}
+ *   the manifest, the built HTML of one manifest route by its output path
+ *   (`fixture-1/first-article/index.html`), a reader for any output file, and
+ *   a cleanup callback
+ */
+export async function renderSite(input) {
+  const dirs = await createRenderDirectories();
+  try {
+    const { manifest } = await renderPublication(input, {
+      outputDirectory: dirs.outputDirectory,
+      workDirectory: dirs.workDirectory,
+      sourceDirectory: dirs.sourceDirectory,
+      provenance: testProvenance(),
+    });
+    const read = (/** @type {string} */ file) =>
+      readFile(path.join(dirs.outputDirectory, file));
+    return {
+      manifest,
+      read,
+      htmlOf: async (routePath) => {
+        assert.ok(
+          manifest.routes.some(
+            (/** @type {any} */ route) => route.path === routePath,
+          ),
+          `${routePath} is a built route`,
+        );
+        return (await read(routePath)).toString('utf8');
+      },
+      cleanup: dirs.cleanup,
+    };
+  } catch (error) {
+    await dirs.cleanup();
+    throw error;
+  }
 }

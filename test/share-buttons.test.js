@@ -21,6 +21,7 @@ import {
   resolveShareTargets,
 } from '../src/core/internal/share.js';
 import { buildRichFixture } from './helpers/page-kind-fixtures.js';
+import { renderSite } from './helpers/render-fixtures.js';
 
 const GROUP = /<div class="g-share"[^>]*>[\s\S]*?<\/div>/;
 const TITLE = 'First article';
@@ -290,6 +291,24 @@ test('a page without an article share group renders none (pages and listings are
   )) {
     assert.ok(!page.bodyHtml.includes('g-share'), `${page.kind} ${page.route}`);
   }
+});
+
+test('full render: the schemas validate publication.sharing and the built article carries the group', async (t) => {
+  const input = /** @type {any} */ (await buildRichFixture());
+  input.publication.sharing = { targets: ['x', 'bluesky', 'email'] };
+  const site = await renderSite(input);
+  t.after(site.cleanup);
+  const html = await site.htmlOf('fixture-1/first-article/index.html');
+  const group = html.match(GROUP);
+  assert.ok(group, 'the built article renders a share group');
+  assert.deepEqual(order(group[0]), ['x', 'bluesky', 'email', 'bookmark']);
+  assert.match(group[0], /aria-label="Share on X"/);
+  const canonical = html.match(/<link rel="canonical" href="([^"]+)"/);
+  assert.ok(canonical, 'the built article names its canonical URL');
+  assert.ok(
+    group[0].includes(encodeURIComponent(canonical[1])),
+    'the share links carry the page canonical URL',
+  );
 });
 
 // --- the shipped site script ---

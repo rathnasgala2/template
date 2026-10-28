@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.6.0] - 2026-10-27
+
 ### Added
 
 - Share buttons: `publication.sharing.targets` (ordered; `copy-link`, `native`,
@@ -19,8 +21,8 @@ and this project adheres to
   script only where `navigator.share` exists. Bookmark stays last. A site
   without `sharing` (or with `["copy-link"]`) renders the same group as before,
   byte for byte; an empty list leaves Bookmark alone. Brand marks are added to
-  the inline icon set (Simple Icons, CC0). Needs `@rathnasgala2/schemas` 3.22.0
-  to validate the key.
+  the inline icon set (Simple Icons, CC0). `publication.sharing` is validated by
+  `@rathnasgala2/schemas` 3.22.0.
 - Public counts on post cards, the home cover story and article headers: when
   interactions are on and a `publicCounts` switch is true (and that kind of
   interaction is enabled), each carries an empty, hidden `g-counts` slot (end of
@@ -47,7 +49,7 @@ and this project adheres to
   without `follows` renders the same bytes as before. New base-layer classes
   (`g-follow*`, `g-form*`, `g-field*`, `g-input`, `g-hp`, `g-sr-only`) read
   tokens only and are not published theme hooks. English and Tamil sentences.
-  Needs `@rathnasgala2/schemas` 3.22.0 to validate the key.
+  `interactions-config.follows` is validated by `@rathnasgala2/schemas` 3.22.0.
 
 - Galascribe newsletter: `publication.newsletter.mode: "galascribe"` renders the
   newsletter panel with a Subscribe link to the App's
@@ -79,8 +81,15 @@ and this project adheres to
   as email-safe HTML (absolute links and images, the largest responsive image,
   `<pre><code>` blocks, inline styles only where a mail client needs them, no
   script, form, class or id). Fragments are in no sitemap, feed, search index or
-  `llms` file and are listed in the artifact manifest as `asset` routes. Needs
-  `@rathnasgala2/schemas` 3.22.0 to validate the newsletter mode.
+  `llms` file and are listed in the artifact manifest as `asset` routes. The
+  newsletter mode is validated by `@rathnasgala2/schemas` 3.22.0.
+
+### Changed
+
+- The `@rathnasgala2/schemas` peer range is `^3.22.0` and the lock installs
+  3.22.0 exactly from the npm registry. 3.22.0 is the release that validates
+  `publication.sharing`, the Galascribe newsletter mode and `emailContent`,
+  `publication.contactForm`, and `follows` in the interactions config.
 
 ### Fixed
 
