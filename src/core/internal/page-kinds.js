@@ -408,7 +408,7 @@ export function selectRelatedArticles(record, published) {
  * @param {string} title the record title
  * @returns {string} the body without a leading `<h1>` that equals the title
  */
-function dropLeadingTitleHeading(body, title) {
+export function dropLeadingTitleHeading(body, title) {
   const match = /^\s*<h1(?:\s[^>]*)?>([\s\S]*?)<\/h1>\s*/i.exec(body);
   if (!match) return body;
   const heading = unescapeHtml(match[1].replace(/<[^>]*>/g, ''));

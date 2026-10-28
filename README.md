@@ -941,6 +941,34 @@ again later."; a `400` marks the fields named by its `errors[].pointer` (a
 `/message` pointer reads "Your message can have at most two links."). The API,
 not the template, limits the form to the Pro and Business plans.
 
+### Email fragments
+
+When the newsletter is in Galascribe mode with `emailContent: "full"`, the build
+also writes one email-safe HTML document per published post (every language, no
+edition, no unlisted post, no page) at `/_gala/email/<content id>.html`, where
+`<content id>` is the post's front-matter `id`. The API fetches it after the
+generation is certified live and puts it in the newsletter email.
+`emailContent: "card"` needs none, and neither does link mode.
+
+- The document is `<!doctype html>`, an `<html lang dir>`, a `<head>` of
+  charset, `<meta name="robots" content="noindex">` and the post title, and a
+  `<body>` of one `<div data-gala-email-body lang dir>` holding the body. No
+  theme, stylesheet link, site script or CSP tag.
+- The body is the post's sanitized HTML (so no script, form, iframe or event
+  attribute), with a leading heading that repeats the title dropped; every link
+  and image address absolute against the post's own URL (relative and fragment
+  links as the site resolves them); every image its largest responsive
+  derivative, with its size and
+  `style="display:block;max-width:100%;height:auto;border:0"`; `class`, `id` and
+  `<span>` wrappers removed (code blocks stay `<pre><code>` text); and an inline
+  `style` only on `pre`, `code`, `blockquote`, `table`, `th`, `td`, `hr` and
+  `figure`. Rewriting is tag by tag, so text, including code samples that show
+  markup, is untouched.
+- A fragment is not a page: it is in no sitemap, feed, search index or `llms`
+  file, and the manifest lists it like other outputs (`routeClass: "asset"`,
+  `text/html; charset=utf-8`). A site on a host that skips underscore folders
+  must serve `_gala/` (for GitHub Pages, publish with `.nojekyll`).
+
 ## Policy pages
 
 Every site carries two legal pages, `/terms` and `/privacy` (page kind

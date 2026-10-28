@@ -236,9 +236,11 @@ export const CONTENT_IMAGE_SIZES = `(max-width: ${CONTENT_IMAGE_SLOT_WIDTH}px) 1
  * @param {Readonly<Record<string, readonly {path: string, width: number, height: number}[]>>} options.mediaVariants
  *   the media pipeline's output files per source digest, ascending width
  * @param {string} options.publicBasePath the public base path
- * @returns {{page: (reference: {path: string, sourceDigest: string}, altAttribute: string) => string, feed: (reference: {path: string, sourceDigest: string}, altAttribute: string) => string}}
- *   the page form (responsive, lazy) and the feed form (one `src`, no
- *   loading hints); `altAttribute` is the body's own entity-encoded `alt`
+ * @returns {{page: (reference: {path: string, sourceDigest: string}, altAttribute: string) => string, feed: (reference: {path: string, sourceDigest: string}, altAttribute: string) => string, email: (reference: {path: string, sourceDigest: string}, altAttribute: string) => string}}
+ *   the page form (responsive, lazy), the feed form (one `src`, no loading
+ *   hints) and the email form (one `src`, the largest output file, a style
+ *   that fits a mail client's column); `altAttribute` is the body's own
+ *   entity-encoded `alt`
  */
 export function createContentImage({ mediaVariants, publicBasePath }) {
   /**
@@ -281,6 +283,15 @@ export function createContentImage({ mediaVariants, publicBasePath }) {
     feed(reference, altAttribute) {
       const source = fitting(filesOf(reference));
       return `<img src="${escapeHtml(source.url)}" alt="${altAttribute}" width="${source.width}" height="${source.height}">`;
+    },
+    email(reference, altAttribute) {
+      const source = filesOf(reference).at(-1);
+      if (!source) {
+        throw new RenderPolicyViolationError(
+          `content image ${reference.path} has no media pipeline output; this is a renderer defect`,
+        );
+      }
+      return `<img src="${escapeHtml(source.url)}" alt="${altAttribute}" width="${source.width}" height="${source.height}" style="display:block;max-width:100%;height:auto;border:0">`;
     },
   };
 }

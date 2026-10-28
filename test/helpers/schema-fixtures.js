@@ -131,6 +131,12 @@ export async function applyCurrentRenderPolicy(buildInput) {
       publication.footerCard.body.body,
     );
   }
+  if (publication?.contactForm?.intro) {
+    publication.contactForm.intro.renderPolicy = { ...identity };
+    publication.contactForm.intro.bodyDigest = computeBodyDigest(
+      publication.contactForm.intro.body,
+    );
+  }
   for (const page of Object.values(
     /** @type {any} */ (buildInput).policies ?? {},
   )) {

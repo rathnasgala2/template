@@ -73,6 +73,15 @@ and this project adheres to
   form is on (`POLICY_ROUTE_CONFLICT`). The intro's source joins the manifest's
   included sources. English and Tamil sentences.
 
+- Email fragments: with `publication.newsletter` in Galascribe mode and
+  `emailContent: "full"`, each published post also gets
+  `/_gala/email/<content id>.html`: a `noindex` document holding the post body
+  as email-safe HTML (absolute links and images, the largest responsive image,
+  `<pre><code>` blocks, inline styles only where a mail client needs them, no
+  script, form, class or id). Fragments are in no sitemap, feed, search index or
+  `llms` file and are listed in the artifact manifest as `asset` routes. Needs
+  `@rathnasgala2/schemas` 3.22.0 to validate the newsletter mode.
+
 ### Fixed
 
 - The `email` share target is a `mailto:` link without `target="_blank"` or

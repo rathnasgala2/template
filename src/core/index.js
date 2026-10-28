@@ -113,6 +113,10 @@ import {
 } from './internal/policy-pages.js';
 import { renderPagesWithEleventy } from './internal/eleventy-render.js';
 import {
+  buildEmailFragments,
+  emailFragmentsOn,
+} from './internal/email-fragment.js';
+import {
   AUDIENCE_MARKER,
   AUDIENCE_SCRIPT_MEDIA_TYPE,
   AUDIENCE_SCRIPT_PATH,
@@ -609,6 +613,9 @@ export async function renderPublication(buildInput, options) {
   /** @type {(body: string) => string} a body's feed form */
   const feedBody = (body) =>
     rewriteBodyImages(body, contentImages, contentImage.feed);
+  /** @type {(body: string) => string} a body's email form (largest image) */
+  const emailBody = (body) =>
+    rewriteBodyImages(body, contentImages, contentImage.email);
   const mediaImage = createMediaImage({
     mediaAssets,
     publicBasePath,
@@ -1155,7 +1162,24 @@ export async function renderPublication(buildInput, options) {
     full: absoluteSiteUrl(LLMS_FULL_ROUTE),
     routeProfile,
   });
+  // The full-post email fragments, only for a Galascribe newsletter that mails
+  // full posts. Raw documents like the files below, so they are in no sitemap,
+  // feed, search index or `llms` file.
+  const emailFragments = emailFragmentsOn(validatedInput.publication)
+    ? buildEmailFragments(validatedInput, {
+        emailBody,
+        absoluteUrl: absoluteSiteUrl,
+      }).map((fragment) => ({
+        virtualPath: `email/${fragment.contentId}.html`,
+        content: fragment.content,
+        permalink: projectFixedAssetPath(
+          validatedInput.basePath,
+          fragment.route,
+        ),
+      }))
+    : [];
   const assetPages = [
+    ...emailFragments,
     { virtualPath: 'robots.html', content: robotsTxt, permalink: ROBOTS_PATH },
     { virtualPath: 'llms.html', content: llmsTxt, permalink: llmsFilePath },
     {
@@ -1247,6 +1271,12 @@ export async function renderPublication(buildInput, options) {
       { routeClass: 'asset', mediaType: 'text/plain; charset=utf-8' },
     ],
   ]);
+  for (const fragment of emailFragments) {
+    specialRoutes.set(fragment.permalink, {
+      routeClass: 'asset',
+      mediaType: 'text/html; charset=utf-8',
+    });
+  }
   for (const feed of feeds.languageFeeds) {
     specialRoutes.set(
       projectFixedAssetPath(validatedInput.basePath, feed.atomRoute),
