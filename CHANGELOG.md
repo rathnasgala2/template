@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.6.1] - 2026-10-28
+
 ### Fixed
 
 - The renderer no longer fails with `entry._pages is not iterable` when the
