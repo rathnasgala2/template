@@ -88,7 +88,9 @@ import { cardMediaOf } from './first-body-image.js';
 import { createStructuredData } from './structured-data.js';
 import { icon } from './icons.js';
 import {
+  countKinds,
   interactionsActive,
+  renderCountSlot,
   renderInteractionsSection,
 } from './interactions.js';
 import { renderShareGroup } from './share.js';
@@ -513,6 +515,18 @@ export function buildGeneratedPages(validatedInput, options) {
   const interactionsModule = interactionsActive(options.interactions)
     ? options.interactions
     : undefined;
+  // Public counts on cards, the home cover story and article headers: an
+  // empty slot per post, only for the kinds the site shows (see `countKinds`).
+  const countSlotKinds = countKinds(interactionsModule);
+  const countSlotOf = (
+    /** @type {import('../../../types/index.d.ts').ContentBuildRecord} */ record,
+  ) =>
+    countSlotKinds && record.frontmatter.kind === 'article'
+      ? renderCountSlot({
+          kinds: countSlotKinds,
+          contentId: record.frontmatter.id,
+        })
+      : '';
   const publicBasePath = derivePublicBasePath(baseUrl, basePath);
   const routeProfile = options.routeProfile ?? 'directory-index';
   const translations =
@@ -571,6 +585,7 @@ export function buildGeneratedPages(validatedInput, options) {
       // A tag only unlisted posts carry has no listing page: plain text.
       hasTagPage: (tag) => tagSegments.has(tag),
       variantsOf: translations.variantsOf,
+      countSlot: countSlotOf,
       languageLabel: (tag) => languageLabel(tag, translations.languages),
       localizeAuthor: translations.active
         ? (author, record) =>
@@ -1176,7 +1191,7 @@ export function buildGeneratedPages(validatedInput, options) {
     const head =
       `<div class="g-wrap g-article-head">${renderBreadcrumbs({ trail: [homeStep, ...trail], messages })}` +
       (isArticle
-        ? `<div class="g-article-labels">${firstTag ? chip(firstTag) : ''}${seriesTag}</div>`
+        ? `<div class="g-article-labels">${firstTag ? chip(firstTag) : ''}${seriesTag}${countSlotOf(record)}</div>`
         : '') +
       `<h1>${escapeHtml(frontmatter.title)}</h1>` +
       (frontmatter.description
@@ -1429,6 +1444,7 @@ export function buildGeneratedPages(validatedInput, options) {
           `</div><div class="g-hero-body"><p class="g-eyebrow"><span class="g-badge">${icon('sparkle')}${text('featuredLabel')}</span>` +
           (fm.tags[0] ? chip(fm.tags[0]) : '') +
           langChips(featured) +
+          countSlotOf(featured) +
           `</p><h2 id="hero-title"><a href="${href}">${escapeHtml(fm.title)}</a></h2>` +
           (fm.description
             ? `<p class="g-dek">${escapeHtml(fm.description)}</p>`

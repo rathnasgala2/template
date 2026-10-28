@@ -529,6 +529,10 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-article-head h1 { font-size: clamp(2.25rem, 1.2rem + 3.8vw, var(--gala-display-max)); }
   .g-article-meta { display: flex; align-items: center; justify-content: space-between; gap: var(--gala-space-4); width: 100%; padding-top: 1.1rem; border-top: var(--gala-border-width) solid var(--gala-color-border); flex-wrap: wrap; }
   .g-share { display: flex; gap: var(--gala-space-1); }
+  /* Public counts, at the end of a card's top row, the cover story's eyebrow and the article's label row, where each row already has the height of a line of them (so filling a slot moves nothing). The slots carry the hidden attribute until the counts script fills them, so they take no space before then. */
+  .g-counts { display: inline-flex; align-items: center; gap: var(--gala-space-3); flex: none; margin-inline-start: auto; white-space: nowrap; font-family: var(--gala-font-ui); font-size: .8125rem; color: var(--gala-color-text-muted); font-variant-numeric: tabular-nums; }
+  .g-count { display: inline-flex; align-items: center; gap: .3em; }
+  .g-count .g-icon { width: .95em; height: .95em; }
   [data-gala-slot="edition-selector"] { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gala-space-2); min-width: 0; max-width: 100%; }
   .g-article-cover { margin-block: 0; }
   .g-article-cover img { width: 100%; height: auto; aspect-ratio: 21 / 9; object-fit: cover; border-radius: var(--gala-radius-large); border: var(--gala-border-card); box-shadow: var(--gala-shadow-card); filter: var(--gala-media-filter); }

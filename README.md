@@ -356,8 +356,9 @@ Every page is fully readable with JavaScript off; the script only enhances:
   `fetch` of the `data-search-index` URL, `/` and Ctrl/Cmd+K, arrow keys and
   Enter), code blocks (language label and Copy button, select-text fallback),
   contents highlighting (`IntersectionObserver` on `data-toc`), the share group
-  (copy link; bookmark stored under `gala:saved:v1`) and a reading-progress
-  fallback where scroll-driven animations are unsupported. It never mutates
+  (copy link, the native share sheet where `navigator.share` exists, bookmark
+  stored under `gala:saved:v1`) and a reading-progress fallback where
+  scroll-driven animations are unsupported. It never mutates
   `document.documentElement.style`, uses no cookie and no account identifier,
   and builds all DOM text with `textContent`/`setAttribute`, never HTML from
   fetched data. Localized strings are rendered by the server as `data-*`
@@ -377,12 +378,13 @@ Every page is fully readable with JavaScript off; the script only enhances:
   `<meta name="color-scheme" content="light dark">` tag and the one
   `<script src>` reference, so every route's `<head>` is still byte-identical.
 - With JavaScript disabled the toggle, search button and share group stay hidden
-  (they would do nothing), the contents list, menu and links are plain anchors
-  and `<details>`, and the resolved root attribute is server-rendered as the
-  fixed `light` default, so a no-JS reader, an archival crawler, or a load where
-  the script fails still gets a fully themed page. `<meta name="color-scheme">`
-  carries `prefers-color-scheme` through to user-agent styling independent of
-  any script.
+  (they would do nothing; a share group with link targets, see Share buttons,
+  stays visible, with its script-only buttons hidden), the contents list, menu
+  and links are plain anchors and `<details>`, and the resolved root attribute
+  is server-rendered as the fixed `light` default, so a no-JS reader, an
+  archival crawler, or a load where the script fails still gets a fully themed
+  page. `<meta name="color-scheme">` carries `prefers-color-scheme` through to
+  user-agent styling independent of any script.
 
 **Authoring a theme:** see [`docs/theme-authoring.md`](docs/theme-authoring.md)
 for the full guide — how a theme is a delta over the template-owned `gala-base`
@@ -757,28 +759,73 @@ contracts/theme-styling-contract.jcs     # published styling catalog (real and c
 `src/core/` and `src/modules/interactions/` are the only source roots, and
 `src/core` never imports from `src/modules`: the interactions browser script is
 read from disk and emitted as `assets/gala-interactions-v1.js` when
-`build-input.modules.interactions` is present.
-`test/module-tree-absence.test.js`, `.dependency-cruiser.cjs` and the ESLint
-`no-restricted-imports` rule enforce this. `newsletter` and `prism` have no
-module directory, package, configuration schema, stub, output or runtime code in
-this MVP. Reader consent and analytics are not a module either: they are a core
-privacy setting. `build-input.modules.analytics` (schemas 3.16.0, Google
-Analytics 4 with an opt-in policy) adds, under `src/core/internal/analytics/`, a
-consent banner after the footer of every HTML page, a "Privacy choices" button
-in the footer legal navigation, `assets/gala-consent-v1.js` (deferred; no eval,
-no cookie; the choice is kept in `localStorage` as `gala.consent.v1`), the
-provider's CSP sources and the analytics paragraph of the policy pages'
-Galascribe section. Nothing from the provider loads before the reader accepts,
-and a site without the module has none of these (it still carries the legal
-footer navigation and the two policy pages). A browser that sends the Global
-Privacy Control signal (`navigator.globalPrivacyControl === true`) with no
-stored choice is treated as declining, without storing anything and without the
-banner on load; the footer's "Privacy choices" button still opens it, and
-`gala:consent` carries `{analytics: false, source: 'gpc'}`. Whitelabel is not a
-module either: the footer's "Galascribe" credit link is a core appearance
-switch, `build-input.appearance.attribution` (`showMadeWith: false` omits the
-line; absent or `true` shows it). Nor are editions: they are a rendered content
-kind (see Editions).
+`build-input.modules.interactions` is present (and, when its `publicCounts` show
+reaction or comment counts, `assets/gala-counts-v1.js`; see Counts on cards and
+article headers). `test/module-tree-absence.test.js`, `.dependency-cruiser.cjs`
+and the ESLint `no-restricted-imports` rule enforce this. `newsletter` and
+`prism` have no module directory, package, configuration schema, stub, output or
+runtime code in this MVP. Reader consent and analytics are not a module either:
+they are a core privacy setting. `build-input.modules.analytics` (schemas
+3.16.0, Google Analytics 4 with an opt-in policy) adds, under
+`src/core/internal/analytics/`, a consent banner after the footer of every HTML
+page, a "Privacy choices" button in the footer legal navigation,
+`assets/gala-consent-v1.js` (deferred; no eval, no cookie; the choice is kept in
+`localStorage` as `gala.consent.v1`), the provider's CSP sources and the
+analytics paragraph of the policy pages' Galascribe section. Nothing from the
+provider loads before the reader accepts, and a site without the module has none
+of these (it still carries the legal footer navigation and the two policy
+pages). A browser that sends the Global Privacy Control signal
+(`navigator.globalPrivacyControl === true`) with no stored choice is treated as
+declining, without storing anything and without the banner on load; the footer's
+"Privacy choices" button still opens it, and `gala:consent` carries
+`{analytics: false, source: 'gpc'}`. Whitelabel is not a module either: the
+footer's "Galascribe" credit link is a core appearance switch,
+`build-input.appearance.attribution` (`showMadeWith: false` omits the line;
+absent or `true` shows it). Nor are editions: they are a rendered content kind
+(see Editions).
+
+## Share buttons
+
+`publication.sharing.targets` (schemas 3.22.0) is the ordered list of buttons in
+the article's share group: `copy-link`, `native`, `x`, `bluesky`, `linkedin`,
+`facebook`, `hacker-news`, `whatsapp`, `telegram`, `reddit`, `email`. Absent
+means `["copy-link"]` (the group is byte-identical to the one sites had before
+the setting existed); an empty list leaves Bookmark alone. Bookmark is always
+last.
+
+- Every target except `copy-link` and `native` is a plain `<a>` on the network's
+  documented share URL (`internal/share.js` cites each source), with the post
+  title and canonical URL encoded, `target="_blank"`,
+  `rel="noopener noreferrer"` and an accessible name such as "Share on X". It
+  works with JavaScript off, so a group with a link target is visible without
+  the script and only its script-dependent buttons (copy link, native, Bookmark)
+  carry `hidden`.
+- `native` is hidden until the site script finds `navigator.share`.
+- The brand marks are monochrome Simple Icons paths (CC0) in the inline icon
+  set.
+- Only the already-published `g-share` and `g-icon-btn` hooks are used, so no
+  theme change is needed.
+
+## Counts on cards and article headers
+
+When interactions are on and a `publicCounts` switch is true (and that kind of
+interaction is enabled), each post card, the home cover story and the article
+header carry an empty, `hidden` count slot
+(`<span class="g-counts" data-gala-counts data-content-id="…" hidden>`, one
+`g-count` part per shown kind), at the end of the card's top row, the cover
+story's eyebrow row and the article's label row (each already a line tall, so
+filling a slot moves nothing). The pages that carry a slot load
+`assets/gala-counts-v1.js` (deferred; its `data-api-origin` and
+`data-publication-id` come from its own tag), which makes one request for the
+page,
+`GET {api}/v2/public/publications/{publicationId}/interaction-counts?contentIds=…`
+(at most 50 ids per request), and fills each slot with the `PublicCount`
+`display` text and `label` accessible name, the same figures the article's own
+interactions section shows. A `null` count shows nothing. Slots stay hidden and
+take no space until filled, and with JavaScript off or on any failure the page
+is unchanged. The classes (`g-counts`, `g-count`) are owned by the base layer
+and read tokens only, like the `g-reaction` family; they are not published theme
+hooks.
 
 ## Policy pages
 

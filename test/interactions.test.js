@@ -439,8 +439,8 @@ test('module on: article routes carry the section and the deferred script; every
     bearing += 1;
     assert.equal(
       html.match(/<script[^>]*\bsrc=/g)?.length,
-      2,
-      'appearance script plus interactions script',
+      3,
+      'appearance script, interactions script and (reaction counts are on) the counts script',
     );
     const contentId = /data-content-id="([^"]+)"/.exec(html)?.[1];
     assert.match(contentId ?? '', /^019c0000-0000-7000-8000-/);

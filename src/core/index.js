@@ -113,9 +113,14 @@ import {
 } from './internal/policy-pages.js';
 import { renderPagesWithEleventy } from './internal/eleventy-render.js';
 import {
+  COUNTS_SCRIPT_MEDIA_TYPE,
+  COUNTS_SCRIPT_PATH,
+  COUNT_SLOT_MARKER,
   INTERACTIONS_SCRIPT_MEDIA_TYPE,
   INTERACTIONS_SCRIPT_PATH,
+  countKinds,
   interactionsActive,
+  loadCountsScript,
   loadInteractionsScript,
   validateInteractionsModule,
 } from './internal/interactions.js';
@@ -439,6 +444,9 @@ export async function renderPublication(buildInput, options) {
   );
   const interactionsModule = validatedInput.modules.interactions;
   const interactionsOn = interactionsActive(interactionsModule);
+  // The counts script: only when the site shows public counts on cards and
+  // article headers (see `countKinds`).
+  const countsOn = countKinds(interactionsModule) !== undefined;
   // One CSP per build: the production policy, plus (local stack only) the
   // interactions module's differing API origin in `connect-src`.
   // Consent and analytics are a core privacy setting: when the analytics
@@ -494,6 +502,10 @@ export async function renderPublication(buildInput, options) {
   const interactionsScriptHref = joinBasePathAndRoute(
     publicBasePath,
     `/${INTERACTIONS_SCRIPT_PATH}`,
+  );
+  const countsScriptHref = joinBasePathAndRoute(
+    publicBasePath,
+    `/${COUNTS_SCRIPT_PATH}`,
   );
   const urlPrefix = derivePublicBasePath(validatedInput.baseUrl, '/');
   const homeRoute = joinPublicRoute(publicBasePath, '/', routeProfile);
@@ -938,6 +950,15 @@ export async function renderPublication(buildInput, options) {
         interactionsScriptHref: page.interactionBearing
           ? interactionsScriptHref
           : undefined,
+        // The counts script rides on exactly the pages that carry a count
+        // slot, and reads its API origin and publication id from its own tag.
+        ...(countsOn && page.bodyHtml.includes(COUNT_SLOT_MARKER)
+          ? {
+              countsScriptHref,
+              countsApiOrigin: interactionsModule?.apiOrigin,
+              countsPublicationId: validatedInput.publication.id,
+            }
+          : {}),
         consentScriptHref,
         cspMetaTag,
         baseStylesheetHref: baseStylesheetHrefValue,
@@ -1356,6 +1377,31 @@ export async function renderPublication(buildInput, options) {
     });
   }
 
+  // The counts script, only when public counts are shown on cards and article
+  // headers: the template package's own file, like the interactions script.
+  /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
+  const countsAssets = [];
+  if (countsOn) {
+    const countsScriptBytes = await loadCountsScript();
+    const joinedCountsScriptPath = projectFixedAssetPath(
+      validatedInput.basePath,
+      `/${COUNTS_SCRIPT_PATH}`,
+    );
+    const countsScriptDestination = path.join(
+      outputDirectory,
+      joinedCountsScriptPath,
+    );
+    await mkdir(path.dirname(countsScriptDestination), { recursive: true });
+    await writeFile(countsScriptDestination, countsScriptBytes);
+    countsAssets.push({
+      path: joinedCountsScriptPath,
+      mediaType: COUNTS_SCRIPT_MEDIA_TYPE,
+      byteLength: String(countsScriptBytes.byteLength),
+      sha256: digestBytes(countsScriptBytes),
+      immutable: false,
+    });
+  }
+
   // The consent script, only when the analytics module is on: the template's
   // own constant source, so the row is a pure function of the template version.
   /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
@@ -1386,6 +1432,7 @@ export async function renderPublication(buildInput, options) {
     appearanceScriptAsset,
     baseStylesheetAsset,
     ...interactionsAssets,
+    ...countsAssets,
     ...consentAssets,
     ...(themeAssetsResult ? themeAssetsResult.assets : []),
   ].sort((a, b) => compareUtf8Bytes(a.path, b.path));

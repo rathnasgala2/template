@@ -25,6 +25,17 @@ const INTERACTIONS_SCRIPT_SOURCE_URL = new URL(
   import.meta.url,
 );
 
+/** @type {string} the counts script's output-relative path */
+export const COUNTS_SCRIPT_PATH = 'assets/gala-counts-v1.js';
+
+/** @type {string} */
+export const COUNTS_SCRIPT_MEDIA_TYPE = INTERACTIONS_SCRIPT_MEDIA_TYPE;
+
+const COUNTS_SCRIPT_SOURCE_URL = new URL(
+  '../../modules/interactions/browser/gala-counts.js',
+  import.meta.url,
+);
+
 /** @type {string} */
 const CONFIG_SCHEMA_ID = 'urn:gala:schema:interactions-config:2.0.0';
 
@@ -190,6 +201,51 @@ export function interactionsActive(module) {
 }
 
 /**
+ * Which public counts the site shows on post cards and article headers: a
+ * kind is shown only when the site has that kind of interaction on and the
+ * author's matching `publicCounts` switch is true. The same switches decide
+ * the counts the article's own interactions section shows.
+ *
+ * @param {import('../../../types/index.d.ts').InteractionsModule | undefined} module
+ *   the validated module, if any
+ * @returns {{reactions: boolean, comments: boolean} | undefined} the kinds to
+ *   show, or `undefined` when there are none (the page carries no count slot,
+ *   no counts script and makes no counts request)
+ */
+export function countKinds(module) {
+  if (!module || !interactionsActive(module)) return undefined;
+  const { config } = module;
+  const reactions = config.reactions.enabled && config.publicCounts.reactions;
+  const comments = config.comments.enabled && config.publicCounts.comments;
+  return reactions || comments ? { reactions, comments } : undefined;
+}
+
+/**
+ * One post's count slot: empty and `hidden` (so it takes no space and shows
+ * no placeholder) until the counts script fills it from the page's single
+ * batched request. Without JavaScript it stays hidden. Each kind's slot
+ * carries its own icon; the script sets the figure and the accessible name.
+ *
+ * @param {object} input
+ * @param {{reactions: boolean, comments: boolean}} input.kinds from {@link countKinds}
+ * @param {string} input.contentId the post's front matter id
+ * @returns {string} the slot markup
+ */
+export function renderCountSlot({ kinds, contentId }) {
+  const one = (/** @type {string} */ kind, /** @type {string} */ iconName) =>
+    `<span class="g-count" data-gala-count-kind="${kind}" hidden>${icon(iconName)}<span data-gala-count-value></span></span>`;
+  return (
+    `<span class="g-counts" data-gala-counts data-content-id="${escapeHtml(contentId)}" hidden>` +
+    (kinds.reactions ? one('reactions', 'heart') : '') +
+    (kinds.comments ? one('comments', 'comment') : '') +
+    `</span>`
+  );
+}
+
+/** The exact opening of a count slot, to find the pages that carry one. */
+export const COUNT_SLOT_MARKER = '<span class="g-counts" data-gala-counts ';
+
+/**
  * Render the `<section class="g-interactions">` for one article.
  *
  * @param {object} input render input
@@ -271,4 +327,13 @@ export function renderInteractionsSection({
  */
 export function loadInteractionsScript() {
   return readFile(INTERACTIONS_SCRIPT_SOURCE_URL);
+}
+
+/**
+ * Read the counts script's bytes from the template package.
+ *
+ * @returns {Promise<Buffer>} the script bytes
+ */
+export function loadCountsScript() {
+  return readFile(COUNTS_SCRIPT_SOURCE_URL);
 }

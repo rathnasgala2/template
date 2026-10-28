@@ -295,6 +295,9 @@ export function createContentImage({ mediaVariants, publicBasePath }) {
  * @property {(tag: string) => boolean} [hasTagPage] whether the tag has a
  *   listing page (default: every tag does); a tag without one renders as plain
  *   text, never a dead link
+ * @property {(record: import('../../../types/index.d.ts').ContentBuildRecord) => string} [countSlot]
+ *   the record's empty public-count slot (default: none, so a card is
+ *   unchanged); see `renderCountSlot` in `internal/interactions.js`
  */
 
 /**
@@ -310,6 +313,7 @@ export function createComponents(context) {
   const languageLabel = context.languageLabel ?? languageName;
   const localizeAuthor = context.localizeAuthor ?? ((author) => author);
   const variantsOf = context.variantsOf ?? ((record) => [record]);
+  const countSlot = context.countSlot ?? (() => '');
   /**
    * @param {string} key a plain message key
    * @returns {string} the escaped message text
@@ -450,7 +454,7 @@ export function createComponents(context) {
       `<article class="g-card${variant === 'row' ? ' g-card-row' : ''}">` +
       media +
       `<div class="g-card-body">` +
-      `<div class="g-card-top">${firstTag ? chip(firstTag) : ''}${seriesTag}${langChips(record)}</div>` +
+      `<div class="g-card-top">${firstTag ? chip(firstTag) : ''}${seriesTag}${langChips(record)}${countSlot(record)}</div>` +
       `<h${options.headingLevel ?? 3}><a class="g-card-link" href="${href}">${escapeHtml(fm.title)}</a></h${options.headingLevel ?? 3}>` +
       (fm.description
         ? `<p class="g-card-excerpt">${escapeHtml(fm.description)}</p>`

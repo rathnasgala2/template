@@ -21,6 +21,18 @@ and this project adheres to
   byte for byte; an empty list leaves Bookmark alone. Brand marks are added to
   the inline icon set (Simple Icons, CC0). Needs `@rathnasgala2/schemas` 3.22.0
   to validate the key.
+- Public counts on post cards, the home cover story and article headers: when
+  interactions are on and a `publicCounts` switch is true (and that kind of
+  interaction is enabled), each carries an empty, hidden `g-counts` slot (end of
+  the card's top row, the cover story's eyebrow row, the article's label row).
+  Pages with a slot load the new `assets/gala-counts-v1.js`, which makes one
+  batched request per page
+  (`GET /v2/public/publications/{id}/interaction-counts?contentIds=`, at most 50
+  ids) and fills the slots with the `PublicCount` figures the article already
+  shows. No JavaScript, or any failure, leaves the page unchanged; no layout
+  shift. A site with both switches off, or without interactions, renders exactly
+  as before. `g-counts`/`g-count` are base-layer classes (tokens only), not new
+  theme hooks.
 
 ## [4.5.1] - 2026-10-27
 
