@@ -188,18 +188,21 @@ export function renderGalascribeSection({
 }
 
 /**
- * Fail closed when an authored document already uses a policy route.
+ * Fail closed when an authored document already uses a route a generated
+ * system page owns: `/terms` and `/privacy` always, plus any `extraRoutes`
+ * (the Contact page's `/contact` while the contact form is on).
  *
  * @param {readonly import('../../../types/index.d.ts').ContentBuildRecord[]} content
  *   the build input's `content[]`
  * @param {(frontmatter: import('../../../types/index.d.ts').ContentFrontmatterNormalized) => string} routeOf
  *   a document's own un-joined route
+ * @param {readonly string[]} [extraRoutes] further reserved routes
  * @returns {void}
  * @throws {BuildInputValidationError} `POLICY_ROUTE_CONFLICT`, one
  *   diagnostic per conflicting document
  */
-export function assertPolicyRoutesFree(content, routeOf) {
-  const reserved = new Set([TERMS_ROUTE, PRIVACY_ROUTE]);
+export function assertPolicyRoutesFree(content, routeOf, extraRoutes = []) {
+  const reserved = new Set([TERMS_ROUTE, PRIVACY_ROUTE, ...extraRoutes]);
   // A trailing slash and letter case never make a route a different page.
   const normalise = (/** @type {string} */ route) =>
     (route.length > 1 && route.endsWith('/')
@@ -215,6 +218,9 @@ export function assertPolicyRoutesFree(content, routeOf) {
     ];
     for (const route of routes) {
       if (!reserved.has(normalise(route))) continue;
+      const owner = extraRoutes.includes(normalise(route))
+        ? 'the generated Contact page owns (the site has its contact form on)'
+        : 'the generated policy pages own';
       diagnostics.push({
         code: 'POLICY_ROUTE_CONFLICT',
         severity: 'ERROR',
@@ -222,7 +228,7 @@ export function assertPolicyRoutesFree(content, routeOf) {
         actualValueClass: 'object',
         rule: 'template:policy',
         sourcePath: record.sourcePath,
-        remediation: `The document ${record.sourcePath} uses ${route}, which the generated policy pages own. Rename or move it.`,
+        remediation: `The document ${record.sourcePath} uses ${route}, which ${owner}. Rename or move it.`,
         documentationUrl: DOCUMENTATION_URL,
       });
     }

@@ -184,7 +184,29 @@ export interface PublicationNormalized {
   contactAuthorId?: string;
   socialLinks: unknown[];
   defaultImage?: ResolvedFileRef;
-  newsletter?: { url: string; title: string; text: string };
+  /**
+   * The newsletter panel (schemas 3.22.0): link mode (`mode` absent or
+   * `link`) points at the author's own newsletter; Galascribe mode collects
+   * and mails subscribers itself.
+   */
+  newsletter?:
+    | { mode?: 'link'; url: string; title: string; text: string }
+    | {
+        mode: 'galascribe';
+        title: string;
+        text: string;
+        emailContent: 'card' | 'full';
+        replyToOwner: boolean;
+      };
+  /**
+   * The contact form (schemas 3.22.0): `intro` is the rendered body of the
+   * optional `gala/theme-pages/contact.md`.
+   */
+  contactForm?: {
+    enabled: boolean;
+    fields: { website: boolean; phone: boolean };
+    intro?: RenderableBody;
+  };
   /** The article share group; absent means `["copy-link"]`, `[]` none. */
   sharing?: { targets: readonly ShareTarget[] };
   crawlers?: { ai: 'allow' | 'block' };
@@ -254,6 +276,8 @@ export interface InteractionsConfig {
   };
   comments: { enabled: boolean; allowReplies: boolean; maxDepth: number };
   publicCounts: { reactions: boolean; comments: boolean };
+  /** The author Follow control (schemas 3.22.0); absent means off. */
+  follows?: { enabled: boolean };
 }
 
 /** `build-input.modules.interactions`: the config plus the two origins. */

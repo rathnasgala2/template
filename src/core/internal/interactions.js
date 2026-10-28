@@ -77,9 +77,21 @@ export function validateInteractionsModule(candidate) {
   );
   const apiOrigin = origin(module.apiOrigin, `${where}.apiOrigin`);
   const appOrigin = origin(module.appOrigin, `${where}.appOrigin`);
+  // `follows` (schemas 3.22.0) is the one optional member.
+  const hasFollows =
+    typeof module.config === 'object' &&
+    module.config !== null &&
+    'follows' in module.config;
   const config = exactObject(
     module.config,
-    ['schemaId', 'schemaVersion', 'reactions', 'comments', 'publicCounts'],
+    [
+      'schemaId',
+      'schemaVersion',
+      'reactions',
+      'comments',
+      'publicCounts',
+      ...(hasFollows ? ['follows'] : []),
+    ],
     `${where}.config`,
   );
   if (
@@ -180,6 +192,14 @@ export function validateInteractionsModule(candidate) {
   );
   boolean(counts.reactions, `${where}.config.publicCounts.reactions`);
   boolean(counts.comments, `${where}.config.publicCounts.comments`);
+  if (hasFollows) {
+    const follows = exactObject(
+      config.follows,
+      ['enabled'],
+      `${where}.config.follows`,
+    );
+    boolean(follows.enabled, `${where}.config.follows.enabled`);
+  }
   return /** @type {import('../../../types/index.d.ts').InteractionsModule} */ (
     /** @type {unknown} */ ({ config, apiOrigin, appOrigin })
   );

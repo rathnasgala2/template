@@ -34,6 +34,21 @@ and this project adheres to
   as before. `g-counts`/`g-count` are base-layer classes (tokens only), not new
   theme hooks.
 
+- Author Follow control: `interactions-config.follows.enabled` (needs the
+  interactions module; reactions and comments may be off) adds a hidden Follow
+  control, keyed by the author's stable id, to the article byline, each author
+  card and the author page. The new `assets/gala-audience-v1.js` (loaded only by
+  pages with an audience element) reveals it, reads the state with `GET` when a
+  reader token exists, follows with `PUT` and unfollows with `DELETE`, announces
+  results and errors in a polite live region, and without a token starts the
+  existing reader connect and resumes the follow after return. The interactions
+  script leaves a return whose pending intent is a follow to the audience script
+  and shows the reader as signed in on a `gala:reader-session` event. A site
+  without `follows` renders the same bytes as before. New base-layer classes
+  (`g-follow*`, `g-form*`, `g-field*`, `g-input`, `g-hp`, `g-sr-only`) read
+  tokens only and are not published theme hooks. English and Tamil sentences.
+  Needs `@rathnasgala2/schemas` 3.22.0 to validate the key.
+
 ### Fixed
 
 - The `email` share target is a `mailto:` link without `target="_blank"` or

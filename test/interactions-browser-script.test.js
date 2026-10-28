@@ -388,6 +388,44 @@ test('state mismatch in the fragment is discarded: no token request, fragment sc
   assert.equal(h.$('.g-composer__signin').hidden, false);
 });
 
+test("a return from a sign-in started by an author's Follow control is left to the audience script: fragment, pending record and token request untouched", async () => {
+  const pending = {
+    state: 'S1',
+    codeVerifier: 'verifier-xyz',
+    intent: {
+      kind: 'follow',
+      authorId: '0190b1f0-0000-7000-8000-0000000000a1',
+    },
+    createdAt: Date.now(),
+  };
+  const hash = '#gala-reader-code=the-code&gala-reader-state=S1';
+  const h = await boot({ hash, pending, handler: api() });
+  await h.ready();
+  assert.equal(h.window.location.hash, hash);
+  assert.deepEqual(
+    JSON.parse(h.window.sessionStorage.getItem(PENDING_KEY)),
+    pending,
+  );
+  assert.equal(h.bodyCalls('POST', '/v2/reader/tokens').length, 0);
+  assert.equal(h.window.localStorage.getItem(SESSION_KEY), null);
+});
+
+test('gala:reader-session (sent by the audience script after a sign-in) shows the reader as signed in', async () => {
+  const h = await boot({ handler: api() });
+  await h.ready();
+  assert.equal(h.$('.g-composer__signin').hidden, false);
+  h.window.localStorage.setItem(SESSION_KEY, JSON.stringify(SIGNED_IN));
+  h.window.document.dispatchEvent(
+    new h.window.CustomEvent('gala:reader-session'),
+  );
+  await h.waitFor(
+    () =>
+      h.$('.g-composer__signin') === null || h.$('.g-composer__signin').hidden,
+    'signed in',
+  );
+  assert.match(h.$('.g-comments').textContent, /Signed in as /);
+});
+
 test('token exchange then replays a reaction automatically', async () => {
   const h = await boot({
     hash: '#gala-reader-code=the-code&gala-reader-state=S1',

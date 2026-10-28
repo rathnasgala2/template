@@ -21,6 +21,7 @@ import { joinBasePathAndRoute } from './route.js';
 import { resolveOriginalDerivativePath } from './seo.js';
 import { cardMediaOf } from './first-body-image.js';
 import { languageName } from './translations.js';
+import { renderGalascribeNewsletterPanel } from './audience.js';
 
 /** Reading speed used for every reading-time estimate. */
 export const WORDS_PER_MINUTE = 230;
@@ -83,20 +84,32 @@ export function monogram(name) {
 }
 
 /**
- * Render the optional newsletter panel: a call-to-action link to the
- * sign-up page configured in `publication.newsletter` (validated by the
- * build-input schema: an `https:` URL, a title and a short text), never a
- * form. Renders nothing when the publication has no newsletter.
+ * Render the optional newsletter panel. Link mode (`publication.newsletter`
+ * with a `url`, validated by the build-input schema: an `https:` URL, a title
+ * and a short text) is a call-to-action link to the author's own sign-up
+ * page, never a form. Galascribe mode (`mode: "galascribe"`) is the signup
+ * form of `internal/audience.js`, whose no-JavaScript fallback is a Subscribe
+ * link to `subscribeUrl`. Renders nothing when the publication has no
+ * newsletter.
  *
  * @param {object} options rendering options
- * @param {{url: string, title: string, text: string} | undefined} options.newsletter
+ * @param {{mode?: 'link', url: string, title: string, text: string} | {mode: 'galascribe', title: string, text: string} | undefined} options.newsletter
  *   `publication.newsletter`
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
  *   the resolved message catalog
+ * @param {string} [options.subscribeUrl] the App page the Galascribe-mode
+ *   panel links to without JavaScript
  * @returns {string} the panel markup, or an empty string
  */
-export function renderNewsletterPanel({ newsletter, messages }) {
+export function renderNewsletterPanel({ newsletter, messages, subscribeUrl }) {
   if (!newsletter) return '';
+  if (newsletter.mode === 'galascribe') {
+    return renderGalascribeNewsletterPanel({
+      newsletter,
+      messages,
+      subscribeUrl: subscribeUrl ?? '',
+    });
+  }
   const { url, title, text } = newsletter;
   return (
     `<section class="g-wrap g-newsletter" aria-labelledby="newsletter-title">` +
@@ -298,13 +311,16 @@ export function createContentImage({ mediaVariants, publicBasePath }) {
  * @property {(record: import('../../../types/index.d.ts').ContentBuildRecord) => string} [countSlot]
  *   the record's empty public-count slot (default: none, so a card is
  *   unchanged); see `renderCountSlot` in `internal/interactions.js`
+ * @property {(author: import('../../../types/index.d.ts').AuthorNormalized) => string} [followControl]
+ *   the author's Follow control (default: none, so a byline is unchanged); see
+ *   `renderFollowControl` in `internal/audience.js`
  */
 
 /**
  * Build the component renderers bound to one build's context.
  *
  * @param {ComponentContext} context
- * @returns {{text: (key: string) => string, call: (key: string, ...args: string[]) => string, chip: (tag: string) => string, langChips: (record: import('../../../types/index.d.ts').ContentBuildRecord) => string, meta: (record: import('../../../types/index.d.ts').ContentBuildRecord, showUpdated?: boolean) => string, avatar: (author: import('../../../types/index.d.ts').AuthorNormalized | undefined) => string, byline: (record: import('../../../types/index.d.ts').ContentBuildRecord, showUpdated?: boolean) => string, card: (record: import('../../../types/index.d.ts').ContentBuildRecord, options?: {partLabel?: string, headingLevel?: number}, variant?: 'grid' | 'row') => string, recordAuthors: (record: import('../../../types/index.d.ts').ContentBuildRecord) => import('../../../types/index.d.ts').AuthorNormalized[]}}
+ * @returns {{text: (key: string) => string, call: (key: string, ...args: string[]) => string, chip: (tag: string) => string, langChips: (record: import('../../../types/index.d.ts').ContentBuildRecord) => string, meta: (record: import('../../../types/index.d.ts').ContentBuildRecord, showUpdated?: boolean) => string, avatar: (author: import('../../../types/index.d.ts').AuthorNormalized | undefined) => string, byline: (record: import('../../../types/index.d.ts').ContentBuildRecord, showUpdated?: boolean, withFollow?: boolean) => string, follow: (author: import('../../../types/index.d.ts').AuthorNormalized) => string, card: (record: import('../../../types/index.d.ts').ContentBuildRecord, options?: {partLabel?: string, headingLevel?: number}, variant?: 'grid' | 'row') => string, recordAuthors: (record: import('../../../types/index.d.ts').ContentBuildRecord) => import('../../../types/index.d.ts').AuthorNormalized[]}}
  *   the bound renderers
  */
 export function createComponents(context) {
@@ -314,6 +330,7 @@ export function createComponents(context) {
   const localizeAuthor = context.localizeAuthor ?? ((author) => author);
   const variantsOf = context.variantsOf ?? ((record) => [record]);
   const countSlot = context.countSlot ?? (() => '');
+  const followControl = context.followControl ?? (() => '');
   /**
    * @param {string} key a plain message key
    * @returns {string} the escaped message text
@@ -415,9 +432,11 @@ export function createComponents(context) {
   /**
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
    * @param {boolean} [showUpdated] show the "Updated" date (article head)
+   * @param {boolean} [withFollow] add a Follow control for each author (the
+   *   article head's byline; nothing when the site has follows off)
    * @returns {string}
    */
-  const byline = (record, showUpdated = false) => {
+  const byline = (record, showUpdated = false, withFollow = false) => {
     const authors = recordAuthors(record);
     const names = authors
       .map(
@@ -427,7 +446,9 @@ export function createComponents(context) {
       .join(', ');
     return (
       `<div class="g-byline">${avatar(authors[0])}` +
-      `<div class="g-byline-text"><span>${names}</span>${meta(record, showUpdated)}</div></div>`
+      `<div class="g-byline-text"><span>${names}</span>${meta(record, showUpdated)}</div>` +
+      (withFollow ? authors.map(followControl).join('') : '') +
+      `</div>`
     );
   };
 
@@ -472,6 +493,7 @@ export function createComponents(context) {
     meta,
     avatar,
     byline,
+    follow: followControl,
     card,
     recordAuthors,
   };

@@ -761,20 +761,21 @@ contracts/theme-styling-contract.jcs     # published styling catalog (real and c
 read from disk and emitted as `assets/gala-interactions-v1.js` when
 `build-input.modules.interactions` is present (and, when its `publicCounts` show
 reaction or comment counts, `assets/gala-counts-v1.js`; see Counts on cards and
-article headers). `test/module-tree-absence.test.js`, `.dependency-cruiser.cjs`
-and the ESLint `no-restricted-imports` rule enforce this. `newsletter` and
-`prism` have no module directory, package, configuration schema, stub, output or
-runtime code in this MVP. Reader consent and analytics are not a module either:
-they are a core privacy setting. `build-input.modules.analytics` (schemas
-3.16.0, Google Analytics 4 with an opt-in policy) adds, under
-`src/core/internal/analytics/`, a consent banner after the footer of every HTML
-page, a "Privacy choices" button in the footer legal navigation,
-`assets/gala-consent-v1.js` (deferred; no eval, no cookie; the choice is kept in
-`localStorage` as `gala.consent.v1`), the provider's CSP sources and the
-analytics paragraph of the policy pages' Galascribe section. Nothing from the
-provider loads before the reader accepts, and a site without the module has none
-of these (it still carries the legal footer navigation and the two policy
-pages). A browser that sends the Global Privacy Control signal
+article headers; and, for the audience features, `assets/gala-audience-v1.js`;
+see Audience features). `test/module-tree-absence.test.js`,
+`.dependency-cruiser.cjs` and the ESLint `no-restricted-imports` rule enforce
+this. `newsletter` and `prism` have no module directory, package, configuration
+schema, stub, output or runtime code in this MVP. Reader consent and analytics
+are not a module either: they are a core privacy setting.
+`build-input.modules.analytics` (schemas 3.16.0, Google Analytics 4 with an
+opt-in policy) adds, under `src/core/internal/analytics/`, a consent banner
+after the footer of every HTML page, a "Privacy choices" button in the footer
+legal navigation, `assets/gala-consent-v1.js` (deferred; no eval, no cookie; the
+choice is kept in `localStorage` as `gala.consent.v1`), the provider's CSP
+sources and the analytics paragraph of the policy pages' Galascribe section.
+Nothing from the provider loads before the reader accepts, and a site without
+the module has none of these (it still carries the legal footer navigation and
+the two policy pages). A browser that sends the Global Privacy Control signal
 (`navigator.globalPrivacyControl === true`) with no stored choice is treated as
 declining, without storing anything and without the banner on load; the footer's
 "Privacy choices" button still opens it, and `gala:consent` carries
@@ -827,6 +828,52 @@ take no space until filled, and with JavaScript off or on any failure the page
 is unchanged. The classes (`g-counts`, `g-count`) are owned by the base layer
 and read tokens only, like the `g-reaction` family; they are not published theme
 hooks.
+
+## Audience features
+
+Three opt-in features share one browser script, `assets/gala-audience-v1.js`
+(deferred, `src/modules/interactions/browser/gala-audience.js`). A page loads it
+exactly when its body carries an element marked
+`data-gala-audience="follow" | "newsletter" | "contact"`; the script reads the
+API origin, App origin, publication id and return address from its own tag and
+its run-time sentences, in the page's language, from a
+`<script type="application/json" data-gala-audience-messages>` block. The
+origins come from `build-input.modules.interactions` when it is present (the
+local stack names its own) and are otherwise the production API and App. A site
+that turns none of them on renders the bytes it rendered before and loads
+nothing. They need `@rathnasgala2/schemas` 3.22.0 to validate the keys they
+read.
+
+### Author Follow control
+
+`interactions-config.follows.enabled` (with the interactions module present;
+reactions and comments may both be off) puts a Follow control, keyed by the
+author's stable id, on the article head's byline, on each author card and on the
+author page. Editions, listings and the home cover story carry none. It ships
+`hidden` and the script reveals it:
+
+- **States** are `data-state` `idle` (Follow), `following` (Following and an
+  Unfollow button) and `pending` (`aria-busy`, buttons `aria-disabled`, the half
+  in view stays). Results and errors are announced in the control's
+  `role="status"` live region; an error also sets `data-error`.
+- **Reading:** with a reader token, one `GET .../authors/{authorId}/follow` per
+  distinct author sets every control for that author; without a token nothing is
+  requested. An author the API does not know hides its controls.
+- **Following** is `PUT`, **Unfollow** `DELETE`, both with the bearer token.
+  `FOLLOWS_DISABLED`, `AUTHOR_NOT_FOUND`/`PUBLICATION_NOT_LIVE`, `RATE_LIMITED`,
+  a network failure and anything else each have their own sentence; a rejected
+  token (401, `READER_TOKEN_SCOPE`) is dropped.
+- **Without a token** the click starts the reader connect (OAuth code with PKCE,
+  the same `gala.reader.*` storage keys as the interactions script) with the
+  intent `{kind: "follow", authorId}`; on return the script exchanges the code,
+  scrubs the fragment and applies the follow. The interactions script leaves a
+  return with that intent to this script, and this script leaves every other
+  intent to it; after a sign-in this script sends a `gala:reader-session` event
+  so the interactions section shows the reader too.
+
+The classes (`g-follow`, `g-follow-btn`, `g-follow-on`, `g-follow-state`,
+`g-follow-undo`, `g-follow-status`) are owned by the base layer and read tokens
+only, like `g-counts`; `g-btn` is the published hook.
 
 ## Policy pages
 

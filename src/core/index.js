@@ -113,6 +113,16 @@ import {
 } from './internal/policy-pages.js';
 import { renderPagesWithEleventy } from './internal/eleventy-render.js';
 import {
+  AUDIENCE_MARKER,
+  AUDIENCE_SCRIPT_MEDIA_TYPE,
+  AUDIENCE_SCRIPT_PATH,
+  CONTACT_ROUTE,
+  audienceOrigins,
+  followsEnabled,
+  loadAudienceScript,
+  serializeAudienceMessages,
+} from './internal/audience.js';
+import {
   COUNTS_SCRIPT_MEDIA_TYPE,
   COUNTS_SCRIPT_PATH,
   COUNT_SLOT_MARKER,
@@ -360,6 +370,19 @@ async function assertRenderPolicyCompliance(validatedInput) {
       'publication.footerCard.body',
     );
   }
+  if (validatedInput.publication.contactForm?.intro) {
+    const { intro } = validatedInput.publication.contactForm;
+    assertRenderPolicyIdentity(
+      intro.renderPolicy,
+      identity,
+      'publication.contactForm.intro',
+    );
+    assertPolicyConformantHtml(
+      intro.body,
+      intro.bodyDigest,
+      'publication.contactForm.intro',
+    );
+  }
   if (validatedInput.policies !== undefined) {
     const policies = validatePolicies(validatedInput.policies);
     for (const key of /** @type {const} */ (['terms', 'privacy'])) {
@@ -406,7 +429,12 @@ export async function renderPublication(buildInput, options) {
   // unresolved one fails closed before anything is written.
   const contentImages = resolveContentImages(validatedInput);
   // No document may take a route the generated policy pages own.
-  assertPolicyRoutesFree(validatedInput.content, contentRoute);
+  // The Contact page owns `/contact` while the site's contact form is on.
+  assertPolicyRoutesFree(
+    validatedInput.content,
+    contentRoute,
+    validatedInput.publication.contactForm?.enabled ? [CONTACT_ROUTE] : [],
+  );
   // Every edition must sit beside an article of this build; placed here for the
   // same reason.
   const editions = resolveEditions(validatedInput.content, contentRoute);
@@ -447,6 +475,16 @@ export async function renderPublication(buildInput, options) {
   // The counts script: only when the site shows public counts on cards and
   // article headers (see `countKinds`).
   const countsOn = countKinds(interactionsModule) !== undefined;
+  // The audience script: only when the site turns on the author Follow
+  // control, the Galascribe newsletter signup or the contact form.
+  const followsOn = followsEnabled(interactionsModule);
+  const contactOn = validatedInput.publication.contactForm?.enabled === true;
+  const audienceOn =
+    followsOn ||
+    contactOn ||
+    validatedInput.publication.newsletter?.mode === 'galascribe';
+  const { apiOrigin: audienceApiOrigin, appOrigin: audienceAppOrigin } =
+    audienceOrigins(interactionsModule);
   // One CSP per build: the production policy, plus (local stack only) the
   // interactions module's differing API origin in `connect-src`.
   // Consent and analytics are a core privacy setting: when the analytics
@@ -506,6 +544,10 @@ export async function renderPublication(buildInput, options) {
   const countsScriptHref = joinBasePathAndRoute(
     publicBasePath,
     `/${COUNTS_SCRIPT_PATH}`,
+  );
+  const audienceScriptHref = joinBasePathAndRoute(
+    publicBasePath,
+    `/${AUDIENCE_SCRIPT_PATH}`,
   );
   const urlPrefix = derivePublicBasePath(validatedInput.baseUrl, '/');
   const homeRoute = joinPublicRoute(publicBasePath, '/', routeProfile);
@@ -752,6 +794,7 @@ export async function renderPublication(buildInput, options) {
       publicBasePath,
       pageTags,
       consentOn: analyticsOn,
+      contactOn,
     });
 
   /**
@@ -873,6 +916,7 @@ export async function renderPublication(buildInput, options) {
     mediaDimensions,
     interactions: interactionsOn ? interactionsModule : undefined,
     analytics: analyticsOn ? analyticsModule : undefined,
+    audience: { follows: followsOn, appOrigin: audienceAppOrigin },
     composition,
   });
   /** @type {Set<string>} output paths of the interaction-bearing routes */
@@ -957,6 +1001,19 @@ export async function renderPublication(buildInput, options) {
               countsScriptHref,
               countsApiOrigin: interactionsModule?.apiOrigin,
               countsPublicationId: validatedInput.publication.id,
+            }
+          : {}),
+        // The audience script rides on exactly the pages that carry an
+        // audience element; it reads its origins, publication id and return
+        // address from its own tag and its sentences from a JSON data block.
+        ...(audienceOn && page.bodyHtml.includes(AUDIENCE_MARKER)
+          ? {
+              audienceScriptHref,
+              audienceApiOrigin,
+              audienceAppOrigin,
+              audiencePublicationId: validatedInput.publication.id,
+              audienceReturnUrl: absoluteSiteUrl(page.route),
+              audienceMessages: serializeAudienceMessages(pageChrome.messages),
             }
           : {}),
         consentScriptHref,
@@ -1402,6 +1459,31 @@ export async function renderPublication(buildInput, options) {
     });
   }
 
+  // The audience script, only when the Follow control, the Galascribe
+  // newsletter or the contact form is on: the template package's own file.
+  /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
+  const audienceAssets = [];
+  if (audienceOn) {
+    const audienceScriptBytes = await loadAudienceScript();
+    const joinedAudienceScriptPath = projectFixedAssetPath(
+      validatedInput.basePath,
+      `/${AUDIENCE_SCRIPT_PATH}`,
+    );
+    const audienceScriptDestination = path.join(
+      outputDirectory,
+      joinedAudienceScriptPath,
+    );
+    await mkdir(path.dirname(audienceScriptDestination), { recursive: true });
+    await writeFile(audienceScriptDestination, audienceScriptBytes);
+    audienceAssets.push({
+      path: joinedAudienceScriptPath,
+      mediaType: AUDIENCE_SCRIPT_MEDIA_TYPE,
+      byteLength: String(audienceScriptBytes.byteLength),
+      sha256: digestBytes(audienceScriptBytes),
+      immutable: false,
+    });
+  }
+
   // The consent script, only when the analytics module is on: the template's
   // own constant source, so the row is a pure function of the template version.
   /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
@@ -1433,6 +1515,7 @@ export async function renderPublication(buildInput, options) {
     baseStylesheetAsset,
     ...interactionsAssets,
     ...countsAssets,
+    ...audienceAssets,
     ...consentAssets,
     ...(themeAssetsResult ? themeAssetsResult.assets : []),
   ].sort((a, b) => compareUtf8Bytes(a.path, b.path));

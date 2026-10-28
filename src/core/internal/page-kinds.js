@@ -94,6 +94,13 @@ import {
   renderInteractionsSection,
 } from './interactions.js';
 import { renderShareGroup } from './share.js';
+import {
+  CONTACT_ROUTE,
+  PRODUCTION_APP_ORIGIN,
+  newsletterRequestUrl,
+  renderContactForm,
+  renderFollowControl,
+} from './audience.js';
 import { getMessages } from './messages.js';
 import {
   languageLabel,
@@ -467,6 +474,11 @@ export function homeDocumentTitle(name, tagline) {
  * @param {import('../../../types/index.d.ts').AnalyticsModule} [options.analytics]
  *   the validated analytics module; when set, the Galascribe section of both
  *   policy pages carries the analytics and consent paragraph
+ * @param {{follows: boolean, appOrigin: string}} [options.audience] what the
+ *   audience features need from the interactions module: whether the Follow
+ *   control is on (`interactions-config.follows.enabled`) and the App origin
+ *   the Galascribe newsletter's no-JavaScript Subscribe link points at
+ *   (default: follows off, the production App)
  * @param {import('./translations.js').TranslationResolution} [options.translations]
  *   the language-variant resolution (default: resolved from `content`)
  * @param {import('./route.js').RouteNormalizationProfile} [options.routeProfile]
@@ -527,6 +539,8 @@ export function buildGeneratedPages(validatedInput, options) {
           contentId: record.frontmatter.id,
         })
       : '';
+  const followsOn = options.audience?.follows === true;
+  const appOrigin = options.audience?.appOrigin ?? PRODUCTION_APP_ORIGIN;
   const publicBasePath = derivePublicBasePath(baseUrl, basePath);
   const routeProfile = options.routeProfile ?? 'directory-index';
   const translations =
@@ -586,6 +600,8 @@ export function buildGeneratedPages(validatedInput, options) {
       hasTagPage: (tag) => tagSegments.has(tag),
       variantsOf: translations.variantsOf,
       countSlot: countSlotOf,
+      followControl: (author) =>
+        followsOn ? renderFollowControl({ author, messages: catalog }) : '',
       languageLabel: (tag) => languageLabel(tag, translations.languages),
       localizeAuthor: translations.active
         ? (author, record) =>
@@ -596,7 +612,7 @@ export function buildGeneratedPages(validatedInput, options) {
   const uiByCatalog = new Map();
   let ui = createUi(messages);
   uiByCatalog.set(messages, ui);
-  let { text, call, chip, langChips, byline, card, avatar } = ui;
+  let { text, call, chip, langChips, byline, card, avatar, follow } = ui;
   /**
    * Render the following pages' chrome strings in a page's own language: its
    * catalog when it has one, else the site's.
@@ -610,7 +626,7 @@ export function buildGeneratedPages(validatedInput, options) {
     );
     ui = uiByCatalog.get(messages) ?? createUi(messages);
     uiByCatalog.set(messages, ui);
-    ({ text, call, chip, langChips, byline, card, avatar } = ui);
+    ({ text, call, chip, langChips, byline, card, avatar, follow } = ui);
     homeStep = {
       label: /** @type {string} */ (messages.homeLinkLabel),
       route: site('/'),
@@ -939,10 +955,29 @@ export function buildGeneratedPages(validatedInput, options) {
     ),
   });
 
+  const galascribeNewsletter =
+    publication.newsletter?.mode === 'galascribe'
+      ? publication.newsletter
+      : undefined;
+  const subscribeUrl = galascribeNewsletter
+    ? newsletterRequestUrl(appOrigin, publication.id)
+    : undefined;
   const newsletterHtml = renderNewsletterPanel({
     newsletter: publication.newsletter,
     messages,
+    subscribeUrl,
   });
+  // An article page shows the panel in the page's own language when the
+  // Galascribe signup is on (its run-time sentences are in that language too);
+  // the link-mode panel stays in the site language, as it always has.
+  const articleNewsletter = () =>
+    galascribeNewsletter && translations.active
+      ? renderNewsletterPanel({
+          newsletter: galascribeNewsletter,
+          messages,
+          subscribeUrl,
+        })
+      : newsletterHtml;
 
   /** @type {GeneratedPage[]} */
   const pages = [];
@@ -1015,6 +1050,51 @@ export function buildGeneratedPages(validatedInput, options) {
     });
   }
 
+  // The Contact page: a system page like the policy pages (same page-kind
+  // hook, indexable, in the sitemap, in no feed, search index or `llms`
+  // document) that exists only while the site's contact form is on. Its intro
+  // is the optional `gala/theme-pages/contact.md` body, else a short default.
+  if (publication.contactForm?.enabled) {
+    const contactTitle = text0('contactPageTitle');
+    const contactIntro = publication.contactForm.intro
+      ? options.pageBody(
+          dropLeadingTitleHeading(
+            publication.contactForm.intro.body,
+            contactTitle,
+          ),
+        )
+      : `<p>${text('contactDefaultIntro')}</p>`;
+    pages.push({
+      kind: 'policy',
+      route: CONTACT_ROUTE,
+      title: contactTitle,
+      documentTitle: documentTitleOf(contactTitle),
+      language: publication.defaultLanguage,
+      description:
+        truncateAtWord(plainText(contactIntro), DESCRIPTION_MAX) ||
+        publication.description,
+      robotsContent: 'index, follow',
+      ...defaultSocial,
+      jsonLd: sd.serialize(
+        sd.webPage({
+          name: contactTitle,
+          description: publication.description,
+          url: absolute(site(CONTACT_ROUTE)),
+          language: publication.defaultLanguage,
+          trail: [
+            homeStep,
+            { label: contactTitle, route: site(CONTACT_ROUTE) },
+          ],
+        }),
+      ),
+      bodyHtml:
+        `<article class="g-article"><div class="g-wrap g-article-head">${crumbs([{ label: contactTitle }])}` +
+        `<h1 id="contact-title">${escapeHtml(contactTitle)}</h1></div>` +
+        `<div class="g-wrap g-article-grid"><div class="g-prose">${contactIntro}</div>` +
+        `<div class="g-prose g-contact">${renderContactForm({ fields: publication.contactForm.fields, messages })}</div></div></article>`,
+    });
+  }
+
   for (const author of authors) {
     const authored = publishedArticles.filter((record) =>
       translations
@@ -1037,7 +1117,8 @@ export function buildGeneratedPages(validatedInput, options) {
       (author.biography
         ? `<p class="g-dek">${escapeHtml(author.biography)}</p>`
         : '') +
-      links;
+      links +
+      follow(author);
     const authorHead = listingHead({
       breadcrumbHtml: crumbs(
         [{ label: /** @type {string} */ (messages.authorsSectionLabel) }],
@@ -1198,7 +1279,7 @@ export function buildGeneratedPages(validatedInput, options) {
         ? `<p class="g-dek">${escapeHtml(frontmatter.description)}</p>`
         : '') +
       (isArticle || isEdition
-        ? `<div class="g-article-meta">${byline(record, true)}${isArticle ? langChips(record) : ''}${isArticle ? share : ''}</div>`
+        ? `<div class="g-article-meta">${byline(record, true, isArticle)}${isArticle ? langChips(record) : ''}${isArticle ? share : ''}</div>`
         : '') +
       editionSelector +
       `</div>`;
@@ -1246,6 +1327,7 @@ export function buildGeneratedPages(validatedInput, options) {
             (author.biography
               ? `<p class="g-author-bio">${escapeHtml(author.biography)}</p>`
               : '') +
+            follow(author) +
             `</div></section>`,
         )
         .join('');
@@ -1404,7 +1486,7 @@ export function buildGeneratedPages(validatedInput, options) {
         `<article class="g-article" data-gala-article-layout="${composition.articleLayout}">${isArticle || isEdition ? '<div class="g-progress" aria-hidden="true"></div>' : ''}` +
         `${articleStructure({ head, cover, toc: tocNav, prose, foot })}</article>` +
         after +
-        (isArticle ? newsletterHtml : ''),
+        (isArticle ? articleNewsletter() : ''),
     });
   }
 

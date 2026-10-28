@@ -113,6 +113,19 @@ export function collectIncludedSources(buildInput) {
     }
   }
 
+  // The contact page's intro (`gala/theme-pages/contact.md`) shapes `/contact`
+  // the same way; absent when the file is, and then the default text is the
+  // template's own.
+  const contactIntro = buildInput.publication.contactForm?.intro;
+  if (contactIntro) {
+    record(
+      contactIntro.sourcePath,
+      contactIntro.sourceDigest,
+      'content',
+      rootRevision,
+    );
+  }
+
   if (buildInput.navigation.source.kind === 'authored') {
     record(
       buildInput.navigation.source.sourcePath,

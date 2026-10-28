@@ -11,6 +11,7 @@ import { joinPublicRoute } from './route.js';
 import { icon } from './icons.js';
 import { monogram, renderImage } from './components.js';
 import { renderConsentOpenItem } from './analytics/markup.js';
+import { CONTACT_ROUTE } from './audience.js';
 
 /**
  * The footer's Galascribe link: the site's full base URL as `utm_source` and
@@ -188,6 +189,8 @@ function renderSocialLinks(socialLinks, rssHref, messages) {
  *   switcher, shown in the base row (empty on a one-language site)
  * @param {boolean} [options.consentOn] whether the analytics module is on, which
  *   adds the script-revealed "Privacy choices" item to the legal navigation
+ * @param {boolean} [options.contactOn] whether the site's contact form is on,
+ *   which adds a Contact link after Privacy in the legal navigation
  * @returns {string} the rendered footer
  */
 export function renderFooter({
@@ -212,6 +215,7 @@ export function renderFooter({
   pageTags = [],
   publicBasePath,
   consentOn = false,
+  contactOn = false,
   languageSwitcherHtml = '',
 }) {
   const label = (/** @type {string} */ key) =>
@@ -244,6 +248,7 @@ export function renderFooter({
   const legalItems =
     legalItem('/terms', 'termsLinkLabel') +
     legalItem('/privacy', 'privacyLinkLabel') +
+    (contactOn ? legalItem(CONTACT_ROUTE, 'contactLinkLabel') : '') +
     (showAttribution
       ? `<li><a href="${escapeHtml(madeWithGalascribeHref(baseUrl, pageTags))}" target="_blank" rel="noopener" aria-label="${label('footerAttributionAriaLabel')}">${label('footerAttributionLabel')}</a></li>`
       : '') +

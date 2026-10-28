@@ -144,10 +144,12 @@ const SKELETON_LAYOUT_SOURCE = [
   // share the colour-scheme line so no blank line is added to a page.
   '<meta name="color-scheme" content="{{ colorScheme }}">{% if iconHref %}<link rel="icon" href="{{ iconHref }}"{% if iconType %} type="{{ iconType }}"{% endif %}>{% if appleTouchIcon %}<link rel="apple-touch-icon" href="{{ iconHref }}">{% endif %}{% endif %}{% for themeColor in themeColors %}<meta name="theme-color" content="{{ themeColor.color }}"{% if themeColor.media %} media="{{ themeColor.media }}"{% endif %}>{% endfor %}',
   // The interactions script (article pages, module on), the counts script
-  // (pages with a public-count slot) and the consent script (analytics module
-  // on, every HTML page) are deferred and sit on the appearance script's line,
-  // so a page without them is byte-identical to before.
-  '<script src="{{ appearanceScriptHref }}"></script>{% if interactionsScriptHref %}<script src="{{ interactionsScriptHref }}" defer></script>{% endif %}{% if countsScriptHref %}<script src="{{ countsScriptHref }}" defer data-api-origin="{{ countsApiOrigin }}" data-publication-id="{{ countsPublicationId }}"></script>{% endif %}{% if consentScriptHref %}<script src="{{ consentScriptHref }}" defer></script>{% endif %}',
+  // (pages with a public-count slot), the audience script (pages with a Follow
+  // control, a Galascribe newsletter panel or the contact form; preceded by its
+  // JSON sentences) and the consent script (analytics module on, every HTML
+  // page) are deferred and sit on the appearance script's line, so a page
+  // without them is byte-identical to before.
+  '<script src="{{ appearanceScriptHref }}"></script>{% if interactionsScriptHref %}<script src="{{ interactionsScriptHref }}" defer></script>{% endif %}{% if countsScriptHref %}<script src="{{ countsScriptHref }}" defer data-api-origin="{{ countsApiOrigin }}" data-publication-id="{{ countsPublicationId }}"></script>{% endif %}{% if audienceScriptHref %}<script type="application/json" data-gala-audience-messages>{{ audienceMessages | safe }}</script><script src="{{ audienceScriptHref }}" defer data-gala-audience-script data-api-origin="{{ audienceApiOrigin }}" data-app-origin="{{ audienceAppOrigin }}" data-publication-id="{{ audiencePublicationId }}" data-canonical-url="{{ audienceReturnUrl }}"></script>{% endif %}{% if consentScriptHref %}<script src="{{ consentScriptHref }}" defer></script>{% endif %}',
   '<title>{{ title }}</title>',
   '{% if description %}<meta name="description" content="{{ description }}">{% endif %}',
   '{% if robotsContent %}<meta name="robots" content="{{ robotsContent }}">{% endif %}',

@@ -23,7 +23,9 @@
  *    bearer token, which is kept in
  *    `localStorage["gala.reader.session.<publicationId>"]`, and the pending
  *    intent is replayed (a reaction is applied; a comment draft is restored
- *    into the composer and never auto-posted).
+ *    into the composer and never auto-posted). A pending intent of kind
+ *    `follow` (an author's Follow control, `gala-audience.js`) is not this
+ *    script's: it leaves such a return untouched.
  *
  * Every request is `mode: 'cors'`, `credentials: 'omit'`, bounded by a 15 s
  * `AbortController` timeout, and carries the bearer token explicitly. Comment
@@ -756,6 +758,13 @@
   async function completeSignInFromFragment() {
     const hash = window.location.hash || '';
     if (hash.indexOf('gala-reader-') === -1) return null;
+    // A sign-in started from an author's Follow control belongs to the
+    // audience script (`gala-audience.js`): leave the fragment and the pending
+    // record exactly as they are.
+    const awaiting = readJson('sessionStorage', PENDING_KEY);
+    if (awaiting && awaiting.intent && awaiting.intent.kind === 'follow') {
+      return null;
+    }
     const params = new URLSearchParams(hash.replace(/^#/, ''));
     const code = params.get('gala-reader-code');
     const returnedState = params.get('gala-reader-state');
@@ -2217,6 +2226,14 @@
     await loadAll();
     if (intent) await replay(intent);
   }
+
+  // The audience script (`gala-audience.js`) signs a reader in when they follow
+  // an author on this page; this script then shows them as signed in too.
+  document.addEventListener('gala:reader-session', () => {
+    session = loadSession();
+    refreshComposers();
+    loadAll();
+  });
 
   init().catch(() => {
     showNotice(MESSAGES.unavailable);

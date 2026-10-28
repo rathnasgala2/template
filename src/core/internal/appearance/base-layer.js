@@ -533,6 +533,43 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-counts { display: inline-flex; align-items: center; gap: var(--gala-space-3); flex: none; margin-inline-start: auto; white-space: nowrap; font-family: var(--gala-font-ui); font-size: .8125rem; color: var(--gala-color-text-muted); font-variant-numeric: tabular-nums; }
   .g-count { display: inline-flex; align-items: center; gap: .3em; }
   .g-count .g-icon { width: .95em; height: .95em; }
+
+  /* Audience features: the author Follow control, the newsletter signup and the contact form. All scripted parts are revealed by gala-audience-v1.js; the controls ship hidden, so nothing here shows without it. */
+  .g-follow { display: inline-flex; align-items: center; flex-wrap: wrap; gap: var(--gala-space-2); font-family: var(--gala-font-ui); font-size: .875rem; }
+  .g-follow-btn { min-height: 2.25rem; padding: .35rem .95rem; font-size: .875rem; }
+  .g-follow-btn .g-icon { width: 1em; height: 1em; }
+  .g-follow-on { display: inline-flex; align-items: center; gap: var(--gala-space-2); }
+  .g-follow-state { display: inline-flex; align-items: center; gap: .35em; font-weight: var(--gala-weight-ui); color: var(--gala-color-text); }
+  .g-follow-state .g-icon { width: 1em; height: 1em; color: var(--gala-color-success); }
+  .g-follow-undo { min-height: 2.25rem; padding: .3rem .85rem; border-radius: var(--gala-radius-pill); border: var(--gala-border-width) solid var(--gala-color-border); background: transparent; color: var(--gala-color-text-muted); font-family: var(--gala-font-ui); font-size: .8125rem; cursor: pointer; }
+  .g-follow-undo:hover { border-color: var(--gala-color-text); color: var(--gala-color-text); }
+  .g-follow[aria-busy="true"] button { cursor: progress; opacity: .7; }
+  .g-follow-status { flex-basis: 100%; font-size: .8125rem; color: var(--gala-color-text-muted); }
+  .g-follow-status:empty { display: none; }
+  .g-follow[data-error] .g-follow-status { color: var(--gala-color-danger); }
+  .g-byline .g-follow { margin-inline-start: var(--gala-space-2); }
+  .g-author-card .g-follow, .g-topic-hero .g-follow { margin-top: var(--gala-space-3); }
+  .g-form { display: grid; gap: var(--gala-space-4); min-width: 0; }
+  .g-field { display: grid; gap: var(--gala-space-2); min-width: 0; }
+  .g-field label { font-family: var(--gala-font-ui); font-size: .875rem; font-weight: var(--gala-weight-ui); color: var(--gala-color-text-muted); }
+  .g-input {
+    width: 100%; max-width: 100%; min-height: 2.75rem; padding: .7rem .9rem; border-radius: var(--gala-radius-medium); border: var(--gala-border-width) solid var(--gala-color-border);
+    background: var(--gala-color-canvas); color: var(--gala-color-text); font-family: var(--gala-font-body); font-size: 1rem; line-height: 1.5;
+  }
+  textarea.g-input { min-height: 8rem; resize: vertical; }
+  .g-input:hover { border-color: var(--gala-color-text-muted); }
+  .g-input[aria-invalid="true"] { border-color: var(--gala-color-danger); }
+  .g-field-error { margin: 0; font-family: var(--gala-font-ui); font-size: .8125rem; color: var(--gala-color-danger); }
+  .g-form-status { margin: 0; font-family: var(--gala-font-ui); font-size: .875rem; color: var(--gala-color-text-muted); }
+  .g-form-status:empty { display: none; }
+  .g-form-note { font-size: .875rem; color: var(--gala-color-text-muted); }
+  .g-form-submit { justify-self: start; }
+  .g-form [aria-busy="true"] { cursor: progress; opacity: .75; }
+  .g-hp, .g-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+  .g-newsletter-form { position: relative; z-index: 1; grid-template-columns: minmax(0, 1fr) auto; gap: var(--gala-space-3); align-items: center; width: min(100%, 26rem); }
+  .g-newsletter-form .g-input { background: var(--gala-color-input); border-color: var(--gala-color-input-border); color: var(--gala-color-panel-text); }
+  .g-newsletter-form .g-input[aria-invalid="true"] { border-color: var(--gala-color-panel-text); }
+  .g-newsletter-form .g-form-status { grid-column: 1 / -1; color: var(--gala-color-panel-text); }
   [data-gala-slot="edition-selector"] { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gala-space-2); min-width: 0; max-width: 100%; }
   .g-article-cover { margin-block: 0; }
   .g-article-cover img { width: 100%; height: auto; aspect-ratio: 21 / 9; object-fit: cover; border-radius: var(--gala-radius-large); border: var(--gala-border-card); box-shadow: var(--gala-shadow-card); filter: var(--gala-media-filter); }
@@ -854,6 +891,8 @@ export const GALA_BASE_COMPONENT_CSS = `
     .g-article-cover img { aspect-ratio: 16 / 10; }
     .g-footer-grid, .g-footer-grid:has(> .g-footer-brand:first-child) { grid-template-columns: minmax(0, 1fr); }
     .g-author-card { flex-direction: column; }
+    .g-newsletter-form { grid-template-columns: minmax(0, 1fr); width: 100%; }
+    .g-newsletter-form .g-btn { justify-self: start; }
     .g-interactions { padding: var(--gala-space-4); }
     .g-comment__replies { padding-left: var(--gala-space-3); }
     .g-composer__actions { flex-direction: column; align-items: stretch; }

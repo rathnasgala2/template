@@ -42,6 +42,8 @@ export const ICONS = Object.freeze({
   pen: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13 7 4 4"/>',
   comment:
     '<path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L3 20.5l1.6-5.3A8.5 8.5 0 1 1 21 11.5z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
 
   // Share targets. The brand marks below are monochrome Simple Icons paths
   // (https://simpleicons.org, CC0-1.0; 24x24 grid). They are filled glyphs,

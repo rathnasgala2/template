@@ -121,6 +121,51 @@ const CATALOGS = Object.freeze({
     shareOnLabel: (network) => `Share on ${network}`,
     shareByEmailLabel: 'Share by email',
     shareNativeLabel: 'Share this article',
+    followLabel: 'Follow',
+    followingLabel: 'Following',
+    unfollowLabel: 'Unfollow',
+    /** @type {(name: string) => string} */
+    followAriaLabel: (name) => `Follow ${name}`,
+    /** @type {(name: string) => string} */
+    unfollowAriaLabel: (name) => `Unfollow ${name}`,
+    /** @type {(name: string) => string} */
+    followedAnnouncement: (name) => `You now follow ${name}.`,
+    /** @type {(name: string) => string} */
+    unfollowedAnnouncement: (name) => `You no longer follow ${name}.`,
+    followDisabledMessage: "Following isn't available on this site right now.",
+    followAuthorMissingMessage: "This author can't be followed right now.",
+    audienceNetworkError: "Couldn't reach Galascribe. Try again.",
+    audienceRateLimited: 'Too many attempts. Try again in a moment.',
+    audienceGenericError: 'Something went wrong. Try again.',
+    audienceStorageBlocked:
+      'Your browser blocked storage this site needs to sign you in.',
+    audienceSignInUnsupported: "This browser can't sign you in on this page.",
+    audienceSignInFailed: "Sign-in didn't complete. Try again.",
+    audienceSignInInvalid: "That sign-in link wasn't valid. Try again.",
+    honeypotLabel: 'Leave this field empty',
+    fieldRequiredMessage: 'This field is required.',
+    fieldInvalidMessage: 'Check this field.',
+    newsletterEmailLabel: 'Email address',
+    newsletterCheckInbox: 'Check your inbox to confirm',
+    newsletterFullMessage:
+      "This newsletter isn't taking new subscribers right now.",
+    newsletterEmailInvalid: 'Enter a valid email address.',
+    contactLinkLabel: 'Contact',
+    contactPageTitle: 'Contact',
+    contactDefaultIntro:
+      'Have a question or something to say? Send a message and the author will reply by email.',
+    contactNameLabel: 'Name',
+    contactEmailLabel: 'Email',
+    contactMessageLabel: 'Message',
+    contactWebsiteLabel: 'Website (optional)',
+    contactPhoneLabel: 'Phone (optional)',
+    contactSubmitLabel: 'Send message',
+    contactNoscript:
+      'This form needs JavaScript. Turn it on to send a message.',
+    contactSent: 'Thanks, your message was sent.',
+    contactUnavailable: "This form isn't accepting messages right now.",
+    contactRateLimited: 'Too many messages from here. Try again later.',
+    contactMessageLinks: 'Your message can have at most two links.',
     tagListLabel: 'Tags',
     tagKickerLabel: 'Tag',
     seriesKickerLabel: 'Series',
@@ -302,6 +347,58 @@ const CATALOGS = Object.freeze({
     shareOnLabel: (network) => `${network} இல் பகிர்`,
     shareByEmailLabel: 'மின்னஞ்சலில் பகிர்',
     shareNativeLabel: 'இந்தக் கட்டுரையைப் பகிர்',
+    followLabel: 'பின்தொடர்',
+    followingLabel: 'பின்தொடர்கிறீர்கள்',
+    unfollowLabel: 'பின்தொடர்வதை நிறுத்து',
+    /** @type {(name: string) => string} */
+    followAriaLabel: (name) => `${name} ஐப் பின்தொடர்`,
+    /** @type {(name: string) => string} */
+    unfollowAriaLabel: (name) => `${name} ஐப் பின்தொடர்வதை நிறுத்து`,
+    /** @type {(name: string) => string} */
+    followedAnnouncement: (name) =>
+      `நீங்கள் இப்போது ${name} ஐப் பின்தொடர்கிறீர்கள்.`,
+    /** @type {(name: string) => string} */
+    unfollowedAnnouncement: (name) => `நீங்கள் இனி ${name} ஐப் பின்தொடரவில்லை.`,
+    followDisabledMessage:
+      'இந்தத் தளத்தில் பின்தொடர்தல் தற்போது கிடைக்கவில்லை.',
+    followAuthorMissingMessage: 'இந்த எழுத்தாளரை இப்போது பின்தொடர முடியாது.',
+    audienceNetworkError: 'Galascribe ஐ அடைய முடியவில்லை. மீண்டும் முயலவும்.',
+    audienceRateLimited:
+      'மிக அதிக முயற்சிகள். சிறிது நேரம் கழித்து மீண்டும் முயலவும்.',
+    audienceGenericError: 'ஏதோ தவறு நேர்ந்தது. மீண்டும் முயலவும்.',
+    audienceStorageBlocked:
+      'உங்களை உள்நுழையச் செய்ய இந்தத் தளத்திற்குத் தேவையான சேமிப்பிடத்தை உங்கள் உலாவி தடுத்தது.',
+    audienceSignInUnsupported:
+      'இந்த உலாவியால் இந்தப் பக்கத்தில் உங்களை உள்நுழையச் செய்ய முடியாது.',
+    audienceSignInFailed: 'உள்நுழைவு முடியவில்லை. மீண்டும் முயலவும்.',
+    audienceSignInInvalid:
+      'அந்த உள்நுழைவு இணைப்பு செல்லுபடியாகவில்லை. மீண்டும் முயலவும்.',
+    honeypotLabel: 'இந்தப் புலத்தை காலியாக விடவும்',
+    fieldRequiredMessage: 'இந்தப் புலம் தேவை.',
+    fieldInvalidMessage: 'இந்தப் புலத்தைச் சரிபார்க்கவும்.',
+    newsletterEmailLabel: 'மின்னஞ்சல் முகவரி',
+    newsletterCheckInbox: 'உறுதிப்படுத்த உங்கள் இன்பாக்ஸைப் பாருங்கள்',
+    newsletterFullMessage:
+      'இந்தச் செய்திமடல் இப்போது புதிய சந்தாதாரர்களை ஏற்கவில்லை.',
+    newsletterEmailInvalid: 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்.',
+    contactLinkLabel: 'தொடர்புக்கு',
+    contactPageTitle: 'தொடர்பு',
+    contactDefaultIntro:
+      'கேள்வி அல்லது சொல்ல ஏதேனும் உள்ளதா? ஒரு செய்தியை அனுப்புங்கள்; எழுத்தாளர் மின்னஞ்சலில் பதிலளிப்பார்.',
+    contactNameLabel: 'பெயர்',
+    contactEmailLabel: 'மின்னஞ்சல்',
+    contactMessageLabel: 'செய்தி',
+    contactWebsiteLabel: 'இணையதளம் (விருப்பம்)',
+    contactPhoneLabel: 'தொலைபேசி (விருப்பம்)',
+    contactSubmitLabel: 'செய்தியை அனுப்பு',
+    contactNoscript:
+      'இந்தப் படிவத்திற்கு JavaScript தேவை. செய்தி அனுப்ப அதை இயக்கவும்.',
+    contactSent: 'நன்றி, உங்கள் செய்தி அனுப்பப்பட்டது.',
+    contactUnavailable: 'இந்தப் படிவம் இப்போது செய்திகளை ஏற்கவில்லை.',
+    contactRateLimited:
+      'இங்கிருந்து மிக அதிக செய்திகள். பிறகு மீண்டும் முயலவும்.',
+    contactMessageLinks:
+      'உங்கள் செய்தியில் அதிகபட்சம் இரண்டு இணைப்புகள் இருக்கலாம்.',
     tagListLabel: 'குறிச்சொற்கள்',
     tagKickerLabel: 'குறிச்சொல்',
     seriesKickerLabel: 'தொடர்',
