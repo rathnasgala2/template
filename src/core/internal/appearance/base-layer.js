@@ -543,6 +543,7 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-follow-state .g-icon { width: 1em; height: 1em; color: var(--gala-color-success); }
   .g-follow-undo { min-height: 2.25rem; padding: .3rem .85rem; border-radius: var(--gala-radius-pill); border: var(--gala-border-width) solid var(--gala-color-border); background: transparent; color: var(--gala-color-text-muted); font-family: var(--gala-font-ui); font-size: .8125rem; cursor: pointer; }
   .g-follow-undo:hover { border-color: var(--gala-color-text); color: var(--gala-color-text); }
+  @media (pointer: coarse) { .g-follow-btn, .g-follow-undo { min-height: 2.75rem; } }
   .g-follow[aria-busy="true"] button { cursor: progress; opacity: .7; }
   .g-follow-status { flex-basis: 100%; font-size: .8125rem; color: var(--gala-color-text-muted); }
   .g-follow-status:empty { display: none; }
