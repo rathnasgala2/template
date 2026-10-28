@@ -49,6 +49,18 @@ and this project adheres to
   tokens only and are not published theme hooks. English and Tamil sentences.
   Needs `@rathnasgala2/schemas` 3.22.0 to validate the key.
 
+- Galascribe newsletter: `publication.newsletter.mode: "galascribe"` renders the
+  newsletter panel with a Subscribe link to the App's
+  `/t/newsletter/request/{publicationId}` page (the no-JavaScript path) and a
+  hidden signup form (email field, `trap` honeypot, Subscribe) that
+  `assets/gala-audience-v1.js` reveals in its place. Submitting posts
+  `{email, trap}` to `POST .../newsletter-subscriptions`; every accepted answer
+  reads "Check your inbox to confirm", `NEWSLETTER_FULL` and
+  `NEWSLETTER_UNAVAILABLE` read "This newsletter isn't taking new subscribers
+  right now.", and rate limit, bad address and outage have their own sentences.
+  Link mode, with or without `mode: "link"`, is byte-identical. English and
+  Tamil sentences.
+
 ### Fixed
 
 - The `email` share target is a `mailto:` link without `target="_blank"` or

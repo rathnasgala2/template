@@ -875,6 +875,37 @@ The classes (`g-follow`, `g-follow-btn`, `g-follow-on`, `g-follow-state`,
 `g-follow-undo`, `g-follow-status`) are owned by the base layer and read tokens
 only, like `g-counts`; `g-btn` is the published hook.
 
+### Galascribe newsletter
+
+`publication.newsletter` is either link mode (today's `{url, title, text}`, with
+an optional `"mode": "link"`; the panel is byte-identical to what it always was)
+or Galascribe mode,
+`{"mode": "galascribe", title, text, emailContent, replyToOwner}`. Galascribe
+mode keeps the panel's copy and changes what is beside it
+(`data-gala-audience="newsletter"` on the `g-newsletter` section):
+
+- **Without JavaScript** a Subscribe link (`g-btn`) to the App's
+  `{appOrigin}/t/newsletter/request/{publicationId}` page, where the App origin
+  is the interactions module's (the local stack) or
+  `https://app.galascribe.com`.
+- **With the script** the link is hidden and a form (`g-form g-newsletter-form`,
+  hidden until then) takes its place: an email field with a screen-reader-only
+  label, a honeypot input named `trap` (the API's field; off-screen in a `g-hp`
+  wrapper, `aria-hidden`, `tabindex="-1"`, never `display: none`), a Subscribe
+  button and a polite status line.
+- **Submitting** posts `{email, trap}` to `POST .../newsletter-subscriptions`
+  with no credential. Every accepted answer, honeypot hits included, reads
+  "Check your inbox to confirm" (so the form never tells a known address from an
+  unknown one). `NEWSLETTER_FULL` and `NEWSLETTER_UNAVAILABLE` read "This
+  newsletter isn't taking new subscribers right now."; `RATE_LIMITED`, a
+  rejected address (`400`), a network failure and anything else have their own
+  sentences. An empty or malformed address is stopped before the request.
+  `data-state` on the form is `sent` or `error`.
+
+The panel appears where it always did (the home page and article pages). On a
+site with language variants the Galascribe-mode panel on an article is in the
+article's language, like the sentences the script announces.
+
 ## Policy pages
 
 Every site carries two legal pages, `/terms` and `/privacy` (page kind
