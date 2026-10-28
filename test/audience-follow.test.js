@@ -170,7 +170,10 @@ test('Tamil pages get Tamil labels, names and sentences', () => {
 });
 
 test('followsEnabled needs the module and its follows switch, not reactions or comments', () => {
-  /** @param {any} follows */
+  /**
+   * @param {any} follows
+   * @returns {object} an interactions module with that follows member
+   */
   const module = (follows) => ({
     config: {
       reactions: { enabled: false, definitions: [] },
@@ -496,6 +499,7 @@ test('script: an author the API does not know is not offered; a token the API re
  * @param {string} hash
  * @param {Record<string, unknown>} pending
  * @param {Record<string, any>} routes
+ * @returns {Promise<any>} the harness of a page that loads on return from the App
  */
 async function returnFromApp(hash, pending, routes) {
   return bootAudience(followMarkup(), {

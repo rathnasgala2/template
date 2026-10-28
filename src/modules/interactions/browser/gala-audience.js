@@ -188,7 +188,8 @@
     } finally {
       clearTimeout(timer);
     }
-    let payload = null;
+    /** @type {any} */
+    let payload;
     try {
       payload = await response.json();
     } catch {

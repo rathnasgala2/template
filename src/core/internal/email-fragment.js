@@ -100,7 +100,11 @@ const ATTRIBUTE = /\s([a-z][a-z-]*)="([^"]*)"/gi;
  * @returns {string} the email-safe HTML
  */
 export function toEmailSafeHtml(html, pageUrl) {
-  /** @param {string} value an entity-decoded address */
+  /**
+   * @param {string} value an entity-decoded address
+   * @returns {string} the address against the post's URL, as written when it
+   *   cannot be resolved
+   */
   const absolute = (value) => {
     try {
       return new URL(value, pageUrl).toString();

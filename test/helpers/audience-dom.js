@@ -30,8 +30,13 @@ export const APP = 'https://app.galascribe.com';
 export const PAGE = 'https://blog.example/posts/hello/';
 export const SESSION_KEY = 'gala.reader.session.' + PUBLICATION;
 export const PENDING_KEY = 'gala.reader.pending.' + PUBLICATION;
-export const FOLLOW_PATH = (/** @type {string} */ id = AUTHOR) =>
-  `/v2/public/publications/${PUBLICATION}/authors/${id}/follow`;
+/**
+ * @param {string} [id] the author id (default: the fixture author)
+ * @returns {string} the follow path of that author
+ */
+export function FOLLOW_PATH(id = AUTHOR) {
+  return `/v2/public/publications/${PUBLICATION}/authors/${id}/follow`;
+}
 
 /** A reader session that has not expired. */
 export const SESSION = Object.freeze({
@@ -144,7 +149,7 @@ export async function bootAudience(html, options = {}) {
     calls,
     navigations,
     events,
-    /** Let promises and the 30 ms announcement timers run. */
+    /** @returns {Promise<unknown>} resolves once promises and the 30 ms announcement timers have run */
     settle: () => sleep(90),
     $: (/** @type {string} */ selector) =>
       window.document.querySelector(selector),
