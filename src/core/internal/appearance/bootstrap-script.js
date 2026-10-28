@@ -23,7 +23,8 @@
  *    `fetch` of the static index named by `data-search-index`; `/` and
  *    Ctrl/Cmd+K; arrow keys and Enter), code blocks (language label and Copy
  *    button), contents highlighting (IntersectionObserver on `data-toc`),
- *    the share group (copy link, bookmark in `localStorage`), and a
+ *    the share group (copy link, native share sheet where the browser has
+ *    one, bookmark in `localStorage`; link targets need no script), and a
  *    reading-progress fallback where scroll-driven animations are
  *    unsupported.
  *
@@ -597,6 +598,29 @@ const READABLE_SCRIPT_SOURCE = String.raw`(function () {
     var path = window.location.pathname;
     var copyLink = group.querySelector('[data-action="copy-link"]');
     var bookmark = group.querySelector('[data-action="bookmark"]');
+    var nativeShare = group.querySelector('[data-action="native-share"]');
+    // A group with link targets is visible before this runs and keeps its
+    // script-only buttons hidden until now; the native button stays hidden
+    // where the browser has no share sheet.
+    if (copyLink) copyLink.hidden = false;
+    if (bookmark) bookmark.hidden = false;
+    if (nativeShare && navigator.share) {
+      nativeShare.hidden = false;
+      nativeShare.addEventListener('click', function () {
+        try {
+          navigator
+            .share({
+              title: nativeShare.getAttribute('data-share-title') || document.title,
+              url: nativeShare.getAttribute('data-share-url') || window.location.href
+            })
+            .catch(function () {
+              // Dismissing the share sheet rejects; nothing to report.
+            });
+        } catch (error) {
+          // A refused share call leaves the page as it was.
+        }
+      });
+    }
     if (copyLink) {
       copyLink.addEventListener('click', function () {
         writeClipboard(window.location.href).then(

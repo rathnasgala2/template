@@ -158,6 +158,20 @@ export interface AuthorNormalized {
   sourceDigest: string;
 }
 
+/** A share-group target (`publication.sharing.targets`). */
+export type ShareTarget =
+  | 'copy-link'
+  | 'native'
+  | 'x'
+  | 'bluesky'
+  | 'linkedin'
+  | 'facebook'
+  | 'hacker-news'
+  | 'whatsapp'
+  | 'telegram'
+  | 'reddit'
+  | 'email';
+
 /** The subset of `publicationNormalized` this renderer reads. */
 export interface PublicationNormalized {
   id: string;
@@ -171,6 +185,8 @@ export interface PublicationNormalized {
   socialLinks: unknown[];
   defaultImage?: ResolvedFileRef;
   newsletter?: { url: string; title: string; text: string };
+  /** The article share group; absent means `["copy-link"]`, `[]` none. */
+  sharing?: { targets: readonly ShareTarget[] };
   crawlers?: { ai: 'allow' | 'block' };
   profile?: { route: string; body: RenderableBody };
   footerCard?: {

@@ -91,6 +91,7 @@ import {
   interactionsActive,
   renderInteractionsSection,
 } from './interactions.js';
+import { renderShareGroup } from './share.js';
 import { getMessages } from './messages.js';
 import {
   languageLabel,
@@ -1157,11 +1158,13 @@ export function buildGeneratedPages(validatedInput, options) {
           : '') +
         `${escapeHtml(series)}</a>`
       : '';
-    const share =
-      `<div class="g-share" role="group" aria-label="${text('shareLabel')}" hidden>` +
-      `<button class="g-icon-btn" type="button" data-action="copy-link" aria-label="${text('copyLinkLabel')}" title="${text('copyLinkLabel')}">${icon('link')}</button>` +
-      `<button class="g-icon-btn" type="button" data-action="bookmark" aria-pressed="false" aria-label="${text('saveForLaterLabel')}" title="${text('saveForLaterLabel')}">${icon('bookmark')}</button>` +
-      `</div>`;
+    // The post's canonical URL, as the page's own canonical link names it.
+    const share = renderShareGroup({
+      sharing: publication.sharing,
+      title: frontmatter.title,
+      url: frontmatter.seo?.canonicalUrl || absolute(recordHref(record)),
+      messages,
+    });
     // The article and each of its editions offer the same selector.
     const editionSelector = renderEditionSelector({
       messages,

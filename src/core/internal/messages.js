@@ -117,6 +117,10 @@ const CATALOGS = Object.freeze({
     shareLabel: 'Share',
     copyLinkLabel: 'Copy link to this article',
     saveForLaterLabel: 'Save for later',
+    /** @type {(network: string) => string} */
+    shareOnLabel: (network) => `Share on ${network}`,
+    shareByEmailLabel: 'Share by email',
+    shareNativeLabel: 'Share this article',
     tagListLabel: 'Tags',
     tagKickerLabel: 'Tag',
     seriesKickerLabel: 'Series',
@@ -294,6 +298,10 @@ const CATALOGS = Object.freeze({
     shareLabel: 'பகிர்',
     copyLinkLabel: 'இந்தக் கட்டுரையின் இணைப்பை நகலெடு',
     saveForLaterLabel: 'பின்னர் படிக்கச் சேமி',
+    /** @type {(network: string) => string} */
+    shareOnLabel: (network) => `${network} இல் பகிர்`,
+    shareByEmailLabel: 'மின்னஞ்சலில் பகிர்',
+    shareNativeLabel: 'இந்தக் கட்டுரையைப் பகிர்',
     tagListLabel: 'குறிச்சொற்கள்',
     tagKickerLabel: 'குறிச்சொல்',
     seriesKickerLabel: 'தொடர்',

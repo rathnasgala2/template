@@ -8,6 +8,20 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Share buttons: `publication.sharing.targets` (ordered; `copy-link`, `native`,
+  `x`, `bluesky`, `linkedin`, `facebook`, `hacker-news`, `whatsapp`, `telegram`,
+  `reddit`, `email`) sets what the article share group holds. Every target but
+  `copy-link` and `native` is a plain link on the network's documented share URL
+  (new tab, `rel="noopener noreferrer"`, "Share on X" names, title and canonical
+  URL encoded) and works with JavaScript off; `native` is shown by the site
+  script only where `navigator.share` exists. Bookmark stays last. A site
+  without `sharing` (or with `["copy-link"]`) renders the same group as before,
+  byte for byte; an empty list leaves Bookmark alone. Brand marks are added to
+  the inline icon set (Simple Icons, CC0). Needs `@rathnasgala2/schemas` 3.22.0
+  to validate the key.
+
 ## [4.5.1] - 2026-10-27
 
 ### Fixed
