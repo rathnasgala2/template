@@ -223,7 +223,20 @@ export async function renderPagesWithEleventy({
     'utf8',
   );
 
-  const eleventy = new Eleventy(inputDirectory, outputDirectory, {
+  // Eleventy turns every input path into a path relative to `process.cwd()`
+  // with a bare string `startsWith` and no path-boundary check
+  // (`TemplatePath.stripLeadingSubPath`, `@11ty/eleventy-utils`). An absolute
+  // `inputDirectory` that merely shares a string prefix with the working
+  // directory (cwd `/x/site`, input `/x/site-work/input`) is cut to
+  // `work/input/...`, the dependency-graph node names then match no template
+  // map entry, and the build fails with `entry._pages is not iterable` for
+  // that cwd and work-directory spelling only. Handing Eleventy the path
+  // already relative to the working directory (`../site-work/input`, or
+  // `.gala/work/input` when inside it) leaves it nothing to cut, and the
+  // output bytes do not depend on where the process was started.
+  const eleventyInput = path.relative(process.cwd(), inputDirectory) || '.';
+
+  const eleventy = new Eleventy(eleventyInput, outputDirectory, {
     source: 'script',
     runMode: 'build',
     dryRun: false,

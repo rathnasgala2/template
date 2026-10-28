@@ -8,6 +8,16 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- The renderer no longer fails with `entry._pages is not iterable` when the
+  process working directory is only a string prefix of the work directory (cwd
+  `/x/site`, work `/x/site-work`, which the publish toolchain's `--work` flag
+  allows) or is the filesystem root. Eleventy cut such an absolute input path
+  against the cwd with a bare `startsWith`, so no template matched its
+  dependency-graph node. The adapter now hands Eleventy the input directory
+  relative to the cwd; the output bytes are unchanged.
+
 ## [4.6.0] - 2026-10-27
 
 ### Added
