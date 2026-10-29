@@ -165,10 +165,7 @@ test('Tamil pages get Tamil labels, names and sentences', () => {
   assert.match(html, /aria-label="அன்னா ஐப் பின்தொடர்"/);
   assert.match(html, /aria-label="அன்னா ஐப் பின்தொடர்வதை நிறுத்து"/);
   assert.match(html, />பின்தொடர்வதை நிறுத்து<\/button>/);
-  const english = getMessages('en');
-  for (const key of Object.keys(english)) {
-    assert.ok(key in messages, `ta has ${key}`);
-  }
+  // Key parity for every catalog lives in test/messages-parity.test.js.
 });
 
 test('followsEnabled needs the module and its follows switch, not reactions or comments', () => {
