@@ -79,6 +79,7 @@ import {
   editionKindLabel,
   editionRoute,
   listedEditions,
+  nofollowLinks,
   renderEditionSelector,
   resolveEditions,
 } from './editions.js';
@@ -121,9 +122,8 @@ import {
   EDITORIAL_COMPOSITION,
 } from './template-composition.js';
 
-/** Listing page size (index and per-year archive pages). Scoped decision:
- * this renderer has no externally fixed page size; 10 is a deterministic,
- * documented default with no author-facing configuration surface.
+/** The default listing page size (index, per-year archive and section pages).
+ * An author sets another with `publication.listing.pageSize` (1 to 50).
  * @type {number} */
 export const LISTING_PAGE_SIZE = 10;
 
@@ -547,6 +547,8 @@ export function buildGeneratedPages(validatedInput, options) {
     options.translations ??
     resolveTranslations(content, publication.defaultLanguage);
   const defaultMessages = getMessages(publication.defaultLanguage);
+  // Posts per listing page: the author's `listing.pageSize`, else the default.
+  const pageSize = publication.listing?.pageSize ?? LISTING_PAGE_SIZE;
   let messages = defaultMessages;
   const authorsById = new Map(authors.map((author) => [author.id, author]));
   const editions = options.editions ?? resolveEditions(content, contentRoute);
@@ -1309,8 +1311,10 @@ export function buildGeneratedPages(validatedInput, options) {
     const prose =
       `<div class="g-prose">${tocMobile}` +
       renderSlot('article-preamble') +
-      options.pageBody(
-        dropLeadingTitleHeading(record.body, frontmatter.title),
+      (isEdition ? nofollowLinks : (/** @type {string} */ html) => html)(
+        options.pageBody(
+          dropLeadingTitleHeading(record.body, frontmatter.title),
+        ),
       ) +
       tags +
       renderSlot('article-end') +
@@ -1502,7 +1506,7 @@ export function buildGeneratedPages(validatedInput, options) {
   const [featured, ...rest] = publishedArticles;
   const latest = rest.slice(0, LATEST_CARD_COUNT);
   const older = rest.slice(LATEST_CARD_COUNT);
-  const indexPages = paginate(older, LISTING_PAGE_SIZE);
+  const indexPages = paginate(older, pageSize);
   const indexRoute = (/** @type {number} */ n) =>
     site(n === 1 ? '/' : `/page/${n}`);
   const seriesName = publishedArticles.find((r) => r.frontmatter.series)
@@ -1870,7 +1874,7 @@ export function buildGeneratedPages(validatedInput, options) {
       /** @type {import('../../../types/index.d.ts').ContentBuildRecord[]} */ (
         byYear.get(year)
       );
-    const yearPages = paginate(items, LISTING_PAGE_SIZE);
+    const yearPages = paginate(items, pageSize);
     const yearRoute = (/** @type {number} */ n) =>
       n === 1 ? `/archive/${year}` : `/archive/${year}/page/${n}`;
     yearPages.forEach((pageItems, pageIndex) => {
@@ -1933,7 +1937,7 @@ export function buildGeneratedPages(validatedInput, options) {
       (r) => languageSegment(r.frontmatter.language) === section.segment,
     );
     const name = languageLabel(section.language, translations.languages);
-    const sectionPages = paginate(items, LISTING_PAGE_SIZE);
+    const sectionPages = paginate(items, pageSize);
     const sectionRoute = (/** @type {number} */ n) =>
       n === 1 ? `/${section.segment}` : `/${section.segment}/page/${n}`;
     sectionPages.forEach((pageItems, pageIndex) => {

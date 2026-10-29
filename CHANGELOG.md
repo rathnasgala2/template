@@ -8,6 +8,33 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- `deleteDate` (schemas 3.25.0): a post whose `deleteDate` has come (UTC day of
+  `buildEpoch`) leaves every listing, feed, sitemap, search index, `llms` file
+  and `posts.json`; its route renders a noindex removed-post notice in the page
+  language. One liveness predicate (`internal/liveness.js`) decides it for the
+  whole build; each translation obeys its own date.
+- `publication.listing.pageSize` (1 to 50, default 10) sets the page size of
+  every listing.
+- `publication.aiRights`: `robots.txt` with separate search/answer-bot and
+  training-crawler groups (Google-Extended follows either), `noai, noimageai`
+  robots meta when training is blocked, `/license.xml` (RSL 1.0), and an "AI
+  use" section in `llms.txt`. Without `aiRights`, `robots.txt` is unchanged.
+- `<route>index.md` per live indexable article (front matter subset plus the
+  author's Markdown as written, read from the repository file and verified by
+  its `sourceDigest`), `/posts.json`, `/version.json` and a noindex `/version/`
+  page.
+- Links in Prism edition pages carry `rel="nofollow"`, merged with existing
+  `rel` values.
+
+### Changed
+
+- `llms.txt` lists `posts.json` under "Optional".
+- Requires `@rathnasgala2/schemas` 3.25.0.
+- Eleventy no longer reads a `---` fence at the start of a generated file as
+  page data, so a generated Markdown file keeps its own front matter.
+
 ## [4.6.1] - 2026-10-28
 
 ### Fixed

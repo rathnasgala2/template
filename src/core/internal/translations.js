@@ -133,20 +133,29 @@ export function localizeAuthor(author, language) {
 /**
  * @param {readonly ContentBuildRecord[]} content the build input's `content[]`
  * @param {string} defaultLanguage `publication.defaultLanguage`
+ * @param {readonly ContentBuildRecord[]} [removedRoots] articles removed by
+ *   their `deleteDate` (`internal/liveness.js`): a live translation still names
+ *   one, but the removed article is no member of the group
  * @returns {TranslationResolution}
  */
-export function resolveTranslations(content, defaultLanguage) {
+export function resolveTranslations(
+  content,
+  defaultLanguage,
+  removedRoots = [],
+) {
   const articles = content.filter((r) => r.frontmatter.kind === 'article');
   const published = articles.filter(
     (r) => r.frontmatter.status === 'published',
   );
   /** @type {Map<string, ContentBuildRecord>} */
   const rootsBySlug = new Map();
-  for (const record of articles) {
+  for (const record of [...articles, ...removedRoots]) {
     if (!record.frontmatter.translationOf) {
       rootsBySlug.set(record.frontmatter.slug, record);
     }
   }
+  const rootIsLive = (/** @type {ContentBuildRecord} */ root) =>
+    root.frontmatter.status === 'published' && !removedRoots.includes(root);
   /** @type {Map<ContentBuildRecord, ContentBuildRecord[]>} */
   const translationsByRoot = new Map();
   /** @type {string[]} */
@@ -186,10 +195,7 @@ export function resolveTranslations(content, defaultLanguage) {
           ? -1
           : 1;
   for (const [root, translations] of translationsByRoot) {
-    const members = [
-      ...(root.frontmatter.status === 'published' ? [root] : []),
-      ...translations,
-    ];
+    const members = [...(rootIsLive(root) ? [root] : []), ...translations];
     const inDefault = (/** @type {ContentBuildRecord} */ r) =>
       r.frontmatter.language.toLowerCase() === defaultFull;
     const earliest = [...members].sort((a, b) =>
@@ -203,7 +209,7 @@ export function resolveTranslations(content, defaultLanguage) {
     )[0];
     const primary =
       members.find(inDefault) ??
-      (root.frontmatter.status === 'published' ? root : undefined) ??
+      (rootIsLive(root) ? root : undefined) ??
       earliest;
     /** @type {Set<string>} */
     const seen = new Set();

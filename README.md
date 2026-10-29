@@ -298,9 +298,11 @@ output-security pipeline every generated page still passes through:
   search index, feeds or `llms` documents; a document or redirect on either
   route fails with `POLICY_ROUTE_CONFLICT`). The `error` page kind
   (`renderErrorPageBody`) is exported as a pure function for the `404.html`
-  caller (see below), not wired into any generated route here. Listing page size
-  (10), sort tie-break, and the tag/series/archive root pages are documented
-  scoped decisions this renderer's own governing brief does not fix verbatim.
+  caller (see below), not wired into any generated route here. The listing page
+  size is `publication.listing.pageSize` (1 to 50, default 10; see "Listing page
+  size"); the sort tie-break and the tag/series/archive root pages are
+  documented scoped decisions this renderer's own governing brief does not fix
+  verbatim.
 - **`src/core/internal/messages.js`** is the message catalog every user-visible
   chrome string above is looked up from (never an inline literal), keyed by
   BCP-47 tag with a fixed `en` fallback — the only catalog S2 authors;
@@ -567,6 +569,83 @@ theme-declared SVG icon mark safe to publish.
   backslash-separated path, a symlink escaping the theme directory, and an
   undeclared file never being copied.
 
+### Listing page size
+
+`publication.listing.pageSize` (schemas 3.25.0, integer 1 to 50) is the number
+of posts on each page of every listing: the home page's older posts, each year's
+archive, and each language section. Absent means 10 (`LISTING_PAGE_SIZE`). The
+home page's featured post and latest cards come before the paginated list and do
+not count against it.
+
+### Removing a post (`deleteDate`)
+
+A post's `deleteDate` (`YYYY-MM-DD`, schemas 3.25.0, a day like `publishAfter`)
+takes it off the site. `internal/liveness.js` holds the one predicate: a
+document is live unless its `deleteDate` is on or before the UTC day of the
+build input's `buildEpoch`. It runs once, before rendering, so a removed post
+reaches no listing, feed, sitemap, search index, `llms` file, `posts.json`,
+related, series, tag, author or language section. Its route (and any redirect
+that pointed at it) renders a notice instead: "This post was removed", the
+removal date, a link home, in the page's language, `noindex, follow`, no title
+and no body. A live document on the same route wins over the notice. The removal
+day is read in UTC because the publication's staggered-release timezone is a
+platform setting the build input does not carry; the platform republishes at the
+start of that day in the author's timezone. An edition of a removed article is
+dropped with it. Each translation obeys its own `deleteDate`: removing the
+default-language article leaves its translations on the site (the removed
+article simply stops being a member of the group), and removing one translation
+leaves the others.
+
+### AI rights
+
+`publication.aiRights` (schemas 3.25.0: `search`, `training`, each `allow` or
+`block`, and an optional `licenseUrl`) wins over `publication.crawlers.ai`. With
+neither set the output is unchanged; with only `crawlers.ai` it is the old
+single switch, byte for byte. With `aiRights`:
+
+- `robots.txt` lists, per blocked class, one group of user agents with
+  `Disallow: /`. Search and answer bots (`search`): OAI-SearchBot, ChatGPT-User,
+  Claude-SearchBot, Claude-User, PerplexityBot, Perplexity-User. Training
+  crawlers (`training`): GPTBot, ClaudeBot, anthropic-ai, Applebot-Extended,
+  CCBot, Bytespider, Meta-ExternalAgent, Amazonbot, cohere-ai. Google-Extended
+  covers both Gemini training and answer grounding, so it is blocked when either
+  class is (the rule Galascribe v1 used). A `License:` line names
+  `/license.xml`.
+- `training: "block"` adds `noai, noimageai` to the `robots` meta of every HTML
+  page, merged with the directives already there.
+- `/license.xml` is the terms in Really Simple Licensing 1.0 shape: `search` is
+  always permitted; `ai-input` and `ai-index` follow `search`; `ai-train`
+  follows `training`; `licenseUrl` becomes a `payment type="purchase"` custom
+  link.
+- `llms.txt` gains an "AI use" section stating both choices and linking the
+  license file and `licenseUrl`.
+
+### Per-article Markdown, `posts.json`, `version.json`
+
+- **`<route>index.md`** (for example `/first-article/index.md`; `<route>.md`
+  under the `explicit-file` route profile) for every live, indexable article: a
+  small front matter (`title`, `date`, `updated`, `language`, `tags`,
+  `canonical`) then the author's Markdown body as written. The build input
+  carries each body as rendered HTML, so the Markdown is read from the
+  repository file (`sourcePath` under `options.sourceDirectory`, the tree the
+  media pipeline already reads) and used only if its bytes hash to the record's
+  `sourceDigest`. A missing or changed file means no `index.md` for that
+  article, never a wrong one. The manifest records the file as
+  `text/plain; charset=utf-8`: its media-type list has no `text/markdown`.
+- **`/posts.json`**: `{schemaVersion, generatedAt, posts[]}`, newest first; each
+  post has `slug`, `title`, `url`, `markdownUrl` (when it has an `index.md`),
+  `date`, `updated`, `language`, `translationOf` (translations only), `tags` and
+  `summary` (the description, else an excerpt). Articles with `seo.noindex` are
+  left out, as in `llms.txt`. It is listed in `llms.txt`.
+- **`/version.json`** and the noindex **`/version/`** page: template, schemas,
+  theme and publish-toolchain package versions, source commit and build time,
+  taken from the build input; a value the build input does not carry is omitted.
+
+### Prism edition links
+
+Every `<a href>` in an edition page's body gets `rel="nofollow"`, merged with
+any `rel` values already present (`nofollowLinks` in `internal/editions.js`).
+
 ### Media pipeline scope decisions (documented, not silently assumed)
 
 Neither this renderer's own governing brief nor its internal styling decision
@@ -663,12 +742,14 @@ brief sits on top of the page kinds above:
   `internal/llms.js`). `robots.txt` allows all crawlers and names the absolute
   sitemap; `publication.crawlers.ai: "block"` (validated by the build-input
   schema, absent means allow) adds `Disallow: /` groups for the 15 known AI
-  crawlers. It is always written at the output root: **only a robots.txt at the
-  host root is honoured by crawlers**, so a site served from a path (for example
-  a GitHub project site) must have the same file at its host root. `llms.txt`
-  follows llmstxt.org (`# title`, `> description`, `## Articles`, `## Series`,
-  `## Optional`); `llms-full.txt` is every published article as plain text.
-  Unlisted content and editions are excluded from both.
+  crawlers; `publication.aiRights` is the finer control (see "AI rights"). It is
+  always written at the output root: **only a robots.txt at the host root is
+  honoured by crawlers**, so a site served from a path (for example a GitHub
+  project site) must have the same file at its host root. `llms.txt` follows
+  llmstxt.org (`# title`, `> description`, `## Articles`, `## Series`,
+  `## Optional`, which also lists `posts.json`); `llms-full.txt` is every
+  published article as plain text. Unlisted content and editions are excluded
+  from both.
 - **`404.html`**: the `error` page kind's pure `renderErrorPageBody`, now
   actually wired into `renderPublication` at the fixed `errorDocumentKey`
   (`internal/route.js#errorDocumentPath`) — `404.html` at the root, or
@@ -1012,18 +1093,18 @@ slash and ignoring letter case) fails the build closed with
 
 This source targets `@rathnasgala2/schemas@3.25.0` with a `^3.25.0` peer range
 (any 3.x from 3.25.0; 3.25.0 adds `deleteDate`, `publication.listing`,
-`publication.aiRights` and `publication.performance`; 3.22.0 adds `publication.sharing`, the Galascribe
-newsletter mode with `emailContent`, `publication.contactForm`, and `follows` in
-the interactions config; 3.21.0 adds `translationOf`; 3.16.0 adds
-`modules.analytics`, `build-input.policies` and the `site-policy-defaults`
-export, and its `theme-contract` admits styling contract 4.1.0); the lock
-installs 3.25.0 exactly from the npm registry, with its registry integrity. The
-2.8.0->2.11.0 convergence changes none of the four roots this renderer
-validates, for the same reason the 2.7.0-2.8.0 delta below did not. Only the
-`"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) and, since 4.4.0, the
-`./site-policy-defaults` export (the default policy text) are consumed; the
-2.6.0 `./runtime-origins` narrow export and every other addition through 2.6.1
-(new OpenAPI operations, App route/catalog copy, the
+`publication.aiRights` and `publication.performance`; 3.22.0 adds
+`publication.sharing`, the Galascribe newsletter mode with `emailContent`,
+`publication.contactForm`, and `follows` in the interactions config; 3.21.0 adds
+`translationOf`; 3.16.0 adds `modules.analytics`, `build-input.policies` and the
+`site-policy-defaults` export, and its `theme-contract` admits styling contract
+4.1.0); the lock installs 3.25.0 exactly from the npm registry, with its
+registry integrity. The 2.8.0->2.11.0 convergence changes none of the four roots
+this renderer validates, for the same reason the 2.7.0-2.8.0 delta below did
+not. Only the `"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) and,
+since 4.4.0, the `./site-policy-defaults` export (the default policy text) are
+consumed; the 2.6.0 `./runtime-origins` narrow export and every other addition
+through 2.6.1 (new OpenAPI operations, App route/catalog copy, the
 `PrincipalSummary`/`AuthenticatorSummary`/keyset field additions) are
 App/API-surface changes this renderer does not read. The `"."` export's 2.2.2
 browser-safety refactor (Node builtins replaced with browser-safe equivalents

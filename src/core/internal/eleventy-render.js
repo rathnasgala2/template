@@ -249,6 +249,13 @@ export async function renderPagesWithEleventy({
       eleventyConfig.setLayoutsDirectory('_includes');
       eleventyConfig.setQuietMode(true);
       eleventyConfig.setDataDeepMerge(false);
+      // Every page's data arrives through `addTemplate`'s options, never as
+      // front matter in its content, and a generated Markdown file starts with
+      // its own `---` fence. Moving the delimiter somewhere no document starts
+      // keeps Eleventy from reading that fence as page data.
+      eleventyConfig.setFrontMatterParsingOptions({
+        delimiters: '<!--gala-eleventy-front-matter-->',
+      });
 
       for (const page of pages) {
         eleventyConfig.addTemplate(page.virtualPath, page.content, {

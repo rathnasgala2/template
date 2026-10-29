@@ -105,9 +105,20 @@ const typesOf = (/** @type {string} */ html) =>
 
 test.after(() => site.cleanup());
 
+/**
+ * The generated notice pages (the 404 and `/version/`) are noindex and carry
+ * no structured data or description.
+ *
+ * @param {string} file an output path
+ * @returns {boolean}
+ */
+function isNoticePage(file) {
+  return file.endsWith('404.html') || file.endsWith('/version/index.html');
+}
+
 test('JSON-LD: one parseable block per page; types per page kind', () => {
   for (const [file, html] of htmlPages) {
-    if (file.endsWith('404.html')) continue;
+    if (isNoticePage(file)) continue;
     assert.equal(ldJsonBlocks(html).length, 1, `${file}: one JSON-LD block`);
     assert.doesNotThrow(() => JSON.parse(ldJsonBlocks(html)[0]), file);
   }
@@ -198,7 +209,7 @@ test('every page has exactly one executable script, apart from its JSON-LD data 
     assert.equal(executableScriptCount(html), 1, file);
     assert.equal(
       (html.match(/<script type="application\/ld\+json">/g) ?? []).length,
-      file.endsWith('404.html') ? 0 : 1,
+      isNoticePage(file) ? 0 : 1,
       file,
     );
   }
@@ -467,7 +478,7 @@ test('titles: home is "<Publication> - <tagline>" within 60 chars; every other p
 
 test('meta descriptions exist on every indexable page and are generated per kind', () => {
   for (const [file, html] of htmlPages) {
-    if (file.endsWith('404.html')) continue;
+    if (isNoticePage(file)) continue;
     const description = descriptionOf(html);
     assert.ok(description && description.length > 5, file);
     assert.ok(Array.from(description).length <= 160, `${file}: ${description}`);

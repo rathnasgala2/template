@@ -226,6 +226,27 @@ export function resolveEditions(content, routeOf) {
 }
 
 /**
+ * Add `nofollow` to the `rel` of every link in an edition's body, keeping any
+ * value already there. An edition restates its article, so its outbound links
+ * carry no endorsement of their own.
+ *
+ * @param {string} html an edition's rendered body
+ * @returns {string} the body with `rel` merged on each `<a>` that has an `href`
+ */
+export function nofollowLinks(html) {
+  return html.replace(/<a\b([^>]*)>/giu, (tag, attributes) => {
+    if (!/\shref\s*=/iu.test(` ${attributes}`)) return tag;
+    const rel = /\srel\s*=\s*(?:"([^"]*)"|'([^']*)')/iu.exec(attributes);
+    if (!rel) return `<a${attributes} rel="nofollow">`;
+    const values = (rel[1] ?? rel[2] ?? '').split(/\s+/u).filter(Boolean);
+    if (!values.some((value) => value.toLowerCase() === 'nofollow')) {
+      values.push('nofollow');
+    }
+    return `<a${attributes.replace(rel[0], ` rel="${values.join(' ')}"`)}>`;
+  });
+}
+
+/**
  * The editions a reader is offered next to an article: every published one,
  * plus the one being read. An `unlisted` edition stays reachable by its own
  * address but is not advertised.

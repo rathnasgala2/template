@@ -159,7 +159,9 @@ import { processMedia } from './internal/media/pipeline.js';
 import {
   buildGeneratedPages,
   contentRoute,
+  isSeoNoindex,
   renderErrorPageBody,
+  selectPublishedArticles,
 } from './internal/page-kinds.js';
 import { assertProvenance } from './internal/provenance.js';
 import {
@@ -185,7 +187,25 @@ import {
   twitterCardType,
 } from './internal/seo.js';
 import { buildLlmsDocuments } from './internal/llms.js';
-import { buildRobotsTxt, readAiCrawlerPolicy } from './internal/robots.js';
+import {
+  buildRobotsTxt,
+  readAiCrawlerPolicy,
+  readAiPolicy,
+  withTrainingOptOut,
+} from './internal/robots.js';
+import { buildLicenseXml } from './internal/license-rsl.js';
+import { splitLiveContent } from './internal/liveness.js';
+import {
+  renderRemovedPostBody,
+  renderVersionBody,
+} from './internal/notice-pages.js';
+import {
+  buildArticleMarkdown,
+  buildPostsJson,
+  buildVersionInfo,
+  markdownRoute,
+  readMarkdownBody,
+} from './internal/static-outputs.js';
 import { buildSitemap } from './internal/sitemap.js';
 import {
   defaultThemeStylesheetLinksHtml,
@@ -221,6 +241,13 @@ const SEARCH_INDEX_ROUTE = '/search-index.json';
 const ROBOTS_PATH = 'robots.txt';
 /** @type {string} the un-joined route of the llmstxt.org index. */
 const LLMS_ROUTE = '/llms.txt';
+/** The author's AI-use terms (RSL), only when `publication.aiRights` is set. */
+const LICENSE_ROUTE = '/license.xml';
+/** Every live article as JSON. */
+const POSTS_ROUTE = '/posts.json';
+/** What built the site, as JSON; its page is `VERSION_PAGE_ROUTE`. */
+const VERSION_JSON_ROUTE = '/version.json';
+const VERSION_PAGE_ROUTE = '/version';
 /** @type {string} the un-joined route of the full-text companion. */
 const LLMS_FULL_ROUTE = '/llms-full.txt';
 
@@ -422,12 +449,20 @@ export async function renderPublication(buildInput, options) {
   if (!inputValidation.valid) {
     throw new BuildInputValidationError(inputValidation.diagnostics);
   }
-  const validatedInput =
+  const authoredInput =
     /** @type {import('../../types/index.d.ts').NormalizedBuildInput} */ (
       buildInput
     );
 
-  await assertRenderPolicyCompliance(validatedInput);
+  await assertRenderPolicyCompliance(authoredInput);
+  // One "is it live" decision for the whole build (`internal/liveness.js`):
+  // everything below sees only the records whose `deleteDate` has not come.
+  // The removed ones are rendered as notices further down.
+  const liveSplit = splitLiveContent(
+    authoredInput.content,
+    authoredInput.buildEpoch,
+  );
+  const validatedInput = { ...authoredInput, content: liveSplit.live };
   // Every body image must name an image asset the build input inventories
   // for its document; resolved here, from the verified bodies alone, so an
   // unresolved one fails closed before anything is written.
@@ -447,6 +482,7 @@ export async function renderPublication(buildInput, options) {
   const translations = resolveTranslations(
     validatedInput.content,
     validatedInput.publication.defaultLanguage,
+    liveSplit.removedRoots,
   );
   assertLanguageSegmentsFree(
     validatedInput.content,
@@ -673,6 +709,10 @@ export async function renderPublication(buildInput, options) {
   );
   const rssHref = joinBasePathAndRoute(publicBasePath, RSS_FEED_ROUTE);
   const publication = validatedInput.publication;
+  // The author's AI-use choices. Training blocked adds the `noai, noimageai`
+  // robots directives to every HTML page.
+  const aiPolicy = readAiPolicy(publication);
+  const trainingBlocked = aiPolicy.granular && aiPolicy.training === 'block';
   const footerCard = publication.footerCard;
   // Already verified render-policy-conformant HTML by
   // assertRenderPolicyCompliance's assertPolicyConformantHtml call above —
@@ -919,6 +959,7 @@ export async function renderPublication(buildInput, options) {
     routeProfile,
     pageBody,
     editions,
+    translations,
     mediaAssets,
     mediaDimensions,
     interactions: interactionsOn ? interactionsModule : undefined,
@@ -968,7 +1009,7 @@ export async function renderPublication(buildInput, options) {
         dir: page.direction,
         pageKind: page.kind,
         description: page.description,
-        robotsContent: page.robotsContent,
+        robotsContent: withTrainingOptOut(page.robotsContent, trainingBlocked),
         canonicalUrl:
           page.canonicalUrl ??
           new URL(
@@ -1034,7 +1075,8 @@ export async function renderPublication(buildInput, options) {
     });
   });
 
-  for (const record of validatedInput.content) {
+  // A removed post's old addresses still lead to its notice.
+  for (const record of [...validatedInput.content, ...liveSplit.removed]) {
     const joined = joinBasePathAndRoute(
       validatedInput.basePath,
       contentRoute(record.frontmatter),
@@ -1069,49 +1111,136 @@ export async function renderPublication(buildInput, options) {
     );
   }
 
+  /**
+   * One generated notice page (the 404, a removed post's route, `/version/`):
+   * the site chrome around a single `<main>` section, `noindex, follow`, with
+   * no canonical URL or image of its own.
+   *
+   * @param {object} notice
+   * @param {string} notice.virtualPath the page's input path
+   * @param {string} notice.permalink its output path
+   * @param {string} notice.language its language
+   * @param {string | undefined} notice.currentRoute its joined route
+   * @param {string} notice.heading its heading (and title before the site name)
+   * @param {string} notice.pageKind the `data-gala-page-kind` value
+   * @param {(messages: typeof siteMessages) => string} notice.main the
+   *   `<main>` inner HTML, given the page language's catalog
+   */
+  const pushNoticePage = ({
+    virtualPath,
+    permalink,
+    language,
+    currentRoute,
+    heading,
+    pageKind,
+    main,
+  }) => {
+    const chrome = chromeFor(language);
+    contentPages.push({
+      virtualPath,
+      content: renderPageBody({
+        messages: chrome.messages,
+        headerHtml: headerFor(currentRoute, language),
+        footerHtml: footerFor([], language),
+        mainHtml: main(chrome.messages),
+        consentHtml: chrome.consentHtml,
+      }),
+      permalink,
+      layout: 'skeleton.njk',
+      data: {
+        title: `${heading} | ${siteName}`,
+        ogTitle: heading,
+        lang: language,
+        dir: resolveTextDirection(language),
+        pageKind,
+        // No `canonicalUrl`/`ogImage`: a notice has no real resource to
+        // canonicalize or illustrate.
+        robotsContent: withTrainingOptOut('noindex, follow', trainingBlocked),
+        siteName,
+        ogType: 'website',
+        twitterCard: twitterCardType(false),
+        atomFeedUrl: feeds.atomSelfUrl,
+        rssFeedUrl: feeds.rssSelfUrl,
+        languageFeedLinksHtml,
+        hreflangLinksHtml: '',
+        appearanceScriptHref: appearanceScriptHrefValue,
+        consentScriptHref,
+        cspMetaTag,
+        baseStylesheetHref: baseStylesheetHrefValue,
+        themeStylesheetLinksHtml,
+        composition,
+        ...siteHeadData,
+        ...colorModeData,
+      },
+    });
+  };
+
   // The one ordinary generated `404.html` error page, using the `error`
   // page kind's own pure body function. Pushed after the guard above so the
   // guard's own "is there anything authored to render" check is unaffected
   // by this always-present synthetic page.
-  const errorBodyHtml = renderPageBody({
-    messages: siteMessages,
-    headerHtml: headerFor(undefined),
-    footerHtml: footerFor(),
-    mainHtml: renderErrorPageBody({ messages: siteMessages, homeRoute }),
-    consentHtml: chromeFor(defaultLanguage).consentHtml,
-  });
   const errorFilePath = errorDocumentPath(validatedInput.basePath);
-  contentPages.push({
+  pushNoticePage({
     virtualPath: 'pages/error-404.html',
-    content: errorBodyHtml,
     permalink: errorFilePath,
-    layout: 'skeleton.njk',
-    data: {
-      title: `${/** @type {string} */ (siteMessages.errorPageHeading)} | ${siteName}`,
-      ogTitle: /** @type {string} */ (siteMessages.errorPageHeading),
-      lang: validatedInput.publication.defaultLanguage,
-      dir: resolveTextDirection(validatedInput.publication.defaultLanguage),
-      pageKind: 'error',
-      // No `canonicalUrl`/`ogImage`: an error page has no real resource to
-      // canonicalize or illustrate.
-      robotsContent: 'noindex, follow',
-      siteName,
-      ogType: 'website',
-      twitterCard: twitterCardType(false),
-      atomFeedUrl: feeds.atomSelfUrl,
-      rssFeedUrl: feeds.rssSelfUrl,
-      languageFeedLinksHtml,
-      hreflangLinksHtml: '',
-      appearanceScriptHref: appearanceScriptHrefValue,
-      consentScriptHref,
-      cspMetaTag,
-      baseStylesheetHref: baseStylesheetHrefValue,
-      themeStylesheetLinksHtml,
-      composition,
-      ...siteHeadData,
-      ...colorModeData,
-    },
+    language: defaultLanguage,
+    currentRoute: undefined,
+    heading: /** @type {string} */ (siteMessages.errorPageHeading),
+    pageKind: 'error',
+    main: (messages) => renderErrorPageBody({ messages, homeRoute }),
   });
+
+  // A removed post's route (and any other address it had) renders a notice,
+  // noindex, with no body. A route a live document also takes keeps the live
+  // document.
+  /** @type {Set<string>} */
+  const takenPermalinks = new Set(
+    [...contentPages, ...redirectPages].map((page) => page.permalink),
+  );
+  liveSplit.removed.forEach((record, index) => {
+    const { frontmatter } = record;
+    const joined = joinBasePathAndRoute(
+      validatedInput.basePath,
+      contentRoute(frontmatter),
+    );
+    const permalink = projectRouteToFilePath(joined, routeProfile);
+    if (takenPermalinks.has(permalink) || !frontmatter.deleteDate) return;
+    takenPermalinks.add(permalink);
+    const deleteDate = frontmatter.deleteDate;
+    const language = chromeFor(frontmatter.language);
+    pushNoticePage({
+      virtualPath: `pages/removed-${index}.html`,
+      permalink,
+      language: frontmatter.language,
+      currentRoute: undefined,
+      heading: /** @type {string} */ (language.messages.postRemovedHeading),
+      pageKind: 'error',
+      main: (messages) =>
+        renderRemovedPostBody({ messages, deleteDate, homeRoute }),
+    });
+  });
+
+  // `/version/`: what built the site, for a reader; `/version.json` is the
+  // same facts for a program. A live document on the same route keeps it.
+  const versionInfo = buildVersionInfo(
+    validatedInput,
+    TEMPLATE_PACKAGE_VERSION,
+  );
+  const versionPagePath = projectRouteToFilePath(
+    joinBasePathAndRoute(validatedInput.basePath, VERSION_PAGE_ROUTE),
+    routeProfile,
+  );
+  if (!takenPermalinks.has(versionPagePath)) {
+    pushNoticePage({
+      virtualPath: 'pages/version.html',
+      permalink: versionPagePath,
+      language: defaultLanguage,
+      currentRoute: undefined,
+      heading: /** @type {string} */ (siteMessages.versionPageHeading),
+      pageKind: 'policy',
+      main: (messages) => renderVersionBody({ messages, info: versionInfo }),
+    });
+  }
 
   // Feeds, sitemap and the static search index. Each is a fixed,
   // literal-extension file — never route-normalized like an ordinary
@@ -1142,9 +1271,16 @@ export async function renderPublication(buildInput, options) {
     routeProfile,
   });
   const searchIndexJson = buildSearchIndex(validatedInput, routeProfile);
+  const licenseFilePath = projectFixedAssetPath(
+    validatedInput.basePath,
+    LICENSE_ROUTE,
+  );
   const robotsTxt = buildRobotsTxt({
     aiPolicy: readAiCrawlerPolicy(validatedInput.publication),
     sitemapUrl: absoluteSiteUrl(SITEMAP_ROUTE),
+    ...(aiPolicy.granular
+      ? { rights: aiPolicy, licenseFileUrl: absoluteSiteUrl(LICENSE_ROUTE) }
+      : {}),
   });
   const llmsFilePath = projectFixedAssetPath(
     validatedInput.basePath,
@@ -1160,8 +1296,51 @@ export async function renderPublication(buildInput, options) {
     sitemap: absoluteSiteUrl(SITEMAP_ROUTE),
     searchIndex: absoluteSiteUrl(SEARCH_INDEX_ROUTE),
     full: absoluteSiteUrl(LLMS_FULL_ROUTE),
+    posts: absoluteSiteUrl(POSTS_ROUTE),
+    ...(aiPolicy.granular ? { license: absoluteSiteUrl(LICENSE_ROUTE) } : {}),
     routeProfile,
   });
+  // Each live, indexable article's Markdown twin, read from the repository
+  // file the build input digested (see `internal/static-outputs.js`). An
+  // article whose file is not there, or is not that file, has no twin.
+  const sourceDirectory = path.resolve(options.sourceDirectory);
+  /** @type {Set<import('../../types/index.d.ts').ContentBuildRecord>} */
+  const withMarkdown = new Set();
+  /** @type {{virtualPath: string, content: string, permalink: string}[]} */
+  const markdownPages = [];
+  for (const record of selectPublishedArticles(validatedInput.content)) {
+    if (isSeoNoindex(record.frontmatter)) continue;
+    const markdown = await readMarkdownBody(sourceDirectory, record);
+    if (markdown === undefined) continue;
+    const route = contentRoute(record.frontmatter);
+    withMarkdown.add(record);
+    markdownPages.push({
+      virtualPath: `markdown/${markdownPages.length}.html`,
+      content: buildArticleMarkdown(
+        record,
+        record.frontmatter.seo?.canonicalUrl || absoluteSiteUrl(route),
+        markdown,
+      ),
+      permalink: projectFixedAssetPath(
+        validatedInput.basePath,
+        markdownRoute(route, routeProfile),
+      ),
+    });
+  }
+  const postsJson = buildPostsJson(validatedInput.content, {
+    absoluteUrl: absoluteSiteUrl,
+    withMarkdown,
+    routeProfile,
+    buildEpoch: validatedInput.buildEpoch,
+  });
+  const postsFilePath = projectFixedAssetPath(
+    validatedInput.basePath,
+    POSTS_ROUTE,
+  );
+  const versionFilePath = projectFixedAssetPath(
+    validatedInput.basePath,
+    VERSION_JSON_ROUTE,
+  );
   // The full-post email fragments, only for a Galascribe newsletter that mails
   // full posts. Raw documents like the files below, so they are in no sitemap,
   // feed, search index or `llms` file.
@@ -1180,6 +1359,29 @@ export async function renderPublication(buildInput, options) {
     : [];
   const assetPages = [
     ...emailFragments,
+    ...markdownPages,
+    ...(aiPolicy.granular
+      ? [
+          {
+            virtualPath: 'license.html',
+            content: buildLicenseXml(
+              aiPolicy,
+              joinPublicRoute(publicBasePath, '/', routeProfile),
+            ),
+            permalink: licenseFilePath,
+          },
+        ]
+      : []),
+    {
+      virtualPath: 'posts.html',
+      content: postsJson,
+      permalink: postsFilePath,
+    },
+    {
+      virtualPath: 'version-json.html',
+      content: `${JSON.stringify(versionInfo)}\n`,
+      permalink: versionFilePath,
+    },
     { virtualPath: 'robots.html', content: robotsTxt, permalink: ROBOTS_PATH },
     { virtualPath: 'llms.html', content: llmsTxt, permalink: llmsFilePath },
     {
@@ -1259,6 +1461,18 @@ export async function renderPublication(buildInput, options) {
       { routeClass: 'asset', mediaType: 'application/json; charset=utf-8' },
     ],
     [
+      postsFilePath,
+      { routeClass: 'asset', mediaType: 'application/json; charset=utf-8' },
+    ],
+    [
+      versionFilePath,
+      { routeClass: 'asset', mediaType: 'application/json; charset=utf-8' },
+    ],
+    [
+      licenseFilePath,
+      { routeClass: 'asset', mediaType: 'application/xml; charset=utf-8' },
+    ],
+    [
       ROBOTS_PATH,
       { routeClass: 'asset', mediaType: 'text/plain; charset=utf-8' },
     ],
@@ -1271,6 +1485,14 @@ export async function renderPublication(buildInput, options) {
       { routeClass: 'asset', mediaType: 'text/plain; charset=utf-8' },
     ],
   ]);
+  // The manifest's media types have no `text/markdown`; plain text is the
+  // closest it admits, and hosts serve a `.md` file by its extension.
+  for (const page of markdownPages) {
+    specialRoutes.set(page.permalink, {
+      routeClass: 'asset',
+      mediaType: 'text/plain; charset=utf-8',
+    });
+  }
   for (const fragment of emailFragments) {
     specialRoutes.set(fragment.permalink, {
       routeClass: 'asset',

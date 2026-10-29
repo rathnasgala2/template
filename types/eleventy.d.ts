@@ -10,6 +10,9 @@ declare module '@11ty/eleventy' {
     setLayoutsDirectory(directory: string): void;
     setQuietMode(value: boolean): void;
     setDataDeepMerge(value: boolean): void;
+    setFrontMatterParsingOptions(options: {
+      delimiters?: string | [string, string];
+    }): void;
     addTemplate(
       virtualInputPath: string,
       content: string,

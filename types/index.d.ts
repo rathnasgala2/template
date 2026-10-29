@@ -101,6 +101,8 @@ export interface ContentFrontmatterNormalized {
   edition?: ContentEdition;
   /** The slug of the article this article translates (schemas 3.21.0). */
   translationOf?: string;
+  /** The day (`YYYY-MM-DD`) the article leaves the site (schemas 3.25.0). */
+  deleteDate?: string;
 }
 
 /**
@@ -210,6 +212,14 @@ export interface PublicationNormalized {
   /** The article share group; absent means `["copy-link"]`, `[]` none. */
   sharing?: { targets: readonly ShareTarget[] };
   crawlers?: { ai: 'allow' | 'block' };
+  /** Posts per listing page, 1 to 50; absent means 10 (schemas 3.25.0). */
+  listing?: { pageSize?: number };
+  /** How AI systems may use the writing (schemas 3.25.0). */
+  aiRights?: {
+    search: 'allow' | 'block';
+    training: 'allow' | 'block';
+    licenseUrl?: string;
+  };
   profile?: { route: string; body: RenderableBody };
   footerCard?: {
     enabled: boolean;

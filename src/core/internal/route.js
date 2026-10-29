@@ -71,7 +71,7 @@ export function derivePublicBasePath(baseUrl, basePath) {
 }
 
 const FIXED_FILE_EXTENSION =
-  /\.(?:xml|json|txt|html?|css|m?js|map|ico|webmanifest|png|jpe?g|gif|webp|avif|svg|woff2?|pdf)$/i;
+  /\.(?:xml|json|txt|md|html?|css|m?js|map|ico|webmanifest|png|jpe?g|gif|webp|avif|svg|woff2?|pdf)$/i;
 
 /**
  * Whether a route denotes a fixed file (a feed, the sitemap, an asset), not

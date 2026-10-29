@@ -55,7 +55,7 @@ const EXCERPT_MAX_LENGTH = 300;
  *   render-policy-conformant HTML fragment
  * @returns {string} the bounded plain-text excerpt
  */
-function plainTextExcerpt(html) {
+export function plainTextExcerpt(html) {
   const stripped = html
     .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')

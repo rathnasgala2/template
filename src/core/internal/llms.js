@@ -87,6 +87,9 @@ export function htmlToText(html) {
  * @param {string} urls.sitemap
  * @param {string} urls.searchIndex
  * @param {string} urls.full this file's `llms-full.txt` sibling
+ * @param {string} urls.posts the absolute `posts.json` URL
+ * @param {string} [urls.license] the absolute `license.xml` URL; present
+ *   exactly when the publication set `aiRights`
  * @param {import('./route.js').RouteNormalizationProfile} urls.routeProfile
  *   the route normalization profile deciding each page link's public form
  * @returns {{llmsTxt: string, llmsFullTxt: string}} the exact UTF-8 texts
@@ -199,6 +202,34 @@ export function buildLlmsDocuments(validatedInput, urls) {
       ),
     );
   }
+  const rights = publication.aiRights;
+  if (rights) {
+    const verdict = (/** @type {string} */ choice) =>
+      choice === 'allow' ? 'allowed' : 'not allowed';
+    lines.push(
+      '',
+      '## AI use',
+      '',
+      `- AI search and answer bots: ${verdict(rights.search)}`,
+      `- Model training: ${verdict(rights.training)}`,
+      ...(urls.license
+        ? [
+            link({
+              title: 'Licence terms (RSL)',
+              url: urls.license,
+            }),
+          ]
+        : []),
+      ...(rights.licenseUrl
+        ? [
+            link({
+              title: 'Licensing the writing',
+              url: rights.licenseUrl,
+            }),
+          ]
+        : []),
+    );
+  }
   lines.push(
     '',
     '## Optional',
@@ -224,6 +255,11 @@ export function buildLlmsDocuments(validatedInput, urls) {
       title: 'Search index',
       url: urls.searchIndex,
       description: 'JSON',
+    }),
+    link({
+      title: 'Posts as JSON',
+      url: urls.posts,
+      description: 'Every published article',
     }),
   );
 
