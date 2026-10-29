@@ -55,8 +55,8 @@ not a repository file and lists none.
 
 ## Contract sources and generation commands
 
-This source targets `@rathnasgala2/schemas@3.22.0` (installed exactly by the
-lock, from the npm registry); the peer range is `^3.22.0`. Template 4.4.0
+This source targets `@rathnasgala2/schemas@3.25.0` (installed exactly by the
+lock, from the npm registry); the peer range is `^3.25.0`. Template 4.4.0
 publishes styling contract 4.1.0 (`TEMPLATE_STYLING_CONTRACT_VERSION`; its
 `templateVersion` is 4.4.0, and schemas 3.16.0's `theme-contract` admits it with
 `templateRange` `^4.4.0`). `TEMPLATE_STYLING_CONTRACT_TEMPLATE_VERSION` is the
