@@ -1364,10 +1364,7 @@ export async function renderPublication(buildInput, options) {
       ? [
           {
             virtualPath: 'license.html',
-            content: buildLicenseXml(
-              aiPolicy,
-              joinPublicRoute(publicBasePath, '/', routeProfile),
-            ),
+            content: buildLicenseXml(aiPolicy, absoluteSiteUrl('/')),
             permalink: licenseFilePath,
           },
         ]

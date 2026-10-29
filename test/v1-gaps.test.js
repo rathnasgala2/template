@@ -305,6 +305,7 @@ test('aiRights: robots.txt groups, noai meta, license.xml, llms.txt', async (t) 
     assert.match(four, /content="noindex, follow, noai, noimageai"/);
     const license = await site.read('fixture-1/license.xml');
     assertWellFormedXml(license);
+    assert.ok(license.includes(`<content url="${BASE}/"`));
     assert.ok(
       license.includes(
         '<permits type="usage">search ai-input ai-index</permits>',
