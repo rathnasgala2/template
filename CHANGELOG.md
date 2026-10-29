@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.7.0] - 2026-10-29
+
 ### Added
 
 - `deleteDate` (schemas 3.25.0): a post whose `deleteDate` has come (UTC day of

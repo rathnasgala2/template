@@ -14,4 +14,4 @@
  *
  * @type {string}
  */
-export const TEMPLATE_RENDERER_VERSION = '4.6.1';
+export const TEMPLATE_RENDERER_VERSION = '4.7.0';
