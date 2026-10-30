@@ -462,7 +462,12 @@
     W.addEventListener('hashchange', () => {
       if (location.hash === '#listen') focusPlayAll();
     });
-    if (location.hash === '#listen') focusPlayAll();
+    // Arriving from another page: the browser's own jump to #listen moves focus after this
+    // deferred script runs, so focus Play all once the page has loaded.
+    if (location.hash === '#listen') {
+      if (document.readyState === 'complete') focusPlayAll();
+      else W.addEventListener('load', focusPlayAll, { once: true });
+    }
   }
 
   try {

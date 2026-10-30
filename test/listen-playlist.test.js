@@ -372,7 +372,10 @@ test('previous and next show only for a queue of more than one; previous restart
 });
 
 test('after the #listen jump Play all has focus, whether the page loads there, navigates there or the link is pressed again', async () => {
+  // Arriving from another page, the browser's own fragment jump settles focus after the deferred
+  // script runs, so Play all takes focus at load.
   const onLoad = await bootListen({ page: 'home', hash: '#listen' });
+  onLoad.fire('load');
   assert.equal(
     onLoad.document.activeElement,
     onLoad.$('[data-gala-listen-act="play-all"]'),
