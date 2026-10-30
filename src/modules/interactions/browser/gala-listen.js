@@ -51,6 +51,15 @@
   const cur = blob('current');
   const all = blob('tracks') || [];
   const list = $('[data-gala-listen-list]');
+  /** @type {F} */
+  const markRow = (id) => {
+    if (!list) return;
+    for (const li of list.querySelectorAll('[data-gala-listen-track]')) {
+      if (li.getAttribute('data-gala-listen-track') === id) {
+        li.setAttribute('aria-current', 'true');
+      } else li.removeAttribute('aria-current');
+    }
+  };
 
   /** @type {F} */
   const msg = (k, v = {}) =>
@@ -154,6 +163,7 @@
     if (!c) return;
     el = audio = null;
     q = [];
+    markRow(null);
     st('sessionStorage', SESSION_KEY, null);
     c.setAttribute('data-leaving', '');
     c.querySelector('audio').pause();
@@ -227,6 +237,7 @@
     const name = slot('name');
     name.textContent = t.title;
     name.href = t.url;
+    markRow(t.id);
     slot('label').textContent =
       msg('player.nowPlaying') +
       (multi

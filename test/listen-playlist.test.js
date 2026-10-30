@@ -236,6 +236,22 @@ test('per-row play follows the order the reader chose', async () => {
   );
 });
 
+test('the playing row is marked aria-current and the mark follows the queue', async () => {
+  const h = await bootListen({ page: 'home', list: tracks(3) });
+  const current = () =>
+    h
+      .$$('[data-gala-listen-track]')
+      .filter((/** @type {Element} */ li) => li.hasAttribute('aria-current'))
+      .map((/** @type {Element} */ li) => li.querySelector('a')?.textContent);
+  assert.deepEqual(current(), []);
+  h.act('play-all');
+  assert.deepEqual(current(), ['Episode 3']);
+  h.media.end(h.audio());
+  assert.deepEqual(current(), ['Episode 2']);
+  h.act('stop');
+  assert.deepEqual(current(), []);
+});
+
 test('rows hidden behind Show all still play in the queue', async () => {
   const h = await bootListen({ page: 'home', list: tracks(7) });
   h.act('play-all');
