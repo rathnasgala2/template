@@ -217,6 +217,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Nástroje na publikovanie',
   versionCommitLabel: 'Zdrojový commit',
   versionBuiltAtLabel: 'Zostavené',
+  listenNavLabel: 'Počúvať',
+  listenNavCurrentLabel: 'Počúvať tento článok',
+  listenInviteTitle: 'Máte plné ruky? Radšej počúvajte.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Tento článok existuje aj ako rozhovor na ${minutes} min. Hodí sa na cestu autom, do posilňovne alebo k umývaniu riadu.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Tento článok existuje aj ako rozprávanie na ${minutes} min. Hodí sa na cestu autom, do posilňovne alebo k umývaniu riadu.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Tento článok existuje aj ako debata na ${minutes} min. Hodí sa na cestu autom, do posilňovne alebo k umývaniu riadu.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Tento článok existuje aj ako scénka na ${minutes} min. Hodí sa na cestu autom, do posilňovne alebo k umývaniu riadu.`,
+  listenInvitePlayLabel: 'Prehrať',
+  listenInviteDeclineLabel: 'Nie, ďakujem',
+  listenInviteNote: 'Hlasy AI, upravené podľa tohto článku.',
+  listenInviteCloseLabel: 'Zatvoriť zatiaľ',
+  listenPlayerRegionLabel: 'Audio prehrávač',
+  listenPlayerNowPlayingLabel: 'Práve hrá',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} z ${count}`,
+  listenPlayerPlayLabel: 'Prehrať',
+  listenPlayerPauseLabel: 'Pozastaviť',
+  listenPlayerBackLabel: 'O 15 sekúnd späť',
+  listenPlayerPreviousLabel: 'Predchádzajúca epizóda',
+  listenPlayerNextLabel: 'Ďalšia epizóda',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Rýchlosť prehrávania ${rate}×`,
+  listenPlayerSeekLabel: 'Pozícia',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} z ${total}`,
+  listenPlayerCloseLabel: 'Zastaviť a zavrieť',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Práve hrá: ${title}`,
+  listenListHeading: 'Počúvajte tento blog',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `Epizód: ${count} · ${duration}`,
+  listenListPlayAllLabel: 'Prehrať všetko',
+  listenListShuffleLabel: 'Náhodne',
+  listenListOrderLabel: 'Poradie',
+  listenListNewestLabel: 'Najnovšie prvé',
+  listenListOldestLabel: 'Najstaršie prvé',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Zobraziť všetkých ${count}`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Prehrať: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

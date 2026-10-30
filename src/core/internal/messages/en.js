@@ -217,6 +217,61 @@ export default Object.freeze({
   versionToolchainLabel: 'Publish toolchain',
   versionCommitLabel: 'Source commit',
   versionBuiltAtLabel: 'Built at',
+  listenNavLabel: 'Listen',
+  listenNavCurrentLabel: 'Listen to this post',
+  listenInviteTitle: 'Hands busy? Listen instead.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `This post is also a ${minutes}-minute conversation. Good for a drive, a workout or the dishes.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `This post is also a ${minutes}-minute narration. Good for a drive, a workout or the dishes.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `This post is also a ${minutes}-minute debate. Good for a drive, a workout or the dishes.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `This post is also a ${minutes}-minute skit. Good for a drive, a workout or the dishes.`,
+  listenInvitePlayLabel: 'Play it',
+  listenInviteDeclineLabel: 'No thanks',
+  listenInviteNote: 'AI voices, adapted from this post.',
+  listenInviteCloseLabel: 'Close for now',
+  listenPlayerRegionLabel: 'Audio player',
+  listenPlayerNowPlayingLabel: 'Now playing',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} of ${count}`,
+  listenPlayerPlayLabel: 'Play',
+  listenPlayerPauseLabel: 'Pause',
+  listenPlayerBackLabel: 'Back 15 seconds',
+  listenPlayerPreviousLabel: 'Previous episode',
+  listenPlayerNextLabel: 'Next episode',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Playback speed ${rate} times`,
+  listenPlayerSeekLabel: 'Position',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} of ${total}`,
+  listenPlayerCloseLabel: 'Stop and close',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Playing: ${title}`,
+  listenListHeading: 'Listen to this blog',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) =>
+    count === '1'
+      ? `1 episode · ${duration}`
+      : `${count} episodes · ${duration}`,
+  listenListPlayAllLabel: 'Play all',
+  listenListShuffleLabel: 'Shuffle',
+  listenListOrderLabel: 'Order',
+  listenListNewestLabel: 'Newest first',
+  listenListOldestLabel: 'Oldest first',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Show all ${count}`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Play ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const months = [

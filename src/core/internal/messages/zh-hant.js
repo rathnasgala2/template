@@ -206,6 +206,59 @@ export default Object.freeze({
   versionToolchainLabel: '發布工具鏈',
   versionCommitLabel: '原始碼提交',
   versionBuiltAtLabel: '建置時間',
+  listenNavLabel: '收聽',
+  listenNavCurrentLabel: '收聽本文',
+  listenInviteTitle: '騰不出手？不妨聽一聽。',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `本文也有 ${minutes} 分鐘的對話版。適合開車、健身或洗碗時收聽。`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `本文也有 ${minutes} 分鐘的朗讀版。適合開車、健身或洗碗時收聽。`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `本文也有 ${minutes} 分鐘的辯論版。適合開車、健身或洗碗時收聽。`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `本文也有 ${minutes} 分鐘的短劇版。適合開車、健身或洗碗時收聽。`,
+  listenInvitePlayLabel: '播放',
+  listenInviteDeclineLabel: '不用了',
+  listenInviteNote: 'AI 配音，改編自本文。',
+  listenInviteCloseLabel: '暫時關閉',
+  listenPlayerRegionLabel: '音訊播放器',
+  listenPlayerNowPlayingLabel: '正在播放',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} / ${count}`,
+  listenPlayerPlayLabel: '播放',
+  listenPlayerPauseLabel: '暫停',
+  listenPlayerBackLabel: '倒退 15 秒',
+  listenPlayerPreviousLabel: '上一集',
+  listenPlayerNextLabel: '下一集',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `播放速度 ${rate} 倍`,
+  listenPlayerSeekLabel: '進度',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} / ${total}`,
+  listenPlayerCloseLabel: '停止並關閉',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `正在播放：${title}`,
+  listenListHeading: '收聽本部落格',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} 集 · ${duration}`,
+  listenListPlayAllLabel: '全部播放',
+  listenListShuffleLabel: '隨機播放',
+  listenListOrderLabel: '排序',
+  listenListNewestLabel: '最新優先',
+  listenListOldestLabel: '最早優先',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `顯示全部 ${count} 集`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `播放 ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} 分鐘`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} 小時 ${minutes} 分鐘`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

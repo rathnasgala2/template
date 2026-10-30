@@ -216,6 +216,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Orodja za objavo',
   versionCommitLabel: 'Izvorni commit',
   versionBuiltAtLabel: 'Zgrajeno',
+  listenNavLabel: 'Poslušaj',
+  listenNavCurrentLabel: 'Poslušaj ta članek',
+  listenInviteTitle: 'Zasedene roke? Raje poslušaj.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Ta članek je na voljo tudi kot pogovor v trajanju ${minutes} min. Primerno za vožnjo, trening ali pomivanje posode.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Ta članek je na voljo tudi kot pripoved v trajanju ${minutes} min. Primerno za vožnjo, trening ali pomivanje posode.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Ta članek je na voljo tudi kot razprava v trajanju ${minutes} min. Primerno za vožnjo, trening ali pomivanje posode.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Ta članek je na voljo tudi kot skeč v trajanju ${minutes} min. Primerno za vožnjo, trening ali pomivanje posode.`,
+  listenInvitePlayLabel: 'Predvajaj',
+  listenInviteDeclineLabel: 'Ne, hvala',
+  listenInviteNote: 'Glasovi umetne inteligence, priredba tega članka.',
+  listenInviteCloseLabel: 'Zapri za zdaj',
+  listenPlayerRegionLabel: 'Predvajalnik zvoka',
+  listenPlayerNowPlayingLabel: 'Zdaj predvaja',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} od ${count}`,
+  listenPlayerPlayLabel: 'Predvajaj',
+  listenPlayerPauseLabel: 'Premor',
+  listenPlayerBackLabel: '15 sekund nazaj',
+  listenPlayerPreviousLabel: 'Prejšnja epizoda',
+  listenPlayerNextLabel: 'Naslednja epizoda',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Hitrost predvajanja ${rate}×`,
+  listenPlayerSeekLabel: 'Položaj',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} od ${total}`,
+  listenPlayerCloseLabel: 'Ustavi in zapri',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Zdaj predvaja: ${title}`,
+  listenListHeading: 'Poslušaj ta blog',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `Epizod: ${count} · ${duration}`,
+  listenListPlayAllLabel: 'Predvajaj vse',
+  listenListShuffleLabel: 'Naključno',
+  listenListOrderLabel: 'Vrstni red',
+  listenListNewestLabel: 'Najprej najnovejše',
+  listenListOldestLabel: 'Najprej najstarejše',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Pokaži vse (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Predvajaj: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -221,6 +221,58 @@ export default Object.freeze({
   versionToolchainLabel: '公開ツールチェーン',
   versionCommitLabel: 'ソースコミット',
   versionBuiltAtLabel: 'ビルド日時',
+  listenNavLabel: '聴く',
+  listenNavCurrentLabel: 'この記事を聴く',
+  listenInviteTitle: '手がふさがっていませんか？聴くこともできます。',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `この記事は${minutes}分の会話としても聴けます。ドライブやワークアウト、皿洗いのお供にどうぞ。`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `この記事は${minutes}分のナレーションとしても聴けます。ドライブやワークアウト、皿洗いのお供にどうぞ。`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `この記事は${minutes}分のディベートとしても聴けます。ドライブやワークアウト、皿洗いのお供にどうぞ。`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `この記事は${minutes}分のスキットとしても聴けます。ドライブやワークアウト、皿洗いのお供にどうぞ。`,
+  listenInvitePlayLabel: '再生する',
+  listenInviteDeclineLabel: 'いいえ、結構です',
+  listenInviteNote: 'AI音声で、この記事をもとに制作しています。',
+  listenInviteCloseLabel: '今は閉じる',
+  listenPlayerRegionLabel: 'オーディオプレーヤー',
+  listenPlayerNowPlayingLabel: '再生中',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} / ${count}`,
+  listenPlayerPlayLabel: '再生',
+  listenPlayerPauseLabel: '一時停止',
+  listenPlayerBackLabel: '15秒戻る',
+  listenPlayerPreviousLabel: '前のエピソード',
+  listenPlayerNextLabel: '次のエピソード',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `再生速度 ${rate}倍`,
+  listenPlayerSeekLabel: '再生位置',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} / ${total}`,
+  listenPlayerCloseLabel: '停止して閉じる',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `再生中: ${title}`,
+  listenListHeading: 'このブログを聴く',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count}エピソード · ${duration}`,
+  listenListPlayAllLabel: 'すべて再生',
+  listenListShuffleLabel: 'シャッフル',
+  listenListOrderLabel: '並び順',
+  listenListNewestLabel: '新しい順',
+  listenListOldestLabel: '古い順',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `すべて表示（${count}件）`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title}を再生`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes}分`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours}時間${minutes}分`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

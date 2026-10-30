@@ -216,6 +216,59 @@ export default Object.freeze({
   versionToolchainLabel: 'پبلش ٹول چین',
   versionCommitLabel: 'سورس کمٹ',
   versionBuiltAtLabel: 'تیار ہونے کا وقت',
+  listenNavLabel: 'سنیں',
+  listenNavCurrentLabel: 'یہ مضمون سنیں',
+  listenInviteTitle: 'ہاتھ مصروف ہیں؟ پڑھنے کے بجائے سنیں۔',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `یہ مضمون ${minutes} منٹ کی گفتگو کی صورت میں بھی دستیاب ہے۔ ڈرائیو، ورزش یا برتن دھونے کے لیے موزوں۔`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `یہ مضمون ${minutes} منٹ کے بیانیے کی صورت میں بھی دستیاب ہے۔ ڈرائیو، ورزش یا برتن دھونے کے لیے موزوں۔`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `یہ مضمون ${minutes} منٹ کے مباحثے کی صورت میں بھی دستیاب ہے۔ ڈرائیو، ورزش یا برتن دھونے کے لیے موزوں۔`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `یہ مضمون ${minutes} منٹ کے خاکے کی صورت میں بھی دستیاب ہے۔ ڈرائیو، ورزش یا برتن دھونے کے لیے موزوں۔`,
+  listenInvitePlayLabel: 'چلائیں',
+  listenInviteDeclineLabel: 'نہیں، شکریہ',
+  listenInviteNote: 'اے آئی آوازیں، اس مضمون سے ماخوذ۔',
+  listenInviteCloseLabel: 'ابھی بند کریں',
+  listenPlayerRegionLabel: 'آڈیو پلیئر',
+  listenPlayerNowPlayingLabel: 'ابھی چل رہا ہے',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${count} میں سے ${index}`,
+  listenPlayerPlayLabel: 'چلائیں',
+  listenPlayerPauseLabel: 'روکیں',
+  listenPlayerBackLabel: '15 سیکنڈ پیچھے',
+  listenPlayerPreviousLabel: 'پچھلی قسط',
+  listenPlayerNextLabel: 'اگلی قسط',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `پلے بیک کی رفتار ${rate}×`,
+  listenPlayerSeekLabel: 'مقام',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${total} میں سے ${elapsed}`,
+  listenPlayerCloseLabel: 'روکیں اور بند کریں',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `چل رہا ہے: ${title}`,
+  listenListHeading: 'یہ بلاگ سنیں',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} اقساط · ${duration}`,
+  listenListPlayAllLabel: 'سب چلائیں',
+  listenListShuffleLabel: 'بے ترتیب',
+  listenListOrderLabel: 'ترتیب',
+  listenListNewestLabel: 'نیا پہلے',
+  listenListOldestLabel: 'پرانا پہلے',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `سب دکھائیں (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} چلائیں`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} منٹ`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} گھنٹہ ${minutes} منٹ`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

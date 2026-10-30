@@ -222,6 +222,61 @@ export default Object.freeze({
   versionToolchainLabel: 'Eines de publicació',
   versionCommitLabel: "Commit d'origen",
   versionBuiltAtLabel: 'Compilat el',
+  listenNavLabel: 'Escolta',
+  listenNavCurrentLabel: 'Escolta aquest article',
+  listenInviteTitle: 'Tens les mans ocupades? Escolta’l.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Aquest article també és una conversa de ${minutes} min. Ideal per al cotxe, l’entrenament o els plats.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Aquest article també és una narració de ${minutes} min. Ideal per al cotxe, l’entrenament o els plats.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Aquest article també és un debat de ${minutes} min. Ideal per al cotxe, l’entrenament o els plats.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Aquest article també és un esquetx de ${minutes} min. Ideal per al cotxe, l’entrenament o els plats.`,
+  listenInvitePlayLabel: 'Reprodueix',
+  listenInviteDeclineLabel: 'No, gràcies',
+  listenInviteNote: 'Veus d’IA, adaptades d’aquest article.',
+  listenInviteCloseLabel: 'Tanca per ara',
+  listenPlayerRegionLabel: 'Reproductor d’àudio',
+  listenPlayerNowPlayingLabel: 'S’està reproduint',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} de ${count}`,
+  listenPlayerPlayLabel: 'Reprodueix',
+  listenPlayerPauseLabel: 'Pausa',
+  listenPlayerBackLabel: 'Retrocedeix 15 segons',
+  listenPlayerPreviousLabel: 'Episodi anterior',
+  listenPlayerNextLabel: 'Episodi següent',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Velocitat de reproducció ${rate}×`,
+  listenPlayerSeekLabel: 'Posició',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} de ${total}`,
+  listenPlayerCloseLabel: 'Atura i tanca',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `S’està reproduint: ${title}`,
+  listenListHeading: 'Escolta aquest blog',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) =>
+    count === '1'
+      ? `1 episodi · ${duration}`
+      : `${count} episodis · ${duration}`,
+  listenListPlayAllLabel: 'Reprodueix-ho tot',
+  listenListShuffleLabel: 'Aleatori',
+  listenListOrderLabel: 'Ordre',
+  listenListNewestLabel: 'Els més recents primer',
+  listenListOldestLabel: 'Els més antics primer',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Mostra’ls tots (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Reprodueix ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

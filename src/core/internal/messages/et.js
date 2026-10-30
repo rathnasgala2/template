@@ -217,6 +217,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Avaldamisvahendid',
   versionCommitLabel: 'Lähtekommit',
   versionBuiltAtLabel: 'Ehitatud',
+  listenNavLabel: 'Kuula',
+  listenNavCurrentLabel: 'Kuula seda postitust',
+  listenInviteTitle: 'Käed hõivatud? Kuula hoopis.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `See postitus on ka ${minutes}-minutiline vestlus. Sobib autosõiduks, trenniks või nõudepesuks.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `See postitus on ka ${minutes}-minutiline ettelugemine. Sobib autosõiduks, trenniks või nõudepesuks.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `See postitus on ka ${minutes}-minutiline arutelu. Sobib autosõiduks, trenniks või nõudepesuks.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `See postitus on ka ${minutes}-minutiline sketš. Sobib autosõiduks, trenniks või nõudepesuks.`,
+  listenInvitePlayLabel: 'Esita',
+  listenInviteDeclineLabel: 'Ei aitäh',
+  listenInviteNote: 'Tehisintellekti hääled, kohandatud sellest postitusest.',
+  listenInviteCloseLabel: 'Sulge praegu',
+  listenPlayerRegionLabel: 'Heliesitaja',
+  listenPlayerNowPlayingLabel: 'Praegu mängib',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} / ${count}`,
+  listenPlayerPlayLabel: 'Esita',
+  listenPlayerPauseLabel: 'Paus',
+  listenPlayerBackLabel: '15 sekundit tagasi',
+  listenPlayerPreviousLabel: 'Eelmine osa',
+  listenPlayerNextLabel: 'Järgmine osa',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Taasesituse kiirus ${rate}×`,
+  listenPlayerSeekLabel: 'Asukoht',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} / ${total}`,
+  listenPlayerCloseLabel: 'Peata ja sulge',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Praegu mängib: ${title}`,
+  listenListHeading: 'Kuula seda ajaveebi',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} osa · ${duration}`,
+  listenListPlayAllLabel: 'Esita kõik',
+  listenListShuffleLabel: 'Sega',
+  listenListOrderLabel: 'Järjekord',
+  listenListNewestLabel: 'Uuemad enne',
+  listenListOldestLabel: 'Vanemad enne',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Näita kõiki (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Esita ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

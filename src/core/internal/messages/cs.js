@@ -217,6 +217,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Publikační nástroje',
   versionCommitLabel: 'Zdrojový commit',
   versionBuiltAtLabel: 'Sestaveno',
+  listenNavLabel: 'Poslouchat',
+  listenNavCurrentLabel: 'Poslechnout si tento článek',
+  listenInviteTitle: 'Máte plné ruce? Poslouchejte.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Tento článek existuje i jako rozhovor na ${minutes} min. Hodí se na cestu autem, do posilovny nebo k mytí nádobí.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Tento článek existuje i jako vyprávění na ${minutes} min. Hodí se na cestu autem, do posilovny nebo k mytí nádobí.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Tento článek existuje i jako debata na ${minutes} min. Hodí se na cestu autem, do posilovny nebo k mytí nádobí.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Tento článek existuje i jako scénka na ${minutes} min. Hodí se na cestu autem, do posilovny nebo k mytí nádobí.`,
+  listenInvitePlayLabel: 'Přehrát',
+  listenInviteDeclineLabel: 'Ne, děkuji',
+  listenInviteNote: 'Hlasy AI, upraveno podle tohoto článku.',
+  listenInviteCloseLabel: 'Zavřít prozatím',
+  listenPlayerRegionLabel: 'Audio přehrávač',
+  listenPlayerNowPlayingLabel: 'Právě hraje',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} z ${count}`,
+  listenPlayerPlayLabel: 'Přehrát',
+  listenPlayerPauseLabel: 'Pozastavit',
+  listenPlayerBackLabel: 'O 15 sekund zpět',
+  listenPlayerPreviousLabel: 'Předchozí epizoda',
+  listenPlayerNextLabel: 'Další epizoda',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Rychlost přehrávání ${rate}×`,
+  listenPlayerSeekLabel: 'Pozice',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} z ${total}`,
+  listenPlayerCloseLabel: 'Zastavit a zavřít',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Právě hraje: ${title}`,
+  listenListHeading: 'Poslouchejte tento blog',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `Epizod: ${count} · ${duration}`,
+  listenListPlayAllLabel: 'Přehrát vše',
+  listenListShuffleLabel: 'Náhodně',
+  listenListOrderLabel: 'Pořadí',
+  listenListNewestLabel: 'Nejnovější první',
+  listenListOldestLabel: 'Nejstarší první',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Zobrazit všech ${count}`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Přehrát: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

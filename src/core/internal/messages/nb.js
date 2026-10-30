@@ -218,6 +218,61 @@ export default Object.freeze({
   versionToolchainLabel: 'Publiseringsverktøy',
   versionCommitLabel: 'Kildecommit',
   versionBuiltAtLabel: 'Bygget',
+  listenNavLabel: 'Lytt',
+  listenNavCurrentLabel: 'Lytt til dette innlegget',
+  listenInviteTitle: 'Hendene opptatt? Lytt i stedet.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Dette innlegget finnes også som en samtale på ${minutes} min. Perfekt for bilturen, treningen eller oppvasken.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Dette innlegget finnes også som en opplesning på ${minutes} min. Perfekt for bilturen, treningen eller oppvasken.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Dette innlegget finnes også som en debatt på ${minutes} min. Perfekt for bilturen, treningen eller oppvasken.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Dette innlegget finnes også som en sketsj på ${minutes} min. Perfekt for bilturen, treningen eller oppvasken.`,
+  listenInvitePlayLabel: 'Spill av',
+  listenInviteDeclineLabel: 'Nei takk',
+  listenInviteNote: 'KI-stemmer, tilpasset dette innlegget.',
+  listenInviteCloseLabel: 'Lukk for nå',
+  listenPlayerRegionLabel: 'Lydspiller',
+  listenPlayerNowPlayingLabel: 'Spilles nå',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} av ${count}`,
+  listenPlayerPlayLabel: 'Spill av',
+  listenPlayerPauseLabel: 'Pause',
+  listenPlayerBackLabel: '15 sekunder tilbake',
+  listenPlayerPreviousLabel: 'Forrige episode',
+  listenPlayerNextLabel: 'Neste episode',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Avspillingshastighet ${rate}×`,
+  listenPlayerSeekLabel: 'Posisjon',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} av ${total}`,
+  listenPlayerCloseLabel: 'Stopp og lukk',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Spilles nå: ${title}`,
+  listenListHeading: 'Lytt til denne bloggen',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) =>
+    count === '1'
+      ? `1 episode · ${duration}`
+      : `${count} episoder · ${duration}`,
+  listenListPlayAllLabel: 'Spill av alle',
+  listenListShuffleLabel: 'Bland',
+  listenListOrderLabel: 'Rekkefølge',
+  listenListNewestLabel: 'Nyeste først',
+  listenListOldestLabel: 'Eldste først',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Vis alle ${count}`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Spill av ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} t ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

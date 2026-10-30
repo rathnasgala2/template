@@ -218,6 +218,61 @@ export default Object.freeze({
   versionToolchainLabel: 'Publicatietoolchain',
   versionCommitLabel: 'Bron-commit',
   versionBuiltAtLabel: 'Gebouwd op',
+  listenNavLabel: 'Luisteren',
+  listenNavCurrentLabel: 'Luister naar dit artikel',
+  listenInviteTitle: 'Handen vol? Luister dan liever.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Dit artikel is er ook als gesprek van ${minutes} min. Fijn voor onderweg, tijdens het sporten of bij de afwas.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Dit artikel is er ook als voorgelezen verhaal van ${minutes} min. Fijn voor onderweg, tijdens het sporten of bij de afwas.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Dit artikel is er ook als debat van ${minutes} min. Fijn voor onderweg, tijdens het sporten of bij de afwas.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Dit artikel is er ook als sketch van ${minutes} min. Fijn voor onderweg, tijdens het sporten of bij de afwas.`,
+  listenInvitePlayLabel: 'Afspelen',
+  listenInviteDeclineLabel: 'Nee, bedankt',
+  listenInviteNote: 'AI-stemmen, gebaseerd op dit artikel.',
+  listenInviteCloseLabel: 'Nu sluiten',
+  listenPlayerRegionLabel: 'Audiospeler',
+  listenPlayerNowPlayingLabel: 'Nu aan het afspelen',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} van ${count}`,
+  listenPlayerPlayLabel: 'Afspelen',
+  listenPlayerPauseLabel: 'Pauzeren',
+  listenPlayerBackLabel: '15 seconden terug',
+  listenPlayerPreviousLabel: 'Vorige aflevering',
+  listenPlayerNextLabel: 'Volgende aflevering',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Afspeelsnelheid ${rate}×`,
+  listenPlayerSeekLabel: 'Positie',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} van ${total}`,
+  listenPlayerCloseLabel: 'Stoppen en sluiten',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Speelt nu: ${title}`,
+  listenListHeading: 'Luister naar deze blog',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) =>
+    count === '1'
+      ? `1 aflevering · ${duration}`
+      : `${count} afleveringen · ${duration}`,
+  listenListPlayAllLabel: 'Alles afspelen',
+  listenListShuffleLabel: 'Willekeurig',
+  listenListOrderLabel: 'Volgorde',
+  listenListNewestLabel: 'Nieuwste eerst',
+  listenListOldestLabel: 'Oudste eerst',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Toon alle ${count}`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} afspelen`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} u ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -216,6 +216,58 @@ export default Object.freeze({
   versionToolchainLabel: '게시 툴체인',
   versionCommitLabel: '소스 커밋',
   versionBuiltAtLabel: '빌드 시각',
+  listenNavLabel: '듣기',
+  listenNavCurrentLabel: '이 글 듣기',
+  listenInviteTitle: '손이 바쁘신가요? 대신 들어 보세요.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `이 글은 ${minutes}분 길이의 대화로도 들을 수 있어요. 운전이나 운동, 설거지할 때 좋아요.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `이 글은 ${minutes}분 길이의 낭독으로도 들을 수 있어요. 운전이나 운동, 설거지할 때 좋아요.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `이 글은 ${minutes}분 길이의 토론으로도 들을 수 있어요. 운전이나 운동, 설거지할 때 좋아요.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `이 글은 ${minutes}분 길이의 스킷으로도 들을 수 있어요. 운전이나 운동, 설거지할 때 좋아요.`,
+  listenInvitePlayLabel: '재생',
+  listenInviteDeclineLabel: '아니요, 괜찮아요',
+  listenInviteNote: 'AI 음성으로 이 글을 바탕으로 만들었어요.',
+  listenInviteCloseLabel: '지금은 닫기',
+  listenPlayerRegionLabel: '오디오 플레이어',
+  listenPlayerNowPlayingLabel: '재생 중',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} / ${count}`,
+  listenPlayerPlayLabel: '재생',
+  listenPlayerPauseLabel: '일시정지',
+  listenPlayerBackLabel: '15초 뒤로',
+  listenPlayerPreviousLabel: '이전 에피소드',
+  listenPlayerNextLabel: '다음 에피소드',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `재생 속도 ${rate}배`,
+  listenPlayerSeekLabel: '재생 위치',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} / ${total}`,
+  listenPlayerCloseLabel: '정지하고 닫기',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `재생 중: ${title}`,
+  listenListHeading: '이 블로그 듣기',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count}개 에피소드 · ${duration}`,
+  listenListPlayAllLabel: '모두 재생',
+  listenListShuffleLabel: '셔플',
+  listenListOrderLabel: '정렬',
+  listenListNewestLabel: '최신순',
+  listenListOldestLabel: '오래된 순',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `${count}개 모두 보기`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} 재생`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes}분`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours}시간 ${minutes}분`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

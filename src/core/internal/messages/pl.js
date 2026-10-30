@@ -218,6 +218,59 @@ export default Object.freeze({
   versionToolchainLabel: 'Narzędzia publikacji',
   versionCommitLabel: 'Commit źródłowy',
   versionBuiltAtLabel: 'Zbudowano',
+  listenNavLabel: 'Posłuchaj',
+  listenNavCurrentLabel: 'Posłuchaj tego wpisu',
+  listenInviteTitle: 'Zajęte ręce? Posłuchaj zamiast czytać.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Ten wpis jest też dostępny jako rozmowa na ${minutes} min. Dobre na drogę, trening albo zmywanie.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Ten wpis jest też dostępny jako narracja na ${minutes} min. Dobre na drogę, trening albo zmywanie.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Ten wpis jest też dostępny jako debata na ${minutes} min. Dobre na drogę, trening albo zmywanie.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Ten wpis jest też dostępny jako skecz na ${minutes} min. Dobre na drogę, trening albo zmywanie.`,
+  listenInvitePlayLabel: 'Odtwórz',
+  listenInviteDeclineLabel: 'Nie, dziękuję',
+  listenInviteNote: 'Głosy AI, adaptacja tego wpisu.',
+  listenInviteCloseLabel: 'Zamknij na razie',
+  listenPlayerRegionLabel: 'Odtwarzacz audio',
+  listenPlayerNowPlayingLabel: 'Teraz odtwarzane',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} z ${count}`,
+  listenPlayerPlayLabel: 'Odtwórz',
+  listenPlayerPauseLabel: 'Pauza',
+  listenPlayerBackLabel: 'Cofnij o 15 sekund',
+  listenPlayerPreviousLabel: 'Poprzedni odcinek',
+  listenPlayerNextLabel: 'Następny odcinek',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Prędkość odtwarzania ${rate}×`,
+  listenPlayerSeekLabel: 'Pozycja',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} z ${total}`,
+  listenPlayerCloseLabel: 'Zatrzymaj i zamknij',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Odtwarzanie: ${title}`,
+  listenListHeading: 'Posłuchaj tego bloga',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `Odcinków: ${count} · ${duration}`,
+  listenListPlayAllLabel: 'Odtwórz wszystkie',
+  listenListShuffleLabel: 'Losowo',
+  listenListOrderLabel: 'Kolejność',
+  listenListNewestLabel: 'Najnowsze najpierw',
+  listenListOldestLabel: 'Najstarsze najpierw',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Pokaż wszystkie (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Odtwórz: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} godz. ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

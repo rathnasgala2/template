@@ -221,6 +221,60 @@ export default Object.freeze({
   versionToolchainLabel: 'Nashr vositalari',
   versionCommitLabel: 'Manba commit',
   versionBuiltAtLabel: 'Yig‘ilgan vaqt',
+  listenNavLabel: 'Tinglash',
+  listenNavCurrentLabel: 'Bu maqolani tinglash',
+  listenInviteTitle: 'Qo‘llaringiz band? Tinglang.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Bu maqola ${minutes} daqiqalik suhbat sifatida ham mavjud. Yo‘lda, mashq paytida yoki idish yuvayotganda qulay.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Bu maqola ${minutes} daqiqalik hikoya sifatida ham mavjud. Yo‘lda, mashq paytida yoki idish yuvayotganda qulay.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Bu maqola ${minutes} daqiqalik munozara sifatida ham mavjud. Yo‘lda, mashq paytida yoki idish yuvayotganda qulay.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Bu maqola ${minutes} daqiqalik skeç sifatida ham mavjud. Yo‘lda, mashq paytida yoki idish yuvayotganda qulay.`,
+  listenInvitePlayLabel: 'Ijro etish',
+  listenInviteDeclineLabel: 'Yo‘q, rahmat',
+  listenInviteNote:
+    'Sun’iy intellekt ovozlari, ushbu maqola asosida moslashtirilgan.',
+  listenInviteCloseLabel: 'Hozircha yopish',
+  listenPlayerRegionLabel: 'Audio pleyer',
+  listenPlayerNowPlayingLabel: 'Hozir ijro etilmoqda',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} / ${count}`,
+  listenPlayerPlayLabel: 'Ijro etish',
+  listenPlayerPauseLabel: 'To‘xtatib turish',
+  listenPlayerBackLabel: '15 soniya orqaga',
+  listenPlayerPreviousLabel: 'Oldingi epizod',
+  listenPlayerNextLabel: 'Keyingi epizod',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Ijro tezligi ${rate}×`,
+  listenPlayerSeekLabel: 'Joylashuv',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} / ${total}`,
+  listenPlayerCloseLabel: 'To‘xtatish va yopish',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Ijro etilmoqda: ${title}`,
+  listenListHeading: 'Bu blogni tinglash',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} ta epizod · ${duration}`,
+  listenListPlayAllLabel: 'Hammasini ijro etish',
+  listenListShuffleLabel: 'Aralashtirish',
+  listenListOrderLabel: 'Tartib',
+  listenListNewestLabel: 'Avval yangilari',
+  listenListOldestLabel: 'Avval eskilari',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Hammasini ko‘rsatish (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} ni ijro etish`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} daq`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} soat ${minutes} daq`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

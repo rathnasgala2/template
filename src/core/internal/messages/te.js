@@ -218,6 +218,58 @@ export default Object.freeze({
   versionToolchainLabel: 'పబ్లిష్ టూల్‌చెయిన్',
   versionCommitLabel: 'సోర్స్ కమిట్',
   versionBuiltAtLabel: 'నిర్మించిన సమయం',
+  listenNavLabel: 'వినండి',
+  listenNavCurrentLabel: 'ఈ వ్యాసాన్ని వినండి',
+  listenInviteTitle: 'చేతులు బిజీగా ఉన్నాయా? బదులుగా వినండి.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `ఈ వ్యాసం ${minutes} నిమిషాల సంభాషణగా కూడా ఉంది. ప్రయాణం, వ్యాయామం లేదా గిన్నెలు కడిగేటప్పుడు బాగుంటుంది.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `ఈ వ్యాసం ${minutes} నిమిషాల పఠనంగా కూడా ఉంది. ప్రయాణం, వ్యాయామం లేదా గిన్నెలు కడిగేటప్పుడు బాగుంటుంది.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `ఈ వ్యాసం ${minutes} నిమిషాల చర్చగా కూడా ఉంది. ప్రయాణం, వ్యాయామం లేదా గిన్నెలు కడిగేటప్పుడు బాగుంటుంది.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `ఈ వ్యాసం ${minutes} నిమిషాల స్కిట్‌గా కూడా ఉంది. ప్రయాణం, వ్యాయామం లేదా గిన్నెలు కడిగేటప్పుడు బాగుంటుంది.`,
+  listenInvitePlayLabel: 'ప్లే చేయండి',
+  listenInviteDeclineLabel: 'వద్దు, ధన్యవాదాలు',
+  listenInviteNote: 'AI స్వరాలు, ఈ వ్యాసం ఆధారంగా రూపొందించినవి.',
+  listenInviteCloseLabel: 'ప్రస్తుతానికి మూసివేయండి',
+  listenPlayerRegionLabel: 'ఆడియో ప్లేయర్',
+  listenPlayerNowPlayingLabel: 'ఇప్పుడు ప్లే అవుతోంది',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${count} లో ${index}`,
+  listenPlayerPlayLabel: 'ప్లే',
+  listenPlayerPauseLabel: 'పాజ్',
+  listenPlayerBackLabel: '15 సెకన్లు వెనక్కి',
+  listenPlayerPreviousLabel: 'మునుపటి ఎపిసోడ్',
+  listenPlayerNextLabel: 'తదుపరి ఎపిసోడ్',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `ప్లేబ్యాక్ వేగం ${rate}×`,
+  listenPlayerSeekLabel: 'స్థానం',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${total} లో ${elapsed}`,
+  listenPlayerCloseLabel: 'ఆపి మూసివేయండి',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `ప్లే అవుతోంది: ${title}`,
+  listenListHeading: 'ఈ బ్లాగ్‌ను వినండి',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} ఎపిసోడ్లు · ${duration}`,
+  listenListPlayAllLabel: 'అన్నీ ప్లే చేయండి',
+  listenListShuffleLabel: 'షఫుల్',
+  listenListOrderLabel: 'క్రమం',
+  listenListNewestLabel: 'కొత్తవి మొదట',
+  listenListOldestLabel: 'పాతవి మొదట',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `అన్ని ${count} చూపించు`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} ప్లే చేయండి`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} నిమి`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} గం ${minutes} నిమి`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

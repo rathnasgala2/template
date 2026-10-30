@@ -210,6 +210,59 @@ export default Object.freeze({
   versionToolchainLabel: 'أدوات النشر',
   versionCommitLabel: 'إيداع المصدر',
   versionBuiltAtLabel: 'وقت البناء',
+  listenNavLabel: 'استمع',
+  listenNavCurrentLabel: 'استمع إلى هذه المقالة',
+  listenInviteTitle: 'يداك مشغولتان؟ استمع بدلًا من القراءة.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `هذه المقالة متاحة أيضًا كمحادثة مدتها ${minutes} دقيقة. مناسبة للقيادة أو التمرين أو غسل الأطباق.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `هذه المقالة متاحة أيضًا كسرد صوتي مدته ${minutes} دقيقة. مناسب للقيادة أو التمرين أو غسل الأطباق.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `هذه المقالة متاحة أيضًا كمناظرة مدتها ${minutes} دقيقة. مناسبة للقيادة أو التمرين أو غسل الأطباق.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `هذه المقالة متاحة أيضًا كمشهد تمثيلي مدته ${minutes} دقيقة. مناسب للقيادة أو التمرين أو غسل الأطباق.`,
+  listenInvitePlayLabel: 'شغّله',
+  listenInviteDeclineLabel: 'لا، شكرًا',
+  listenInviteNote: 'أصوات بالذكاء الاصطناعي، مقتبسة من هذه المقالة.',
+  listenInviteCloseLabel: 'إغلاق الآن',
+  listenPlayerRegionLabel: 'مشغّل الصوت',
+  listenPlayerNowPlayingLabel: 'قيد التشغيل',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} من ${count}`,
+  listenPlayerPlayLabel: 'تشغيل',
+  listenPlayerPauseLabel: 'إيقاف مؤقت',
+  listenPlayerBackLabel: 'رجوع 15 ثانية',
+  listenPlayerPreviousLabel: 'الحلقة السابقة',
+  listenPlayerNextLabel: 'الحلقة التالية',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `سرعة التشغيل ${rate}×`,
+  listenPlayerSeekLabel: 'الموضع',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} من ${total}`,
+  listenPlayerCloseLabel: 'إيقاف وإغلاق',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `قيد التشغيل: ${title}`,
+  listenListHeading: 'استمع إلى هذه المدونة',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `عدد الحلقات: ${count} · ${duration}`,
+  listenListPlayAllLabel: 'تشغيل الكل',
+  listenListShuffleLabel: 'عشوائي',
+  listenListOrderLabel: 'الترتيب',
+  listenListNewestLabel: 'الأحدث أولًا',
+  listenListOldestLabel: 'الأقدم أولًا',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `عرض الكل (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `تشغيل ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} دقيقة`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} ساعة و${minutes} دقيقة`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

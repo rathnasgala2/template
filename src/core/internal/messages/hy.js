@@ -219,6 +219,59 @@ export default Object.freeze({
   versionToolchainLabel: 'Հրապարակման գործիքներ',
   versionCommitLabel: 'Սկզբնական commit',
   versionBuiltAtLabel: 'Կառուցման ժամանակ',
+  listenNavLabel: 'Լսել',
+  listenNavCurrentLabel: 'Լսել այս հոդվածը',
+  listenInviteTitle: 'Ձեռքերդ զբաղվա՞ծ են։ Լսիր։',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Այս հոդվածը հասանելի է նաև ${minutes} րոպեանոց զրույցի տեսքով։ Հարմար է ճանապարհին, մարզվելիս կամ ամանեղեն լվանալիս։`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Այս հոդվածը հասանելի է նաև ${minutes} րոպեանոց պատումի տեսքով։ Հարմար է ճանապարհին, մարզվելիս կամ ամանեղեն լվանալիս։`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Այս հոդվածը հասանելի է նաև ${minutes} րոպեանոց բանավեճի տեսքով։ Հարմար է ճանապարհին, մարզվելիս կամ ամանեղեն լվանալիս։`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Այս հոդվածը հասանելի է նաև ${minutes} րոպեանոց սքեչի տեսքով։ Հարմար է ճանապարհին, մարզվելիս կամ ամանեղեն լվանալիս։`,
+  listenInvitePlayLabel: 'Միացնել',
+  listenInviteDeclineLabel: 'Ոչ, շնորհակալություն',
+  listenInviteNote:
+    'Արհեստական բանականության ձայներ, հարմարեցված այս հոդվածից։',
+  listenInviteCloseLabel: 'Փակել առայժմ',
+  listenPlayerRegionLabel: 'Աուդիոնվագարկիչ',
+  listenPlayerNowPlayingLabel: 'Հիմա նվագում է',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} / ${count}`,
+  listenPlayerPlayLabel: 'Նվագարկել',
+  listenPlayerPauseLabel: 'Դադար',
+  listenPlayerBackLabel: '15 վայրկյան հետ',
+  listenPlayerPreviousLabel: 'Նախորդ դրվագը',
+  listenPlayerNextLabel: 'Հաջորդ դրվագը',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Նվագարկման արագություն ${rate}×`,
+  listenPlayerSeekLabel: 'Դիրք',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} / ${total}`,
+  listenPlayerCloseLabel: 'Կանգնեցնել և փակել',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Նվագում է՝ ${title}`,
+  listenListHeading: 'Լսել այս բլոգը',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} դրվագ · ${duration}`,
+  listenListPlayAllLabel: 'Նվագարկել բոլորը',
+  listenListShuffleLabel: 'Խառնել',
+  listenListOrderLabel: 'Դասավորություն',
+  listenListNewestLabel: 'Նախ՝ նորերը',
+  listenListOldestLabel: 'Նախ՝ հները',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Ցույց տալ բոլորը (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Նվագարկել՝ ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} րոպե`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} ժ ${minutes} րոպե`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

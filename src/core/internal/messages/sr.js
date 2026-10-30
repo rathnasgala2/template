@@ -216,6 +216,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Алати за објаву',
   versionCommitLabel: 'Изворни commit',
   versionBuiltAtLabel: 'Изграђено',
+  listenNavLabel: 'Слушај',
+  listenNavCurrentLabel: 'Слушај овај чланак',
+  listenInviteTitle: 'Заузете руке? Радије слушај.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Овај чланак је доступан и као разговор од ${minutes} мин. Згодно за вожњу, тренинг или прање судова.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Овај чланак је доступан и као нарација од ${minutes} мин. Згодно за вожњу, тренинг или прање судова.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Овај чланак је доступан и као расправа од ${minutes} мин. Згодно за вожњу, тренинг или прање судова.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Овај чланак је доступан и као скеч од ${minutes} мин. Згодно за вожњу, тренинг или прање судова.`,
+  listenInvitePlayLabel: 'Пусти',
+  listenInviteDeclineLabel: 'Не, хвала',
+  listenInviteNote: 'АИ гласови, прилагођено према овом чланку.',
+  listenInviteCloseLabel: 'Затвори за сада',
+  listenPlayerRegionLabel: 'Аудио плејер',
+  listenPlayerNowPlayingLabel: 'Тренутно свира',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} од ${count}`,
+  listenPlayerPlayLabel: 'Пусти',
+  listenPlayerPauseLabel: 'Паузирај',
+  listenPlayerBackLabel: 'Назад 15 секунди',
+  listenPlayerPreviousLabel: 'Претходна епизода',
+  listenPlayerNextLabel: 'Следећа епизода',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Брзина репродукције ${rate}×`,
+  listenPlayerSeekLabel: 'Позиција',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} од ${total}`,
+  listenPlayerCloseLabel: 'Заустави и затвори',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Свира: ${title}`,
+  listenListHeading: 'Слушај овај блог',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `Епизода: ${count} · ${duration}`,
+  listenListPlayAllLabel: 'Пусти све',
+  listenListShuffleLabel: 'Насумично',
+  listenListOrderLabel: 'Редослед',
+  listenListNewestLabel: 'Најновије прво',
+  listenListOldestLabel: 'Најстарије прво',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Прикажи све (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Пусти: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} мин`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} ч ${minutes} мин`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -216,6 +216,59 @@ export default Object.freeze({
   versionToolchainLabel: 'ಪ್ರಕಟಣೆ ಟೂಲ್‌ಚೇನ್',
   versionCommitLabel: 'ಮೂಲ ಕಮಿಟ್',
   versionBuiltAtLabel: 'ನಿರ್ಮಿಸಿದ ಸಮಯ',
+  listenNavLabel: 'ಆಲಿಸಿ',
+  listenNavCurrentLabel: 'ಈ ಲೇಖನವನ್ನು ಆಲಿಸಿ',
+  listenInviteTitle: 'ಕೈಗಳು ಬ್ಯುಸಿಯೇ? ಬದಲಿಗೆ ಆಲಿಸಿ.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `ಈ ಲೇಖನ ${minutes} ನಿಮಿಷಗಳ ಸಂಭಾಷಣೆಯಾಗಿಯೂ ಲಭ್ಯವಿದೆ. ಪ್ರಯಾಣ, ವ್ಯಾಯಾಮ ಅಥವಾ ಪಾತ್ರೆ ತೊಳೆಯುವಾಗ ಸೂಕ್ತ.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `ಈ ಲೇಖನ ${minutes} ನಿಮಿಷಗಳ ವಾಚನವಾಗಿಯೂ ಲಭ್ಯವಿದೆ. ಪ್ರಯಾಣ, ವ್ಯಾಯಾಮ ಅಥವಾ ಪಾತ್ರೆ ತೊಳೆಯುವಾಗ ಸೂಕ್ತ.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `ಈ ಲೇಖನ ${minutes} ನಿಮಿಷಗಳ ಚರ್ಚೆಯಾಗಿಯೂ ಲಭ್ಯವಿದೆ. ಪ್ರಯಾಣ, ವ್ಯಾಯಾಮ ಅಥವಾ ಪಾತ್ರೆ ತೊಳೆಯುವಾಗ ಸೂಕ್ತ.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `ಈ ಲೇಖನ ${minutes} ನಿಮಿಷಗಳ ಸ್ಕಿಟ್ ಆಗಿಯೂ ಲಭ್ಯವಿದೆ. ಪ್ರಯಾಣ, ವ್ಯಾಯಾಮ ಅಥವಾ ಪಾತ್ರೆ ತೊಳೆಯುವಾಗ ಸೂಕ್ತ.`,
+  listenInvitePlayLabel: 'ಪ್ಲೇ ಮಾಡಿ',
+  listenInviteDeclineLabel: 'ಬೇಡ, ಧನ್ಯವಾದಗಳು',
+  listenInviteNote: 'AI ಧ್ವನಿಗಳು, ಈ ಲೇಖನದಿಂದ ಅಳವಡಿಸಿದ್ದು.',
+  listenInviteCloseLabel: 'ಸದ್ಯಕ್ಕೆ ಮುಚ್ಚಿ',
+  listenPlayerRegionLabel: 'ಆಡಿಯೊ ಪ್ಲೇಯರ್',
+  listenPlayerNowPlayingLabel: 'ಈಗ ಪ್ಲೇ ಆಗುತ್ತಿದೆ',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${count} ರಲ್ಲಿ ${index}`,
+  listenPlayerPlayLabel: 'ಪ್ಲೇ',
+  listenPlayerPauseLabel: 'ವಿರಾಮ',
+  listenPlayerBackLabel: '15 ಸೆಕೆಂಡ್ ಹಿಂದಕ್ಕೆ',
+  listenPlayerPreviousLabel: 'ಹಿಂದಿನ ಸಂಚಿಕೆ',
+  listenPlayerNextLabel: 'ಮುಂದಿನ ಸಂಚಿಕೆ',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `ಪ್ಲೇಬ್ಯಾಕ್ ವೇಗ ${rate}×`,
+  listenPlayerSeekLabel: 'ಸ್ಥಾನ',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${total} ರಲ್ಲಿ ${elapsed}`,
+  listenPlayerCloseLabel: 'ನಿಲ್ಲಿಸಿ ಮುಚ್ಚಿ',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `ಪ್ಲೇ ಆಗುತ್ತಿದೆ: ${title}`,
+  listenListHeading: 'ಈ ಬ್ಲಾಗ್ ಆಲಿಸಿ',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} ಸಂಚಿಕೆಗಳು · ${duration}`,
+  listenListPlayAllLabel: 'ಎಲ್ಲವನ್ನೂ ಪ್ಲೇ ಮಾಡಿ',
+  listenListShuffleLabel: 'ಷಫಲ್',
+  listenListOrderLabel: 'ಕ್ರಮ',
+  listenListNewestLabel: 'ಹೊಸದು ಮೊದಲು',
+  listenListOldestLabel: 'ಹಳೆಯದು ಮೊದಲು',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `ಎಲ್ಲಾ ${count} ತೋರಿಸಿ`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} ಪ್ಲೇ ಮಾಡಿ`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} ನಿಮಿಷ`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} ಗಂಟೆ ${minutes} ನಿಮಿಷ`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

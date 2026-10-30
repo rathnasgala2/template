@@ -218,6 +218,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Publiceringsverktyg',
   versionCommitLabel: 'Källcommit',
   versionBuiltAtLabel: 'Byggd',
+  listenNavLabel: 'Lyssna',
+  listenNavCurrentLabel: 'Lyssna på det här inlägget',
+  listenInviteTitle: 'Händerna upptagna? Lyssna istället.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Det här inlägget finns också som ett samtal på ${minutes} min. Perfekt för bilturen, träningen eller disken.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Det här inlägget finns också som en uppläsning på ${minutes} min. Perfekt för bilturen, träningen eller disken.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Det här inlägget finns också som en debatt på ${minutes} min. Perfekt för bilturen, träningen eller disken.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Det här inlägget finns också som en sketch på ${minutes} min. Perfekt för bilturen, träningen eller disken.`,
+  listenInvitePlayLabel: 'Spela upp',
+  listenInviteDeclineLabel: 'Nej tack',
+  listenInviteNote: 'AI-röster, anpassade från det här inlägget.',
+  listenInviteCloseLabel: 'Stäng för nu',
+  listenPlayerRegionLabel: 'Ljudspelare',
+  listenPlayerNowPlayingLabel: 'Spelas nu',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} av ${count}`,
+  listenPlayerPlayLabel: 'Spela upp',
+  listenPlayerPauseLabel: 'Pausa',
+  listenPlayerBackLabel: 'Tillbaka 15 sekunder',
+  listenPlayerPreviousLabel: 'Föregående avsnitt',
+  listenPlayerNextLabel: 'Nästa avsnitt',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Uppspelningshastighet ${rate}×`,
+  listenPlayerSeekLabel: 'Position',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} av ${total}`,
+  listenPlayerCloseLabel: 'Stoppa och stäng',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Spelas nu: ${title}`,
+  listenListHeading: 'Lyssna på den här bloggen',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} avsnitt · ${duration}`,
+  listenListPlayAllLabel: 'Spela upp alla',
+  listenListShuffleLabel: 'Blanda',
+  listenListOrderLabel: 'Ordning',
+  listenListNewestLabel: 'Nyaste först',
+  listenListOldestLabel: 'Äldsta först',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Visa alla ${count}`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Spela upp ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} tim ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -208,6 +208,59 @@ export default Object.freeze({
   versionToolchainLabel: 'כלי פרסום',
   versionCommitLabel: 'קומיט מקור',
   versionBuiltAtLabel: 'נבנה ב',
+  listenNavLabel: 'האזנה',
+  listenNavCurrentLabel: 'האזנה לפוסט הזה',
+  listenInviteTitle: 'ידיים עסוקות? אפשר להאזין במקום.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `הפוסט הזה זמין גם כשיחה של ${minutes} דקות. מתאים לנסיעה, לאימון או לשטיפת כלים.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `הפוסט הזה זמין גם כהקראה של ${minutes} דקות. מתאים לנסיעה, לאימון או לשטיפת כלים.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `הפוסט הזה זמין גם כוויכוח של ${minutes} דקות. מתאים לנסיעה, לאימון או לשטיפת כלים.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `הפוסט הזה זמין גם כסקצ׳ של ${minutes} דקות. מתאים לנסיעה, לאימון או לשטיפת כלים.`,
+  listenInvitePlayLabel: 'הפעלה',
+  listenInviteDeclineLabel: 'לא, תודה',
+  listenInviteNote: 'קולות AI, בעיבוד של הפוסט הזה.',
+  listenInviteCloseLabel: 'סגירה לעכשיו',
+  listenPlayerRegionLabel: 'נגן שמע',
+  listenPlayerNowPlayingLabel: 'מתנגן עכשיו',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} מתוך ${count}`,
+  listenPlayerPlayLabel: 'ניגון',
+  listenPlayerPauseLabel: 'השהיה',
+  listenPlayerBackLabel: 'אחורה 15 שניות',
+  listenPlayerPreviousLabel: 'הפרק הקודם',
+  listenPlayerNextLabel: 'הפרק הבא',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `מהירות ניגון ${rate}×`,
+  listenPlayerSeekLabel: 'מיקום',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} מתוך ${total}`,
+  listenPlayerCloseLabel: 'עצירה וסגירה',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `מתנגן: ${title}`,
+  listenListHeading: 'האזנה לבלוג הזה',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) =>
+    count === '1' ? `פרק אחד · ${duration}` : `${count} פרקים · ${duration}`,
+  listenListPlayAllLabel: 'ניגון הכול',
+  listenListShuffleLabel: 'ערבוב',
+  listenListOrderLabel: 'סדר',
+  listenListNewestLabel: 'החדשים קודם',
+  listenListOldestLabel: 'הישנים קודם',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `הצגת הכול (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `ניגון ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} דק׳`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} שע׳ ${minutes} דק׳`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

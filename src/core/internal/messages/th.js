@@ -211,6 +211,59 @@ export default Object.freeze({
   versionToolchainLabel: 'เครื่องมือเผยแพร่',
   versionCommitLabel: 'คอมมิตต้นทาง',
   versionBuiltAtLabel: 'สร้างเมื่อ',
+  listenNavLabel: 'ฟัง',
+  listenNavCurrentLabel: 'ฟังบทความนี้',
+  listenInviteTitle: 'มือไม่ว่างใช่ไหม ฟังแทนได้',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `บทความนี้มีเวอร์ชันบทสนทนายาว ${minutes} นาทีด้วย เหมาะกับการขับรถ ออกกำลังกาย หรือล้างจาน`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `บทความนี้มีเวอร์ชันบรรยายเสียงยาว ${minutes} นาทีด้วย เหมาะกับการขับรถ ออกกำลังกาย หรือล้างจาน`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `บทความนี้มีเวอร์ชันโต้วาทียาว ${minutes} นาทีด้วย เหมาะกับการขับรถ ออกกำลังกาย หรือล้างจาน`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `บทความนี้มีเวอร์ชันสกิตสั้นยาว ${minutes} นาทีด้วย เหมาะกับการขับรถ ออกกำลังกาย หรือล้างจาน`,
+  listenInvitePlayLabel: 'เล่น',
+  listenInviteDeclineLabel: 'ไม่เป็นไร ขอบคุณ',
+  listenInviteNote: 'เสียง AI ดัดแปลงจากบทความนี้',
+  listenInviteCloseLabel: 'ปิดไว้ก่อน',
+  listenPlayerRegionLabel: 'เครื่องเล่นเสียง',
+  listenPlayerNowPlayingLabel: 'กำลังเล่น',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} จาก ${count}`,
+  listenPlayerPlayLabel: 'เล่น',
+  listenPlayerPauseLabel: 'หยุดชั่วคราว',
+  listenPlayerBackLabel: 'ย้อนกลับ 15 วินาที',
+  listenPlayerPreviousLabel: 'ตอนก่อนหน้า',
+  listenPlayerNextLabel: 'ตอนถัดไป',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `ความเร็วในการเล่น ${rate}×`,
+  listenPlayerSeekLabel: 'ตำแหน่ง',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} จาก ${total}`,
+  listenPlayerCloseLabel: 'หยุดและปิด',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `กำลังเล่น: ${title}`,
+  listenListHeading: 'ฟังบล็อกนี้',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} ตอน · ${duration}`,
+  listenListPlayAllLabel: 'เล่นทั้งหมด',
+  listenListShuffleLabel: 'สุ่มเล่น',
+  listenListOrderLabel: 'ลำดับ',
+  listenListNewestLabel: 'ใหม่สุดก่อน',
+  listenListOldestLabel: 'เก่าสุดก่อน',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `แสดงทั้งหมด (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `เล่น ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} นาที`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} ชม. ${minutes} นาที`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

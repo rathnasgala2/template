@@ -214,6 +214,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Інструменти публікації',
   versionCommitLabel: 'Вихідний коміт',
   versionBuiltAtLabel: 'Зібрано',
+  listenNavLabel: 'Слухати',
+  listenNavCurrentLabel: 'Слухати цю статтю',
+  listenInviteTitle: 'Зайняті руки? Краще послухайте.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Ця стаття є також у вигляді розмови на ${minutes} хв. Зручно в дорозі, на тренуванні чи за миттям посуду.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Ця стаття є також у вигляді озвучення на ${minutes} хв. Зручно в дорозі, на тренуванні чи за миттям посуду.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Ця стаття є також у вигляді дебатів на ${minutes} хв. Зручно в дорозі, на тренуванні чи за миттям посуду.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Ця стаття є також у вигляді скетчу на ${minutes} хв. Зручно в дорозі, на тренуванні чи за миттям посуду.`,
+  listenInvitePlayLabel: 'Увімкнути',
+  listenInviteDeclineLabel: 'Ні, дякую',
+  listenInviteNote: 'Голоси ШІ, адаптація цієї статті.',
+  listenInviteCloseLabel: 'Закрити поки що',
+  listenPlayerRegionLabel: 'Аудіоплеєр',
+  listenPlayerNowPlayingLabel: 'Зараз грає',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} з ${count}`,
+  listenPlayerPlayLabel: 'Відтворити',
+  listenPlayerPauseLabel: 'Пауза',
+  listenPlayerBackLabel: 'Назад на 15 секунд',
+  listenPlayerPreviousLabel: 'Попередній випуск',
+  listenPlayerNextLabel: 'Наступний випуск',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Швидкість відтворення ${rate}×`,
+  listenPlayerSeekLabel: 'Позиція',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} з ${total}`,
+  listenPlayerCloseLabel: 'Зупинити й закрити',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Грає: ${title}`,
+  listenListHeading: 'Слухати цей блог',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `Випусків: ${count} · ${duration}`,
+  listenListPlayAllLabel: 'Слухати все',
+  listenListShuffleLabel: 'Перемішати',
+  listenListOrderLabel: 'Порядок',
+  listenListNewestLabel: 'Спочатку нові',
+  listenListOldestLabel: 'Спочатку старі',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Показати всі (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Відтворити: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} хв`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} год ${minutes} хв`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

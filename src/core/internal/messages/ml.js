@@ -222,6 +222,59 @@ export default Object.freeze({
   versionToolchainLabel: 'പബ്ലിഷ് ടൂൾചെയിൻ',
   versionCommitLabel: 'സോഴ്സ് കമ്മിറ്റ്',
   versionBuiltAtLabel: 'നിർമ്മിച്ച സമയം',
+  listenNavLabel: 'കേൾക്കുക',
+  listenNavCurrentLabel: 'ഈ ലേഖനം കേൾക്കുക',
+  listenInviteTitle: 'കൈകൾ തിരക്കിലാണോ? പകരം കേൾക്കൂ.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `ഈ ലേഖനം ${minutes} മിനിറ്റ് ദൈർഘ്യമുള്ള സംഭാഷണമായും ലഭ്യമാണ്. യാത്രയ്ക്കും വ്യായാമത്തിനും പാത്രം കഴുകുമ്പോഴും അനുയോജ്യം.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `ഈ ലേഖനം ${minutes} മിനിറ്റ് ദൈർഘ്യമുള്ള വായനയായും ലഭ്യമാണ്. യാത്രയ്ക്കും വ്യായാമത്തിനും പാത്രം കഴുകുമ്പോഴും അനുയോജ്യം.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `ഈ ലേഖനം ${minutes} മിനിറ്റ് ദൈർഘ്യമുള്ള സംവാദമായും ലഭ്യമാണ്. യാത്രയ്ക്കും വ്യായാമത്തിനും പാത്രം കഴുകുമ്പോഴും അനുയോജ്യം.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `ഈ ലേഖനം ${minutes} മിനിറ്റ് ദൈർഘ്യമുള്ള സ്കിറ്റായും ലഭ്യമാണ്. യാത്രയ്ക്കും വ്യായാമത്തിനും പാത്രം കഴുകുമ്പോഴും അനുയോജ്യം.`,
+  listenInvitePlayLabel: 'പ്ലേ ചെയ്യുക',
+  listenInviteDeclineLabel: 'വേണ്ട, നന്ദി',
+  listenInviteNote: 'AI ശബ്ദങ്ങൾ, ഈ ലേഖനത്തിൽ നിന്ന് രൂപാന്തരപ്പെടുത്തിയത്.',
+  listenInviteCloseLabel: 'ഇപ്പോൾ അടയ്ക്കുക',
+  listenPlayerRegionLabel: 'ഓഡിയോ പ്ലേയർ',
+  listenPlayerNowPlayingLabel: 'ഇപ്പോൾ പ്ലേ ചെയ്യുന്നു',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${count}-ൽ ${index}`,
+  listenPlayerPlayLabel: 'പ്ലേ',
+  listenPlayerPauseLabel: 'താൽക്കാലികമായി നിർത്തുക',
+  listenPlayerBackLabel: '15 സെക്കൻഡ് പിന്നോട്ട്',
+  listenPlayerPreviousLabel: 'മുൻ എപ്പിസോഡ്',
+  listenPlayerNextLabel: 'അടുത്ത എപ്പിസോഡ്',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `പ്ലേബാക്ക് വേഗം ${rate}×`,
+  listenPlayerSeekLabel: 'സ്ഥാനം',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${total}-ൽ ${elapsed}`,
+  listenPlayerCloseLabel: 'നിർത്തി അടയ്ക്കുക',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `പ്ലേ ചെയ്യുന്നു: ${title}`,
+  listenListHeading: 'ഈ ബ്ലോഗ് കേൾക്കുക',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} എപ്പിസോഡുകൾ · ${duration}`,
+  listenListPlayAllLabel: 'എല്ലാം പ്ലേ ചെയ്യുക',
+  listenListShuffleLabel: 'ഷഫിൾ',
+  listenListOrderLabel: 'ക്രമം',
+  listenListNewestLabel: 'പുതിയവ ആദ്യം',
+  listenListOldestLabel: 'പഴയവ ആദ്യം',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `എല്ലാ ${count}-ഉം കാണിക്കുക`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} പ്ലേ ചെയ്യുക`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} മിനിറ്റ്`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} മണിക്കൂർ ${minutes} മിനിറ്റ്`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

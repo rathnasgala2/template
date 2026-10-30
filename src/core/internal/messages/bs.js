@@ -215,6 +215,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Alati za objavu',
   versionCommitLabel: 'Izvorni commit',
   versionBuiltAtLabel: 'Izgrađeno',
+  listenNavLabel: 'Slušaj',
+  listenNavCurrentLabel: 'Slušaj ovaj članak',
+  listenInviteTitle: 'Zauzete ruke? Radije slušaj.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Ovaj članak je dostupan i kao razgovor od ${minutes} min. Pogodno za vožnju, trening ili pranje suđa.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Ovaj članak je dostupan i kao naracija od ${minutes} min. Pogodno za vožnju, trening ili pranje suđa.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Ovaj članak je dostupan i kao rasprava od ${minutes} min. Pogodno za vožnju, trening ili pranje suđa.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Ovaj članak je dostupan i kao skeč od ${minutes} min. Pogodno za vožnju, trening ili pranje suđa.`,
+  listenInvitePlayLabel: 'Pusti',
+  listenInviteDeclineLabel: 'Ne, hvala',
+  listenInviteNote: 'AI glasovi, prilagođeno prema ovom članku.',
+  listenInviteCloseLabel: 'Zatvori za sada',
+  listenPlayerRegionLabel: 'Audio plejer',
+  listenPlayerNowPlayingLabel: 'Trenutno svira',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} od ${count}`,
+  listenPlayerPlayLabel: 'Reproduciraj',
+  listenPlayerPauseLabel: 'Pauziraj',
+  listenPlayerBackLabel: 'Nazad 15 sekundi',
+  listenPlayerPreviousLabel: 'Prethodna epizoda',
+  listenPlayerNextLabel: 'Sljedeća epizoda',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Brzina reprodukcije ${rate}×`,
+  listenPlayerSeekLabel: 'Pozicija',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} od ${total}`,
+  listenPlayerCloseLabel: 'Zaustavi i zatvori',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Svira: ${title}`,
+  listenListHeading: 'Slušaj ovaj blog',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `Epizoda: ${count} · ${duration}`,
+  listenListPlayAllLabel: 'Reproduciraj sve',
+  listenListShuffleLabel: 'Nasumično',
+  listenListOrderLabel: 'Redoslijed',
+  listenListNewestLabel: 'Najnovije prvo',
+  listenListOldestLabel: 'Najstarije prvo',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Prikaži sve (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Reproduciraj: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

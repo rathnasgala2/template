@@ -217,6 +217,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Инструменты публикации',
   versionCommitLabel: 'Исходный коммит',
   versionBuiltAtLabel: 'Собрано',
+  listenNavLabel: 'Слушать',
+  listenNavCurrentLabel: 'Слушать эту статью',
+  listenInviteTitle: 'Заняты руки? Лучше послушайте.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Эта статья есть и в виде беседы на ${minutes} мин. Удобно в дороге, на тренировке или за мытьём посуды.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Эта статья есть и в виде озвучки на ${minutes} мин. Удобно в дороге, на тренировке или за мытьём посуды.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Эта статья есть и в виде спора на ${minutes} мин. Удобно в дороге, на тренировке или за мытьём посуды.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Эта статья есть и в виде скетча на ${minutes} мин. Удобно в дороге, на тренировке или за мытьём посуды.`,
+  listenInvitePlayLabel: 'Включить',
+  listenInviteDeclineLabel: 'Нет, спасибо',
+  listenInviteNote: 'Голоса ИИ, адаптация этой статьи.',
+  listenInviteCloseLabel: 'Закрыть пока',
+  listenPlayerRegionLabel: 'Аудиоплеер',
+  listenPlayerNowPlayingLabel: 'Сейчас играет',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} из ${count}`,
+  listenPlayerPlayLabel: 'Воспроизвести',
+  listenPlayerPauseLabel: 'Пауза',
+  listenPlayerBackLabel: 'Назад на 15 секунд',
+  listenPlayerPreviousLabel: 'Предыдущий выпуск',
+  listenPlayerNextLabel: 'Следующий выпуск',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Скорость воспроизведения ${rate}×`,
+  listenPlayerSeekLabel: 'Позиция',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} из ${total}`,
+  listenPlayerCloseLabel: 'Остановить и закрыть',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Играет: ${title}`,
+  listenListHeading: 'Слушать этот блог',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `Выпусков: ${count} · ${duration}`,
+  listenListPlayAllLabel: 'Слушать всё',
+  listenListShuffleLabel: 'Перемешать',
+  listenListOrderLabel: 'Порядок',
+  listenListNewestLabel: 'Сначала новые',
+  listenListOldestLabel: 'Сначала старые',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Показать все (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Воспроизвести: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} мин`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} ч ${minutes} мин`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

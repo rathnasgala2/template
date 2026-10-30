@@ -212,6 +212,59 @@ export default Object.freeze({
   versionToolchainLabel: 'পাবলিশ টুলচেইন',
   versionCommitLabel: 'সোর্স কমিট',
   versionBuiltAtLabel: 'তৈরির সময়',
+  listenNavLabel: 'শুনুন',
+  listenNavCurrentLabel: 'এই লেখাটি শুনুন',
+  listenInviteTitle: 'হাত ব্যস্ত? বরং শুনুন।',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `এই লেখাটি ${minutes} মিনিটের আলাপ হিসেবেও আছে। গাড়িতে, ব্যায়ামের সময় বা বাসন ধোয়ার সময় উপযোগী।`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `এই লেখাটি ${minutes} মিনিটের পাঠ হিসেবেও আছে। গাড়িতে, ব্যায়ামের সময় বা বাসন ধোয়ার সময় উপযোগী।`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `এই লেখাটি ${minutes} মিনিটের বিতর্ক হিসেবেও আছে। গাড়িতে, ব্যায়ামের সময় বা বাসন ধোয়ার সময় উপযোগী।`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `এই লেখাটি ${minutes} মিনিটের স্কিট হিসেবেও আছে। গাড়িতে, ব্যায়ামের সময় বা বাসন ধোয়ার সময় উপযোগী।`,
+  listenInvitePlayLabel: 'চালান',
+  listenInviteDeclineLabel: 'না, ধন্যবাদ',
+  listenInviteNote: 'এআই কণ্ঠ, এই লেখা থেকে রূপান্তরিত।',
+  listenInviteCloseLabel: 'এখনকার মতো বন্ধ করুন',
+  listenPlayerRegionLabel: 'অডিও প্লেয়ার',
+  listenPlayerNowPlayingLabel: 'এখন চলছে',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${count}-এর মধ্যে ${index}`,
+  listenPlayerPlayLabel: 'চালান',
+  listenPlayerPauseLabel: 'বিরতি',
+  listenPlayerBackLabel: '15 সেকেন্ড পিছনে',
+  listenPlayerPreviousLabel: 'আগের পর্ব',
+  listenPlayerNextLabel: 'পরের পর্ব',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `প্লেব্যাক গতি ${rate}×`,
+  listenPlayerSeekLabel: 'অবস্থান',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${total}-এর মধ্যে ${elapsed}`,
+  listenPlayerCloseLabel: 'থামান ও বন্ধ করুন',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `চলছে: ${title}`,
+  listenListHeading: 'এই ব্লগটি শুনুন',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count}টি পর্ব · ${duration}`,
+  listenListPlayAllLabel: 'সব চালান',
+  listenListShuffleLabel: 'এলোমেলো',
+  listenListOrderLabel: 'ক্রম',
+  listenListNewestLabel: 'নতুন আগে',
+  listenListOldestLabel: 'পুরোনো আগে',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `সব ${count}টি দেখান`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} চালান`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} মিনিট`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} ঘণ্টা ${minutes} মিনিট`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

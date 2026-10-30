@@ -216,6 +216,59 @@ export default Object.freeze({
   versionToolchainLabel: 'Julkaisutyökalut',
   versionCommitLabel: 'Lähdekommitti',
   versionBuiltAtLabel: 'Rakennettu',
+  listenNavLabel: 'Kuuntele',
+  listenNavCurrentLabel: 'Kuuntele tämä kirjoitus',
+  listenInviteTitle: 'Kädet täynnä? Kuuntele sen sijaan.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Tämä kirjoitus on myös ${minutes} minuutin keskustelu. Sopii automatkalle, treeniin tai tiskaamiseen.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Tämä kirjoitus on myös ${minutes} minuutin ääneen luettu versio. Sopii automatkalle, treeniin tai tiskaamiseen.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Tämä kirjoitus on myös ${minutes} minuutin väittely. Sopii automatkalle, treeniin tai tiskaamiseen.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Tämä kirjoitus on myös ${minutes} minuutin sketsi. Sopii automatkalle, treeniin tai tiskaamiseen.`,
+  listenInvitePlayLabel: 'Toista',
+  listenInviteDeclineLabel: 'Ei kiitos',
+  listenInviteNote: 'Tekoälyäänet, mukailtu tästä kirjoituksesta.',
+  listenInviteCloseLabel: 'Sulje toistaiseksi',
+  listenPlayerRegionLabel: 'Äänisoitin',
+  listenPlayerNowPlayingLabel: 'Nyt soi',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} / ${count}`,
+  listenPlayerPlayLabel: 'Toista',
+  listenPlayerPauseLabel: 'Tauko',
+  listenPlayerBackLabel: '15 sekuntia taaksepäin',
+  listenPlayerPreviousLabel: 'Edellinen jakso',
+  listenPlayerNextLabel: 'Seuraava jakso',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Toistonopeus ${rate}×`,
+  listenPlayerSeekLabel: 'Kohta',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} / ${total}`,
+  listenPlayerCloseLabel: 'Pysäytä ja sulje',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Nyt soi: ${title}`,
+  listenListHeading: 'Kuuntele tätä blogia',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) =>
+    count === '1' ? `1 jakso · ${duration}` : `${count} jaksoa · ${duration}`,
+  listenListPlayAllLabel: 'Toista kaikki',
+  listenListShuffleLabel: 'Sekoita',
+  listenListOrderLabel: 'Järjestys',
+  listenListNewestLabel: 'Uusimmat ensin',
+  listenListOldestLabel: 'Vanhimmat ensin',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Näytä kaikki ${count}`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Toista ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

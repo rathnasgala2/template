@@ -213,6 +213,59 @@ export default Object.freeze({
   versionToolchainLabel: 'Bộ công cụ xuất bản',
   versionCommitLabel: 'Commit nguồn',
   versionBuiltAtLabel: 'Dựng lúc',
+  listenNavLabel: 'Nghe',
+  listenNavCurrentLabel: 'Nghe bài viết này',
+  listenInviteTitle: 'Bận tay? Hãy nghe thay vì đọc.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Bài viết này cũng có dạng cuộc trò chuyện dài ${minutes} phút. Hợp khi lái xe, tập luyện hay rửa bát.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Bài viết này cũng có dạng bản đọc dài ${minutes} phút. Hợp khi lái xe, tập luyện hay rửa bát.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Bài viết này cũng có dạng cuộc tranh luận dài ${minutes} phút. Hợp khi lái xe, tập luyện hay rửa bát.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Bài viết này cũng có dạng tiểu phẩm dài ${minutes} phút. Hợp khi lái xe, tập luyện hay rửa bát.`,
+  listenInvitePlayLabel: 'Phát',
+  listenInviteDeclineLabel: 'Không, cảm ơn',
+  listenInviteNote: 'Giọng AI, chuyển thể từ bài viết này.',
+  listenInviteCloseLabel: 'Đóng lúc này',
+  listenPlayerRegionLabel: 'Trình phát âm thanh',
+  listenPlayerNowPlayingLabel: 'Đang phát',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} trên ${count}`,
+  listenPlayerPlayLabel: 'Phát',
+  listenPlayerPauseLabel: 'Tạm dừng',
+  listenPlayerBackLabel: 'Lùi 15 giây',
+  listenPlayerPreviousLabel: 'Tập trước',
+  listenPlayerNextLabel: 'Tập tiếp theo',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Tốc độ phát ${rate}×`,
+  listenPlayerSeekLabel: 'Vị trí',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} trên ${total}`,
+  listenPlayerCloseLabel: 'Dừng và đóng',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Đang phát: ${title}`,
+  listenListHeading: 'Nghe blog này',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} tập · ${duration}`,
+  listenListPlayAllLabel: 'Phát tất cả',
+  listenListShuffleLabel: 'Phát ngẫu nhiên',
+  listenListOrderLabel: 'Thứ tự',
+  listenListNewestLabel: 'Mới nhất trước',
+  listenListOldestLabel: 'Cũ nhất trước',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Hiện tất cả ${count}`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Phát ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} phút`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} giờ ${minutes} phút`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

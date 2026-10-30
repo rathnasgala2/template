@@ -216,6 +216,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Yayın araç zinciri',
   versionCommitLabel: 'Kaynak commit',
   versionBuiltAtLabel: 'Derlenme zamanı',
+  listenNavLabel: 'Dinle',
+  listenNavCurrentLabel: 'Bu yazıyı dinle',
+  listenInviteTitle: 'Elleriniz meşgul mü? Bunun yerine dinleyin.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Bu yazı ${minutes} dakikalık bir sohbet olarak da var. Yolculuk, spor veya bulaşık için ideal.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Bu yazı ${minutes} dakikalık bir anlatım olarak da var. Yolculuk, spor veya bulaşık için ideal.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Bu yazı ${minutes} dakikalık bir tartışma olarak da var. Yolculuk, spor veya bulaşık için ideal.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Bu yazı ${minutes} dakikalık bir skeç olarak da var. Yolculuk, spor veya bulaşık için ideal.`,
+  listenInvitePlayLabel: 'Oynat',
+  listenInviteDeclineLabel: 'Hayır, teşekkürler',
+  listenInviteNote: 'Yapay zekâ sesleri, bu yazıdan uyarlandı.',
+  listenInviteCloseLabel: 'Şimdilik kapat',
+  listenPlayerRegionLabel: 'Ses oynatıcı',
+  listenPlayerNowPlayingLabel: 'Şimdi çalıyor',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} / ${count}`,
+  listenPlayerPlayLabel: 'Oynat',
+  listenPlayerPauseLabel: 'Duraklat',
+  listenPlayerBackLabel: '15 saniye geri',
+  listenPlayerPreviousLabel: 'Önceki bölüm',
+  listenPlayerNextLabel: 'Sonraki bölüm',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Oynatma hızı ${rate}×`,
+  listenPlayerSeekLabel: 'Konum',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} / ${total}`,
+  listenPlayerCloseLabel: 'Durdur ve kapat',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Çalıyor: ${title}`,
+  listenListHeading: 'Bu blogu dinle',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} bölüm · ${duration}`,
+  listenListPlayAllLabel: 'Tümünü oynat',
+  listenListShuffleLabel: 'Karıştır',
+  listenListOrderLabel: 'Sıralama',
+  listenListNewestLabel: 'Önce en yeni',
+  listenListOldestLabel: 'Önce en eski',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Tümünü göster (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} oynat`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} dk`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} sa ${minutes} dk`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

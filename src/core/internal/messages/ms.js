@@ -216,6 +216,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Rantaian alat penerbitan',
   versionCommitLabel: 'Commit sumber',
   versionBuiltAtLabel: 'Dibina pada',
+  listenNavLabel: 'Dengar',
+  listenNavCurrentLabel: 'Dengar catatan ini',
+  listenInviteTitle: 'Tangan sibuk? Dengar sahaja.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Catatan ini juga tersedia sebagai perbualan selama ${minutes} minit. Sesuai untuk memandu, bersenam atau membasuh pinggan.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Catatan ini juga tersedia sebagai naratif selama ${minutes} minit. Sesuai untuk memandu, bersenam atau membasuh pinggan.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Catatan ini juga tersedia sebagai perdebatan selama ${minutes} minit. Sesuai untuk memandu, bersenam atau membasuh pinggan.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Catatan ini juga tersedia sebagai sketsa selama ${minutes} minit. Sesuai untuk memandu, bersenam atau membasuh pinggan.`,
+  listenInvitePlayLabel: 'Mainkan',
+  listenInviteDeclineLabel: 'Tidak, terima kasih',
+  listenInviteNote: 'Suara AI, diadaptasi daripada catatan ini.',
+  listenInviteCloseLabel: 'Tutup buat masa ini',
+  listenPlayerRegionLabel: 'Pemain audio',
+  listenPlayerNowPlayingLabel: 'Sedang dimainkan',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} daripada ${count}`,
+  listenPlayerPlayLabel: 'Main',
+  listenPlayerPauseLabel: 'Jeda',
+  listenPlayerBackLabel: 'Undur 15 saat',
+  listenPlayerPreviousLabel: 'Episod sebelumnya',
+  listenPlayerNextLabel: 'Episod seterusnya',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Kelajuan main balik ${rate}×`,
+  listenPlayerSeekLabel: 'Kedudukan',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} daripada ${total}`,
+  listenPlayerCloseLabel: 'Henti dan tutup',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Sedang dimainkan: ${title}`,
+  listenListHeading: 'Dengar blog ini',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} episod · ${duration}`,
+  listenListPlayAllLabel: 'Mainkan semua',
+  listenListShuffleLabel: 'Rawak',
+  listenListOrderLabel: 'Susunan',
+  listenListNewestLabel: 'Terbaharu dahulu',
+  listenListOldestLabel: 'Terlama dahulu',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Tunjuk semua ${count}`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Mainkan ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} j ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

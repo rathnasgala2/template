@@ -215,6 +215,59 @@ export default Object.freeze({
   versionToolchainLabel: 'Инструменти за публикуване',
   versionCommitLabel: 'Изходен къмит',
   versionBuiltAtLabel: 'Изграден на',
+  listenNavLabel: 'Слушай',
+  listenNavCurrentLabel: 'Слушай тази статия',
+  listenInviteTitle: 'Заети ръце? По-добре слушайте.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Тази статия е налична и като разговор от ${minutes} мин. Подходящо за път, тренировка или миене на чинии.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Тази статия е налична и като озвучаване от ${minutes} мин. Подходящо за път, тренировка или миене на чинии.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Тази статия е налична и като дебат от ${minutes} мин. Подходящо за път, тренировка или миене на чинии.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Тази статия е налична и като скеч от ${minutes} мин. Подходящо за път, тренировка или миене на чинии.`,
+  listenInvitePlayLabel: 'Пусни',
+  listenInviteDeclineLabel: 'Не, благодаря',
+  listenInviteNote: 'Гласове с ИИ, адаптирани по тази статия.',
+  listenInviteCloseLabel: 'Затвори засега',
+  listenPlayerRegionLabel: 'Аудио плейър',
+  listenPlayerNowPlayingLabel: 'Сега звучи',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} от ${count}`,
+  listenPlayerPlayLabel: 'Пусни',
+  listenPlayerPauseLabel: 'Пауза',
+  listenPlayerBackLabel: '15 секунди назад',
+  listenPlayerPreviousLabel: 'Предишен епизод',
+  listenPlayerNextLabel: 'Следващ епизод',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Скорост на възпроизвеждане ${rate}×`,
+  listenPlayerSeekLabel: 'Позиция',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} от ${total}`,
+  listenPlayerCloseLabel: 'Спри и затвори',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Сега звучи: ${title}`,
+  listenListHeading: 'Слушайте този блог',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) =>
+    count === '1' ? `1 епизод · ${duration}` : `${count} епизода · ${duration}`,
+  listenListPlayAllLabel: 'Пусни всички',
+  listenListShuffleLabel: 'Разбъркано',
+  listenListOrderLabel: 'Ред',
+  listenListNewestLabel: 'Първо най-новите',
+  listenListOldestLabel: 'Първо най-старите',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Покажи всички (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Пусни: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} мин.`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} ч ${minutes} мин.`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

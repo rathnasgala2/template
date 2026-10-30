@@ -215,6 +215,59 @@ export default Object.freeze({
   versionToolchainLabel: 'प्रकाशन टूलचेन',
   versionCommitLabel: 'स्रोत कमिट',
   versionBuiltAtLabel: 'तयार केल्याची वेळ',
+  listenNavLabel: 'ऐका',
+  listenNavCurrentLabel: 'हा लेख ऐका',
+  listenInviteTitle: 'हात गुंतलेले आहेत? त्याऐवजी ऐका.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `हा लेख ${minutes} मिनिटांच्या संभाषणाच्या रूपातही उपलब्ध आहे. प्रवास, व्यायाम किंवा भांडी घासताना उत्तम.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `हा लेख ${minutes} मिनिटांच्या वाचनाच्या रूपातही उपलब्ध आहे. प्रवास, व्यायाम किंवा भांडी घासताना उत्तम.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `हा लेख ${minutes} मिनिटांच्या चर्चेच्या रूपातही उपलब्ध आहे. प्रवास, व्यायाम किंवा भांडी घासताना उत्तम.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `हा लेख ${minutes} मिनिटांच्या स्किटच्या रूपातही उपलब्ध आहे. प्रवास, व्यायाम किंवा भांडी घासताना उत्तम.`,
+  listenInvitePlayLabel: 'सुरू करा',
+  listenInviteDeclineLabel: 'नको, धन्यवाद',
+  listenInviteNote: 'AI आवाज, या लेखावरून रूपांतरित.',
+  listenInviteCloseLabel: 'आत्ता बंद करा',
+  listenPlayerRegionLabel: 'ऑडिओ प्लेयर',
+  listenPlayerNowPlayingLabel: 'आता सुरू आहे',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${count} पैकी ${index}`,
+  listenPlayerPlayLabel: 'प्ले करा',
+  listenPlayerPauseLabel: 'थांबवा',
+  listenPlayerBackLabel: '15 सेकंद मागे',
+  listenPlayerPreviousLabel: 'मागील भाग',
+  listenPlayerNextLabel: 'पुढील भाग',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `प्लेबॅक गती ${rate}×`,
+  listenPlayerSeekLabel: 'स्थान',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${total} पैकी ${elapsed}`,
+  listenPlayerCloseLabel: 'थांबवा आणि बंद करा',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `सुरू आहे: ${title}`,
+  listenListHeading: 'हा ब्लॉग ऐका',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} भाग · ${duration}`,
+  listenListPlayAllLabel: 'सर्व प्ले करा',
+  listenListShuffleLabel: 'शफल',
+  listenListOrderLabel: 'क्रम',
+  listenListNewestLabel: 'नवीन आधी',
+  listenListOldestLabel: 'जुने आधी',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `सर्व ${count} दाखवा`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} प्ले करा`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} मिनिटे`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} तास ${minutes} मिनिटे`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

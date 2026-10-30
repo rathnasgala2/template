@@ -217,6 +217,59 @@ export default Object.freeze({
   versionToolchainLabel: 'Közzétételi eszközlánc',
   versionCommitLabel: 'Forrás-commit',
   versionBuiltAtLabel: 'Készült',
+  listenNavLabel: 'Hallgatás',
+  listenNavCurrentLabel: 'Cikk meghallgatása',
+  listenInviteTitle: 'Foglalt a keze? Hallgassa meg inkább.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Ez a cikk ${minutes} perces beszélgetésként is elérhető. Jó vezetéshez, edzéshez vagy mosogatáshoz.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Ez a cikk ${minutes} perces felolvasásként is elérhető. Jó vezetéshez, edzéshez vagy mosogatáshoz.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Ez a cikk ${minutes} perces vitaként is elérhető. Jó vezetéshez, edzéshez vagy mosogatáshoz.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Ez a cikk ${minutes} perces jelenetként is elérhető. Jó vezetéshez, edzéshez vagy mosogatáshoz.`,
+  listenInvitePlayLabel: 'Lejátszás',
+  listenInviteDeclineLabel: 'Köszönöm, nem',
+  listenInviteNote: 'MI-hangok, a cikk alapján átdolgozva.',
+  listenInviteCloseLabel: 'Bezárás egyelőre',
+  listenPlayerRegionLabel: 'Hanglejátszó',
+  listenPlayerNowPlayingLabel: 'Most szól',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} / ${count}`,
+  listenPlayerPlayLabel: 'Lejátszás',
+  listenPlayerPauseLabel: 'Szünet',
+  listenPlayerBackLabel: 'Vissza 15 másodpercet',
+  listenPlayerPreviousLabel: 'Előző epizód',
+  listenPlayerNextLabel: 'Következő epizód',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Lejátszási sebesség: ${rate}×`,
+  listenPlayerSeekLabel: 'Pozíció',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} / ${total}`,
+  listenPlayerCloseLabel: 'Leállítás és bezárás',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Most szól: ${title}`,
+  listenListHeading: 'Hallgassa ezt a blogot',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} epizód · ${duration}`,
+  listenListPlayAllLabel: 'Összes lejátszása',
+  listenListShuffleLabel: 'Keverés',
+  listenListOrderLabel: 'Sorrend',
+  listenListNewestLabel: 'Legújabb elöl',
+  listenListOldestLabel: 'Legrégebbi elöl',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Mind megjelenítése (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} lejátszása`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} perc`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} óra ${minutes} perc`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

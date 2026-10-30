@@ -214,6 +214,60 @@ export default Object.freeze({
   versionToolchainLabel: 'Útgáfutól',
   versionCommitLabel: 'Upprunaleg commit',
   versionBuiltAtLabel: 'Smíðað',
+  listenNavLabel: 'Hlusta',
+  listenNavCurrentLabel: 'Hlusta á þessa grein',
+  listenInviteTitle: 'Hendurnar uppteknar? Hlustaðu í staðinn.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Þessi grein er líka til sem ${minutes} mínútna samtal. Hentar í bílinn, ræktina eða uppvaskið.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Þessi grein er líka til sem ${minutes} mínútna upplestur. Hentar í bílinn, ræktina eða uppvaskið.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Þessi grein er líka til sem ${minutes} mínútna umræða. Hentar í bílinn, ræktina eða uppvaskið.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Þessi grein er líka til sem ${minutes} mínútna skets. Hentar í bílinn, ræktina eða uppvaskið.`,
+  listenInvitePlayLabel: 'Spila',
+  listenInviteDeclineLabel: 'Nei takk',
+  listenInviteNote: 'Gervigreindarraddir, aðlagað úr þessari grein.',
+  listenInviteCloseLabel: 'Loka í bili',
+  listenPlayerRegionLabel: 'Hljóðspilari',
+  listenPlayerNowPlayingLabel: 'Er að spila',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} af ${count}`,
+  listenPlayerPlayLabel: 'Spila',
+  listenPlayerPauseLabel: 'Hlé',
+  listenPlayerBackLabel: '15 sekúndur til baka',
+  listenPlayerPreviousLabel: 'Fyrri þáttur',
+  listenPlayerNextLabel: 'Næsti þáttur',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Spilunarhraði ${rate}×`,
+  listenPlayerSeekLabel: 'Staða',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} af ${total}`,
+  listenPlayerCloseLabel: 'Stöðva og loka',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Er að spila: ${title}`,
+  listenListHeading: 'Hlusta á þetta blogg',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) =>
+    count === '1' ? `1 þáttur · ${duration}` : `${count} þættir · ${duration}`,
+  listenListPlayAllLabel: 'Spila allt',
+  listenListShuffleLabel: 'Stokka',
+  listenListOrderLabel: 'Röð',
+  listenListNewestLabel: 'Nýjast fyrst',
+  listenListOldestLabel: 'Elst fyrst',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Sýna allt (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Spila ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} mín.`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} klst. ${minutes} mín.`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

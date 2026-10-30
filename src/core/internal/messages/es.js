@@ -222,6 +222,61 @@ export default Object.freeze({
   versionToolchainLabel: 'Herramientas de publicación',
   versionCommitLabel: 'Commit de origen',
   versionBuiltAtLabel: 'Compilado el',
+  listenNavLabel: 'Escuchar',
+  listenNavCurrentLabel: 'Escuchar este artículo',
+  listenInviteTitle: '¿Tienes las manos ocupadas? Escúchalo.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Este artículo también es una conversación de ${minutes} min. Ideal para el coche, el gimnasio o los platos.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Este artículo también es una narración de ${minutes} min. Ideal para el coche, el gimnasio o los platos.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Este artículo también es un debate de ${minutes} min. Ideal para el coche, el gimnasio o los platos.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Este artículo también es un sketch de ${minutes} min. Ideal para el coche, el gimnasio o los platos.`,
+  listenInvitePlayLabel: 'Reproducir',
+  listenInviteDeclineLabel: 'No, gracias',
+  listenInviteNote: 'Voces de IA, adaptadas de este artículo.',
+  listenInviteCloseLabel: 'Cerrar por ahora',
+  listenPlayerRegionLabel: 'Reproductor de audio',
+  listenPlayerNowPlayingLabel: 'Reproduciendo',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} de ${count}`,
+  listenPlayerPlayLabel: 'Reproducir',
+  listenPlayerPauseLabel: 'Pausa',
+  listenPlayerBackLabel: 'Retroceder 15 segundos',
+  listenPlayerPreviousLabel: 'Episodio anterior',
+  listenPlayerNextLabel: 'Episodio siguiente',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Velocidad de reproducción ${rate}×`,
+  listenPlayerSeekLabel: 'Posición',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} de ${total}`,
+  listenPlayerCloseLabel: 'Detener y cerrar',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Reproduciendo: ${title}`,
+  listenListHeading: 'Escucha este blog',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) =>
+    count === '1'
+      ? `1 episodio · ${duration}`
+      : `${count} episodios · ${duration}`,
+  listenListPlayAllLabel: 'Reproducir todo',
+  listenListShuffleLabel: 'Aleatorio',
+  listenListOrderLabel: 'Orden',
+  listenListNewestLabel: 'Más recientes primero',
+  listenListOldestLabel: 'Más antiguos primero',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Mostrar los ${count}`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Reproducir ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

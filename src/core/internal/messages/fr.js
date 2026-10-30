@@ -222,6 +222,61 @@ export default Object.freeze({
   versionToolchainLabel: 'Chaîne de publication',
   versionCommitLabel: 'Commit source',
   versionBuiltAtLabel: 'Généré le',
+  listenNavLabel: 'Écouter',
+  listenNavCurrentLabel: 'Écouter cet article',
+  listenInviteTitle: 'Les mains occupées ? Écoutez plutôt.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Cet article existe aussi en conversation de ${minutes} min. Idéal en voiture, pendant le sport ou la vaisselle.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Cet article existe aussi en lecture audio de ${minutes} min. Idéal en voiture, pendant le sport ou la vaisselle.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Cet article existe aussi en débat de ${minutes} min. Idéal en voiture, pendant le sport ou la vaisselle.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Cet article existe aussi en sketch de ${minutes} min. Idéal en voiture, pendant le sport ou la vaisselle.`,
+  listenInvitePlayLabel: 'Lancer',
+  listenInviteDeclineLabel: 'Non merci',
+  listenInviteNote: 'Voix IA, adaptées de cet article.',
+  listenInviteCloseLabel: 'Fermer pour l’instant',
+  listenPlayerRegionLabel: 'Lecteur audio',
+  listenPlayerNowPlayingLabel: 'En cours de lecture',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} sur ${count}`,
+  listenPlayerPlayLabel: 'Lecture',
+  listenPlayerPauseLabel: 'Pause',
+  listenPlayerBackLabel: 'Reculer de 15 secondes',
+  listenPlayerPreviousLabel: 'Épisode précédent',
+  listenPlayerNextLabel: 'Épisode suivant',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Vitesse de lecture ${rate}×`,
+  listenPlayerSeekLabel: 'Position',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} sur ${total}`,
+  listenPlayerCloseLabel: 'Arrêter et fermer',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Lecture : ${title}`,
+  listenListHeading: 'Écouter ce blog',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) =>
+    count === '1'
+      ? `1 épisode · ${duration}`
+      : `${count} épisodes · ${duration}`,
+  listenListPlayAllLabel: 'Tout lire',
+  listenListShuffleLabel: 'Aléatoire',
+  listenListOrderLabel: 'Ordre',
+  listenListNewestLabel: 'Du plus récent au plus ancien',
+  listenListOldestLabel: 'Du plus ancien au plus récent',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Tout afficher (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Lire ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

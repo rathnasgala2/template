@@ -216,6 +216,58 @@ export default Object.freeze({
   versionToolchainLabel: 'გამოქვეყნების ინსტრუმენტები',
   versionCommitLabel: 'საწყისი commit',
   versionBuiltAtLabel: 'აგების დრო',
+  listenNavLabel: 'მოსმენა',
+  listenNavCurrentLabel: 'ამ სტატიის მოსმენა',
+  listenInviteTitle: 'ხელები გაქვთ დაკავებული? უსმინეთ.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `ეს სტატია ასევე ხელმისაწვდომია ${minutes}-წუთიანი საუბრის სახით. შესაფერისია გზაში, ვარჯიშისას ან ჭურჭლის რეცხვისას.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `ეს სტატია ასევე ხელმისაწვდომია ${minutes}-წუთიანი თხრობის სახით. შესაფერისია გზაში, ვარჯიშისას ან ჭურჭლის რეცხვისას.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `ეს სტატია ასევე ხელმისაწვდომია ${minutes}-წუთიანი დებატის სახით. შესაფერისია გზაში, ვარჯიშისას ან ჭურჭლის რეცხვისას.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `ეს სტატია ასევე ხელმისაწვდომია ${minutes}-წუთიანი სკეტჩის სახით. შესაფერისია გზაში, ვარჯიშისას ან ჭურჭლის რეცხვისას.`,
+  listenInvitePlayLabel: 'დაკვრა',
+  listenInviteDeclineLabel: 'არა, გმადლობთ',
+  listenInviteNote: 'ხელოვნური ინტელექტის ხმები, ამ სტატიის ადაპტაცია.',
+  listenInviteCloseLabel: 'ამჯერად დახურვა',
+  listenPlayerRegionLabel: 'აუდიოპლეერი',
+  listenPlayerNowPlayingLabel: 'ახლა უკრავს',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} / ${count}`,
+  listenPlayerPlayLabel: 'დაკვრა',
+  listenPlayerPauseLabel: 'პაუზა',
+  listenPlayerBackLabel: '15 წამით უკან',
+  listenPlayerPreviousLabel: 'წინა ეპიზოდი',
+  listenPlayerNextLabel: 'შემდეგი ეპიზოდი',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `დაკვრის სიჩქარე ${rate}×`,
+  listenPlayerSeekLabel: 'პოზიცია',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} / ${total}`,
+  listenPlayerCloseLabel: 'გაჩერება და დახურვა',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `უკრავს: ${title}`,
+  listenListHeading: 'ამ ბლოგის მოსმენა',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} ეპიზოდი · ${duration}`,
+  listenListPlayAllLabel: 'ყველას დაკვრა',
+  listenListShuffleLabel: 'არევა',
+  listenListOrderLabel: 'რიგი',
+  listenListNewestLabel: 'ჯერ ახალი',
+  listenListOldestLabel: 'ჯერ ძველი',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `ყველას ჩვენება (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `დაკვრა: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} წთ`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} სთ ${minutes} წთ`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

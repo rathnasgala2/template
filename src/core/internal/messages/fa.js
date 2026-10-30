@@ -214,6 +214,59 @@ export default Object.freeze({
   versionToolchainLabel: 'زنجیرهٔ ابزار انتشار',
   versionCommitLabel: 'کامیت منبع',
   versionBuiltAtLabel: 'زمان ساخت',
+  listenNavLabel: 'گوش دادن',
+  listenNavCurrentLabel: 'گوش دادن به این نوشته',
+  listenInviteTitle: 'دست‌هایتان مشغول است؟ گوش دهید.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `این نوشته به‌صورت گفت‌وگوی ${minutes} دقیقه‌ای هم در دسترس است. مناسب رانندگی، ورزش یا شستن ظرف‌ها.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `این نوشته به‌صورت روایت ${minutes} دقیقه‌ای هم در دسترس است. مناسب رانندگی، ورزش یا شستن ظرف‌ها.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `این نوشته به‌صورت مناظره ${minutes} دقیقه‌ای هم در دسترس است. مناسب رانندگی، ورزش یا شستن ظرف‌ها.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `این نوشته به‌صورت نمایش کوتاه ${minutes} دقیقه‌ای هم در دسترس است. مناسب رانندگی، ورزش یا شستن ظرف‌ها.`,
+  listenInvitePlayLabel: 'پخش',
+  listenInviteDeclineLabel: 'نه، ممنون',
+  listenInviteNote: 'صداهای هوش مصنوعی، اقتباس از این نوشته.',
+  listenInviteCloseLabel: 'فعلاً ببند',
+  listenPlayerRegionLabel: 'پخش‌کننده صدا',
+  listenPlayerNowPlayingLabel: 'در حال پخش',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} از ${count}`,
+  listenPlayerPlayLabel: 'پخش',
+  listenPlayerPauseLabel: 'توقف موقت',
+  listenPlayerBackLabel: '15 ثانیه به عقب',
+  listenPlayerPreviousLabel: 'قسمت قبلی',
+  listenPlayerNextLabel: 'قسمت بعدی',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `سرعت پخش ${rate}×`,
+  listenPlayerSeekLabel: 'موقعیت',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} از ${total}`,
+  listenPlayerCloseLabel: 'توقف و بستن',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `در حال پخش: ${title}`,
+  listenListHeading: 'گوش دادن به این وبلاگ',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} قسمت · ${duration}`,
+  listenListPlayAllLabel: 'پخش همه',
+  listenListShuffleLabel: 'تصادفی',
+  listenListOrderLabel: 'ترتیب',
+  listenListNewestLabel: 'جدیدترین‌ها اول',
+  listenListOldestLabel: 'قدیمی‌ترین‌ها اول',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `نمایش همه (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `پخش ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} دقیقه`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} ساعت و ${minutes} دقیقه`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

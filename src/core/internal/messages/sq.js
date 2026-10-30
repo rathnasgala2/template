@@ -216,6 +216,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Veglat e botimit',
   versionCommitLabel: 'Commit i burimit',
   versionBuiltAtLabel: 'Ndërtuar më',
+  listenNavLabel: 'Dëgjo',
+  listenNavCurrentLabel: 'Dëgjo këtë artikull',
+  listenInviteTitle: 'Duart i ke të zëna? Dëgjoje.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Ky artikull është edhe një bisedë ${minutes} minutëshe. Mirë për udhëtim, stërvitje ose larjen e enëve.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Ky artikull është edhe një rrëfim ${minutes} minutësh. Mirë për udhëtim, stërvitje ose larjen e enëve.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Ky artikull është edhe një debat ${minutes} minutësh. Mirë për udhëtim, stërvitje ose larjen e enëve.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Ky artikull është edhe një skeç ${minutes} minutësh. Mirë për udhëtim, stërvitje ose larjen e enëve.`,
+  listenInvitePlayLabel: 'Luaje',
+  listenInviteDeclineLabel: 'Jo, faleminderit',
+  listenInviteNote: 'Zëra IA, përshtatur nga ky artikull.',
+  listenInviteCloseLabel: 'Mbylle tani',
+  listenPlayerRegionLabel: 'Luajtësi i audios',
+  listenPlayerNowPlayingLabel: 'Po luhet tani',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} nga ${count}`,
+  listenPlayerPlayLabel: 'Luaj',
+  listenPlayerPauseLabel: 'Pauzë',
+  listenPlayerBackLabel: 'Prapa 15 sekonda',
+  listenPlayerPreviousLabel: 'Episodi i mëparshëm',
+  listenPlayerNextLabel: 'Episodi tjetër',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Shpejtësia e luajtjes ${rate}×`,
+  listenPlayerSeekLabel: 'Pozicioni',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} nga ${total}`,
+  listenPlayerCloseLabel: 'Ndalo dhe mbyll',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Po luhet: ${title}`,
+  listenListHeading: 'Dëgjo këtë blog',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} episode · ${duration}`,
+  listenListPlayAllLabel: 'Luaji të gjitha',
+  listenListShuffleLabel: 'Përzieji',
+  listenListOrderLabel: 'Renditja',
+  listenListNewestLabel: 'Më të rejat së pari',
+  listenListOldestLabel: 'Më të vjetrat së pari',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Shfaqi të gjitha (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Luaj ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} orë ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

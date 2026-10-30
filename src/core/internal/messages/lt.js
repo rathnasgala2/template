@@ -217,6 +217,59 @@ export default Object.freeze({
   versionToolchainLabel: 'Publikavimo įrankiai',
   versionCommitLabel: 'Šaltinio commit',
   versionBuiltAtLabel: 'Sukurta',
+  listenNavLabel: 'Klausyti',
+  listenNavCurrentLabel: 'Klausyti šio įrašo',
+  listenInviteTitle: 'Užimtos rankos? Verčiau paklausykite.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Šis įrašas turi ir pokalbio versiją, trukmė ${minutes} min. Tinka kelionei, treniruotei ar indų plovimui.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Šis įrašas turi ir įgarsintą versiją, trukmė ${minutes} min. Tinka kelionei, treniruotei ar indų plovimui.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Šis įrašas turi ir diskusijos versiją, trukmė ${minutes} min. Tinka kelionei, treniruotei ar indų plovimui.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Šis įrašas turi ir skečo versiją, trukmė ${minutes} min. Tinka kelionei, treniruotei ar indų plovimui.`,
+  listenInvitePlayLabel: 'Leisti',
+  listenInviteDeclineLabel: 'Ne, ačiū',
+  listenInviteNote: 'DI balsai, pritaikyta pagal šį įrašą.',
+  listenInviteCloseLabel: 'Kol kas uždaryti',
+  listenPlayerRegionLabel: 'Garso grotuvas',
+  listenPlayerNowPlayingLabel: 'Dabar groja',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} iš ${count}`,
+  listenPlayerPlayLabel: 'Leisti',
+  listenPlayerPauseLabel: 'Pauzė',
+  listenPlayerBackLabel: '15 sekundžių atgal',
+  listenPlayerPreviousLabel: 'Ankstesnis epizodas',
+  listenPlayerNextLabel: 'Kitas epizodas',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Atkūrimo greitis ${rate}×`,
+  listenPlayerSeekLabel: 'Padėtis',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} iš ${total}`,
+  listenPlayerCloseLabel: 'Sustabdyti ir uždaryti',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Dabar groja: ${title}`,
+  listenListHeading: 'Klausykite šio tinklaraščio',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `Epizodų: ${count} · ${duration}`,
+  listenListPlayAllLabel: 'Leisti visus',
+  listenListShuffleLabel: 'Atsitiktinai',
+  listenListOrderLabel: 'Tvarka',
+  listenListNewestLabel: 'Naujausi pirmi',
+  listenListOldestLabel: 'Seniausi pirmi',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Rodyti visus (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Leisti: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min.`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} val. ${minutes} min.`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

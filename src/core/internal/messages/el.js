@@ -222,6 +222,61 @@ export default Object.freeze({
   versionToolchainLabel: 'Εργαλεία δημοσίευσης',
   versionCommitLabel: 'Commit πηγής',
   versionBuiltAtLabel: 'Δημιουργήθηκε',
+  listenNavLabel: 'Ακούστε',
+  listenNavCurrentLabel: 'Ακούστε αυτό το άρθρο',
+  listenInviteTitle: 'Απασχολημένα χέρια; Ακούστε το.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Αυτό το άρθρο υπάρχει και ως συζήτηση διάρκειας ${minutes} λεπτών. Ιδανικό για το αυτοκίνητο, την προπόνηση ή τα πιάτα.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Αυτό το άρθρο υπάρχει και ως αφήγηση διάρκειας ${minutes} λεπτών. Ιδανικό για το αυτοκίνητο, την προπόνηση ή τα πιάτα.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Αυτό το άρθρο υπάρχει και ως αντιπαράθεση διάρκειας ${minutes} λεπτών. Ιδανικό για το αυτοκίνητο, την προπόνηση ή τα πιάτα.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Αυτό το άρθρο υπάρχει και ως σκετς διάρκειας ${minutes} λεπτών. Ιδανικό για το αυτοκίνητο, την προπόνηση ή τα πιάτα.`,
+  listenInvitePlayLabel: 'Αναπαραγωγή',
+  listenInviteDeclineLabel: 'Όχι, ευχαριστώ',
+  listenInviteNote: 'Φωνές AI, διασκευή από αυτό το άρθρο.',
+  listenInviteCloseLabel: 'Κλείσιμο προς το παρόν',
+  listenPlayerRegionLabel: 'Αναπαραγωγή ήχου',
+  listenPlayerNowPlayingLabel: 'Αναπαράγεται τώρα',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} από ${count}`,
+  listenPlayerPlayLabel: 'Αναπαραγωγή',
+  listenPlayerPauseLabel: 'Παύση',
+  listenPlayerBackLabel: 'Πίσω 15 δευτερόλεπτα',
+  listenPlayerPreviousLabel: 'Προηγούμενο επεισόδιο',
+  listenPlayerNextLabel: 'Επόμενο επεισόδιο',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Ταχύτητα αναπαραγωγής ${rate}×`,
+  listenPlayerSeekLabel: 'Θέση',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} από ${total}`,
+  listenPlayerCloseLabel: 'Διακοπή και κλείσιμο',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Αναπαράγεται: ${title}`,
+  listenListHeading: 'Ακούστε αυτό το ιστολόγιο',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) =>
+    count === '1'
+      ? `1 επεισόδιο · ${duration}`
+      : `${count} επεισόδια · ${duration}`,
+  listenListPlayAllLabel: 'Αναπαραγωγή όλων',
+  listenListShuffleLabel: 'Τυχαία σειρά',
+  listenListOrderLabel: 'Σειρά',
+  listenListNewestLabel: 'Πρώτα τα νεότερα',
+  listenListOldestLabel: 'Πρώτα τα παλαιότερα',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Εμφάνιση όλων (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Αναπαραγωγή: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} λ.`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} ω. ${minutes} λ.`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

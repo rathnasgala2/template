@@ -218,6 +218,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Udgivelsesværktøjer',
   versionCommitLabel: 'Kildecommit',
   versionBuiltAtLabel: 'Bygget',
+  listenNavLabel: 'Lyt',
+  listenNavCurrentLabel: 'Lyt til dette indlæg',
+  listenInviteTitle: 'Hænderne fulde? Lyt i stedet.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Dette indlæg findes også som en samtale på ${minutes} min. Perfekt til bilturen, træningen eller opvasken.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Dette indlæg findes også som en oplæsning på ${minutes} min. Perfekt til bilturen, træningen eller opvasken.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Dette indlæg findes også som en debat på ${minutes} min. Perfekt til bilturen, træningen eller opvasken.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Dette indlæg findes også som en sketch på ${minutes} min. Perfekt til bilturen, træningen eller opvasken.`,
+  listenInvitePlayLabel: 'Afspil',
+  listenInviteDeclineLabel: 'Nej tak',
+  listenInviteNote: 'AI-stemmer, tilpasset dette indlæg.',
+  listenInviteCloseLabel: 'Luk for nu',
+  listenPlayerRegionLabel: 'Lydafspiller',
+  listenPlayerNowPlayingLabel: 'Afspiller nu',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} af ${count}`,
+  listenPlayerPlayLabel: 'Afspil',
+  listenPlayerPauseLabel: 'Pause',
+  listenPlayerBackLabel: '15 sekunder tilbage',
+  listenPlayerPreviousLabel: 'Forrige afsnit',
+  listenPlayerNextLabel: 'Næste afsnit',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Afspilningshastighed ${rate}×`,
+  listenPlayerSeekLabel: 'Position',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} af ${total}`,
+  listenPlayerCloseLabel: 'Stop og luk',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Afspiller: ${title}`,
+  listenListHeading: 'Lyt til denne blog',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} afsnit · ${duration}`,
+  listenListPlayAllLabel: 'Afspil alle',
+  listenListShuffleLabel: 'Bland',
+  listenListOrderLabel: 'Rækkefølge',
+  listenListNewestLabel: 'Nyeste først',
+  listenListOldestLabel: 'Ældste først',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Vis alle ${count}`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Afspil ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min.`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} t. ${minutes} min.`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

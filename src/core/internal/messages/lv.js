@@ -215,6 +215,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Publicēšanas rīki',
   versionCommitLabel: 'Avota commit',
   versionBuiltAtLabel: 'Izveidots',
+  listenNavLabel: 'Klausīties',
+  listenNavCurrentLabel: 'Klausīties šo ierakstu',
+  listenInviteTitle: 'Rokas aizņemtas? Labāk paklausies.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Šim ierakstam ir arī sarunas versija, ${minutes} min. Der braucienam, treniņam vai trauku mazgāšanai.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Šim ierakstam ir arī ierunāta versija, ${minutes} min. Der braucienam, treniņam vai trauku mazgāšanai.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Šim ierakstam ir arī diskusijas versija, ${minutes} min. Der braucienam, treniņam vai trauku mazgāšanai.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Šim ierakstam ir arī skeča versija, ${minutes} min. Der braucienam, treniņam vai trauku mazgāšanai.`,
+  listenInvitePlayLabel: 'Atskaņot',
+  listenInviteDeclineLabel: 'Nē, paldies',
+  listenInviteNote: 'MI balsis, pielāgots pēc šī ieraksta.',
+  listenInviteCloseLabel: 'Aizvērt pagaidām',
+  listenPlayerRegionLabel: 'Audio atskaņotājs',
+  listenPlayerNowPlayingLabel: 'Tagad skan',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} no ${count}`,
+  listenPlayerPlayLabel: 'Atskaņot',
+  listenPlayerPauseLabel: 'Pauze',
+  listenPlayerBackLabel: '15 sekundes atpakaļ',
+  listenPlayerPreviousLabel: 'Iepriekšējā epizode',
+  listenPlayerNextLabel: 'Nākamā epizode',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Atskaņošanas ātrums ${rate}×`,
+  listenPlayerSeekLabel: 'Pozīcija',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} no ${total}`,
+  listenPlayerCloseLabel: 'Apturēt un aizvērt',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Tagad skan: ${title}`,
+  listenListHeading: 'Klausīties šo emuāru',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `Epizodes: ${count} · ${duration}`,
+  listenListPlayAllLabel: 'Atskaņot visu',
+  listenListShuffleLabel: 'Jaukti',
+  listenListOrderLabel: 'Secība',
+  listenListNewestLabel: 'Jaunākie vispirms',
+  listenListOldestLabel: 'Vecākie vispirms',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Rādīt visus (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Atskaņot: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

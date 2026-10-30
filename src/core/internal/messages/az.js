@@ -214,6 +214,59 @@ export default Object.freeze({
   versionToolchainLabel: 'Nəşr alətləri',
   versionCommitLabel: 'Mənbə commit',
   versionBuiltAtLabel: 'Yığılma vaxtı',
+  listenNavLabel: 'Dinlə',
+  listenNavCurrentLabel: 'Bu yazını dinlə',
+  listenInviteTitle: 'Əlləriniz məşğuldur? Əvəzinə dinləyin.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Bu yazı ${minutes} dəqiqəlik söhbət kimi də mövcuddur. Yol, idman və ya qab yumaq üçün əladır.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Bu yazı ${minutes} dəqiqəlik təhkiyə kimi də mövcuddur. Yol, idman və ya qab yumaq üçün əladır.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Bu yazı ${minutes} dəqiqəlik müzakirə kimi də mövcuddur. Yol, idman və ya qab yumaq üçün əladır.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Bu yazı ${minutes} dəqiqəlik skeç kimi də mövcuddur. Yol, idman və ya qab yumaq üçün əladır.`,
+  listenInvitePlayLabel: 'Oxut',
+  listenInviteDeclineLabel: 'Xeyr, təşəkkürlər',
+  listenInviteNote: 'Süni intellekt səsləri, bu yazıdan uyğunlaşdırılıb.',
+  listenInviteCloseLabel: 'İndilik bağla',
+  listenPlayerRegionLabel: 'Audio pleyer',
+  listenPlayerNowPlayingLabel: 'İndi səslənir',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} / ${count}`,
+  listenPlayerPlayLabel: 'Oxut',
+  listenPlayerPauseLabel: 'Fasilə',
+  listenPlayerBackLabel: '15 saniyə geri',
+  listenPlayerPreviousLabel: 'Əvvəlki epizod',
+  listenPlayerNextLabel: 'Növbəti epizod',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Oxutma sürəti ${rate}×`,
+  listenPlayerSeekLabel: 'Mövqe',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} / ${total}`,
+  listenPlayerCloseLabel: 'Dayandır və bağla',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `İndi səslənir: ${title}`,
+  listenListHeading: 'Bu bloqu dinlə',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} epizod · ${duration}`,
+  listenListPlayAllLabel: 'Hamısını oxut',
+  listenListShuffleLabel: 'Qarışdır',
+  listenListOrderLabel: 'Sıra',
+  listenListNewestLabel: 'Əvvəl ən yenilər',
+  listenListOldestLabel: 'Əvvəl ən köhnələr',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Hamısını göstər (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} oxut`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} dəq`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} saat ${minutes} dəq`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

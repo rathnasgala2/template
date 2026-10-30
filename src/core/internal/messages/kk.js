@@ -217,6 +217,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Жариялау құралдары',
   versionCommitLabel: 'Бастапқы commit',
   versionBuiltAtLabel: 'Жиналған уақыты',
+  listenNavLabel: 'Тыңдау',
+  listenNavCurrentLabel: 'Бұл жазбаны тыңдау',
+  listenInviteTitle: 'Қолыңыз бос емес пе? Тыңдаңыз.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Бұл жазба ${minutes} минуттық әңгіме түрінде де бар. Жолда, жаттығуда немесе ыдыс жууда ыңғайлы.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Бұл жазба ${minutes} минуттық баяндау түрінде де бар. Жолда, жаттығуда немесе ыдыс жууда ыңғайлы.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Бұл жазба ${minutes} минуттық пікірталас түрінде де бар. Жолда, жаттығуда немесе ыдыс жууда ыңғайлы.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Бұл жазба ${minutes} минуттық скетч түрінде де бар. Жолда, жаттығуда немесе ыдыс жууда ыңғайлы.`,
+  listenInvitePlayLabel: 'Қосу',
+  listenInviteDeclineLabel: 'Жоқ, рахмет',
+  listenInviteNote: 'ЖИ дауыстары, осы жазбадан бейімделген.',
+  listenInviteCloseLabel: 'Әзірге жабу',
+  listenPlayerRegionLabel: 'Аудиоплеер',
+  listenPlayerNowPlayingLabel: 'Қазір ойнап тұр',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} / ${count}`,
+  listenPlayerPlayLabel: 'Ойнату',
+  listenPlayerPauseLabel: 'Кідірту',
+  listenPlayerBackLabel: '15 секунд артқа',
+  listenPlayerPreviousLabel: 'Алдыңғы шығарылым',
+  listenPlayerNextLabel: 'Келесі шығарылым',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Ойнату жылдамдығы ${rate}×`,
+  listenPlayerSeekLabel: 'Орны',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} / ${total}`,
+  listenPlayerCloseLabel: 'Тоқтатып, жабу',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Ойнап тұр: ${title}`,
+  listenListHeading: 'Бұл блогты тыңдау',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} шығарылым · ${duration}`,
+  listenListPlayAllLabel: 'Бәрін ойнату',
+  listenListShuffleLabel: 'Араластыру',
+  listenListOrderLabel: 'Реті',
+  listenListNewestLabel: 'Алдымен жаңалары',
+  listenListOldestLabel: 'Алдымен ескілері',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Барлығын көрсету (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} ойнату`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} мин`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} сағ ${minutes} мин`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

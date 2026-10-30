@@ -226,6 +226,60 @@ export default Object.freeze({
   versionToolchainLabel: 'வெளியீட்டுக் கருவித்தொடர்',
   versionCommitLabel: 'மூலக் கமிட்',
   versionBuiltAtLabel: 'உருவாக்கிய நேரம்',
+  listenNavLabel: 'கேளுங்கள்',
+  listenNavCurrentLabel: 'இந்தப் பதிவைக் கேளுங்கள்',
+  listenInviteTitle: 'கைகள் வேலையில் உள்ளனவா? கேளுங்கள்.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `இந்தப் பதிவு ${minutes} நிமிட உரையாடலாகவும் உள்ளது. பயணம், உடற்பயிற்சி அல்லது பாத்திரம் கழுவும்போது ஏற்றது.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `இந்தப் பதிவு ${minutes} நிமிட ஒலிவடிவ வாசிப்பாகவும் உள்ளது. பயணம், உடற்பயிற்சி அல்லது பாத்திரம் கழுவும்போது ஏற்றது.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `இந்தப் பதிவு ${minutes} நிமிட விவாதமாகவும் உள்ளது. பயணம், உடற்பயிற்சி அல்லது பாத்திரம் கழுவும்போது ஏற்றது.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `இந்தப் பதிவு ${minutes} நிமிட சிறு நாடகமாகவும் உள்ளது. பயணம், உடற்பயிற்சி அல்லது பாத்திரம் கழுவும்போது ஏற்றது.`,
+  listenInvitePlayLabel: 'இயக்கு',
+  listenInviteDeclineLabel: 'வேண்டாம், நன்றி',
+  listenInviteNote: 'AI குரல்கள், இந்தப் பதிவிலிருந்து தழுவப்பட்டவை.',
+  listenInviteCloseLabel: 'இப்போதைக்கு மூடு',
+  listenPlayerRegionLabel: 'ஆடியோ பிளேயர்',
+  listenPlayerNowPlayingLabel: 'இப்போது இயங்குகிறது',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${count} இல் ${index}`,
+  listenPlayerPlayLabel: 'இயக்கு',
+  listenPlayerPauseLabel: 'இடைநிறுத்து',
+  listenPlayerBackLabel: '15 விநாடி பின்னே',
+  listenPlayerPreviousLabel: 'முந்தைய அத்தியாயம்',
+  listenPlayerNextLabel: 'அடுத்த அத்தியாயம்',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `இயக்க வேகம் ${rate}×`,
+  listenPlayerSeekLabel: 'நிலை',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${total} இல் ${elapsed}`,
+  listenPlayerCloseLabel: 'நிறுத்தி மூடு',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `இயங்குகிறது: ${title}`,
+  listenListHeading: 'இந்த வலைப்பதிவைக் கேளுங்கள்',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) =>
+    `${count} அத்தியாயங்கள் · ${duration}`,
+  listenListPlayAllLabel: 'அனைத்தையும் இயக்கு',
+  listenListShuffleLabel: 'கலக்கு',
+  listenListOrderLabel: 'வரிசை',
+  listenListNewestLabel: 'புதியவை முதலில்',
+  listenListOldestLabel: 'பழையவை முதலில்',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `அனைத்தையும் காட்டு (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} ஐ இயக்கு`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} நிமிடம்`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} மணி ${minutes} நிமிடம்`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -216,6 +216,59 @@ export default Object.freeze({
   versionToolchainLabel: 'पब्लिश टूलचेन',
   versionCommitLabel: 'सोर्स कमिट',
   versionBuiltAtLabel: 'बनाने का समय',
+  listenNavLabel: 'सुनें',
+  listenNavCurrentLabel: 'यह लेख सुनें',
+  listenInviteTitle: 'हाथ व्यस्त हैं? इसके बजाय सुनें।',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `यह लेख ${minutes} मिनट की बातचीत के रूप में भी उपलब्ध है। ड्राइव, वर्कआउट या बर्तन धोते समय के लिए बढ़िया।`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `यह लेख ${minutes} मिनट के वाचन के रूप में भी उपलब्ध है। ड्राइव, वर्कआउट या बर्तन धोते समय के लिए बढ़िया।`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `यह लेख ${minutes} मिनट की बहस के रूप में भी उपलब्ध है। ड्राइव, वर्कआउट या बर्तन धोते समय के लिए बढ़िया।`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `यह लेख ${minutes} मिनट की स्किट के रूप में भी उपलब्ध है। ड्राइव, वर्कआउट या बर्तन धोते समय के लिए बढ़िया।`,
+  listenInvitePlayLabel: 'चलाएँ',
+  listenInviteDeclineLabel: 'नहीं, धन्यवाद',
+  listenInviteNote: 'AI आवाज़ें, इसी लेख से रूपांतरित।',
+  listenInviteCloseLabel: 'अभी बंद करें',
+  listenPlayerRegionLabel: 'ऑडियो प्लेयर',
+  listenPlayerNowPlayingLabel: 'अभी चल रहा है',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${count} में से ${index}`,
+  listenPlayerPlayLabel: 'चलाएँ',
+  listenPlayerPauseLabel: 'रोकें',
+  listenPlayerBackLabel: '15 सेकंड पीछे',
+  listenPlayerPreviousLabel: 'पिछला एपिसोड',
+  listenPlayerNextLabel: 'अगला एपिसोड',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `प्लेबैक गति ${rate}×`,
+  listenPlayerSeekLabel: 'स्थिति',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${total} में से ${elapsed}`,
+  listenPlayerCloseLabel: 'रोकें और बंद करें',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `चल रहा है: ${title}`,
+  listenListHeading: 'यह ब्लॉग सुनें',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `${count} एपिसोड · ${duration}`,
+  listenListPlayAllLabel: 'सभी चलाएँ',
+  listenListShuffleLabel: 'शफ़ल करें',
+  listenListOrderLabel: 'क्रम',
+  listenListNewestLabel: 'सबसे नया पहले',
+  listenListOldestLabel: 'सबसे पुराना पहले',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `सभी ${count} दिखाएँ`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `${title} चलाएँ`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} मिनट`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) =>
+    `${hours} घंटा ${minutes} मिनट`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

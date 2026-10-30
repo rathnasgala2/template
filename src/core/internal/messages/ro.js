@@ -216,6 +216,58 @@ export default Object.freeze({
   versionToolchainLabel: 'Instrumente de publicare',
   versionCommitLabel: 'Commit sursă',
   versionBuiltAtLabel: 'Construit la',
+  listenNavLabel: 'Ascultă',
+  listenNavCurrentLabel: 'Ascultă această postare',
+  listenInviteTitle: 'Ai mâinile ocupate? Ascultă, în loc să citești.',
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyConversation: (minutes) =>
+    `Această postare există și ca o conversație de ${minutes} min. Bună pentru drum, antrenament sau spălat vasele.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyNarration: (minutes) =>
+    `Această postare există și ca o naraţiune de ${minutes} min. Bună pentru drum, antrenament sau spălat vasele.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodyDebate: (minutes) =>
+    `Această postare există și ca o dezbatere de ${minutes} min. Bună pentru drum, antrenament sau spălat vasele.`,
+  /** @type {(minutes: string) => string} */
+  listenInviteBodySkit: (minutes) =>
+    `Această postare există și ca o schiță de ${minutes} min. Bună pentru drum, antrenament sau spălat vasele.`,
+  listenInvitePlayLabel: 'Redă',
+  listenInviteDeclineLabel: 'Nu, mulțumesc',
+  listenInviteNote: 'Voci AI, adaptate după această postare.',
+  listenInviteCloseLabel: 'Închide deocamdată',
+  listenPlayerRegionLabel: 'Player audio',
+  listenPlayerNowPlayingLabel: 'Se redă acum',
+  /** @type {(index: string, count: string) => string} */
+  listenPlayerPositionLabel: (index, count) => `${index} din ${count}`,
+  listenPlayerPlayLabel: 'Redă',
+  listenPlayerPauseLabel: 'Pauză',
+  listenPlayerBackLabel: 'Înapoi 15 secunde',
+  listenPlayerPreviousLabel: 'Episodul anterior',
+  listenPlayerNextLabel: 'Episodul următor',
+  /** @type {(rate: string) => string} */
+  listenPlayerSpeedLabel: (rate) => `Viteza de redare ${rate}×`,
+  listenPlayerSeekLabel: 'Poziție',
+  /** @type {(elapsed: string, total: string) => string} */
+  listenPlayerTimeLabel: (elapsed, total) => `${elapsed} din ${total}`,
+  listenPlayerCloseLabel: 'Oprește și închide',
+  /** @type {(title: string) => string} */
+  listenPlayerPlayingAnnouncement: (title) => `Se redă: ${title}`,
+  listenListHeading: 'Ascultă acest blog',
+  /** @type {(count: string, duration: string) => string} */
+  listenListSummary: (count, duration) => `Episoade: ${count} · ${duration}`,
+  listenListPlayAllLabel: 'Redă tot',
+  listenListShuffleLabel: 'Aleatoriu',
+  listenListOrderLabel: 'Ordine',
+  listenListNewestLabel: 'Cele mai noi întâi',
+  listenListOldestLabel: 'Cele mai vechi întâi',
+  /** @type {(count: string) => string} */
+  listenListShowAllLabel: (count) => `Arată toate (${count})`,
+  /** @type {(title: string) => string} */
+  listenListPlayTrackLabel: (title) => `Redă: ${title}`,
+  /** @type {(minutes: string) => string} */
+  listenDurationMinutes: (minutes) => `${minutes} min`,
+  /** @type {(hours: string, minutes: string) => string} */
+  listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
