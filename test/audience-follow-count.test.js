@@ -17,6 +17,7 @@ import { getMessages } from '../src/core/internal/messages.js';
 import {
   AUTHOR,
   FOLLOW_PATH,
+  SESSION_KEY,
   SESSION,
   audiencePage,
   bootAudience,
@@ -222,4 +223,36 @@ test('script: the count is written in the page language', async () => {
   });
   await h.settle();
   assert.equal(countOf(h, 0).text, 'Подписчиков: 12');
+});
+
+test('script: a 401 drops the session and hides every follower count on the page', async () => {
+  for (const method of ['PUT', 'DELETE']) {
+    const h = await bootAudience(markup(), {
+      session: SESSION,
+      handler: routed({
+        ...getRoutes(
+          { following: method === 'DELETE', followers: 4 },
+          { followers: 9 },
+        ),
+        [`${method} ${FOLLOW_PATH()}`]: {
+          status: 401,
+          body: { code: 'READER_AUTHENTICATION_REQUIRED' },
+        },
+      }),
+    });
+    await h.settle();
+    assert.equal(countOf(h, 0).text, '4 followers');
+    assert.equal(countOf(h, 2).text, '9 followers');
+    const action = method === 'PUT' ? 'follow' : 'unfollow';
+    h.$$(`[data-follow-action="${action}"]`)[0].click();
+    await h.settle();
+    for (let i = 0; i < 3; i++) {
+      assert.deepEqual(countOf(h, i), { hidden: true, text: '' }, method);
+    }
+    assert.equal(h.storage(SESSION_KEY), null);
+    assert.equal(
+      h.$$('.g-follow')[0].dataset.state,
+      method === 'PUT' ? 'idle' : 'following',
+    );
+  }
 });

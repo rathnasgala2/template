@@ -139,6 +139,14 @@
   function dropSession() {
     session = null;
     writeStorage('localStorage', SESSION_KEY, null);
+    // The follower count is only for a signed-in team member.
+    for (const count of Array.from(
+      document.querySelectorAll('[data-follow-count]'),
+    )) {
+      /** @type {HTMLElement} */ (count).hidden = true;
+      const text = count.querySelector('[data-follow-count-text]');
+      if (text) text.textContent = '';
+    }
   }
 
   // ------------------------------------------------------------------ network
