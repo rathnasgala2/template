@@ -1,6 +1,6 @@
 {
   "name": "@rathnasgala2/template",
-  "version": "4.7.0",
+  "version": "4.8.0",
   "description": "Deterministic Eleventy-backed static publication renderer for Galascribe portable repositories.",
   "type": "module",
   "license": "Apache-2.0",
@@ -78,7 +78,7 @@
     "sanitize-html": "2.17.7"
   },
   "peerDependencies": {
-    "@rathnasgala2/schemas": "^3.25.0"
+    "@rathnasgala2/schemas": "^3.26.0"
   },
   "devDependencies": {
     "@cyclonedx/cyclonedx-npm": "6.0.1",

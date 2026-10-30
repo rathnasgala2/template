@@ -843,28 +843,29 @@ read from disk and emitted as `assets/gala-interactions-v1.js` when
 `build-input.modules.interactions` is present (and, when its `publicCounts` show
 reaction or comment counts, `assets/gala-counts-v1.js`; see Counts on cards and
 article headers; and, for the audience features, `assets/gala-audience-v1.js`;
-see Audience features). `test/module-tree-absence.test.js`,
-`.dependency-cruiser.cjs` and the ESLint `no-restricted-imports` rule enforce
-this. `newsletter` and `prism` have no module directory, package, configuration
-schema, stub, output or runtime code in this MVP. Reader consent and analytics
-are not a module either: they are a core privacy setting.
-`build-input.modules.analytics` (schemas 3.16.0, Google Analytics 4 with an
-opt-in policy) adds, under `src/core/internal/analytics/`, a consent banner
-after the footer of every HTML page, a "Privacy choices" button in the footer
-legal navigation, `assets/gala-consent-v1.js` (deferred; no eval, no cookie; the
-choice is kept in `localStorage` as `gala.consent.v1`), the provider's CSP
-sources and the analytics paragraph of the policy pages' Galascribe section.
-Nothing from the provider loads before the reader accepts, and a site without
-the module has none of these (it still carries the legal footer navigation and
-the two policy pages). A browser that sends the Global Privacy Control signal
-(`navigator.globalPrivacyControl === true`) with no stored choice is treated as
-declining, without storing anything and without the banner on load; the footer's
-"Privacy choices" button still opens it, and `gala:consent` carries
-`{analytics: false, source: 'gpc'}`. Whitelabel is not a module either: the
-footer's "Galascribe" credit link is a core appearance switch,
-`build-input.appearance.attribution` (`showMadeWith: false` omits the line;
-absent or `true` shows it). Nor are editions: they are a rendered content kind
-(see Editions).
+see Audience features; and, when Listen is live, `assets/gala-listen-v1.js`,
+read from `src/modules/interactions/browser/gala-listen.js`; see Listen).
+`test/module-tree-absence.test.js`, `.dependency-cruiser.cjs` and the ESLint
+`no-restricted-imports` rule enforce this. `newsletter` and `prism` have no
+module directory, package, configuration schema, stub, output or runtime code in
+this MVP. Reader consent and analytics are not a module either: they are a core
+privacy setting. `build-input.modules.analytics` (schemas 3.16.0, Google
+Analytics 4 with an opt-in policy) adds, under `src/core/internal/analytics/`, a
+consent banner after the footer of every HTML page, a "Privacy choices" button
+in the footer legal navigation, `assets/gala-consent-v1.js` (deferred; no eval,
+no cookie; the choice is kept in `localStorage` as `gala.consent.v1`), the
+provider's CSP sources and the analytics paragraph of the policy pages'
+Galascribe section. Nothing from the provider loads before the reader accepts,
+and a site without the module has none of these (it still carries the legal
+footer navigation and the two policy pages). A browser that sends the Global
+Privacy Control signal (`navigator.globalPrivacyControl === true`) with no
+stored choice is treated as declining, without storing anything and without the
+banner on load; the footer's "Privacy choices" button still opens it, and
+`gala:consent` carries `{analytics: false, source: 'gpc'}`. Whitelabel is not a
+module either: the footer's "Galascribe" credit link is a core appearance
+switch, `build-input.appearance.attribution` (`showMadeWith: false` omits the
+line; absent or `true` shows it). Nor are editions: they are a rendered content
+kind (see Editions).
 
 ## Share buttons
 
@@ -1049,6 +1050,73 @@ generation is certified live and puts it in the newsletter email.
   `text/html; charset=utf-8`). A site on a host that skips underscore folders
   must serve `_gala/` (for GitHub Pages, publish with `.nojekyll`).
 
+## Listen
+
+Listen puts an audio version beside a post: a small invitation on the post, a
+"Listen" button in the top bar, and a playlist on the home page. It is opt-in
+twice. `publication.listen.enabled` (schemas 3.26.0) turns it on for the site,
+and a published article carries `listen` (`audio`, `durationSeconds` 1 to 10800,
+`format` of `conversation`, `narration`, `debate` or `skit`). Listen is **live**
+for a build when both hold: the site has it on and at least one published
+article has audio. A build that is not live renders the bytes it rendered
+before, emits no audio and loads no script. An unlisted post's audio is never
+emitted, and a post whose `deleteDate` has come leaves the playlist with the
+post.
+
+Build input (what the publish toolchain's intake hands the renderer):
+`publication.listen` is `{ "enabled": boolean }`; a content record's
+`frontmatter.listen` is
+`{ audio: { sourcePath, mediaType, bytes, sha256 }, durationSeconds, format }`
+with `mediaType` `audio/mpeg` or `audio/mp4`. The renderer reads
+`audio.sourcePath` from `options.sourceDirectory`, fails closed
+(`MEDIA_SOURCE_DIGEST_MISMATCH`, `MEDIA_FORMAT_INVALID`,
+`MEDIA_RESOURCE_EXCEEDED`) before anything is written if the bytes do not match
+`bytes` and `sha256` or exceed 25 MiB per file or 512 MiB in all, and copies
+each file once, as-is (no transcoding), to
+`assets/listen/<slug>.<first 8 hex of sha256>.<ext>` (`.mp3` or `.m4a`) with a
+manifest asset row of its media type (`immutable`). The source file is also a
+manifest included source (role `asset`).
+
+A live build gives every HTML page the script
+(`<script src=".../assets/gala-listen-v1.js" defer data-gala-listen-script>`),
+the top-bar button, two JSON blobs and the UI `<template>`; an article page with
+audio also gets its track, and the home page gets the playlist. The script finds
+everything by `data-gala-listen-*` attributes:
+
+- the top-bar button sits in the header actions after the search button: on an
+  article with audio a `<button data-gala-listen-open="current">` that opens the
+  player on this post; everywhere else an
+  `<a data-gala-listen-open="playlist" href="{base}#listen">` that works without
+  JavaScript. The label shows from 600px wide; below that the icon shows alone
+  and the label is visually hidden, not removed;
+- `<script type="application/json" data-gala-listen-config>`: `siteTitle`,
+  `playlistUrl` (an absolute path) and `artwork` (the brand mark as an absolute
+  URL, else `null`);
+- `<script type="application/json" data-gala-listen-messages>`: the page
+  language's strings as one flat object keyed `nav.label`, `invite.title`,
+  `player.pause`, `list.summary`, `duration.minutes`, and so on; a string that
+  takes arguments carries `{minutes}`, `{index}`, `{count}`, `{rate}`,
+  `{elapsed}`, `{total}`, `{title}`, `{duration}` or `{hours}` for the script to
+  fill (catalog keys are the `listen*` entries of `internal/messages/en.js`;
+  minutes shown are `max(1, round(seconds / 60))`);
+- `<script type="application/json" data-gala-listen-current>` (article pages
+  with audio only): one track,
+  `{ id, slug, title, url, audio, durationSeconds, format, publishedAt }`, `url`
+  and `audio` absolute paths;
+- `<template data-gala-listen-ui>`: the invitation and the player, cloned by the
+  script;
+- the home page's `<section id="listen" data-gala-listen-list>`, placed after
+  the intro and before the post list, with the controls and per-row play buttons
+  `hidden` (a plain list of links without JavaScript) and the tracks, newest
+  first, in `<script type="application/json" data-gala-listen-tracks>`.
+
+The base layer owns the CSS (`.g-listen*`, `.g-listen-nav*`, `.g-listen-list*`):
+tokens only, `z-index: 55` (below the consent banner and the toast at 60), a
+full-width bottom sheet at 480px and below, safe-area offsets, and opacity-only
+motion under `prefers-reduced-motion`. The classes are template-owned feature
+chrome like the Follow control's: they are not part of the published styling
+contract. Playback is the shipped script's alone; the renderer makes no request.
+
 ## Policy pages
 
 Every site carries two legal pages, `/terms` and `/privacy` (page kind
@@ -1091,20 +1159,21 @@ slash and ignoring letter case) fails the build closed with
 
 ## Consuming `@rathnasgala2/schemas`
 
-This source targets `@rathnasgala2/schemas@3.25.0` with a `^3.25.0` peer range
-(any 3.x from 3.25.0; 3.25.0 adds `deleteDate`, `publication.listing`,
-`publication.aiRights` and `publication.performance`; 3.22.0 adds
-`publication.sharing`, the Galascribe newsletter mode with `emailContent`,
-`publication.contactForm`, and `follows` in the interactions config; 3.21.0 adds
-`translationOf`; 3.16.0 adds `modules.analytics`, `build-input.policies` and the
-`site-policy-defaults` export, and its `theme-contract` admits styling contract
-4.1.0); the lock installs 3.25.0 exactly from the npm registry, with its
-registry integrity. The 2.8.0->2.11.0 convergence changes none of the four roots
-this renderer validates, for the same reason the 2.7.0-2.8.0 delta below did
-not. Only the `"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) and,
-since 4.4.0, the `./site-policy-defaults` export (the default policy text) are
-consumed; the 2.6.0 `./runtime-origins` narrow export and every other addition
-through 2.6.1 (new OpenAPI operations, App route/catalog copy, the
+This source targets `@rathnasgala2/schemas@3.26.0` with a `^3.26.0` peer range
+(any 3.x from 3.26.0; 3.26.0 adds `publication.listen` and a post's `listen`
+member; 3.25.0 adds `deleteDate`, `publication.listing`, `publication.aiRights`
+and `publication.performance`; 3.22.0 adds `publication.sharing`, the Galascribe
+newsletter mode with `emailContent`, `publication.contactForm`, and `follows` in
+the interactions config; 3.21.0 adds `translationOf`; 3.16.0 adds
+`modules.analytics`, `build-input.policies` and the `site-policy-defaults`
+export, and its `theme-contract` admits styling contract 4.1.0); the lock
+installs 3.26.0 exactly from the npm registry, with its registry integrity. The
+2.8.0->2.11.0 convergence changes none of the four roots this renderer
+validates, for the same reason the 2.7.0-2.8.0 delta below did not. Only the
+`"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) and, since 4.4.0, the
+`./site-policy-defaults` export (the default policy text) are consumed; the
+2.6.0 `./runtime-origins` narrow export and every other addition through 2.6.1
+(new OpenAPI operations, App route/catalog copy, the
 `PrincipalSummary`/`AuthenticatorSummary`/keyset field additions) are
 App/API-surface changes this renderer does not read. The `"."` export's 2.2.2
 browser-safety refactor (Node builtins replaced with browser-safe equivalents

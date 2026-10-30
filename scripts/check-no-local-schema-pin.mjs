@@ -16,7 +16,7 @@ const FORBIDDEN = [
 ];
 const FILES = ['package.json', 'package-lock.json'];
 const REGISTRY_TARBALL =
-  'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.25.0.tgz';
+  'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.26.0.tgz';
 
 /**
  * @param {string} path the file to scan
@@ -44,23 +44,23 @@ async function main() {
   const diagnostics = (await Promise.all(FILES.map(checkFile))).flat();
   const manifest = JSON.parse(await readFile('package.json', 'utf8'));
   const lock = JSON.parse(await readFile('package-lock.json', 'utf8'));
-  if (manifest.peerDependencies?.['@rathnasgala2/schemas'] !== '^3.25.0') {
+  if (manifest.peerDependencies?.['@rathnasgala2/schemas'] !== '^3.26.0') {
     diagnostics.push(
-      'package.json: @rathnasgala2/schemas must be the ^3.25.0 peer for portable source-only installation.',
+      'package.json: @rathnasgala2/schemas must be the ^3.26.0 peer for portable source-only installation.',
     );
   }
   if (
     lock.packages?.['']?.peerDependencies?.['@rathnasgala2/schemas'] !==
-    '^3.25.0'
+    '^3.26.0'
   ) {
     diagnostics.push(
-      'package-lock.json: @rathnasgala2/schemas must be the ^3.25.0 peer.',
+      'package-lock.json: @rathnasgala2/schemas must be the ^3.26.0 peer.',
     );
   }
   const schemaLock = lock.packages?.['node_modules/@rathnasgala2/schemas'];
-  if (schemaLock?.version !== '3.25.0') {
+  if (schemaLock?.version !== '3.26.0') {
     diagnostics.push(
-      'package-lock.json: the installed @rathnasgala2/schemas entry must be version 3.25.0.',
+      'package-lock.json: the installed @rathnasgala2/schemas entry must be version 3.26.0.',
     );
   }
   if (schemaLock?.resolved !== REGISTRY_TARBALL) {
@@ -77,7 +77,7 @@ async function main() {
     throw new Error(diagnostics.join('\n'));
   }
   console.log(
-    'schema is a caret-range registry peer (installed 3.25.0 pinned by the lock).',
+    'schema is a caret-range registry peer (installed 3.26.0 pinned by the lock).',
   );
 }
 

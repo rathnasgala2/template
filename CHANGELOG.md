@@ -8,6 +8,35 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.8.0] - 2026-10-30
+
+### Added
+
+- Listen, audio versions of posts (schemas 3.26.0). With
+  `publication.listen.enabled` and at least one published article carrying
+  `listen` (`audio`, `durationSeconds`, `format`), the build is live: each
+  published post's audio is copied as-is to
+  `assets/listen/<slug>.<first 8 hex of sha256>.<ext>` with a manifest asset row
+  (`audio/mpeg` or `audio/mp4`), every HTML page gets a top-bar Listen button (a
+  button that opens the player on an article with audio, a link to the home
+  playlist elsewhere), the config and message blobs, the UI `<template>` and
+  `assets/gala-listen-v1.js`, an article with audio gets its track blob, and the
+  home page gets a playlist section (after the intro, before the post list) with
+  the tracks newest first. Not live means no audio, no script and the same bytes
+  as before.
+- The Listen strings in all 58 chrome locales (35 keys, `listen*`).
+- `.g-listen*`, `.g-listen-nav*` and `.g-listen-list*` in the base layer: tokens
+  only, `z-index: 55`, a bottom sheet at 480px and below, safe-area offsets,
+  opacity-only motion under `prefers-reduced-motion`.
+- `src/modules/interactions/browser/gala-listen.js`, the Listen browser script,
+  emitted as `assets/gala-listen-v1.js` like the audience script.
+
+### Changed
+
+- Requires `@rathnasgala2/schemas` 3.26.0.
+- A manifest included source (role `asset`) is listed for each Listen audio file
+  the build copies.
+
 ## [4.7.0] - 2026-10-29
 
 ### Added
