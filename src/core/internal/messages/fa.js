@@ -113,6 +113,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `اکنون ${name} را دنبال می‌کنید.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `دیگر ${name} را دنبال نمی‌کنید.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} دنبال‌کننده`,
+  followersTeamHint: 'فقط تیم سایت شما این را می‌بیند',
   followDisabledMessage: 'دنبال کردن اکنون در این سایت در دسترس نیست.',
   followAuthorMissingMessage: 'این نویسنده را اکنون نمی‌توان دنبال کرد.',
   audienceNetworkError: 'اتصال به Galascribe برقرار نشد. دوباره تلاش کنید.',

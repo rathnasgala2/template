@@ -112,6 +112,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `আপনি এখন ${name}-কে ফলো করছেন।`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `আপনি আর ${name}-কে ফলো করছেন না।`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} জন অনুসারী`,
+  followersTeamHint: 'শুধু আপনার সাইটের টিম এটি দেখতে পায়',
   followDisabledMessage: 'এই সাইটে এখন ফলো করা যাচ্ছে না।',
   followAuthorMissingMessage: 'এই লেখককে এখন ফলো করা যাচ্ছে না।',
   audienceNetworkError: 'Galascribe-এ পৌঁছানো গেল না। আবার চেষ্টা করুন।',

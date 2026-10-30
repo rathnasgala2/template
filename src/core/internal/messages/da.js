@@ -114,6 +114,10 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Du følger nu ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Du følger ikke længere ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) =>
+    count === '1' ? '1 følger' : `${count} følgere`,
+  followersTeamHint: 'Kun dit websteds team kan se dette',
   followDisabledMessage:
     'Det er ikke muligt at følge på dette websted lige nu.',
   followAuthorMissingMessage: 'Denne forfatter kan ikke følges lige nu.',

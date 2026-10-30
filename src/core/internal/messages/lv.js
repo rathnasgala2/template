@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Tagad sekojat: ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Vairs nesekojat: ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `Sekotāji: ${count}`,
+  followersTeamHint: 'To redz tikai jūsu vietnes komanda',
   followDisabledMessage: 'Sekošana šajā vietnē pašlaik nav pieejama.',
   followAuthorMissingMessage: 'Šim autoram pašlaik nevar sekot.',
   audienceNetworkError: 'Neizdevās sazināties ar Galascribe. Mēģiniet vēlreiz.',

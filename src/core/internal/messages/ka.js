@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `ახლა თვალს ადევნებთ: ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `აღარ ადევნებთ თვალს: ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} გამომწერი`,
+  followersTeamHint: 'ამას მხოლოდ თქვენი საიტის გუნდი ხედავს',
   followDisabledMessage: 'ამ საიტზე გამოწერა ახლა მიუწვდომელია.',
   followAuthorMissingMessage: 'ამ ავტორის გამოწერა ახლა შეუძლებელია.',
   audienceNetworkError:

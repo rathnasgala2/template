@@ -120,6 +120,9 @@ export default Object.freeze({
     `நீங்கள் இப்போது ${name} ஐப் பின்தொடர்கிறீர்கள்.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `நீங்கள் இனி ${name} ஐப் பின்தொடரவில்லை.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} பின்தொடர்பவர்கள்`,
+  followersTeamHint: 'இதை உங்கள் தளத்தின் குழு மட்டுமே பார்க்கும்',
   followDisabledMessage: 'இந்தத் தளத்தில் பின்தொடர்தல் தற்போது கிடைக்கவில்லை.',
   followAuthorMissingMessage: 'இந்த எழுத்தாளரை இப்போது பின்தொடர முடியாது.',
   audienceNetworkError: 'Galascribe ஐ அடைய முடியவில்லை. மீண்டும் முயலவும்.',

@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Du följer nu ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Du följer inte längre ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} följare`,
+  followersTeamHint: 'Bara din webbplats team ser detta',
   followDisabledMessage:
     'Det går inte att följa på den här webbplatsen just nu.',
   followAuthorMissingMessage: 'Den här författaren går inte att följa just nu.',

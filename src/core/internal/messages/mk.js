@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Сега го следите ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Повеќе не го следите ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `Следбеници: ${count}`,
+  followersTeamHint: 'Ова го гледа само тимот на вашата страница',
   followDisabledMessage: 'Следењето моментално не е достапно на оваа страница.',
   followAuthorMissingMessage: 'Овој автор моментално не може да се следи.',
   audienceNetworkError:

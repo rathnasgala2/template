@@ -112,6 +112,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `ตอนนี้คุณติดตาม ${name} แล้ว`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `คุณเลิกติดตาม ${name} แล้ว`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `ผู้ติดตาม ${count} คน`,
+  followersTeamHint: 'เฉพาะทีมของไซต์คุณเท่านั้นที่เห็น',
   followDisabledMessage: 'ตอนนี้เว็บไซต์นี้ยังไม่เปิดให้ติดตาม',
   followAuthorMissingMessage: 'ตอนนี้ยังติดตามผู้เขียนคนนี้ไม่ได้',
   audienceNetworkError: 'เชื่อมต่อ Galascribe ไม่ได้ ลองอีกครั้ง',

@@ -8,6 +8,17 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Follower count beside every Follow control, shown only to the site's team. The
+  control ships a hidden count (users icon, text, and the hint "Only your site's
+  team sees this" as a `title` and as visually hidden text). The audience script
+  fills it from the optional `followers` member of the follow answer (GET, PUT
+  and DELETE), updates every control for the author, and hides it again for an
+  answer without a non-negative integer `followers`. Readers outside the team
+  see the page unchanged. Two new strings (`followersCountLabel`,
+  `followersTeamHint`) in all 58 chrome locales.
+
 ## [4.8.0] - 2026-10-30
 
 ### Added

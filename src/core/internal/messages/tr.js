@@ -115,6 +115,9 @@ export default Object.freeze({
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) =>
     `Artık ${name} kişisini takip etmiyorsunuz.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} takipçi`,
+  followersTeamHint: 'Bunu yalnızca sitenizin ekibi görür',
   followDisabledMessage: 'Takip özelliği bu sitede şu anda kullanılamıyor.',
   followAuthorMissingMessage: 'Bu yazar şu anda takip edilemiyor.',
   audienceNetworkError: "Galascribe'a ulaşılamadı. Tekrar deneyin.",

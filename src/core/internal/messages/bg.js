@@ -113,6 +113,10 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Вече следвате ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Вече не следвате ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) =>
+    count === '1' ? '1 последовател' : `${count} последователи`,
+  followersTeamHint: 'Само екипът на сайта ви вижда това',
   followDisabledMessage: 'Следването в момента не е налично на този сайт.',
   followAuthorMissingMessage: 'Този автор в момента не може да бъде следван.',
   audienceNetworkError: 'Не може да се свърже с Galascribe. Опитайте отново.',

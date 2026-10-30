@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Sada pratite ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Više ne pratite ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `Pratilaca: ${count}`,
+  followersTeamHint: 'Ovo vidi samo tim vaše stranice',
   followDisabledMessage: 'Praćenje trenutno nije dostupno na ovoj stranici.',
   followAuthorMissingMessage: 'Ovog autora trenutno nije moguće pratiti.',
   audienceNetworkError: 'Nije moguće doći do Galascribe. Pokušajte ponovo.',

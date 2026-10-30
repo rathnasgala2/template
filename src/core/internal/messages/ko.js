@@ -115,6 +115,9 @@ export default Object.freeze({
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) =>
     `더 이상 ${name}을(를) 팔로우하지 않습니다.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `팔로워 ${count}명`,
+  followersTeamHint: '사이트 팀에게만 표시됩니다',
   followDisabledMessage: '지금은 이 사이트에서 팔로우를 사용할 수 없습니다.',
   followAuthorMissingMessage: '지금은 이 작성자를 팔로우할 수 없습니다.',
   audienceNetworkError: 'Galascribe에 연결할 수 없습니다. 다시 시도하세요.',

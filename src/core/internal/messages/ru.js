@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Вы подписались на ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Вы отписались от ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `Подписчиков: ${count}`,
+  followersTeamHint: 'Это видит только команда вашего сайта',
   followDisabledMessage: 'Подписка на этом сайте сейчас недоступна.',
   followAuthorMissingMessage: 'На этого автора сейчас нельзя подписаться.',
   audienceNetworkError:

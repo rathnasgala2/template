@@ -113,6 +113,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Ви підписалися на ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Ви відписалися від ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `Підписників: ${count}`,
+  followersTeamHint: 'Це бачить лише команда вашого сайту',
   followDisabledMessage: 'Підписка на цьому сайті зараз недоступна.',
   followAuthorMissingMessage: 'На цього автора зараз не можна підписатися.',
   audienceNetworkError: 'Не вдалося зв’язатися з Galascribe. Спробуйте ще раз.',

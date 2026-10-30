@@ -111,6 +111,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `מעכשיו אתם עוקבים אחרי ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `הפסקתם לעקוב אחרי ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `עוקבים: ${count}`,
+  followersTeamHint: 'רק הצוות של האתר שלך רואה זאת',
   followDisabledMessage: 'מעקב אינו זמין באתר הזה כרגע.',
   followAuthorMissingMessage: 'אי אפשר לעקוב אחרי הכותב הזה כרגע.',
   audienceNetworkError: 'אין חיבור ל-Galascribe. נסו שוב.',

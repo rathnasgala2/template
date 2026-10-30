@@ -111,6 +111,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `你已关注 ${name}。`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `你已取消关注 ${name}。`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} 位关注者`,
+  followersTeamHint: '仅网站团队可见',
   followDisabledMessage: '本站暂时无法使用关注功能。',
   followAuthorMissingMessage: '暂时无法关注这位作者。',
   audienceNetworkError: '无法连接 Galascribe，请重试。',

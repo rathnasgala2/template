@@ -115,6 +115,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Енді сіз ${name} авторын бақылап жатырсыз.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Енді сіз ${name} авторын бақыламайсыз.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} жазылушы`,
+  followersTeamHint: 'Мұны тек сайтыңыздың тобы көреді',
   followDisabledMessage: 'Бақылау бұл сайтта қазір қолжетімсіз.',
   followAuthorMissingMessage: 'Бұл авторды қазір бақылау мүмкін емес.',
   audienceNetworkError:

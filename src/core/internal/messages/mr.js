@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `तुम्ही आता ${name} यांना फॉलो करत आहात.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `तुम्ही आता ${name} यांना फॉलो करत नाही.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} फॉलोअर्स`,
+  followersTeamHint: 'हे फक्त तुमच्या साइटची टीम पाहते',
   followDisabledMessage: 'या साइटवर सध्या फॉलो करता येत नाही.',
   followAuthorMissingMessage: 'या लेखकाला सध्या फॉलो करता येत नाही.',
   audienceNetworkError:

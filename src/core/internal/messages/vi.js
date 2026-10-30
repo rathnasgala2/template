@@ -113,6 +113,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Bạn đang theo dõi ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Bạn đã bỏ theo dõi ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} người theo dõi`,
+  followersTeamHint: 'Chỉ nhóm của trang web bạn thấy điều này',
   followDisabledMessage: 'Hiện chưa thể theo dõi trên trang này.',
   followAuthorMissingMessage: 'Hiện chưa thể theo dõi tác giả này.',
   audienceNetworkError: 'Không thể kết nối tới Galascribe. Hãy thử lại.',

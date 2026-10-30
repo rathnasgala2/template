@@ -114,6 +114,10 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Jälgid nüüd: ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Enam ei jälgi: ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) =>
+    count === '1' ? '1 jälgija' : `${count} jälgijat`,
+  followersTeamHint: 'Seda näeb ainult saidi meeskond',
   followDisabledMessage: 'Jälgimine pole sellel saidil praegu saadaval.',
   followAuthorMissingMessage: 'Seda autorit ei saa praegu jälgida.',
   audienceNetworkError: "Galascribe'iga ei saanud ühendust. Proovi uuesti.",

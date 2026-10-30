@@ -116,6 +116,9 @@ export default Object.freeze({
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) =>
     `ನೀವು ಇನ್ನು ${name} ಅವರನ್ನು ಫಾಲೋ ಮಾಡುತ್ತಿಲ್ಲ.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} ಅನುಯಾಯಿಗಳು`,
+  followersTeamHint: 'ಇದನ್ನು ನಿಮ್ಮ ಸೈಟ್‌ನ ತಂಡ ಮಾತ್ರ ನೋಡುತ್ತದೆ',
   followDisabledMessage: 'ಈ ಸೈಟ್‌ನಲ್ಲಿ ಈಗ ಫಾಲೋ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.',
   followAuthorMissingMessage: 'ಈ ಲೇಖಕರನ್ನು ಈಗ ಫಾಲೋ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.',
   audienceNetworkError: 'Galascribe ತಲುಪಲು ಆಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',

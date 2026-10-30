@@ -113,6 +113,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Acum îl urmărești pe ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Nu mai urmărești ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `Urmăritori: ${count}`,
+  followersTeamHint: 'Doar echipa site-ului tău vede asta',
   followDisabledMessage: 'Urmărirea nu este disponibilă pe acest site acum.',
   followAuthorMissingMessage: 'Acest autor nu poate fi urmărit acum.',
   audienceNetworkError: 'Nu s-a putut contacta Galascribe. Încearcă din nou.',

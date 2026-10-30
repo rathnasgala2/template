@@ -112,6 +112,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `أصبحت تتابع ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `لم تعد تتابع ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `المتابعون: ${count}`,
+  followersTeamHint: 'يراه فريق موقعك فقط',
   followDisabledMessage: 'المتابعة غير متاحة في هذا الموقع حاليًا.',
   followAuthorMissingMessage: 'لا يمكن متابعة هذا الكاتب حاليًا.',
   audienceNetworkError: 'تعذّر الاتصال بـ Galascribe. حاول مرة أخرى.',

@@ -146,6 +146,7 @@ export function renderFollowControl({ author, messages }) {
     `<span class="g-follow-state">${icon('check')}<span>${text('followingLabel')}</span></span>` +
     `<button class="g-follow-undo" type="button" data-follow-action="unfollow" aria-label="${call('unfollowAriaLabel', name)}">${text('unfollowLabel')}</button>` +
     `</span>` +
+    `<span class="g-follow-count" data-follow-count title="${text('followersTeamHint')}" hidden>${icon('users')}<span data-follow-count-text></span><span class="g-sr-only"> ${text('followersTeamHint')}</span></span>` +
     `<span class="g-follow-status" role="status" aria-live="polite"></span>` +
     `</span>`
   );
@@ -304,9 +305,13 @@ export function serializeAudienceMessages(messages) {
     /** @type {string} */ (messages[key]);
   const named = (/** @type {string} */ key) =>
     /** @type {(name: string) => string} */ (messages[key])('{name}');
+  const count = (/** @type {string} */ key, /** @type {string} */ n) =>
+    /** @type {(c: string) => string} */ (messages[key])(n);
   return serializeJsonLd({
     followed: named('followedAnnouncement'),
     unfollowed: named('unfollowedAnnouncement'),
+    followersOne: count('followersCountLabel', '1'),
+    followersOther: count('followersCountLabel', '{count}'),
     followDisabled: plain('followDisabledMessage'),
     authorGone: plain('followAuthorMissingMessage'),
     network: plain('audienceNetworkError'),

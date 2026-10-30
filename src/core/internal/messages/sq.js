@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Tani po ndiqni ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Nuk po e ndiqni më ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} ndjekës`,
+  followersTeamHint: 'Këtë e sheh vetëm ekipi i faqes tuaj',
   followDisabledMessage: 'Ndjekja nuk është e disponueshme në këtë sajt tani.',
   followAuthorMissingMessage: 'Ky autor nuk mund të ndiqet tani.',
   audienceNetworkError: 'Nuk u lidh dot me Galascribe. Provoni përsëri.',

@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `మీరు ఇప్పుడు ${name} ను ఫాలో అవుతున్నారు.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `మీరు ఇకపై ${name} ను ఫాలో అవ్వడం లేదు.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} అనుచరులు`,
+  followersTeamHint: 'దీన్ని మీ సైట్ బృందం మాత్రమే చూస్తుంది',
   followDisabledMessage: 'ఈ సైట్‌లో ప్రస్తుతం ఫాలో చేయడం అందుబాటులో లేదు.',
   followAuthorMissingMessage: 'ఈ రచయితను ప్రస్తుతం ఫాలో చేయడం సాధ్యం కాదు.',
   audienceNetworkError: 'Galascribe ను చేరుకోలేకపోయాం. మళ్లీ ప్రయత్నించండి.',

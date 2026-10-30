@@ -115,6 +115,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `${name}をフォローしました。`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `${name}のフォローを解除しました。`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `フォロワー${count}人`,
+  followersTeamHint: 'サイトのチームにのみ表示されます',
   followDisabledMessage: '現在、このサイトではフォローを利用できません。',
   followAuthorMissingMessage: '現在、この著者はフォローできません。',
   audienceNetworkError:

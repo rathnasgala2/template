@@ -115,6 +115,10 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Τώρα ακολουθείς: ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Δεν ακολουθείς πια: ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) =>
+    count === '1' ? '1 ακόλουθος' : `${count} ακόλουθοι`,
+  followersTeamHint: 'Το βλέπει μόνο η ομάδα του ιστότοπού σας',
   followDisabledMessage:
     'Η παρακολούθηση δεν είναι διαθέσιμη σε αυτόν τον ιστότοπο αυτή τη στιγμή.',
   followAuthorMissingMessage:

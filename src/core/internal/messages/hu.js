@@ -115,6 +115,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Mostantól követed: ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Már nem követed: ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} követő`,
+  followersTeamHint: 'Ezt csak a webhelyed csapata látja',
   followDisabledMessage: 'A követés jelenleg nem érhető el ezen az oldalon.',
   followAuthorMissingMessage: 'Ez a szerző jelenleg nem követhető.',
   audienceNetworkError: 'A Galascribe nem érhető el. Próbáld újra.',

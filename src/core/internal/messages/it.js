@@ -113,6 +113,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Ora segui ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Non segui più ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} follower`,
+  followersTeamHint: 'Solo il team del tuo sito lo vede',
   followDisabledMessage: 'Al momento non è possibile seguire su questo sito.',
   followAuthorMissingMessage:
     'Al momento questo autore non può essere seguito.',

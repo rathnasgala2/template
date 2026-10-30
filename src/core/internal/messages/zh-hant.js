@@ -111,6 +111,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `您已追蹤 ${name}。`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `您已取消追蹤 ${name}。`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} 位追蹤者`,
+  followersTeamHint: '僅網站團隊可見',
   followDisabledMessage: '本站目前無法使用追蹤功能。',
   followAuthorMissingMessage: '目前無法追蹤這位作者。',
   audienceNetworkError: '無法連線至 Galascribe，請再試一次。',

@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Dabar sekate: ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Nebesekate: ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `Sekėjų: ${count}`,
+  followersTeamHint: 'Tai mato tik jūsų svetainės komanda',
   followDisabledMessage: 'Sekti šioje svetainėje šiuo metu negalima.',
   followAuthorMissingMessage: 'Šio autoriaus šiuo metu sekti negalima.',
   audienceNetworkError:

@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Teraz obserwujesz ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Już nie obserwujesz ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `Obserwujących: ${count}`,
+  followersTeamHint: 'Widzi to tylko zespół Twojej witryny',
   followDisabledMessage: 'Obserwowanie jest teraz niedostępne w tej witrynie.',
   followAuthorMissingMessage: 'Tego autora nie można teraz obserwować.',
   audienceNetworkError:

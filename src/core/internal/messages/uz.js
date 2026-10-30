@@ -115,6 +115,9 @@ export default Object.freeze({
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) =>
     `Endi siz ${name} muallifini kuzatmayapsiz.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} kuzatuvchi`,
+  followersTeamHint: "Buni faqat saytingiz jamoasi ko'radi",
   followDisabledMessage: 'Kuzatish bu saytda hozir mavjud emas.',
   followAuthorMissingMessage: 'Bu muallifni hozir kuzatib bo‘lmaydi.',
   audienceNetworkError:

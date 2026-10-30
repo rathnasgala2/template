@@ -113,6 +113,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `अब तपाईं ${name} लाई फलो गर्दै हुनुहुन्छ।`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `अब तपाईं ${name} लाई फलो गर्नुहुन्न।`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} फलोअर`,
+  followersTeamHint: 'यो तपाईंको साइटको टोलीले मात्र देख्छ',
   followDisabledMessage: 'यो साइटमा अहिले फलो गर्न मिल्दैन।',
   followAuthorMissingMessage: 'यी लेखकलाई अहिले फलो गर्न मिल्दैन।',
   audienceNetworkError: 'Galascribe सम्म पुग्न सकिएन। फेरि प्रयास गर्नुहोस्।',

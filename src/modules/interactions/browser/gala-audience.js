@@ -459,6 +459,44 @@
   }
 
   /**
+   * Show or hide the follower count (visible only to the site's team: the
+   * API sends `followers` to nobody else) on every control for one author.
+   * Anything but a non-negative integer number hides it.
+   *
+   * @param {string} authorId
+   * @param {unknown} followers the answer's `followers`
+   */
+  function showFollowers(authorId, followers) {
+    const valid =
+      typeof followers === 'number' &&
+      Number.isInteger(followers) &&
+      followers >= 0 &&
+      Boolean(messages.followersOne && messages.followersOther);
+    let label = '';
+    if (valid) {
+      const n = /** @type {number} */ (followers);
+      let formatted = String(n);
+      try {
+        formatted = n.toLocaleString(document.documentElement.lang || 'en');
+      } catch {
+        // An unknown language tag keeps the plain digits.
+      }
+      label = (
+        n === 1 ? messages.followersOne : messages.followersOther
+      ).replace('{count}', formatted);
+    }
+    for (const control of controlsFor(authorId)) {
+      const count = /** @type {HTMLElement | null} */ (
+        control.querySelector('[data-follow-count]')
+      );
+      const text = control.querySelector('[data-follow-count-text]');
+      if (!count || !text) continue;
+      text.textContent = label;
+      count.hidden = !valid;
+    }
+  }
+
+  /**
    * @param {unknown} error
    * @param {boolean} adding whether the call was a follow
    * @returns {string} the sentence for the failure
@@ -508,6 +546,7 @@
           ? result.following
           : adding;
       showFollowing(authorId, following);
+      showFollowers(authorId, result && result.followers);
       announce(
         status,
         say(following ? 'followed' : 'unfollowed').replace('{name}', name),
@@ -562,6 +601,7 @@
             { auth: true },
           );
           showFollowing(authorId, Boolean(result && result.following));
+          showFollowers(authorId, result && result.followers);
         } catch (error) {
           if (error instanceof ApiError && error.status === 401) dropSession();
           if (

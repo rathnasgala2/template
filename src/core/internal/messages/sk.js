@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Teraz sledujete: ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Už nesledujete: ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `Sledovateľov: ${count}`,
+  followersTeamHint: 'Vidí to iba tím vášho webu',
   followDisabledMessage:
     'Sledovanie na tejto stránke momentálne nie je dostupné.',
   followAuthorMissingMessage: 'Tohto autora momentálne nemožno sledovať.',

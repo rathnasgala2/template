@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Sada pratite: ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Više ne pratite: ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `Pratilaca: ${count}`,
+  followersTeamHint: 'Ovo vidi samo tim vašeg sajta',
   followDisabledMessage: 'Praćenje na ovom sajtu trenutno nije dostupno.',
   followAuthorMissingMessage: 'Ovog autora trenutno nije moguće pratiti.',
   audienceNetworkError:

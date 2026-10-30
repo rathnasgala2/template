@@ -112,6 +112,10 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Seuraat nyt: ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Et enää seuraa: ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) =>
+    count === '1' ? '1 seuraaja' : `${count} seuraajaa`,
+  followersTeamHint: 'Vain sivustosi tiimi näkee tämän',
   followDisabledMessage:
     'Seuraaminen ei ole tällä sivustolla käytettävissä juuri nyt.',
   followAuthorMissingMessage: 'Tätä kirjoittajaa ei voi seurata juuri nyt.',

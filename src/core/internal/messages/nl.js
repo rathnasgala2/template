@@ -115,6 +115,10 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Je volgt nu ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Je volgt ${name} niet meer.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) =>
+    count === '1' ? '1 volger' : `${count} volgers`,
+  followersTeamHint: 'Alleen het team van je site ziet dit',
   followDisabledMessage: 'Volgen is op deze site nu niet beschikbaar.',
   followAuthorMissingMessage: 'Deze auteur kan nu niet worden gevolgd.',
   audienceNetworkError: 'Galascribe is niet bereikbaar. Probeer het opnieuw.',

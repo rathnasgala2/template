@@ -115,6 +115,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Այժմ հետևում եք ${name}-ին։`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Այլևս չեք հետևում ${name}-ին։`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} հետևորդ`,
+  followersTeamHint: 'Սա տեսնում է միայն ձեր կայքի թիմը',
   followDisabledMessage: 'Հետևելը այս կայքում այս պահին հասանելի չէ։',
   followAuthorMissingMessage: 'Այս հեղինակին այս պահին հնարավոր չէ հետևել։',
   audienceNetworkError: 'Galascribe-ին չհաջողվեց կապվել։ Կրկին փորձեք։',

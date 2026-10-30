@@ -115,6 +115,10 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Agora você segue ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Você não segue mais ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) =>
+    count === '1' ? '1 seguidor' : `${count} seguidores`,
+  followersTeamHint: 'Só a equipe do seu site vê isto',
   followDisabledMessage: 'Seguir não está disponível neste site no momento.',
   followAuthorMissingMessage: 'Este autor não pode ser seguido no momento.',
   audienceNetworkError:

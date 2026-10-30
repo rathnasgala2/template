@@ -116,6 +116,10 @@ export default Object.freeze({
   followedAnnouncement: (name) => `You now follow ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `You no longer follow ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) =>
+    count === '1' ? '1 follower' : `${count} followers`,
+  followersTeamHint: "Only your site's team sees this",
   followDisabledMessage: "Following isn't available on this site right now.",
   followAuthorMissingMessage: "This author can't be followed right now.",
   audienceNetworkError: "Couldn't reach Galascribe. Try again.",

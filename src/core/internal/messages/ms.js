@@ -113,6 +113,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Anda kini mengikuti ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Anda tidak lagi mengikuti ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} pengikut`,
+  followersTeamHint: 'Hanya pasukan tapak anda melihat ini',
   followDisabledMessage:
     'Fungsi ikuti tidak tersedia di laman ini buat masa ini.',
   followAuthorMissingMessage: 'Penulis ini tidak dapat diikuti buat masa ini.',

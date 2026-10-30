@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `اب آپ ${name} کو فالو کر رہے ہیں۔`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `اب آپ ${name} کو فالو نہیں کر رہے۔`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} فالوورز`,
+  followersTeamHint: 'اسے صرف آپ کی سائٹ کی ٹیم دیکھتی ہے',
   followDisabledMessage: 'اس سائٹ پر فی الحال فالو کرنا دستیاب نہیں ہے۔',
   followAuthorMissingMessage: 'اس مصنف کو فی الحال فالو نہیں کیا جا سکتا۔',
   audienceNetworkError: 'Galascribe تک رسائی نہیں ہو سکی۔ دوبارہ کوشش کریں۔',

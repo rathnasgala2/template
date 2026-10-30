@@ -112,6 +112,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Þú fylgist nú með ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Þú fylgist ekki lengur með ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `Fylgjendur: ${count}`,
+  followersTeamHint: 'Aðeins teymi vefsins þíns sér þetta',
   followDisabledMessage: 'Ekki er hægt að fylgja á þessum vef núna.',
   followAuthorMissingMessage: 'Ekki er hægt að fylgja þessum höfundi núna.',
   audienceNetworkError: 'Náði ekki sambandi við Galascribe. Reyndu aftur.',

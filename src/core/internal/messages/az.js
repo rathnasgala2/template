@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Artıq ${name} adlı müəllifi izləyirsiniz.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Artıq ${name} adlı müəllifi izləmirsiniz.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} izləyici`,
+  followersTeamHint: 'Bunu yalnız saytınızın komandası görür',
   followDisabledMessage: 'İzləmə bu saytda hazırda mövcud deyil.',
   followAuthorMissingMessage: 'Bu müəllifi hazırda izləmək mümkün deyil.',
   audienceNetworkError: 'Galascribe ilə əlaqə qurulmadı. Yenidən cəhd edin.',

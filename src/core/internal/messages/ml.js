@@ -117,6 +117,9 @@ export default Object.freeze({
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) =>
     `നിങ്ങൾ ഇനി ${name} എന്നയാളെ പിന്തുടരുന്നില്ല.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} ഫോളോവർമാർ`,
+  followersTeamHint: 'ഇത് നിങ്ങളുടെ സൈറ്റിന്റെ ടീമിന് മാത്രമേ കാണാനാകൂ',
   followDisabledMessage: 'ഈ സൈറ്റിൽ ഇപ്പോൾ പിന്തുടരാൻ കഴിയില്ല.',
   followAuthorMissingMessage: 'ഈ എഴുത്തുകാരനെ ഇപ്പോൾ പിന്തുടരാൻ കഴിയില്ല.',
   audienceNetworkError: 'Galascribe-ൽ എത്താനായില്ല. വീണ്ടും ശ്രമിക്കുക.',

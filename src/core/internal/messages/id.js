@@ -114,6 +114,9 @@ export default Object.freeze({
   followedAnnouncement: (name) => `Sekarang Anda mengikuti ${name}.`,
   /** @type {(name: string) => string} */
   unfollowedAnnouncement: (name) => `Anda tidak lagi mengikuti ${name}.`,
+  /** @type {(count: string) => string} */
+  followersCountLabel: (count) => `${count} pengikut`,
+  followersTeamHint: 'Hanya tim situs Anda yang melihat ini',
   followDisabledMessage: 'Fitur mengikuti sedang tidak tersedia di situs ini.',
   followAuthorMissingMessage: 'Penulis ini sedang tidak bisa diikuti.',
   audienceNetworkError: 'Tidak dapat menjangkau Galascribe. Coba lagi.',
