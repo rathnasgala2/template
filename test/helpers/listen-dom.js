@@ -18,7 +18,7 @@ import { getMessages } from '../../src/core/internal/messages.js';
 /** The one place that names where the script lives. */
 export const LISTEN_SCRIPT_PATH = path.resolve(
   import.meta.dirname,
-  '../../src/modules/listen/browser/gala-listen.js',
+  '../../src/modules/interactions/browser/gala-listen.js',
 );
 export const LISTEN_SOURCE = await readFile(LISTEN_SCRIPT_PATH, 'utf8');
 
