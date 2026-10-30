@@ -26,7 +26,10 @@ import {
 const OTHER = '0190b1f0-0000-7000-8000-0000000000a2';
 const HINT = "Only your site's team sees this";
 
-/** @param {string} [language] */
+/**
+ * @param {string} [language] the page language
+ * @returns {string} a page with three controls
+ */
 function markup(language = 'en') {
   const messages = getMessages(language);
   const control = (/** @type {string} */ id, /** @type {string} */ name) =>
@@ -39,7 +42,11 @@ function markup(language = 'en') {
   );
 }
 
-/** @param {any} h @param {number} i */
+/**
+ * @param {any} h the harness
+ * @param {number} i the control index
+ * @returns {{hidden: boolean, text: string}} the count's state
+ */
 const countOf = (h, i) => {
   const el = h.$$('[data-follow-count]')[i];
   return {
@@ -48,7 +55,11 @@ const countOf = (h, i) => {
   };
 };
 
-/** @param {unknown} body */
+/**
+ * @param {unknown} body the first author's answer
+ * @param {unknown} [other] the second author's answer
+ * @returns {Record<string, any>} routes
+ */
 const getRoutes = (body, other = {}) => ({
   [`GET ${FOLLOW_PATH()}`]: { status: 200, body },
   [`GET ${FOLLOW_PATH(OTHER)}`]: { status: 200, body: other },
