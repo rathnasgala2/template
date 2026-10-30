@@ -102,6 +102,7 @@ import {
   renderContactForm,
   renderFollowControl,
 } from './audience.js';
+import { listenTrackOf, renderListenPlaylist } from './listen.js';
 import { getMessages } from './messages.js';
 import {
   languageLabel,
@@ -243,6 +244,9 @@ function paginate(items, pageSize) {
  *   output path a given `sourceDigest` produced)
  * @property {boolean} [interactionBearing] whether this page carries the
  *   reader-interactions section (article pages when the module is on)
+ * @property {import('./listen.js').ListenTrack} [listenTrack] the article's own
+ *   episode, on an article page with audio when Listen is live (the page then
+ *   gets the "Listen to this post" button and the current-track blob)
  * @property {string} [socialTitle] the `og:title`/`twitter:title` when it
  *   differs from `title` (`seo.title`)
  * @property {string} [canonicalUrl] an absolute canonical URL overriding the
@@ -481,6 +485,8 @@ export function homeDocumentTitle(name, tagline) {
  *   (default: follows off, the production App)
  * @param {import('./translations.js').TranslationResolution} [options.translations]
  *   the language-variant resolution (default: resolved from `content`)
+ * @param {import('./listen.js').ListenResolution} [options.listen] which
+ *   published articles carry audio when Listen is live (default: none)
  * @param {import('./route.js').RouteNormalizationProfile} [options.routeProfile]
  *   the route normalization profile deciding every emitted page URL's form
  *   (default `directory-index`)
@@ -1220,6 +1226,13 @@ export function buildGeneratedPages(validatedInput, options) {
     const { frontmatter } = record;
     useChrome(frontmatter.language);
     const isArticle = frontmatter.kind === 'article';
+    // The episode of an article with audio (Listen live).
+    const listenEntry = isArticle
+      ? options.listen?.byRecord.get(record)
+      : undefined;
+    const listenTrack = listenEntry
+      ? listenTrackOf(listenEntry, recordHref(record))
+      : undefined;
     // An edition restates `original`; a document that is not one is its own.
     const edition = editions.byRecord.get(record);
     const isEdition = edition !== undefined;
@@ -1489,6 +1502,7 @@ export function buildGeneratedPages(validatedInput, options) {
           ? 'noindex, follow'
           : undefined,
       interactionBearing: Boolean(interactions),
+      listenTrack,
       lastModified: contentLastModified(frontmatter),
       bodyHtml:
         `<article class="g-article" data-gala-article-layout="${composition.articleLayout}">${isArticle || isEdition ? '<div class="g-progress" aria-hidden="true"></div>' : ''}` +
@@ -1545,6 +1559,16 @@ export function buildGeneratedPages(validatedInput, options) {
       })()
     : `<section class="g-wrap g-topic-hero"><h2>${text('indexHeading')}</h2><p>${text('emptyListingLabel')}</p></section>`;
   const homeHeading = `<h1 class="g-sr">${escapeHtml(publicationTitle)}</h1>`;
+  // The Listen playlist (Listen live): every listed article with audio, newest
+  // first, after the intro and before the post list.
+  const listenTracks = publishedArticles.flatMap((record) => {
+    const entry = options.listen?.byRecord.get(record);
+    return entry ? [listenTrackOf(entry, recordHref(record))] : [];
+  });
+  const homeListen =
+    listenTracks.length > 0
+      ? renderListenPlaylist({ tracks: listenTracks, messages })
+      : '';
   const homeTags =
     sortedTags.length > 0
       ? `<section class="g-wrap g-topic-strip" aria-label="${text('browseByTagLabel')}"><ul class="g-pills">${[
@@ -1596,6 +1620,7 @@ export function buildGeneratedPages(validatedInput, options) {
         ? homeHeading +
           homeTags +
           homeFeatured +
+          homeListen +
           homeLatest +
           moreList +
           homeSeries +
@@ -1603,6 +1628,7 @@ export function buildGeneratedPages(validatedInput, options) {
         : composition.profile === 'visual'
           ? homeHeading +
             homeFeatured +
+            homeListen +
             homeLatest +
             homeSeries +
             homeTags +
@@ -1610,6 +1636,7 @@ export function buildGeneratedPages(validatedInput, options) {
             newsletterHtml
           : composition.profile === 'personal'
             ? homeHeading +
+              homeListen +
               homeLatest +
               homeFeatured +
               moreList +
@@ -1619,6 +1646,7 @@ export function buildGeneratedPages(validatedInput, options) {
             : composition.profile === 'developer'
               ? homeHeading +
                 homeTags +
+                homeListen +
                 homeLatest +
                 homeSeries +
                 homeFeatured +
@@ -1627,6 +1655,7 @@ export function buildGeneratedPages(validatedInput, options) {
               : homeHeading +
                 homeFeatured +
                 homeTags +
+                homeListen +
                 homeLatest +
                 homeSeries +
                 moreList +

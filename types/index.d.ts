@@ -75,6 +75,29 @@ export interface ContentSeo {
   noindex?: boolean;
 }
 
+/**
+ * One post's audio after publish intake (schemas 3.26.0): the repository file
+ * (under an `assetRoots` entry), its media type and its size and digest. The
+ * renderer copies it as-is.
+ */
+export interface ListenAudioNormalized {
+  sourcePath: string;
+  mediaType: 'audio/mpeg' | 'audio/mp4';
+  bytes: number;
+  sha256: string;
+}
+
+/** What an audio version is: a conversation, a narration, a debate or a skit. */
+export type ListenFormat = 'conversation' | 'narration' | 'debate' | 'skit';
+
+/** A post's `listen` front-matter member after publish intake (schemas 3.26.0). */
+export interface ListenNormalized {
+  audio: ListenAudioNormalized;
+  /** Whole seconds, 1 to 10800. */
+  durationSeconds: number;
+  format: ListenFormat;
+}
+
 /** A `contentFrontmatterNormalized`-shaped record's fields this renderer reads. */
 export interface ContentFrontmatterNormalized {
   id: string;
@@ -103,6 +126,8 @@ export interface ContentFrontmatterNormalized {
   translationOf?: string;
   /** The day (`YYYY-MM-DD`) the article leaves the site (schemas 3.25.0). */
   deleteDate?: string;
+  /** The article's audio version, `kind: "article"` only (schemas 3.26.0). */
+  listen?: ListenNormalized;
 }
 
 /**
@@ -211,6 +236,11 @@ export interface PublicationNormalized {
   };
   /** The article share group; absent means `["copy-link"]`, `[]` none. */
   sharing?: { targets: readonly ShareTarget[] };
+  /**
+   * Listen (schemas 3.26.0): audio versions of posts. Absent means off; it is
+   * live for a build only with a published article that has audio.
+   */
+  listen?: { enabled: boolean };
   crawlers?: { ai: 'allow' | 'block' };
   /** Posts per listing page, 1 to 50; absent means 10 (schemas 3.25.0). */
   listing?: { pageSize?: number };

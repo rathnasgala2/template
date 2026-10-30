@@ -73,6 +73,9 @@ function renderMark(name, mark) {
  *   appearance control, inserted into the `header-actions` slot
  * @param {string} [options.languageSwitcherHtml] the already-rendered language
  *   switcher, shown before the appearance control (empty on a one-language site)
+ * @param {string} [options.listenNavHtml] the already-rendered Listen button
+ *   (`internal/listen.js`), shown after the search button; empty unless Listen
+ *   is live
  * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} options.messages
  * @param {string} options.headerLayout the admitted composition's header layout
  * @returns {string} the rendered header
@@ -90,6 +93,7 @@ export function renderHeader({
   searchIndexHref,
   appearanceControlHtml,
   languageSwitcherHtml = '',
+  listenNavHtml = '',
   messages,
   headerLayout,
 }) {
@@ -108,6 +112,7 @@ export function renderHeader({
     `<div class="g-actions">` +
     `<button class="g-search-btn" type="button" hidden data-action="search" data-search-index="${escapeHtml(searchIndexHref)}" aria-label="${label('searchButtonAriaLabel')}">` +
     `${icon('search')}<span>${label('searchButtonLabel')}</span></button>` +
+    listenNavHtml +
     languageSwitcherHtml +
     renderSlot('header-actions', { html: appearanceControlHtml }) +
     menu +

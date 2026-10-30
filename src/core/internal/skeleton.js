@@ -381,6 +381,9 @@ export function renderToast(messages) {
  *   including its breadcrumb (when it has one) and exactly one `<h1>`
  * @param {string} [options.consentHtml] the already-rendered consent banner
  *   (analytics module on), appended after the footer; empty otherwise
+ * @param {string} [options.listenHtml] the already-rendered Listen blobs and
+ *   UI template (`internal/listen.js`), appended last; empty unless Listen is
+ *   live
  * @returns {string} the complete `<body>` inner HTML
  */
 export function renderPageBody({
@@ -389,6 +392,7 @@ export function renderPageBody({
   footerHtml,
   mainHtml,
   consentHtml = '',
+  listenHtml = '',
 }) {
   return (
     renderSkipLink(messages) +
@@ -396,6 +400,7 @@ export function renderPageBody({
     headerHtml +
     `<main id="main-content" class="g-main" tabindex="-1">${mainHtml}</main>` +
     footerHtml +
-    consentHtml
+    consentHtml +
+    listenHtml
   );
 }

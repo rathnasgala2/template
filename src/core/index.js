@@ -63,7 +63,7 @@
  * configuration, module output or module runtime is ever added beside it
  */
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { validateGalaDocument } from '@rathnasgala2/schemas';
@@ -150,11 +150,22 @@ import {
   resolveTranslations,
 } from './internal/translations.js';
 import { listFilesSortedByUtf8Bytes } from './internal/fs-walk.js';
+import {
+  LISTEN_SCRIPT_MEDIA_TYPE,
+  LISTEN_SCRIPT_PATH,
+  LISTEN_SECTION_ID,
+  audioDigestHex,
+  loadListenScript,
+  renderListenNav,
+  renderListenPage,
+  resolveListen,
+} from './internal/listen.js';
 import { getMessages } from './internal/messages.js';
 import {
   resolveContentImages,
   rewriteBodyImages,
 } from './internal/media/content-images.js';
+import { processListenAudio } from './internal/media/audio.js';
 import { processMedia } from './internal/media/pipeline.js';
 import {
   buildGeneratedPages,
@@ -525,6 +536,15 @@ export async function renderPublication(buildInput, options) {
     validatedInput.publication.newsletter?.mode === 'galascribe';
   const { apiOrigin: audienceApiOrigin, appOrigin: audienceAppOrigin } =
     audienceOrigins(interactionsModule);
+  // Listen: one decision for the whole build (`internal/listen.js`). It is
+  // live when the site turns it on and a published article carries audio; a
+  // build that is not live renders and emits nothing for it.
+  const listen = resolveListen({
+    publication: validatedInput.publication,
+    articles: selectPublishedArticles(validatedInput.content),
+    hrefOf: (filePath) =>
+      joinPublicRoute(publicBasePath, `/${filePath}`, routeProfile),
+  });
   // One CSP per build: the production policy, plus (local stack only) the
   // interactions module's differing API origin in `connect-src`.
   // Consent and analytics are a core privacy setting: when the analytics
@@ -544,12 +564,22 @@ export async function renderPublication(buildInput, options) {
    * catalog (the site's own when the language has none), consent banner and
    * appearance control. One per distinct catalog.
    *
-   * @type {Map<unknown, {messages: typeof siteMessages, consentHtml: string, appearanceControlHtml: string}>}
+   * @type {Map<unknown, {messages: typeof siteMessages, consentHtml: string, appearanceControlHtml: string, listen?: ListenChrome}>}
    */
   const chromeByCatalog = new Map();
   /**
+   * The Listen markup a page of one language renders with (live builds only):
+   * the two top-bar buttons and the per-page fragment.
+   *
+   * @typedef {object} ListenChrome
+   * @property {string} navLinkHtml the link to the home page playlist
+   * @property {string} navButtonHtml the "Listen to this post" button
+   * @property {(current: import('./internal/listen.js').ListenTrack | undefined) => string} pageHtml
+   *   the blobs and UI template, with the page's own track when it has one
+   */
+  /**
    * @param {string} language a BCP-47 tag
-   * @returns {{messages: typeof siteMessages, consentHtml: string, appearanceControlHtml: string}}
+   * @returns {{messages: typeof siteMessages, consentHtml: string, appearanceControlHtml: string, listen?: ListenChrome}}
    */
   const chromeFor = (language) => {
     const messages = getMessages(
@@ -572,6 +602,35 @@ export async function renderPublication(buildInput, options) {
           messages,
           toggle: colorMode.toggle,
         }),
+        listen: listen.live
+          ? {
+              navLinkHtml: renderListenNav({
+                messages,
+                playlistUrl: listenPlaylistUrl,
+                current: false,
+              }),
+              navButtonHtml: renderListenNav({
+                messages,
+                playlistUrl: listenPlaylistUrl,
+                current: true,
+              }),
+              pageHtml: (current) =>
+                renderListenPage({
+                  messages,
+                  config: {
+                    siteTitle: validatedInput.publication.title,
+                    playlistUrl: listenPlaylistUrl,
+                    artwork: brandMark
+                      ? new URL(
+                          brandMark.url,
+                          validatedInput.baseUrl,
+                        ).toString()
+                      : null,
+                  },
+                  current,
+                }),
+            }
+          : undefined,
       };
       chromeByCatalog.set(messages, chrome);
     }
@@ -589,8 +648,14 @@ export async function renderPublication(buildInput, options) {
     publicBasePath,
     `/${AUDIENCE_SCRIPT_PATH}`,
   );
+  const listenScriptHref = joinBasePathAndRoute(
+    publicBasePath,
+    `/${LISTEN_SCRIPT_PATH}`,
+  );
   const urlPrefix = derivePublicBasePath(validatedInput.baseUrl, '/');
   const homeRoute = joinPublicRoute(publicBasePath, '/', routeProfile);
+  // Where the top-bar Listen link and the script go for the playlist.
+  const listenPlaylistUrl = `${homeRoute}#${LISTEN_SECTION_ID}`;
 
   // Admit the selected generation-4 theme and its complete structural
   // composition before any output directory is created. Theme-less calls
@@ -638,6 +703,13 @@ export async function renderPublication(buildInput, options) {
     sourceDirectory: path.resolve(options.sourceDirectory),
     contentImages: [...contentImages.values()],
   });
+  // Each published article's audio (Listen live), verified like the media
+  // above and before anything is written.
+  const listenAudio = listen.live
+    ? await processListenAudio(listen.entries, {
+        sourceDirectory: path.resolve(options.sourceDirectory),
+      })
+    : { assets: [], files: [] };
   // Created only now, after every input and media check has passed, so a
   // rejected build input or media reference leaves nothing behind.
   await mkdir(outputDirectory, { recursive: true });
@@ -851,12 +923,15 @@ export async function renderPublication(buildInput, options) {
    * @param {string | undefined} currentRoute the page's joined route
    * @param {string} [language] the page's language (default: the site's)
    * @param {string} [languageSwitcherHtml] the language switcher markup
+   * @param {boolean} [listenCurrent] whether the page is an article with
+   *   audio (its Listen button opens the player instead of the playlist)
    * @returns {string}
    */
   const headerFor = (
     currentRoute,
     language = validatedInput.publication.defaultLanguage,
     languageSwitcherHtml = '',
+    listenCurrent = false,
   ) => {
     const chrome = chromeFor(language);
     return renderHeader({
@@ -878,6 +953,11 @@ export async function renderPublication(buildInput, options) {
       searchIndexHref,
       appearanceControlHtml: chrome.appearanceControlHtml,
       languageSwitcherHtml,
+      listenNavHtml: chrome.listen
+        ? listenCurrent
+          ? chrome.listen.navButtonHtml
+          : chrome.listen.navLinkHtml
+        : '',
       messages: chrome.messages,
       headerLayout: composition.headerLayout,
     });
@@ -965,6 +1045,7 @@ export async function renderPublication(buildInput, options) {
     interactions: interactionsOn ? interactionsModule : undefined,
     analytics: analyticsOn ? analyticsModule : undefined,
     audience: { follows: followsOn, appOrigin: audienceAppOrigin },
+    listen,
     composition,
   });
   /** @type {Set<string>} output paths of the interaction-bearing routes */
@@ -978,7 +1059,12 @@ export async function renderPublication(buildInput, options) {
     const switcherHtml = languageSwitcherFor(page);
     const bodyHtml = renderPageBody({
       messages: pageChrome.messages,
-      headerHtml: headerFor(joinedRoute, page.language, switcherHtml),
+      headerHtml: headerFor(
+        joinedRoute,
+        page.language,
+        switcherHtml,
+        page.listenTrack !== undefined,
+      ),
       footerHtml: footerFor(
         page.articleMeta?.tags,
         page.language,
@@ -986,6 +1072,7 @@ export async function renderPublication(buildInput, options) {
       ),
       mainHtml: page.bodyHtml,
       consentHtml: pageChrome.consentHtml,
+      listenHtml: pageChrome.listen?.pageHtml(page.listenTrack) ?? '',
     });
     const ogImageInfo = resolveSocialImage({
       mediaAssets,
@@ -1064,6 +1151,9 @@ export async function renderPublication(buildInput, options) {
               audienceMessages: serializeAudienceMessages(pageChrome.messages),
             }
           : {}),
+        // The Listen script rides on every page of a live build; its blobs and
+        // UI template are at the end of the body.
+        ...(listen.live ? { listenScriptHref } : {}),
         consentScriptHref,
         cspMetaTag,
         baseStylesheetHref: baseStylesheetHrefValue,
@@ -1144,6 +1234,7 @@ export async function renderPublication(buildInput, options) {
         footerHtml: footerFor([], language),
         mainHtml: main(chrome.messages),
         consentHtml: chrome.consentHtml,
+        listenHtml: chrome.listen?.pageHtml(undefined) ?? '',
       }),
       permalink,
       layout: 'skeleton.njk',
@@ -1164,6 +1255,7 @@ export async function renderPublication(buildInput, options) {
         languageFeedLinksHtml,
         hreflangLinksHtml: '',
         appearanceScriptHref: appearanceScriptHrefValue,
+        ...(listen.live ? { listenScriptHref } : {}),
         consentScriptHref,
         cspMetaTag,
         baseStylesheetHref: baseStylesheetHrefValue,
@@ -1578,6 +1670,22 @@ export async function renderPublication(buildInput, options) {
     await writeFile(destination, file.bytes);
   }
 
+  // Each published article's audio (Listen live), copied as-is from the source
+  // tree at its content-addressed path, joined with `basePath` like every
+  // other fixed-name asset.
+  const joinedListenAssets = listenAudio.assets.map((asset) => ({
+    ...asset,
+    path: projectFixedAssetPath(validatedInput.basePath, `/${asset.path}`),
+  }));
+  for (const file of listenAudio.files) {
+    const destination = path.join(
+      outputDirectory,
+      projectFixedAssetPath(validatedInput.basePath, `/${file.path}`),
+    );
+    await mkdir(path.dirname(destination), { recursive: true });
+    await copyFile(file.source, destination);
+  }
+
   // The selected theme package's stylesheet/passive-asset bytes, written
   // for the same reason and at the same point as the media pipeline
   // output immediately above (`themeAssetsResult` is `undefined` when no
@@ -1733,6 +1841,31 @@ export async function renderPublication(buildInput, options) {
     });
   }
 
+  // The Listen script, only when Listen is live: the template package's own
+  // file, like the audience script.
+  /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
+  const listenAssets = [];
+  if (listen.live) {
+    const listenScriptBytes = await loadListenScript();
+    const joinedListenScriptPath = projectFixedAssetPath(
+      validatedInput.basePath,
+      `/${LISTEN_SCRIPT_PATH}`,
+    );
+    const listenScriptDestination = path.join(
+      outputDirectory,
+      joinedListenScriptPath,
+    );
+    await mkdir(path.dirname(listenScriptDestination), { recursive: true });
+    await writeFile(listenScriptDestination, listenScriptBytes);
+    listenAssets.push({
+      path: joinedListenScriptPath,
+      mediaType: LISTEN_SCRIPT_MEDIA_TYPE,
+      byteLength: String(listenScriptBytes.byteLength),
+      sha256: digestBytes(listenScriptBytes),
+      immutable: false,
+    });
+  }
+
   // The consent script, only when the analytics module is on: the template's
   // own constant source, so the row is a pure function of the template version.
   /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
@@ -1760,16 +1893,26 @@ export async function renderPublication(buildInput, options) {
 
   const assets = [
     ...joinedMediaAssets,
+    ...joinedListenAssets,
     appearanceScriptAsset,
     baseStylesheetAsset,
     ...interactionsAssets,
     ...countsAssets,
     ...audienceAssets,
+    ...listenAssets,
     ...consentAssets,
     ...(themeAssetsResult ? themeAssetsResult.assets : []),
   ].sort((a, b) => compareUtf8Bytes(a.path, b.path));
 
-  const includedSources = collectIncludedSources(validatedInput);
+  // The audio the renderer copied is a consumed source file like an image.
+  const includedSources = collectIncludedSources(
+    validatedInput,
+    listen.entries.map((entry) => ({
+      path: entry.listen.audio.sourcePath,
+      sha256: `sha256:${audioDigestHex(entry.listen.audio.sha256)}`,
+      sourceRevision: entry.record.sourceRevision,
+    })),
+  );
 
   const manifest = buildArtifactManifest({
     buildInput: validatedInput,

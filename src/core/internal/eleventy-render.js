@@ -148,8 +148,10 @@ const SKELETON_LAYOUT_SOURCE = [
   // control, a Galascribe newsletter panel or the contact form; preceded by its
   // JSON sentences) and the consent script (analytics module on, every HTML
   // page) are deferred and sit on the appearance script's line, so a page
-  // without them is byte-identical to before.
-  '<script src="{{ appearanceScriptHref }}"></script>{% if interactionsScriptHref %}<script src="{{ interactionsScriptHref }}" defer></script>{% endif %}{% if countsScriptHref %}<script src="{{ countsScriptHref }}" defer data-api-origin="{{ countsApiOrigin }}" data-publication-id="{{ countsPublicationId }}"></script>{% endif %}{% if audienceScriptHref %}<script type="application/json" data-gala-audience-messages>{{ audienceMessages | safe }}</script><script src="{{ audienceScriptHref }}" defer data-gala-audience-script data-api-origin="{{ audienceApiOrigin }}" data-app-origin="{{ audienceAppOrigin }}" data-publication-id="{{ audiencePublicationId }}" data-canonical-url="{{ audienceReturnUrl }}"></script>{% endif %}{% if consentScriptHref %}<script src="{{ consentScriptHref }}" defer></script>{% endif %}',
+  // without them is byte-identical to before. The Listen script (live builds,
+  // every HTML page) follows the same rule; its JSON blobs and UI template sit
+  // at the end of the body (`internal/listen.js`).
+  '<script src="{{ appearanceScriptHref }}"></script>{% if interactionsScriptHref %}<script src="{{ interactionsScriptHref }}" defer></script>{% endif %}{% if countsScriptHref %}<script src="{{ countsScriptHref }}" defer data-api-origin="{{ countsApiOrigin }}" data-publication-id="{{ countsPublicationId }}"></script>{% endif %}{% if audienceScriptHref %}<script type="application/json" data-gala-audience-messages>{{ audienceMessages | safe }}</script><script src="{{ audienceScriptHref }}" defer data-gala-audience-script data-api-origin="{{ audienceApiOrigin }}" data-app-origin="{{ audienceAppOrigin }}" data-publication-id="{{ audiencePublicationId }}" data-canonical-url="{{ audienceReturnUrl }}"></script>{% endif %}{% if listenScriptHref %}<script src="{{ listenScriptHref }}" defer data-gala-listen-script></script>{% endif %}{% if consentScriptHref %}<script src="{{ consentScriptHref }}" defer></script>{% endif %}',
   '<title>{{ title }}</title>',
   '{% if description %}<meta name="description" content="{{ description }}">{% endif %}',
   '{% if robotsContent %}<meta name="robots" content="{{ robotsContent }}">{% endif %}',

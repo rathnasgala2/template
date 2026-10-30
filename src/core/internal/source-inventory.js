@@ -34,10 +34,14 @@ function rolePriority(role) {
  *
  * @param {import('../../../types/index.d.ts').NormalizedBuildInput} buildInput
  *   the validated build input
+ * @param {readonly {path: string, sha256: string, sourceRevision: string}[]} [extraAssets]
+ *   further asset files the renderer consumed that the build input does not
+ *   name as image media (the Listen audio it copied), each with its tagged
+ *   digest
  * @returns {import('../../../types/index.d.ts').ManifestIncludedSourceEntry[]}
  *   the unique-by-path row set, sorted by UTF-8 path bytes
  */
-export function collectIncludedSources(buildInput) {
+export function collectIncludedSources(buildInput, extraAssets = []) {
   /** @type {Map<string, import('../../../types/index.d.ts').ManifestIncludedSourceEntry>} */
   const byPath = new Map();
 
@@ -147,6 +151,9 @@ export function collectIncludedSources(buildInput) {
   recordResolvedFile(record, buildInput.appearance.wordmark, rootRevision);
   for (const fontAsset of buildInput.appearance.fontAssets ?? []) {
     recordResolvedFile(record, fontAsset, rootRevision);
+  }
+  for (const asset of extraAssets) {
+    record(asset.path, asset.sha256, 'asset', asset.sourceRevision);
   }
 
   return [...byPath.values()].sort((a, b) => compareUtf8Bytes(a.path, b.path));
