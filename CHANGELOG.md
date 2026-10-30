@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.9.0] - 2026-10-30
+
 ### Added
 
 - Follower count beside every Follow control, shown only to the site's team. The
@@ -18,6 +20,14 @@ and this project adheres to
   answer without a non-negative integer `followers`. Readers outside the team
   see the page unchanged. Two new strings (`followersCountLabel`,
   `followersTeamHint`) in all 58 chrome locales.
+
+### Fixed
+
+- The follower count is hidden again when the reader session is dropped (a 401
+  on a follow read or write), so a signed-out device stops showing it.
+- Listen: a page opened on `#listen` moves focus to Play all after the browser's
+  own fragment jump, so keyboard and screen-reader users land on the playlist's
+  first control.
 
 ## [4.8.0] - 2026-10-30
 
