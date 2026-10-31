@@ -31,7 +31,7 @@ export const RENDER_POLICY_VERSION = '2.0.0';
 /** @type {string} */
 export const MARKDOWN_IT_PACKAGE = 'markdown-it';
 /** @type {string} */
-export const MARKDOWN_IT_VERSION = '14.3.1';
+export const MARKDOWN_IT_VERSION = '14.3.3';
 
 /**
  * The exact markdown-it construction options this renderer requires.
@@ -47,7 +47,7 @@ export const MARKDOWN_IT_OPTIONS = Object.freeze({
 /** @type {string} */
 export const SANITIZER_PACKAGE = 'sanitize-html';
 /** @type {string} */
-export const SANITIZER_VERSION = '2.17.7';
+export const SANITIZER_VERSION = '2.18.1';
 
 /**
  * URL schemes admitted for `a[href]`. Same-document fragments and

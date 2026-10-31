@@ -15,8 +15,8 @@ const REPO_ROOT = path.resolve(import.meta.dirname, '..');
 const EXACT_PINS = {
   '@11ty/eleventy': '3.1.6',
   '@11ty/eleventy-plugin-syntaxhighlight': '5.0.2',
-  'markdown-it': '14.3.1',
-  'sanitize-html': '2.17.7',
+  'markdown-it': '14.3.3',
+  'sanitize-html': '2.18.1',
   // S2-T05's media pipeline decoder/encoder, pinned per its own module
   // documentation (src/core/internal/media/jpeg-codec.js): a
   // dependency-free, pure-JavaScript baseline JPEG codec, no native addon

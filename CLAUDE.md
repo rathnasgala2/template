@@ -152,8 +152,8 @@ design.
 
 ## Review checklist
 
-Confirm: exact dependency pins (Eleventy 3.1.6, markdown-it 14.3.1,
-sanitize-html 2.17.7, syntaxhighlight 5.0.2, `jpeg-js` 0.4.4) unchanged from
+Confirm: exact dependency pins (Eleventy 3.1.6, markdown-it 14.3.3,
+sanitize-html 2.18.1, syntaxhighlight 5.0.2, `jpeg-js` 0.4.4) unchanged from
 `test/pinned-versions.test.js`; lockfile v3; `src/core/` remains the only source
 root; no `bin` named `gala`; no default export other than the documented entry
 point; `contracts/*.jcs` still canonical; `renderPublication`'s required

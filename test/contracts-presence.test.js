@@ -61,9 +61,9 @@ test("contracts/render-policy.jcs is S2-T04's real, closed sanitizer/parser cata
     typographer: false,
   });
   assert.equal(document.markdownIt.package, 'markdown-it');
-  assert.equal(document.markdownIt.version, '14.3.1');
+  assert.equal(document.markdownIt.version, '14.3.3');
   assert.equal(document.sanitizer.package, 'sanitize-html');
-  assert.equal(document.sanitizer.version, '2.17.7');
+  assert.equal(document.sanitizer.version, '2.18.1');
   assert.ok(document.sanitizer.allowedTags.includes('p'));
   assert.ok(!document.sanitizer.allowedTags.includes('script'));
   assert.ok(!document.sanitizer.allowedTags.includes('style'));

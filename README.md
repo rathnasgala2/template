@@ -190,7 +190,7 @@ distinct public entry points:
 - **`normalizeAuthoredMarkdown(markdownSource) -> { html, bodyDigest }`**
   (exported from `src/core/index.js`) is the pipeline an upstream
   `build-input:2.0.0` producer (`publish-kernel`/`publish-action`) runs exactly
-  once per authored Markdown source: `markdown-it` 14.3.1 configured exactly
+  once per authored Markdown source: `markdown-it` 14.3.3 configured exactly
   `{ html: false, linkify: false, typographer: false }`, with a closed
   URL-scheme allowlist (`https`, `http`, `mailto`, or a schemeless relative
   path/fragment — rejecting `javascript:`, `data:`, `blob:`, `vbscript:` and
@@ -200,7 +200,7 @@ distinct public entry points:
   grammar catalog — `bash`, `css`, `diff`, `java`, `javascript`, `json`, `jsx`,
   `markdown`, `markup`, `python`, `sql`, `tsx`, `typescript`, `yaml` — is ever
   highlighted; every other fence language falls back to escaped, unhighlighted
-  code); then `sanitize-html` 2.17.7 against a closed tag/attribute/class/scheme
+  code); then `sanitize-html` 2.18.1 against a closed tag/attribute/class/scheme
   allowlist (no `style`, no `on*`, no `srcdoc`, no `id` outside generated
   heading IDs, no script/style/iframe/object/embed/ svg/math/template content)
   and a fail-closed residual-active-content scan.
