@@ -620,11 +620,6 @@
     "license": "MIT"
   },
   {
-    "name": "deepmerge",
-    "version": "4.3.1",
-    "license": "MIT"
-  },
-  {
     "name": "depd",
     "version": "2.0.0",
     "license": "MIT"
@@ -1361,7 +1356,7 @@
   },
   {
     "name": "launder",
-    "version": "1.7.1",
+    "version": "1.7.2",
     "license": "MIT"
   },
   {
@@ -1436,7 +1431,7 @@
   },
   {
     "name": "markdown-it",
-    "version": "14.3.1",
+    "version": "14.3.3",
     "license": "MIT"
   },
   {
@@ -1911,7 +1906,7 @@
   },
   {
     "name": "sanitize-html",
-    "version": "2.17.7",
+    "version": "2.18.1",
     "license": "MIT"
   },
   {

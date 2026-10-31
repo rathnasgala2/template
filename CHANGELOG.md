@@ -8,6 +8,30 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.10.0] - 2026-10-31
+
+### Security
+
+- **Render-policy revision.** `markdown-it` moves from 14.3.1 to 14.3.3 and
+  `sanitize-html` from 2.17.7 to 2.18.1 (both exact pins). The render-policy
+  digest changed with them (`contracts/render-policy.jcs` is regenerated):
+  `sha256:9e00501941a2f62e6e2caf085942bd2aa1978275bcb450839a409850257ad9b6`
+  becomes
+  `sha256:b7f5e893edc9b98e6ce5e98c636e8f28401cc95d917689f59f073cf1e0617826`, so
+  every build input's `renderPolicy` must be recomputed against this release.
+  `RENDER_POLICY_VERSION` stays `2.0.0`.
+- Closes GHSA-r7fv-28h4-cvq7 and GHSA-gfr2-rv44-r23c (markdown-it) and
+  GHSA-x3q4-9hxx-gx8m and GHSA-cv27-6wvh-8x7j (sanitize-html). The four
+  `audit-allowlist.json` exceptions are removed; the file is empty.
+- The dev-tooling overrides `glob` 14.0.3 and `minimatch` 11.0.3 close
+  GHSA-3g3m-2fjr-6pw4 and GHSA-g3hv-75wg-m249.
+- Rendered output is byte-identical for every Markdown body in the test
+  fixtures, every blog post and every theme SVG in the differential corpus. Two
+  intended differences exist: a reference-definition label longer than 999 code
+  points is no longer a definition (CommonMark limit, markdown-it 14.3.3), and
+  `sanitize-html` now discards a `noscript` region to the browser's end of that
+  element, so markup after an implied close no longer survives.
+
 ## [4.9.0] - 2026-10-30
 
 ### Added
