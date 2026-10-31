@@ -195,14 +195,14 @@
     "license": "Apache-2.0"
   },
   {
-    "name": "@isaacs/cliui",
-    "version": "8.0.2",
-    "license": "ISC"
-  },
-  {
     "name": "@isaacs/fs-minipass",
     "version": "4.0.1",
     "license": "ISC"
+  },
+  {
+    "name": "@isaacs/nonrecursive-glob-match",
+    "version": "1.0.3",
+    "license": "BlueOak-1.0.0"
   },
   {
     "name": "@keyv/bigmap",
@@ -242,11 +242,6 @@
   {
     "name": "@oozcitak/util",
     "version": "10.0.0",
-    "license": "MIT"
-  },
-  {
-    "name": "@pkgjs/parseargs",
-    "version": "0.11.0",
     "license": "MIT"
   },
   {
@@ -410,33 +405,8 @@
     "license": "MIT"
   },
   {
-    "name": "ansi-regex",
-    "version": "5.0.1",
-    "license": "MIT"
-  },
-  {
-    "name": "ansi-regex",
-    "version": "5.0.1",
-    "license": "MIT"
-  },
-  {
-    "name": "ansi-regex",
-    "version": "5.0.1",
-    "license": "MIT"
-  },
-  {
-    "name": "ansi-regex",
-    "version": "6.3.0",
-    "license": "MIT"
-  },
-  {
     "name": "ansi-styles",
     "version": "4.3.0",
-    "license": "MIT"
-  },
-  {
-    "name": "ansi-styles",
-    "version": "6.2.3",
     "license": "MIT"
   },
   {
@@ -462,21 +432,6 @@
   {
     "name": "asap",
     "version": "2.0.6",
-    "license": "MIT"
-  },
-  {
-    "name": "balanced-match",
-    "version": "1.0.2",
-    "license": "MIT"
-  },
-  {
-    "name": "balanced-match",
-    "version": "4.0.4",
-    "license": "MIT"
-  },
-  {
-    "name": "balanced-match",
-    "version": "4.0.4",
     "license": "MIT"
   },
   {
@@ -522,26 +477,6 @@
   {
     "name": "bl",
     "version": "4.1.0",
-    "license": "MIT"
-  },
-  {
-    "name": "brace-expansion",
-    "version": "1.1.21",
-    "license": "MIT"
-  },
-  {
-    "name": "brace-expansion",
-    "version": "2.1.7",
-    "license": "MIT"
-  },
-  {
-    "name": "brace-expansion",
-    "version": "5.0.12",
-    "license": "MIT"
-  },
-  {
-    "name": "brace-expansion",
-    "version": "5.0.12",
     "license": "MIT"
   },
   {
@@ -627,11 +562,6 @@
   {
     "name": "comment-parser",
     "version": "1.4.8",
-    "license": "MIT"
-  },
-  {
-    "name": "concat-map",
-    "version": "0.0.1",
     "license": "MIT"
   },
   {
@@ -775,28 +705,8 @@
     "license": "BSD-2-Clause"
   },
   {
-    "name": "eastasianwidth",
-    "version": "0.2.0",
-    "license": "MIT"
-  },
-  {
     "name": "ee-first",
     "version": "1.1.1",
-    "license": "MIT"
-  },
-  {
-    "name": "emoji-regex",
-    "version": "8.0.0",
-    "license": "MIT"
-  },
-  {
-    "name": "emoji-regex",
-    "version": "8.0.0",
-    "license": "MIT"
-  },
-  {
-    "name": "emoji-regex",
-    "version": "9.2.2",
     "license": "MIT"
   },
   {
@@ -1055,11 +965,6 @@
     "license": "ISC"
   },
   {
-    "name": "foreground-child",
-    "version": "3.3.1",
-    "license": "ISC"
-  },
-  {
     "name": "fresh",
     "version": "2.0.0",
     "license": "MIT"
@@ -1091,8 +996,8 @@
   },
   {
     "name": "glob",
-    "version": "10.5.0",
-    "license": "ISC"
+    "version": "14.0.3",
+    "license": "BlueOak-1.0.0"
   },
   {
     "name": "glob-parent",
@@ -1290,11 +1195,6 @@
     "license": "MIT"
   },
   {
-    "name": "is-fullwidth-code-point",
-    "version": "3.0.0",
-    "license": "MIT"
-  },
-  {
     "name": "is-glob",
     "version": "4.0.3",
     "license": "MIT"
@@ -1343,11 +1243,6 @@
     "name": "iso-639-1",
     "version": "3.1.6",
     "license": "MIT"
-  },
-  {
-    "name": "jackspeak",
-    "version": "3.4.3",
-    "license": "BlueOak-1.0.0"
   },
   {
     "name": "jpeg-js",
@@ -1525,6 +1420,11 @@
     "license": "BlueOak-1.0.0"
   },
   {
+    "name": "lru-cache",
+    "version": "11.5.3",
+    "license": "BlueOak-1.0.0"
+  },
+  {
     "name": "luxon",
     "version": "3.7.2",
     "license": "MIT"
@@ -1571,28 +1471,8 @@
   },
   {
     "name": "minimatch",
-    "version": "10.2.6",
+    "version": "11.0.3",
     "license": "BlueOak-1.0.0"
-  },
-  {
-    "name": "minimatch",
-    "version": "10.2.6",
-    "license": "BlueOak-1.0.0"
-  },
-  {
-    "name": "minimatch",
-    "version": "10.2.6",
-    "license": "BlueOak-1.0.0"
-  },
-  {
-    "name": "minimatch",
-    "version": "3.1.5",
-    "license": "ISC"
-  },
-  {
-    "name": "minimatch",
-    "version": "9.0.9",
-    "license": "ISC"
   },
   {
     "name": "minimist",
@@ -1775,11 +1655,6 @@
     "license": "MIT"
   },
   {
-    "name": "package-json-from-dist",
-    "version": "1.0.1",
-    "license": "BlueOak-1.0.0"
-  },
-  {
     "name": "packageurl-js",
     "version": "2.0.1",
     "license": "MIT"
@@ -1826,7 +1701,7 @@
   },
   {
     "name": "path-scurry",
-    "version": "1.11.1",
+    "version": "3.0.0",
     "license": "BlueOak-1.0.0"
   },
   {
@@ -2085,11 +1960,6 @@
     "license": "MIT"
   },
   {
-    "name": "signal-exit",
-    "version": "4.1.0",
-    "license": "ISC"
-  },
-  {
     "name": "simple-concat",
     "version": "1.0.1",
     "license": "MIT"
@@ -2200,43 +2070,8 @@
     "license": "MIT"
   },
   {
-    "name": "string-width",
-    "version": "4.2.3",
-    "license": "MIT"
-  },
-  {
-    "name": "string-width",
-    "version": "4.2.3",
-    "license": "MIT"
-  },
-  {
-    "name": "string-width",
-    "version": "5.1.2",
-    "license": "MIT"
-  },
-  {
     "name": "string_decoder",
     "version": "1.3.0",
-    "license": "MIT"
-  },
-  {
-    "name": "strip-ansi",
-    "version": "6.0.1",
-    "license": "MIT"
-  },
-  {
-    "name": "strip-ansi",
-    "version": "6.0.1",
-    "license": "MIT"
-  },
-  {
-    "name": "strip-ansi",
-    "version": "6.0.1",
-    "license": "MIT"
-  },
-  {
-    "name": "strip-ansi",
-    "version": "7.2.0",
     "license": "MIT"
   },
   {
@@ -2457,16 +2292,6 @@
   {
     "name": "word-wrap",
     "version": "1.2.5",
-    "license": "MIT"
-  },
-  {
-    "name": "wrap-ansi",
-    "version": "7.0.0",
-    "license": "MIT"
-  },
-  {
-    "name": "wrap-ansi",
-    "version": "8.1.0",
     "license": "MIT"
   },
   {
