@@ -86,6 +86,7 @@ test('all generation-4 profiles produce distinct home, article, author and listi
   const rendered = new Map(
     SUPPORTED_COMPOSITIONS.map((composition) => {
       const pages = buildGeneratedPages(input, {
+        getMessages,
         pageBody: (body) => body,
         composition,
         mediaAssets: [

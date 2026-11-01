@@ -78,6 +78,7 @@ test('a site without variants renders its chrome in the defaultLanguage catalog'
   input.publication.contactForm = { enabled: true, fields: {} };
   input.publication.defaultLanguage = 'ta';
   const pages = buildGeneratedPages(input, {
+    getMessages,
     pageBody: (/** @type {string} */ b) => b,
   });
   const contact = pages.find((/** @type {any} */ p) =>
@@ -85,4 +86,51 @@ test('a site without variants renders its chrome in the defaultLanguage catalog'
   );
   assert.ok(contact, 'contact page generated');
   assert.ok(contact.bodyHtml.includes('தொடர்பு'), 'Tamil chrome');
+});
+
+test('CATALOG_KEYS, the registry and the single-locale loaders agree', async () => {
+  const { CATALOG_KEYS } =
+    await import('../src/core/internal/messages-core.js');
+  const { loadCatalog } = await import('../src/core/internal/messages-load.js');
+  assert.deepEqual([...CATALOG_KEYS].sort(), Object.keys(CATALOGS).sort());
+  for (const key of CATALOG_KEYS) {
+    assert.equal(await loadCatalog(key), CATALOGS[key], `${key} loads`);
+  }
+  await assert.rejects(() => loadCatalog('xx'), RangeError);
+});
+
+test('getMessages is the registry lookup for every tag shape', async () => {
+  const { resolveCatalogKey } =
+    await import('../src/core/internal/messages-core.js');
+  for (const tag of [
+    '',
+    'en',
+    'EN_us',
+    'ta',
+    'zh',
+    'zh-TW',
+    'zh-Hant-HK',
+    'zh-Hans-CN',
+    'sr-Latn-RS',
+    'no',
+    'nn-NO',
+    'iw',
+    'pt-BR',
+    'xx-YY',
+    'ta-IN',
+  ]) {
+    assert.equal(getMessages(tag), CATALOGS[resolveCatalogKey(tag)], tag);
+  }
+  assert.equal(resolveCatalogKey('zh-TW'), 'zh-hant');
+  assert.equal(resolveCatalogKey('nn'), 'nb');
+  assert.equal(resolveCatalogKey(undefined), 'en');
+});
+
+test('loadMessagesFor serves only the loaded locales and fails loudly otherwise', async () => {
+  const { loadMessagesFor } =
+    await import('../src/core/internal/messages-load.js');
+  const get = await loadMessagesFor(['ta-IN']);
+  assert.equal(get('ta'), CATALOGS.ta);
+  assert.equal(get('xx'), CATALOGS.en);
+  assert.throws(() => get('fr'), /"fr" message catalog is not loaded/);
 });

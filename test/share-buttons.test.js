@@ -39,7 +39,10 @@ async function articleShare(sharing, adjust) {
   const buildInput = /** @type {any} */ (await buildRichFixture());
   if (sharing !== undefined) buildInput.publication.sharing = sharing;
   adjust?.(buildInput);
-  const pages = buildGeneratedPages(buildInput, { pageBody: (body) => body });
+  const pages = buildGeneratedPages(buildInput, {
+    getMessages,
+    pageBody: (body) => body,
+  });
   const article = pages.find(
     (page) => page.kind === 'article' && page.title === TITLE,
   );
@@ -285,7 +288,10 @@ test('duplicates collapse, an unknown target fails loudly, the list is the schem
 test('a page without an article share group renders none (pages and listings are unchanged)', async () => {
   const buildInput = /** @type {any} */ (await buildRichFixture());
   buildInput.publication.sharing = { targets: ['x'] };
-  const pages = buildGeneratedPages(buildInput, { pageBody: (body) => body });
+  const pages = buildGeneratedPages(buildInput, {
+    getMessages,
+    pageBody: (body) => body,
+  });
   for (const page of pages.filter(
     (candidate) => candidate.kind !== 'article',
   )) {

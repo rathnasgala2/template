@@ -1038,6 +1038,7 @@ export async function renderPublication(buildInput, options) {
   const redirectProjections = [];
 
   const generatedPages = buildGeneratedPages(validatedInput, {
+    getMessages,
     routeProfile,
     pageBody,
     editions,
@@ -1385,6 +1386,7 @@ export async function renderPublication(buildInput, options) {
     LLMS_FULL_ROUTE,
   );
   const { llmsTxt, llmsFullTxt } = buildLlmsDocuments(validatedInput, {
+    getMessages,
     rss: feeds.rssSelfUrl,
     atom: feeds.atomSelfUrl,
     sitemap: absoluteSiteUrl(SITEMAP_ROUTE),

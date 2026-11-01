@@ -50,6 +50,7 @@ const AUDIENCE_ON = { follows: true, appOrigin: APP };
 async function build(options = {}) {
   const input = /** @type {any} */ (await buildRichFixture());
   const pages = buildGeneratedPages(input, {
+    getMessages,
     pageBody: (body) => body,
     ...(options.audience ? { audience: options.audience } : {}),
   });

@@ -103,7 +103,6 @@ import {
   renderFollowControl,
 } from './audience.js';
 import { listenTrackOf, renderListenPlaylist } from './listen.js';
-import { getMessages } from './messages.js';
 import {
   languageLabel,
   languageSegment,
@@ -461,6 +460,9 @@ export function homeDocumentTitle(name, tagline) {
  *
  * @param {import('../../../types/index.d.ts').NormalizedBuildInput} validatedInput
  * @param {object} options rendering options
+ * @param {(bcp47?: string) => import('./messages-core.js').MessageCatalog} options.getMessages
+ *   the chrome-catalog lookup (`getMessages` from `messages.js` in Node, one
+ *   built by `loadMessagesFor` in a browser)
  * @param {(body: string) => string} options.pageBody turns a body into its
  *   page form (every image naming its media derivatives, lazily loaded)
  * @param {import('./editions.js').EditionResolution} [options.editions] where
@@ -552,6 +554,7 @@ export function buildGeneratedPages(validatedInput, options) {
   const translations =
     options.translations ??
     resolveTranslations(content, publication.defaultLanguage);
+  const { getMessages } = options;
   const defaultMessages = getMessages(publication.defaultLanguage);
   // Posts per listing page: the author's `listing.pageSize`, else the default.
   const pageSize = publication.listing?.pageSize ?? LISTING_PAGE_SIZE;

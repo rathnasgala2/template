@@ -677,6 +677,7 @@ test('the playlist comes before the post list in each of the five compositions, 
     assert.equal(SUPPORTED_COMPOSITIONS.length, 5);
     for (const composition of SUPPORTED_COMPOSITIONS) {
       const pages = buildGeneratedPages(input, {
+        getMessages,
         pageBody: (/** @type {string} */ body) => body,
         composition: { ...composition },
         listen,

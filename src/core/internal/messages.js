@@ -19,21 +19,8 @@
  *    `no`/`nn` -> `nb`, `iw` -> `he`;
  * 4. `en`.
  */
+import { resolveCatalogKey } from './messages-core.js';
 import { CATALOGS } from './messages/registry.js';
-
-/** @type {string} */
-const DEFAULT_LOCALE = 'en';
-
-/** Traditional-script regions for a bare `zh-<region>` tag. */
-const ZH_HANT_REGIONS = new Set(['tw', 'hk', 'mo']);
-
-/** Primary-subtag mappings applied before the primary lookup. */
-const PRIMARY_ALIASES = Object.freeze({
-  zh: 'zh-hans',
-  no: 'nb',
-  nn: 'nb',
-  iw: 'he',
-});
 
 /**
  * Resolve the message catalog for a BCP-47 language tag. See the file header
@@ -45,29 +32,5 @@ const PRIMARY_ALIASES = Object.freeze({
  *   the resolved catalog
  */
 export function getMessages(bcp47) {
-  const parts = (bcp47 ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/_/g, '-')
-    .split('-');
-  const language = parts[0] ?? '';
-  const script = parts.find((part, i) => i > 0 && /^[a-z]{4}$/.test(part));
-  const region = parts.find(
-    (part, i) => i > 0 && /^([a-z]{2}|\d{3})$/.test(part),
-  );
-  /** @type {string[]} */
-  const candidates = [parts.join('-')];
-  if (script) candidates.push(`${language}-${script}`);
-  if (language === 'zh' && !script && region && ZH_HANT_REGIONS.has(region)) {
-    candidates.push('zh-hant');
-  }
-  candidates.push(
-    /** @type {Record<string, string>} */ (PRIMARY_ALIASES)[language] ??
-      language,
-    language,
-  );
-  for (const candidate of candidates) {
-    if (Object.hasOwn(CATALOGS, candidate)) return CATALOGS[candidate];
-  }
-  return CATALOGS[DEFAULT_LOCALE];
+  return CATALOGS[resolveCatalogKey(bcp47)];
 }

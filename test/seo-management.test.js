@@ -5,6 +5,7 @@
  * readable tag/series routes and the public-root JSON-LD ids.
  */
 
+import { getMessages } from '../src/core/internal/messages.js';
 import { strict as assert } from 'node:assert';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -293,6 +294,7 @@ test('author pages carry lastModified: the latest updatedAt ?? publishedAt of th
   const buildInput = /** @type {any} */ (await buildRichFixture());
   buildInput.content[0].frontmatter.updatedAt = '2026-03-03T09:00:00.000Z';
   const pages = buildGeneratedPages(buildInput, {
+    getMessages,
     pageBody: (body) => body,
     routeProfile: 'directory-index',
   });
@@ -589,6 +591,7 @@ test('seo.noindex on a page; unlisted plus noindex; seo on explicit-file', async
   };
   buildInput.content[1].frontmatter.seo = { noindex: true };
   const generatedPages = buildGeneratedPages(buildInput, {
+    getMessages,
     pageBody: (body) => body,
     routeProfile: 'explicit-file',
   });
@@ -620,6 +623,7 @@ test('leading h1 drop: id and inline markup, blockquote, second h1, h1-only body
   for (const body of bodies) {
     buildInput.content[0].body = body;
     const pages = buildGeneratedPages(buildInput, {
+      getMessages,
       pageBody: (b) => b,
       routeProfile: 'directory-index',
     });
@@ -698,6 +702,7 @@ test('an empty seo.title or canonicalUrl falls back to the real title and own UR
   const buildInput = /** @type {any} */ (await buildRichFixture());
   buildInput.content[0].frontmatter.seo = { title: '', canonicalUrl: '' };
   const pages = buildGeneratedPages(buildInput, {
+    getMessages,
     pageBody: (body) => body,
     routeProfile: 'directory-index',
   });

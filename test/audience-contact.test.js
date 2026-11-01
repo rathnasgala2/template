@@ -61,7 +61,7 @@ async function inputWith(contactForm) {
  * @returns {any[]} the generated pages
  */
 const pagesOf = (input) =>
-  buildGeneratedPages(input, { pageBody: (body) => body });
+  buildGeneratedPages(input, { getMessages, pageBody: (body) => body });
 
 const contactPage = (/** @type {any[]} */ pages) =>
   pages.find((page) => page.route === CONTACT_ROUTE);
@@ -194,6 +194,7 @@ test('an authored gala/theme-pages/contact.md replaces the default intro; its le
   });
   const page = contactPage(
     buildGeneratedPages(input, {
+      getMessages,
       pageBody: (body) => `[[${body}]]`,
     }),
   );
@@ -277,6 +278,7 @@ test('the sitemap lists /contact/ like About; feeds, the search index and the ll
     routeProfile: 'directory-index',
   });
   const llms = buildLlmsDocuments(input, {
+    getMessages,
     rss: feeds.rssSelfUrl,
     atom: feeds.atomSelfUrl,
     sitemap: `${input.baseUrl}sitemap.xml`,

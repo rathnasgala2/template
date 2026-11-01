@@ -5,6 +5,7 @@
  * never changed, and manifest paths / physical output paths are untouched.
  */
 
+import { getMessages } from '../src/core/internal/messages.js';
 import { strict as assert } from 'node:assert';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -264,6 +265,7 @@ test('explicit-file emitters: no page URL in sitemap, feeds, llms, search index,
   const buildInput = await fixtureWithNavigation();
   const routeProfile = 'explicit-file';
   const generatedPages = buildGeneratedPages(buildInput, {
+    getMessages,
     pageBody: (body) => body,
     routeProfile,
   });
@@ -297,6 +299,7 @@ test('explicit-file emitters: no page URL in sitemap, feeds, llms, search index,
   assertForm(feeds.atomXml, 'atom', routeProfile, counter);
   assertForm(feeds.rssXml, 'rss', routeProfile, counter);
   const llms = buildLlmsDocuments(buildInput, {
+    getMessages,
     rss: feeds.rssSelfUrl,
     atom: feeds.atomSelfUrl,
     sitemap: `${ORIGIN}/fixture-1/sitemap.xml`,
@@ -318,6 +321,7 @@ test('explicit-file emitters: no page URL in sitemap, feeds, llms, search index,
 test('the same emitters under directory-index produce slashed forms for the same inputs', async () => {
   const buildInput = await fixtureWithNavigation();
   const generatedPages = buildGeneratedPages(buildInput, {
+    getMessages,
     pageBody: (body) => body,
     routeProfile: 'directory-index',
   });

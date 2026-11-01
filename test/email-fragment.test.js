@@ -5,6 +5,7 @@
  * and a full render of everything the audience features add to a site.
  */
 
+import { getMessages } from '../src/core/internal/messages.js';
 import { strict as assert } from 'node:assert';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -280,7 +281,10 @@ test('one fragment per published post: unlisted posts and pages have none, each 
 
 test('fragments are no pages: sitemap, feeds, search index and llms files never name them', async () => {
   const input = await inputWith(GALASCRIBE_FULL);
-  const pages = buildGeneratedPages(input, { pageBody: (body) => body });
+  const pages = buildGeneratedPages(input, {
+    getMessages,
+    pageBody: (body) => body,
+  });
   const sitemap = buildSitemap({
     generatedPages: pages,
     basePath: '/fixture-1',
@@ -292,6 +296,7 @@ test('fragments are no pages: sitemap, feeds, search index and llms files never 
     routeProfile: 'directory-index',
   });
   const llms = buildLlmsDocuments(input, {
+    getMessages,
     rss: feeds.rssSelfUrl,
     atom: feeds.atomSelfUrl,
     sitemap: `${input.baseUrl}sitemap.xml`,

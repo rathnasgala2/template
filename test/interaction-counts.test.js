@@ -7,6 +7,7 @@
  * and silence on every kind of failure.
  */
 
+import { getMessages } from '../src/core/internal/messages.js';
 import { strict as assert } from 'node:assert';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -70,6 +71,7 @@ function moduleWith(flags = {}) {
 async function pagesWith(interactions) {
   const buildInput = /** @type {any} */ (await buildRichFixture());
   const pages = buildGeneratedPages(buildInput, {
+    getMessages,
     pageBody: (body) => body,
     interactions,
   });

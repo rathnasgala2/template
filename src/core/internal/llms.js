@@ -17,7 +17,6 @@ import {
   isSeoNoindex,
   selectPublishedArticles,
 } from './page-kinds.js';
-import { getMessages } from './messages.js';
 
 /** @type {Readonly<Record<string, string>>} */
 const NAMED_ENTITIES = Object.freeze({
@@ -87,6 +86,8 @@ export function htmlToText(html) {
  * @param {string} urls.sitemap
  * @param {string} urls.searchIndex
  * @param {string} urls.full this file's `llms-full.txt` sibling
+ * @param {(bcp47?: string) => import('./messages-core.js').MessageCatalog} urls.getMessages
+ *   the chrome-catalog lookup
  * @param {string} urls.posts the absolute `posts.json` URL
  * @param {string} [urls.license] the absolute `license.xml` URL; present
  *   exactly when the publication set `aiRights`
@@ -96,7 +97,7 @@ export function htmlToText(html) {
  */
 export function buildLlmsDocuments(validatedInput, urls) {
   const { publication, authors, content, basePath, baseUrl } = validatedInput;
-  const messages = getMessages(publication.defaultLanguage);
+  const messages = urls.getMessages(publication.defaultLanguage);
   const authorsById = new Map(authors.map((author) => [author.id, author]));
   /**
    * @param {string} route an un-joined route

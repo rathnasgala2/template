@@ -63,6 +63,7 @@ async function pagesWith(newsletter, audience) {
   const input = /** @type {any} */ (await buildRichFixture());
   if (newsletter) input.publication.newsletter = newsletter;
   return buildGeneratedPages(input, {
+    getMessages,
     pageBody: (body) => body,
     ...(audience ? { audience } : {}),
   });
