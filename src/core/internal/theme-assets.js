@@ -75,20 +75,18 @@ import { validateGalaDocument } from '@rathnasgala2/schemas';
 
 import { ThemeAssetError } from '../errors.js';
 import { digestBytes } from './canonical-jcs.js';
-import { sha256Base64 } from './sha256.js';
-import {
-  assertThemePalette,
-  buildPaletteStylesheet,
-  PALETTE_STYLESHEET_DIRECTORY,
-  PALETTE_STYLESHEET_MEDIA_TYPE,
-} from './appearance/palette-sheet.js';
+import { assertThemePalette } from './appearance/palette-sheet.js';
 import { buildTemplateStylingContract } from './appearance/styling-contract.js';
 import { TEMPLATE_RENDERER_VERSION } from './package-version.js';
 import { MEDIA_TYPE_BY_FORMAT, sniffMediaFormat } from './media/sniff.js';
 import { sanitizeThemeSvg } from './media/theme-svg-sanitizer.js';
-import { projectFixedAssetPath } from './route.js';
 import { satisfiesTemplateRange } from './semver-range.js';
-import { escapeHtml } from './skeleton.js';
+import {
+  THEME_ASSET_DIRECTORY,
+  assembleThemeLinks,
+  joinedThemeOutputPath,
+} from './theme-links.js';
+import { defaultThemeStylesheetLinksHtml } from './theme-links.js';
 import { assertSupportedComposition } from './template-composition.js';
 
 /** @type {string} the immutable `urn:gala:schema:theme-contract:2.0.0` schema id
@@ -100,11 +98,6 @@ const THEME_CONTRACT_SCHEMA_ID = 'urn:gala:schema:theme-contract:2.0.0';
  * (belt-and-suspenders; every real theme package declares a tighter budget
  * of its own, enforced below). */
 const DEFAULT_MAXIMUM_PASSIVE_ASSET_BYTES = 262144;
-
-/** @type {string} the fixed, non-content-addressed output directory every
- * theme asset (stylesheet or passive file) is copied under, relative to
- * `basePath`. */
-export const THEME_ASSET_DIRECTORY = 'assets/theme';
 
 /** @type {readonly string[]} the stylesheet-list shape without `utilities.css`. */
 const STYLESHEETS_WITHOUT_UTILITIES = Object.freeze([
@@ -261,38 +254,6 @@ async function readDeclaredThemeFile(themeDirectory, candidatePath) {
   );
   const bytes = await readFile(absolutePath);
   return { relativePath, bytes };
-}
-
-/**
- * The `basePath`-joined output-relative path (no leading slash, safe to
- * both `path.join(outputDirectory, ...)` and a `manifestAsset.path`) for
- * one theme-owned file. `href` is always derived from this exact same
- * value, never computed independently, so the emitted `<link>` and the
- * physical/manifest path can never drift apart.
- *
- * @param {string} basePath the build input's `basePath`
- * @param {string} themeRelativePath the file's path relative to
- *   `THEME_ASSET_DIRECTORY` (e.g. `"tokens.css"` or `"assets/mark.svg"`)
- * @returns {string} the joined output-relative path
- */
-function joinedThemeOutputPath(basePath, themeRelativePath) {
-  return projectFixedAssetPath(
-    basePath,
-    `/${THEME_ASSET_DIRECTORY}/${themeRelativePath}`,
-  );
-}
-
-/**
- * The public `<link href>` for one theme file: the same joined path as
- * {@link joinedThemeOutputPath}, but under the public base path.
- *
- * @param {string} publicBasePath the public base path
- * @param {string} themeRelativePath the file's path relative to
- *   `THEME_ASSET_DIRECTORY`
- * @returns {string} the root-absolute href
- */
-function themeHref(publicBasePath, themeRelativePath) {
-  return `/${joinedThemeOutputPath(publicBasePath, themeRelativePath)}`;
 }
 
 /** @type {{maximumFileBytes: number, maximumTotalBytes: number, maximumFiles: number}} */
@@ -492,18 +453,6 @@ function assertThemeContractIntegrity(themeJson) {
 }
 
 /**
- * TPL-M1 fix: compute a Subresource Integrity attribute value
- * (`sha256-<base64>`) from exact file bytes, so a theme stylesheet `<link>`
- * can be verified by the browser itself.
- *
- * @param {Uint8Array} bytes exact file bytes
- * @returns {string} an `integrity` attribute value, e.g. `sha256-AAAA...`
- */
-function subresourceIntegrityAttribute(bytes) {
-  return `sha256-${sha256Base64(bytes)}`;
-}
-
-/**
  * Load and validate a selected theme package's `theme.json`, copy its
  * stylesheets (and any declared non-CSS passive assets) into
  * `<basePath>/assets/theme/`, and build the ordered `<link>` HTML fragment
@@ -556,12 +505,12 @@ export async function loadThemeAssets({
   const files = [];
   /** @type {import('../../../types/index.d.ts').ManifestAssetEntry[]} */
   const assets = [];
-  /** @type {string[]} */
-  const linkTags = [];
 
   const declaredAssetsByPath = new Map(
     (themeJson.assets ?? []).map((asset) => [asset.path, asset]),
   );
+  /** @type {{filename: string, relativePath: string, bytes: Uint8Array}[]} */
+  const stylesheets = [];
   for (const filename of /** @type {string[]} */ (themeJson.stylesheets)) {
     const { relativePath, bytes } = await readDeclaredThemeFile(
       themeDirectory,
@@ -572,50 +521,25 @@ export async function loadThemeAssets({
     // ignoring it.
     const declaredRow = declaredAssetsByPath.get(relativePath);
     if (declaredRow) assertPassiveAssetIntegrity(declaredRow, bytes);
-    const outputPath = joinedThemeOutputPath(basePath, relativePath);
-    files.push({ path: outputPath, bytes });
-    assets.push({
-      path: outputPath,
-      mediaType: 'text/css; charset=utf-8',
-      byteLength: String(bytes.byteLength),
-      sha256: digestBytes(bytes),
-      immutable: false,
-    });
-    const mediaAttribute = filename === 'print.css' ? ' media="print"' : '';
-    // TPL-M1 fix: emit Subresource Integrity so a mutated stylesheet in a
-    // published artifact is detectable by the browser itself, not only by
-    // re-running manifest verification. `digestBytes` returns a hex-prefixed
-    // `sha256:` tag for the manifest; SRI needs the same digest re-encoded as
-    // base64, computed fresh from these exact bytes.
-    const integrity = subresourceIntegrityAttribute(bytes);
-    linkTags.push(
-      `<link rel="stylesheet" href="${escapeHtml(themeHref(publicBasePath, relativePath))}" integrity="${integrity}" crossorigin="anonymous"${mediaAttribute}>`,
-    );
+    stylesheets.push({ filename, relativePath, bytes });
   }
 
-  // Template 4.1.0: the publication palette sheet, derived on every build
-  // (`{}` selects the theme's default palette), content-addressed, linked
-  // last with SRI and manifested like every theme stylesheet.
-  const paletteSheet = buildPaletteStylesheet(themeJson, appearanceTokens);
-  const paletteRelativePath = `${PALETTE_STYLESHEET_DIRECTORY}/${paletteSheet.fileName}`;
-  const paletteOutputPath = projectFixedAssetPath(
+  // The stylesheet and palette rows and the `<link>` markup are assembled
+  // without any file access (`theme-links.js`).
+  const links = assembleThemeLinks({
+    themeJson,
+    stylesheets,
     basePath,
-    `/${paletteRelativePath}`,
-  );
-  files.push({
-    path: paletteOutputPath,
-    bytes: Buffer.from(paletteSheet.bytes),
+    publicBasePath,
+    appearanceTokens,
   });
-  assets.push({
-    path: paletteOutputPath,
-    mediaType: PALETTE_STYLESHEET_MEDIA_TYPE,
-    byteLength: String(paletteSheet.bytes.byteLength),
-    sha256: digestBytes(paletteSheet.bytes),
-    immutable: false,
-  });
-  linkTags.push(
-    `<link rel="stylesheet" href="${escapeHtml(`/${projectFixedAssetPath(publicBasePath, `/${paletteRelativePath}`)}`)}" integrity="${subresourceIntegrityAttribute(paletteSheet.bytes)}" crossorigin="anonymous">`,
-  );
+  for (const file of links.files) {
+    files.push({
+      path: file.path,
+      bytes: Buffer.isBuffer(file.bytes) ? file.bytes : Buffer.from(file.bytes),
+    });
+  }
+  assets.push(...links.assets);
 
   // TPL-M2 fix: partition by the already-shape-validated `stylesheets` list
   // itself, not by comparing `asset.mediaType` against the literal string
@@ -675,26 +599,10 @@ export async function loadThemeAssets({
   return {
     files,
     assets,
-    linkTagsHtml: linkTags.join(''),
-    canvas: paletteSheet.canvas,
+    linkTagsHtml: links.linkTagsHtml,
+    canvas: links.canvas,
     composition: assertSupportedComposition(themeJson.composition),
   };
 }
 
-/**
- * The default theme stylesheet markup, used only when
- * `renderPublication` is not given a resolved `options.themeDirectory`
- * (this repository's own tests, and any caller that has not yet resolved a
- * theme package): one `media="print"` `<link>` at the fixed conventional
- * `<basePath>/assets/theme/print.css` path, matching
- * `internal/print-stylesheet.js`'s pre-existing convention exactly. No
- * file is written for this fallback path — see the module's own "purely
- * additive" documentation above.
- *
- * @param {string} basePath the build input's `basePath`
- * @returns {string} the `<link>` HTML fragment
- */
-export function defaultThemeStylesheetLinksHtml(basePath) {
-  const outputPath = joinedThemeOutputPath(basePath, 'print.css');
-  return `<link rel="stylesheet" href="${escapeHtml(`/${outputPath}`)}" media="print">`;
-}
+export { THEME_ASSET_DIRECTORY, defaultThemeStylesheetLinksHtml };
