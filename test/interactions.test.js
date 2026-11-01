@@ -21,9 +21,9 @@ import {
 } from '../src/core/internal/render-policy-content.js';
 import {
   assertRenderPolicyIdentity,
-  computeRenderPolicyIdentity,
   contentSecurityPolicyMetaTag,
 } from '../src/core/internal/content-security.js';
+import { computeRenderPolicyIdentity } from '../src/core/internal/render-policy-identity-node.js';
 import {
   INTERACTIONS_SCRIPT_PATH,
   interactionsActive,

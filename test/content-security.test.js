@@ -11,11 +11,11 @@ import {
 } from '../src/core/index.js';
 import {
   assertRenderPolicyIdentity,
-  computeRenderPolicyIdentity,
   contentSecurityPolicyBaseline,
   contentSecurityPolicyHeaderOnlyDirectives,
   contentSecurityPolicyMetaTag,
 } from '../src/core/internal/content-security.js';
+import { computeRenderPolicyIdentity } from '../src/core/internal/render-policy-identity-node.js';
 import {
   HIGHLIGHT_GRAMMARS,
   contentSecurityPolicyMeta,

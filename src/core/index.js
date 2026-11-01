@@ -93,9 +93,9 @@ import { digestBytes } from './internal/canonical-jcs.js';
 import {
   assertPolicyConformantHtml,
   assertRenderPolicyIdentity,
-  computeRenderPolicyIdentity,
   contentSecurityPolicyMetaTag,
 } from './internal/content-security.js';
+import { computeRenderPolicyIdentity } from './internal/render-policy-identity-node.js';
 import {
   CONSENT_SCRIPT_MEDIA_TYPE,
   CONSENT_SCRIPT_PATH,
@@ -1948,6 +1948,6 @@ export {
 
 export {
   computeBodyDigest,
-  computeRenderPolicyIdentity,
   normalizeAuthoredMarkdown,
 } from './internal/content-security.js';
+export { computeRenderPolicyIdentity } from './internal/render-policy-identity-node.js';

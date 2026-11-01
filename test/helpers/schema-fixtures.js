@@ -14,10 +14,8 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-import {
-  computeBodyDigest,
-  computeRenderPolicyIdentity,
-} from '../../src/core/internal/content-security.js';
+import { computeBodyDigest } from '../../src/core/internal/content-security.js';
+import { computeRenderPolicyIdentity } from '../../src/core/internal/render-policy-identity-node.js';
 
 const packageJsonUrl = await import.meta
   .resolve('@rathnasgala2/schemas/package.json');
