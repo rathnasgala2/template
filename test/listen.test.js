@@ -9,6 +9,7 @@
  * (`publication.listen` and a post's `listen`).
  */
 
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 import { strict as assert } from 'node:assert';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
@@ -678,6 +679,7 @@ test('the playlist comes before the post list in each of the five compositions, 
     for (const composition of SUPPORTED_COMPOSITIONS) {
       const pages = buildGeneratedPages(input, {
         getMessages,
+        loadPolicyDefaults: loadSitePolicyDefaults,
         pageBody: (/** @type {string} */ body) => body,
         composition: { ...composition },
         listen,

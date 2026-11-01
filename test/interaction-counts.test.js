@@ -7,6 +7,7 @@
  * and silence on every kind of failure.
  */
 
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 import { getMessages } from '../src/core/internal/messages.js';
 import { strict as assert } from 'node:assert';
 import { createHash } from 'node:crypto';
@@ -72,6 +73,7 @@ async function pagesWith(interactions) {
   const buildInput = /** @type {any} */ (await buildRichFixture());
   const pages = buildGeneratedPages(buildInput, {
     getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
     pageBody: (body) => body,
     interactions,
   });

@@ -463,6 +463,10 @@ export function homeDocumentTitle(name, tagline) {
  * @param {(bcp47?: string) => import('./messages-core.js').MessageCatalog} options.getMessages
  *   the chrome-catalog lookup (`getMessages` from `messages.js` in Node, one
  *   built by `loadMessagesFor` in a browser)
+ * @param {() => import('./policy-defaults.js').SitePolicyDefaults} [options.loadPolicyDefaults]
+ *   returns the default Terms and Privacy text (`loadSitePolicyDefaults` from
+ *   `policy-defaults-node.js` in Node); needed when the build input carries no
+ *   `policies`
  * @param {string} [options.only] a content id: build the page of that one
  *   record only (none of the site-wide pages, no policy pages); an unknown id
  *   yields no pages
@@ -1036,7 +1040,7 @@ export function buildGeneratedPages(validatedInput, options) {
   });
   for (const policy of only
     ? []
-    : resolvePolicyPages(validatedInput.policies)) {
+    : resolvePolicyPages(validatedInput.policies, options.loadPolicyDefaults)) {
     pages.push({
       kind: 'policy',
       route: policy.route,

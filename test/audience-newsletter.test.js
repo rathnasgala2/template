@@ -6,6 +6,7 @@
  * driving the form in JSDOM (every answer and error code of the API).
  */
 
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
@@ -64,6 +65,7 @@ async function pagesWith(newsletter, audience) {
   if (newsletter) input.publication.newsletter = newsletter;
   return buildGeneratedPages(input, {
     getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
     pageBody: (body) => body,
     ...(audience ? { audience } : {}),
   });

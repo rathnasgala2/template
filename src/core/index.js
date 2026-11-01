@@ -127,6 +127,7 @@ import {
   assertLanguageSegmentsFree,
   resolveTranslations,
 } from './internal/translations.js';
+import { loadSitePolicyDefaults } from './internal/policy-defaults-node.js';
 import { loadAudienceScript } from './internal/audience-node.js';
 import {
   loadCountsScript,
@@ -149,25 +150,20 @@ import {
   selectPublishedArticles,
 } from './internal/page-kinds.js';
 import { assertProvenance } from './internal/provenance.js';
-import {} from './internal/route-labels.js';
 import { projectFixedAssetPath } from './internal/route.js';
 import { buildSearchIndex } from './internal/search-index.js';
-import {} from './internal/seo.js';
 import { buildLlmsDocuments } from './internal/llms.js';
 import { buildRobotsTxt, readAiCrawlerPolicy } from './internal/robots.js';
 import { buildLicenseXml } from './internal/license-rsl.js';
 import { splitLiveContent } from './internal/liveness.js';
-import {} from './internal/notice-pages.js';
 import {
   buildArticleMarkdown,
   buildPostsJson,
   markdownRoute,
-  readMarkdownBody,
 } from './internal/static-outputs.js';
+import { readMarkdownBody } from './internal/static-outputs-node.js';
 import { buildSitemap } from './internal/sitemap.js';
 import { loadThemeAssets } from './internal/theme-assets.js';
-import {} from './internal/skeleton.js';
-import {} from './internal/components.js';
 import {
   collectIncludedSources,
   compareUtf8Bytes,
@@ -504,6 +500,7 @@ export async function renderPublication(buildInput, options) {
     aiPolicy,
   } = buildPageDocuments(validatedInput, {
     getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
     routeProfile,
     liveSplit,
     contentImages,

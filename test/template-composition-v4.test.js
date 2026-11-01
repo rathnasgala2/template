@@ -1,4 +1,5 @@
 import { strict as assert } from 'node:assert';
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -87,6 +88,7 @@ test('all generation-4 profiles produce distinct home, article, author and listi
     SUPPORTED_COMPOSITIONS.map((composition) => {
       const pages = buildGeneratedPages(input, {
         getMessages,
+        loadPolicyDefaults: loadSitePolicyDefaults,
         pageBody: (body) => body,
         composition,
         mediaAssets: [

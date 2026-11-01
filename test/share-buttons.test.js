@@ -5,6 +5,7 @@
  * script's reveal logic (executed in JSDOM, never mirrored).
  */
 
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
@@ -41,6 +42,7 @@ async function articleShare(sharing, adjust) {
   adjust?.(buildInput);
   const pages = buildGeneratedPages(buildInput, {
     getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
     pageBody: (body) => body,
   });
   const article = pages.find(
@@ -290,6 +292,7 @@ test('a page without an article share group renders none (pages and listings are
   buildInput.publication.sharing = { targets: ['x'] };
   const pages = buildGeneratedPages(buildInput, {
     getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
     pageBody: (body) => body,
   });
   for (const page of pages.filter(

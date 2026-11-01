@@ -16,7 +16,7 @@ import {
   renderPublication,
 } from '../src/core/index.js';
 import { madeWithGalascribeHref } from '../src/core/internal/chrome.js';
-import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults.js';
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 import {
   renderGalascribeSection,
   validatePolicies,

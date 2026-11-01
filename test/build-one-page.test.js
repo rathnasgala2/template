@@ -2,6 +2,7 @@
  * `buildGeneratedPages(..., { only })` builds one record's page and nothing else.
  */
 
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
@@ -13,6 +14,7 @@ test('only: one record yields exactly its own page, equal to the full build', as
   const input = /** @type {any} */ (await buildRichFixture());
   const all = buildGeneratedPages(input, {
     getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
     pageBody: (/** @type {string} */ body) => body,
   });
   const article = input.content.find(
@@ -21,6 +23,7 @@ test('only: one record yields exactly its own page, equal to the full build', as
   assert.ok(article);
   const one = buildGeneratedPages(input, {
     getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
     pageBody: (/** @type {string} */ body) => body,
     only: article.frontmatter.id,
   });
@@ -35,6 +38,7 @@ test('only: an unknown id yields no pages', async () => {
   assert.deepEqual(
     buildGeneratedPages(input, {
       getMessages,
+      loadPolicyDefaults: loadSitePolicyDefaults,
       pageBody: (/** @type {string} */ body) => body,
       only: 'no-such-id',
     }),

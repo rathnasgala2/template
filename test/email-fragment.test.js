@@ -5,6 +5,7 @@
  * and a full render of everything the audience features add to a site.
  */
 
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 import { getMessages } from '../src/core/internal/messages.js';
 import { strict as assert } from 'node:assert';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
@@ -283,6 +284,7 @@ test('fragments are no pages: sitemap, feeds, search index and llms files never 
   const input = await inputWith(GALASCRIBE_FULL);
   const pages = buildGeneratedPages(input, {
     getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
     pageBody: (body) => body,
   });
   const sitemap = buildSitemap({

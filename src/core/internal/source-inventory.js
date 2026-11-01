@@ -7,6 +7,7 @@
  */
 
 import { cardMediaOf } from './first-body-image.js';
+import { compareUtf8 } from './utf8.js';
 
 /** @type {readonly string[]} */
 const ROLE_PRIORITY = Object.freeze([
@@ -180,7 +181,5 @@ function recordResolvedFile(record, resolvedFile, sourceRevision) {
  * @returns {number} negative, zero or positive per `Array#sort` contract
  */
 export function compareUtf8Bytes(a, b) {
-  const bytesA = Buffer.from(a, 'utf8');
-  const bytesB = Buffer.from(b, 'utf8');
-  return Buffer.compare(bytesA, bytesB);
+  return compareUtf8(a, b);
 }

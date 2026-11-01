@@ -5,6 +5,7 @@
  * never changed, and manifest paths / physical output paths are untouched.
  */
 
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 import { getMessages } from '../src/core/internal/messages.js';
 import { strict as assert } from 'node:assert';
 import { readFile } from 'node:fs/promises';
@@ -266,6 +267,7 @@ test('explicit-file emitters: no page URL in sitemap, feeds, llms, search index,
   const routeProfile = 'explicit-file';
   const generatedPages = buildGeneratedPages(buildInput, {
     getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
     pageBody: (body) => body,
     routeProfile,
   });
@@ -322,6 +324,7 @@ test('the same emitters under directory-index produce slashed forms for the same
   const buildInput = await fixtureWithNavigation();
   const generatedPages = buildGeneratedPages(buildInput, {
     getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
     pageBody: (body) => body,
     routeProfile: 'directory-index',
   });

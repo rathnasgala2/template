@@ -24,11 +24,13 @@
  * conflict does.
  */
 
-import { BuildInputValidationError } from '../errors.js';
+import {
+  BuildInputValidationError,
+  RenderPolicyViolationError,
+} from '../errors.js';
 import { renderAnalyticsPrivacyParagraph } from './analytics/markup.js';
 import { normalizeAuthoredMarkdown } from './content-security.js';
 import { boundedText, exactObject } from './module-shape.js';
-import { loadSitePolicyDefaults } from './policy-defaults.js';
 import { escapeHtml } from './skeleton.js';
 
 /** @type {string} */
@@ -115,9 +117,11 @@ export function validatePolicies(candidate) {
  *
  * @param {import('../../../types/index.d.ts').PoliciesNormalized | undefined} policies
  *   the build input's `policies`
+ * @param {() => import('./policy-defaults.js').SitePolicyDefaults} [loadPolicyDefaults]
+ *   returns the default text; needed only when `policies` is absent
  * @returns {PolicyPage[]} the Terms page, then the Privacy page
  */
-export function resolvePolicyPages(policies) {
+export function resolvePolicyPages(policies, loadPolicyDefaults) {
   if (policies !== undefined) {
     return [
       {
@@ -132,7 +136,12 @@ export function resolvePolicyPages(policies) {
       },
     ];
   }
-  const defaults = loadSitePolicyDefaults();
+  if (loadPolicyDefaults === undefined) {
+    throw new RenderPolicyViolationError(
+      'the default policy text needs a loadPolicyDefaults option when the build input carries no policies',
+    );
+  }
+  const defaults = loadPolicyDefaults();
   return [
     {
       route: TERMS_ROUTE,

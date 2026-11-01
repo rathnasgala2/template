@@ -81,12 +81,12 @@ import { TEMPLATE_RENDERER_VERSION } from './package-version.js';
 import { MEDIA_TYPE_BY_FORMAT, sniffMediaFormat } from './media/sniff.js';
 import { sanitizeThemeSvg } from './media/theme-svg-sanitizer.js';
 import { satisfiesTemplateRange } from './semver-range.js';
+import { assembleThemeLinks } from './theme-links.js';
 import {
   THEME_ASSET_DIRECTORY,
-  assembleThemeLinks,
+  defaultThemeStylesheetLinksHtml,
   joinedThemeOutputPath,
-} from './theme-links.js';
-import { defaultThemeStylesheetLinksHtml } from './theme-links.js';
+} from './theme-paths.js';
 import { assertSupportedComposition } from './template-composition.js';
 
 /** @type {string} the immutable `urn:gala:schema:theme-contract:2.0.0` schema id

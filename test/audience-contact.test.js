@@ -7,6 +7,7 @@
  * inline validation, every error code of the API).
  */
 
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
@@ -61,7 +62,11 @@ async function inputWith(contactForm) {
  * @returns {any[]} the generated pages
  */
 const pagesOf = (input) =>
-  buildGeneratedPages(input, { getMessages, pageBody: (body) => body });
+  buildGeneratedPages(input, {
+    getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
+    pageBody: (body) => body,
+  });
 
 const contactPage = (/** @type {any[]} */ pages) =>
   pages.find((page) => page.route === CONTACT_ROUTE);
@@ -195,6 +200,7 @@ test('an authored gala/theme-pages/contact.md replaces the default intro; its le
   const page = contactPage(
     buildGeneratedPages(input, {
       getMessages,
+      loadPolicyDefaults: loadSitePolicyDefaults,
       pageBody: (body) => `[[${body}]]`,
     }),
   );

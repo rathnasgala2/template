@@ -8,10 +8,8 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
 import { RenderPolicyViolationError } from '../src/core/index.js';
-import {
-  loadSitePolicyDefaults,
-  readSitePolicyDefaults,
-} from '../src/core/internal/policy-defaults.js';
+import { readSitePolicyDefaults } from '../src/core/internal/policy-defaults.js';
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 
 const SPECIFIER = '@rathnasgala2/schemas/site-policy-defaults';
 

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 import test from 'node:test';
 
 import { getMessages } from '../src/core/internal/messages.js';
@@ -79,6 +80,7 @@ test('a site without variants renders its chrome in the defaultLanguage catalog'
   input.publication.defaultLanguage = 'ta';
   const pages = buildGeneratedPages(input, {
     getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
     pageBody: (/** @type {string} */ b) => b,
   });
   const contact = pages.find((/** @type {any} */ p) =>

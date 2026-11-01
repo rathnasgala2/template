@@ -7,13 +7,10 @@
  * Markdown through the render policy's own pipeline.
  */
 
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
 import { RenderPolicyViolationError } from '../errors.js';
 
 /** @type {string} */
-const SPECIFIER = '@rathnasgala2/schemas/site-policy-defaults';
+export const SPECIFIER = '@rathnasgala2/schemas/site-policy-defaults';
 
 /**
  * @typedef {object} SitePolicyDefault
@@ -26,9 +23,6 @@ const SPECIFIER = '@rathnasgala2/schemas/site-policy-defaults';
  * @property {SitePolicyDefault} terms the Terms page
  * @property {SitePolicyDefault} privacy the Privacy page
  */
-
-/** @type {Readonly<SitePolicyDefaults> | undefined} */
-let loaded;
 
 /**
  * @param {unknown} value a parsed member of the defaults document
@@ -82,19 +76,4 @@ export function readSitePolicyDefaults(readText) {
     terms: defaultOf(candidate?.terms, 'terms'),
     privacy: defaultOf(candidate?.privacy, 'privacy'),
   });
-}
-
-/**
- * Read the schemas package's default policy text once per process.
- *
- * @returns {Readonly<SitePolicyDefaults>} the defaults, checked
- * @throws {RenderPolicyViolationError} when the export is missing or not the
- *   documented shape
- */
-export function loadSitePolicyDefaults() {
-  if (loaded !== undefined) return loaded;
-  loaded = readSitePolicyDefaults(() =>
-    readFileSync(fileURLToPath(import.meta.resolve(SPECIFIER)), 'utf8'),
-  );
-  return loaded;
 }

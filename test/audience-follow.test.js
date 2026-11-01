@@ -6,6 +6,7 @@
  * with `gala-interactions.js`.
  */
 
+import { loadSitePolicyDefaults } from '../src/core/internal/policy-defaults-node.js';
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
@@ -51,6 +52,7 @@ async function build(options = {}) {
   const input = /** @type {any} */ (await buildRichFixture());
   const pages = buildGeneratedPages(input, {
     getMessages,
+    loadPolicyDefaults: loadSitePolicyDefaults,
     pageBody: (body) => body,
     ...(options.audience ? { audience: options.audience } : {}),
   });

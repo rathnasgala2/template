@@ -17,10 +17,6 @@
  * that article, never a wrong one.
  */
 
-import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-
 import { plainTextExcerpt } from './search-index.js';
 import { compareUtf8Bytes } from './source-inventory.js';
 import {
@@ -65,30 +61,6 @@ export function markdownBodyOf(text) {
     .slice(closing + 1)
     .join('\n')
     .replace(/^\n+/u, '');
-}
-
-/**
- * Read an article's Markdown body from the repository tree.
- *
- * @param {string} sourceDirectory the caller-mounted repository root
- * @param {ContentBuildRecord} record an article
- * @returns {Promise<string | undefined>} the body, or `undefined` when the
- *   file is missing, outside the tree, not the file the build input digested,
- *   or has no front matter fence
- */
-export async function readMarkdownBody(sourceDirectory, record) {
-  const root = path.resolve(sourceDirectory) + path.sep;
-  const resolved = path.resolve(sourceDirectory, record.sourcePath);
-  if (!resolved.startsWith(root)) return undefined;
-  let bytes;
-  try {
-    bytes = await readFile(resolved);
-  } catch {
-    return undefined;
-  }
-  const digest = `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
-  if (digest !== record.sourceDigest) return undefined;
-  return markdownBodyOf(bytes.toString('utf8'));
 }
 
 /**

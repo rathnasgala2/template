@@ -73,7 +73,7 @@ import {
 import { readAiPolicy, withTrainingOptOut } from './robots.js';
 import { renderRemovedPostBody, renderVersionBody } from './notice-pages.js';
 import { buildVersionInfo } from './static-outputs.js';
-import { defaultThemeStylesheetLinksHtml } from './theme-assets.js';
+import { defaultThemeStylesheetLinksHtml } from './theme-paths.js';
 import { EDITORIAL_COMPOSITION } from './template-composition.js';
 import { resolveTextDirection } from './text-direction.js';
 import {
@@ -639,6 +639,7 @@ export function buildPageDocuments(validatedInput, ctx) {
 
   const generatedPages = buildGeneratedPages(validatedInput, {
     getMessages,
+    loadPolicyDefaults: ctx.loadPolicyDefaults,
     routeProfile,
     pageBody,
     editions,
@@ -973,6 +974,7 @@ export function buildPageDocuments(validatedInput, ctx) {
 /**
  * @typedef {object} PageDocumentsContext
  * @property {(bcp47?: string) => import('./messages-core.js').MessageCatalog} getMessages the chrome-catalog lookup
+ * @property {() => import('./policy-defaults.js').SitePolicyDefaults} [loadPolicyDefaults] returns the default Terms and Privacy text, needed when the build input carries no policies
  * @property {import('./route.js').RouteNormalizationProfile} routeProfile the route normalization profile
  * @property {ReturnType<typeof import('./liveness.js').splitLiveContent>} liveSplit the live and removed records
  * @property {ReturnType<typeof import('./media/content-images.js').resolveContentImages>} contentImages the resolved body images
