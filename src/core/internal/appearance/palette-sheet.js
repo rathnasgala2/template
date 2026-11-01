@@ -24,7 +24,8 @@
  * author's picks, so sites on the same theme default share identical bytes.
  */
 
-import { createHash } from 'node:crypto';
+import { sha256Hex } from '../sha256.js';
+import { compareUtf8, utf8Bytes } from '../utf8.js';
 
 import { validateGalaDocument } from '@rathnasgala2/schemas';
 import {
@@ -69,9 +70,7 @@ function declarationLines(declarations, indent) {
  * @returns {string} the stylesheet text
  */
 function serialisePaletteSheet(tokens, bound) {
-  const keys = [...bound].sort((a, b) =>
-    Buffer.compare(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8')),
-  );
+  const keys = [...bound].sort(compareUtf8);
   /** @type {Record<string, string>} */
   const light = {};
   /** @type {Record<string, string>} */
@@ -137,7 +136,7 @@ export function assertThemePalette(themeJson) {
  *   the theme's default palette)
  * @returns {{
  *   text: string,
- *   bytes: Buffer,
+ *   bytes: Uint8Array,
  *   fileName: string,
  *   canvas: {light: string, dark: string} | undefined,
  * }} the sheet, its content-addressed file name and the resolved page canvas
@@ -203,14 +202,14 @@ export function buildPaletteStylesheet(themeJson, appearanceTokens) {
   }
 
   const text = serialisePaletteSheet(derived.tokens, derived.bound);
-  const bytes = Buffer.from(text, 'utf8');
+  const bytes = utf8Bytes(text);
   if (bytes.byteLength > PALETTE_STYLESHEET_MAXIMUM_BYTES) {
     throw new ThemeAssetError(
       'APPEARANCE_PALETTE_INVALID',
       `the palette stylesheet is ${bytes.byteLength} bytes, over ${PALETTE_STYLESHEET_MAXIMUM_BYTES}`,
     );
   }
-  const hash = createHash('sha256').update(bytes).digest('hex').slice(0, 12);
+  const hash = sha256Hex(bytes).slice(0, 12);
   const canvas = derived.tokens['color-canvas'];
   const opaque = /^#[0-9a-f]{6}$/i;
   return {

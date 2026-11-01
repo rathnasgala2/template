@@ -25,7 +25,7 @@
  * never collide on the same generated route.
  */
 
-import { createHash } from 'node:crypto';
+import { sha256HexOfText } from './sha256.js';
 
 /**
  * @param {string} label the raw label
@@ -58,10 +58,7 @@ function asciiReadablePrefix(label) {
  *   label
  */
 export function routeSegmentForLabel(label) {
-  const hash = createHash('sha256')
-    .update(label, 'utf8')
-    .digest('hex')
-    .slice(0, 10);
+  const hash = sha256HexOfText(label).slice(0, 10);
   const prefix = asciiReadablePrefix(label);
   return prefix.length > 0 ? `${prefix}-${hash}` : hash;
 }

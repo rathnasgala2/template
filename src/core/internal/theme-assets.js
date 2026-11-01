@@ -68,7 +68,6 @@
  * theme's own declaration.
  */
 
-import { createHash } from 'node:crypto';
 import { lstat, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -76,6 +75,7 @@ import { validateGalaDocument } from '@rathnasgala2/schemas';
 
 import { ThemeAssetError } from '../errors.js';
 import { digestBytes } from './canonical-jcs.js';
+import { sha256Base64 } from './sha256.js';
 import {
   assertThemePalette,
   buildPaletteStylesheet,
@@ -496,11 +496,11 @@ function assertThemeContractIntegrity(themeJson) {
  * (`sha256-<base64>`) from exact file bytes, so a theme stylesheet `<link>`
  * can be verified by the browser itself.
  *
- * @param {Buffer} bytes exact file bytes
+ * @param {Uint8Array} bytes exact file bytes
  * @returns {string} an `integrity` attribute value, e.g. `sha256-AAAA...`
  */
 function subresourceIntegrityAttribute(bytes) {
-  return `sha256-${createHash('sha256').update(bytes).digest('base64')}`;
+  return `sha256-${sha256Base64(bytes)}`;
 }
 
 /**
@@ -602,7 +602,10 @@ export async function loadThemeAssets({
     basePath,
     `/${paletteRelativePath}`,
   );
-  files.push({ path: paletteOutputPath, bytes: paletteSheet.bytes });
+  files.push({
+    path: paletteOutputPath,
+    bytes: Buffer.from(paletteSheet.bytes),
+  });
   assets.push({
     path: paletteOutputPath,
     mediaType: PALETTE_STYLESHEET_MEDIA_TYPE,
