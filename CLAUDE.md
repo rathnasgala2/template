@@ -153,15 +153,19 @@ design.
 ## Review checklist
 
 Confirm: exact dependency pins (Eleventy 3.1.6, markdown-it 14.3.3,
-sanitize-html 2.18.1, syntaxhighlight 5.0.2, `jpeg-js` 0.4.4) unchanged from
-`test/pinned-versions.test.js`; lockfile v3; `src/core/` remains the only source
-root; no `bin` named `gala`; no default export other than the documented entry
-point; `contracts/*.jcs` still canonical; `renderPublication`'s required
-`options.sourceDirectory` (S2-T05: the caller-mounted, read-only repository
-source tree `build-input`'s `resolvedFile` references point into, distinct from
-`outputDirectory`/`workDirectory`) is still asserted and wired through to the
-media pipeline; every emitted asset reference (media, appearance script, theme
-CSS, print CSS) is `basePath`-joined (S2-T12); the optional
-`options.themeDirectory` stays additive (every pre-S2-T12 render path is
-unaffected when it is absent); and every gate in `npm run verify` passing before
-approval.
+sanitize-html 2.18.1, syntaxhighlight 5.0.2, `prismjs` 1.30.0, `jpeg-js` 0.4.4)
+unchanged from `test/pinned-versions.test.js`; lockfile v3; `src/core/` remains
+the only source root; no `bin` named `gala`; no default export other than the
+two documented entry points (`.` and the browser `./preview`); the `./preview`
+import graph still reaches no Node-only module
+(`test/browser-safe-imports.test.js`, the `preview-entry-*` dependency-cruiser
+rules) and the preview still equals the built page
+(`test/preview-parity.test.js`); `contracts/*.jcs` still canonical;
+`renderPublication`'s required `options.sourceDirectory` (S2-T05: the
+caller-mounted, read-only repository source tree `build-input`'s `resolvedFile`
+references point into, distinct from `outputDirectory`/`workDirectory`) is still
+asserted and wired through to the media pipeline; every emitted asset reference
+(media, appearance script, theme CSS, print CSS) is `basePath`-joined (S2-T12);
+the optional `options.themeDirectory` stays additive (every pre-S2-T12 render
+path is unaffected when it is absent); and every gate in `npm run verify`
+passing before approval.
