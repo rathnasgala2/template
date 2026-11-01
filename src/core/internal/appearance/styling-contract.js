@@ -86,6 +86,7 @@ import {
 } from '../template-composition.js';
 import { SLOT_NAMES } from '../skeleton.js';
 import { canonicalizeJcs, domainDigest } from '../canonical-jcs.js';
+import { compareUtf8 } from '../utf8.js';
 
 /** @type {string} */
 export const TEMPLATE_STYLING_CONTRACT_PACKAGE = '@rathnasgala2/template';
@@ -523,11 +524,7 @@ const ALL_HOOKS = Object.freeze([
  * @returns {string[]} a new, UTF-8-byte-sorted, duplicate-free copy
  */
 function sortedUniqueBytes(values) {
-  return [...new Set(values)].sort((a, b) => {
-    const bufferA = Buffer.from(a, 'utf8');
-    const bufferB = Buffer.from(b, 'utf8');
-    return Buffer.compare(bufferA, bufferB);
-  });
+  return [...new Set(values)].sort(compareUtf8);
 }
 
 /**
@@ -570,20 +567,12 @@ export function buildTemplateStylingContract() {
       values: sortedUniqueBytes(values),
       role: 'semantic',
     })),
-  ].sort((a, b) => {
-    const bufferA = Buffer.from(canonicalizeJcs(a), 'utf8');
-    const bufferB = Buffer.from(canonicalizeJcs(b), 'utf8');
-    return Buffer.compare(bufferA, bufferB);
-  });
+  ].sort((a, b) => compareUtf8(canonicalizeJcs(a), canonicalizeJcs(b)));
 
   const publicThemeSlotHooks = ALL_HOOKS.map(({ hookId, selectorAtom }) => ({
     hookId,
     selectorAtom,
-  })).sort((a, b) => {
-    const bufferA = Buffer.from(a.hookId, 'utf8');
-    const bufferB = Buffer.from(b.hookId, 'utf8');
-    return Buffer.compare(bufferA, bufferB);
-  });
+  })).sort((a, b) => compareUtf8(a.hookId, b.hookId));
 
   /** @type {Record<string, unknown>} */
   const withoutDigest = {
