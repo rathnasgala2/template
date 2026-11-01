@@ -123,8 +123,7 @@ export const APPEARANCE_RESOLVED_MODE_VALUES = Object.freeze([
 /**
  * TPL-C1 fix: the server-rendered default for
  * {@link APPEARANCE_RESOLVED_MODE_ATTRIBUTE} on `<html>`, present on every
- * page independent of JavaScript (`internal/eleventy-render.js`'s
- * `SKELETON_LAYOUT_SOURCE`). `light` is chosen because it is the value the
+ * page independent of JavaScript (`internal/document-shell.js`). `light` is chosen because it is the value the
  * bootstrap script's own `resolveMode` already falls back to when
  * `prefers-color-scheme` cannot be read (`internal/appearance/
  * bootstrap-script.js`'s `systemPrefersDark` catch branch), so the
@@ -255,7 +254,7 @@ export const APPEARANCE_BOOTSTRAP_SCRIPT_HREF = `/${APPEARANCE_BOOTSTRAP_SCRIPT_
 
 /**
  * The `basePath`-joined `<script src>` reference every generated page's
- * skeleton layout actually uses.
+ * document shell actually uses.
  *
  * @param {string} basePath the build input's `basePath`
  * @returns {string} the joined `href`

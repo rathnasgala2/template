@@ -20,11 +20,14 @@ the package's one documented entry point. It:
    `@rathnasgala2/schemas`' `validateGalaDocument` and fails closed
    (`BuildInputValidationError`, before anything is written) on an invalid one;
 2. renders the publication profile (when selected) and every selected content
-   record, plus every authored static redirect document, through a single
-   confined, single-pass programmatic Eleventy 3.1.6 build behind
+   record, plus every authored static redirect document, as complete documents
+   (`src/core/internal/site-render.js` assembles the pages and
+   `src/core/internal/document-shell.js` wraps each in its `<head>` and
+   `<body>`), then writes them through a single confined, single-pass
+   programmatic Eleventy 3.1.6 build behind
    `src/core/internal/eleventy-render.js` — the only module in this repository
-   permitted to import `@11ty/eleventy`, so no Eleventy object, plug-in API,
-   config object or Nunjucks environment ever crosses back out of it; and
+   permitted to import `@11ty/eleventy`, so no Eleventy object, plug-in API or
+   config object ever crosses back out of it; and
 3. assembles, digests and schema-validates a closed
    `urn:gala:schema:artifact-manifest:2.0.0` instance describing the candidate
    output directory.
@@ -375,10 +378,10 @@ Every page is fully readable with JavaScript off; the script only enhances:
   (`{path, byteLength, sha256}` plus its fixed
   `application/javascript; charset=utf-8` media type), after the Eleventy route
   listing, so it is never mistaken for an HTML route.
-  `src/core/internal/eleventy-render.js`'s skeleton layout carries the
-  `data-gala-publication-root` attribute, the
-  `<meta name="color-scheme" content="light dark">` tag and the one
-  `<script src>` reference, so every route's `<head>` is still byte-identical.
+  `src/core/internal/document-shell.js` carries the `data-gala-publication-root`
+  attribute, the `<meta name="color-scheme" content="light dark">` tag and the
+  one `<script src>` reference, so every route's `<head>` is still
+  byte-identical.
 - With JavaScript disabled the toggle, search button and share group stay hidden
   (they would do nothing; a share group with link targets, see Share buttons,
   stays visible, with its script-only buttons hidden), the contents list, menu

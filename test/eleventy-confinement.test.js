@@ -48,7 +48,7 @@ test('the confined Eleventy call never discovers a .eleventy.js in its process c
     [
       `import { renderPagesWithEleventy } from '${ELEVENTY_RENDER_MODULE_URL}';`,
       'await renderPagesWithEleventy({',
-      '  pages: [{ virtualPath: "pages/one.html", content: "<p>ok</p>", permalink: "index.html", layout: "skeleton.njk", data: { title: "t", lang: "en" } }],',
+      '  pages: [{ virtualPath: "pages/one.html", content: "<p>ok</p>", permalink: "index.html" }],',
       `  inputDirectory: ${JSON.stringify(path.join(workDirectory, 'input'))},`,
       `  outputDirectory: ${JSON.stringify(outputDirectory)},`,
       '});',
@@ -124,7 +124,7 @@ test('the confined Eleventy call renders when the input directory only string-pr
         `import { renderPagesWithEleventy } from '${ELEVENTY_RENDER_MODULE_URL}';`,
         'await renderPagesWithEleventy({',
         '  pages: [',
-        '    { virtualPath: "pages/one.html", content: "<p>one</p>", permalink: "index.html", layout: "skeleton.njk", data: { title: "t", lang: "en" } },',
+        '    { virtualPath: "pages/one.html", content: "<p>one</p>", permalink: "index.html" },',
         '    { virtualPath: "feeds/atom.html", content: "<feed/>", permalink: "feed/atom.xml" },',
         '  ],',
         `  inputDirectory: ${JSON.stringify(inputDirectory)},`,
@@ -175,7 +175,7 @@ test('the confined Eleventy call renders when the process cwd is the filesystem 
     [
       `import { renderPagesWithEleventy } from '${ELEVENTY_RENDER_MODULE_URL}';`,
       'await renderPagesWithEleventy({',
-      '  pages: [{ virtualPath: "pages/one.html", content: "<p>one</p>", permalink: "index.html", layout: "skeleton.njk", data: { title: "t", lang: "en" } }],',
+      '  pages: [{ virtualPath: "pages/one.html", content: "<p>one</p>", permalink: "index.html" }],',
       `  inputDirectory: ${JSON.stringify(path.join(root, 'work', 'input'))},`,
       `  outputDirectory: ${JSON.stringify(outputDirectory)},`,
       '});',

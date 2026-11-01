@@ -42,6 +42,7 @@ import {
   resolveListen,
 } from './listen.js';
 import { TEMPLATE_RENDERER_VERSION } from './package-version.js';
+import { renderDocumentShell } from './document-shell.js';
 import { rewriteBodyImages } from './media/content-images.js';
 import {
   buildGeneratedPages,
@@ -631,7 +632,7 @@ export function buildPageDocuments(validatedInput, ctx) {
     `/${GALA_BASE_STYLESHEET_PATH}`,
   );
 
-  /** @type {{virtualPath: string, content: string, permalink: string, layout?: string, data?: Record<string, unknown>}[]} */
+  /** @type {{virtualPath: string, content: string, permalink: string, data: import('./document-shell.js').DocumentShellData}[]} */
   const contentPages = [];
   /** @type {{joinedSource: string, joinedTarget: string, publicTarget: string, filePath: string}[]} */
   const redirectProjections = [];
@@ -690,7 +691,6 @@ export function buildPageDocuments(validatedInput, ctx) {
       virtualPath: `pages/${page.kind}-${index}.html`,
       content: bodyHtml,
       permalink: pagePermalink,
-      layout: 'skeleton.njk',
       data: {
         title: page.documentTitle ?? page.title,
         ogTitle: page.socialTitle ?? page.title,
@@ -839,7 +839,6 @@ export function buildPageDocuments(validatedInput, ctx) {
         listenHtml: chrome.listen?.pageHtml(undefined) ?? '',
       }),
       permalink,
-      layout: 'skeleton.njk',
       data: {
         title: `${heading} | ${siteName}`,
         ogTitle: heading,
@@ -937,7 +936,11 @@ export function buildPageDocuments(validatedInput, ctx) {
   }
 
   return {
-    contentPages,
+    contentPages: contentPages.map((page) => ({
+      virtualPath: page.virtualPath,
+      permalink: page.permalink,
+      content: renderDocumentShell(page.data, page.content),
+    })),
     redirectPages,
     redirectProjections,
     generatedPages,

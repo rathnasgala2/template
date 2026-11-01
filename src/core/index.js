@@ -517,8 +517,8 @@ export async function renderPublication(buildInput, options) {
   // Feeds, sitemap and the static search index. Each is a fixed,
   // literal-extension file — never route-normalized like an ordinary
   // content route (`internal/route.js#projectFixedAssetPath`) — and each
-  // bypasses the shared HTML skeleton layout entirely (no `layout` field,
-  // exactly like a generated redirect document above): these are raw
+  // bypasses the shared HTML document shell entirely (exactly like a
+  // generated redirect document above): these are raw
   // XML/JSON bytes, not HTML pages.
   const atomFilePath = projectFixedAssetPath(
     validatedInput.basePath,
