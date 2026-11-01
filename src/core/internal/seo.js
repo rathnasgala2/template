@@ -76,6 +76,9 @@ export function resolveOriginalDerivativePath(mediaAssets, reference) {
  *   build input's `basePath`; the
  *   derivative path is joined with this before being resolved against
  *   `baseUrl`, so a non-root publication's social-image URL is correct)
+ * @param {(derivativePath: string) => string} [options.urlOf] the emitted URL
+ *   of a derivative (default: the path under `basePath`); resolved against
+ *   `baseUrl`, so an absolute or `data:` URL stays as it is
  * @returns {string | undefined} the absolute derivative image URL, or
  *   `undefined`
  */
@@ -84,11 +87,14 @@ export function resolveSocialImageUrl({
   reference,
   baseUrl,
   basePath,
+  urlOf,
 }) {
   const derivativePath = resolveOriginalDerivativePath(mediaAssets, reference);
   if (!derivativePath) return undefined;
   return new URL(
-    joinBasePathAndRoute(basePath, `/${derivativePath}`),
+    urlOf
+      ? urlOf(derivativePath)
+      : joinBasePathAndRoute(basePath, `/${derivativePath}`),
     baseUrl,
   ).toString();
 }
@@ -133,6 +139,8 @@ export function truncateAtWord(text, max) {
  * @param {{path: string, sourceDigest: string} | undefined} options.reference
  * @param {string} options.baseUrl
  * @param {string} options.basePath the public base path
+ * @param {(derivativePath: string) => string} [options.urlOf] the emitted URL
+ *   of a derivative (default: the path under `basePath`)
  * @returns {{url: string, width?: number, height?: number} | undefined}
  */
 export function resolveSocialImage({
@@ -141,12 +149,14 @@ export function resolveSocialImage({
   reference,
   baseUrl,
   basePath,
+  urlOf,
 }) {
   const url = resolveSocialImageUrl({
     mediaAssets,
     reference,
     baseUrl,
     basePath,
+    urlOf,
   });
   if (!url) return undefined;
   const size =

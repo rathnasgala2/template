@@ -173,7 +173,8 @@ export function buildPageDocuments(validatedInput, ctx) {
     themeAssets: themeAssetsResult,
     media,
   } = ctx;
-  const { mediaAssets, mediaDimensions, mediaVariants } = media;
+  const { mediaAssets, mediaDimensions, mediaVariants, urlOf } = media;
+  const { only, renderDocument = renderDocumentShell } = ctx;
   const {
     siteMessages,
     publicBasePath,
@@ -316,7 +317,11 @@ export function buildPageDocuments(validatedInput, ctx) {
     : defaultThemeStylesheetLinksHtml(publicBasePath);
   const composition = themeAssetsResult?.composition ?? EDITORIAL_COMPOSITION;
 
-  const contentImage = createContentImage({ mediaVariants, publicBasePath });
+  const contentImage = createContentImage({
+    mediaVariants,
+    publicBasePath,
+    urlOf,
+  });
   /** @type {(body: string) => string} a body's page form */
   const pageBody = (body) =>
     rewriteBodyImages(body, contentImages, contentImage.page);
@@ -330,6 +335,7 @@ export function buildPageDocuments(validatedInput, ctx) {
     mediaAssets,
     publicBasePath,
     mediaDimensions,
+    urlOf,
   });
   const brandMark = mediaImage(validatedInput.appearance.brandMark);
   // Site icon and browser chrome colour. The icon is the brand mark's original
@@ -573,6 +579,7 @@ export function buildPageDocuments(validatedInput, ctx) {
     feedBody,
     routeProfile,
     translations,
+    selfUrlsOnly: only !== undefined,
   });
   const absoluteSiteUrl = (/** @type {string} */ route) =>
     new URL(
@@ -641,11 +648,13 @@ export function buildPageDocuments(validatedInput, ctx) {
     getMessages,
     loadPolicyDefaults: ctx.loadPolicyDefaults,
     routeProfile,
+    only,
     pageBody,
     editions,
     translations,
     mediaAssets,
     mediaDimensions,
+    mediaUrlOf: urlOf,
     interactions: interactionsOn ? interactionsModule : undefined,
     analytics: analyticsOn ? analyticsModule : undefined,
     audience: { follows: followsOn, appOrigin: audienceAppOrigin },
@@ -684,6 +693,7 @@ export function buildPageDocuments(validatedInput, ctx) {
       reference: page.socialImageRef,
       baseUrl: validatedInput.baseUrl,
       basePath: publicBasePath,
+      urlOf,
     });
     const ogImage = ogImageInfo?.url;
     const pagePermalink = projectRouteToFilePath(joinedRoute, routeProfile);
@@ -767,6 +777,35 @@ export function buildPageDocuments(validatedInput, ctx) {
       },
     });
   });
+
+  // One record's page only (`only`): no redirects, notices or site-wide
+  // documents; the caller wants that page's complete document and nothing
+  // else.
+  if (only !== undefined) {
+    if (contentPages.length === 0) {
+      throw new RenderOptionsError(
+        `no page was generated for content id ${JSON.stringify(only)}`,
+      );
+    }
+    return /** @type {PageDocuments} */ (
+      /** @type {unknown} */ ({
+        contentPages: contentPages.map((page) => ({
+          virtualPath: page.virtualPath,
+          permalink: page.permalink,
+          content: renderDocument(page.data, page.content),
+        })),
+        redirectPages: [],
+        redirectProjections: [],
+        generatedPages,
+        interactionBearingPaths,
+        takenPermalinks: new Set(contentPages.map((page) => page.permalink)),
+        feeds,
+        absoluteSiteUrl,
+        emailBody,
+        aiPolicy,
+      })
+    );
+  }
 
   // A removed post's old addresses still lead to its notice.
   for (const record of [...validatedInput.content, ...liveSplit.removed]) {
@@ -940,7 +979,7 @@ export function buildPageDocuments(validatedInput, ctx) {
     contentPages: contentPages.map((page) => ({
       virtualPath: page.virtualPath,
       permalink: page.permalink,
-      content: renderDocumentShell(page.data, page.content),
+      content: renderDocument(page.data, page.content),
     })),
     redirectPages,
     redirectProjections,
@@ -982,7 +1021,13 @@ export function buildPageDocuments(validatedInput, ctx) {
  * @property {import('./translations.js').TranslationResolution} translations the resolved language variants
  * @property {SiteContext} site the site-wide facts
  * @property {{linkTagsHtml: string, composition: import('./template-composition.js').EDITORIAL_COMPOSITION, canvas: {light: string, dark: string} | undefined} | undefined} themeAssets the loaded theme, absent for the default styling
- * @property {{mediaAssets: any[], mediaDimensions: any, mediaVariants: any}} media the media pipeline's results
+ * @property {{mediaAssets: any[], mediaDimensions: any, mediaVariants: any, urlOf?: (derivativePath: string) => string}} media the media pipeline's results; `urlOf` overrides the emitted URL of a derivative
+ * @property {string} [only] a content id: build that record's page only (no
+ *   redirects, notices, version page or site-wide documents; the result then
+ *   carries `contentPages`, `generatedPages`, `interactionBearingPaths`,
+ *   `takenPermalinks`, `feeds`, `absoluteSiteUrl`, `emailBody` and `aiPolicy`)
+ * @property {(data: import('./document-shell.js').DocumentShellData, content: string) => string} [renderDocument]
+ *   wraps a page's body markup in its document (default: `renderDocumentShell`)
  */
 
 /**

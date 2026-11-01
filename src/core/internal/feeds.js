@@ -107,6 +107,9 @@ function cdata(text) {
  *   the language-variant resolution: the default feeds then list a group of
  *   variants once (its primary), and each non-default language gets its own
  *   pair of feeds
+ * @param {boolean} [options.selfUrlsOnly] build the feeds without entries: the
+ *   self URLs (and so every page's feed-discovery links) are the same, the
+ *   documents are not wanted (the article preview)
  * @returns {{atomXml: string, rssXml: string, atomSelfUrl: string, rssSelfUrl: string, languageFeeds: LanguageFeed[]}}
  *   both feed documents' exact UTF-8 text, plus each feed's own absolute
  *   self URL (for the shared layout's feed-discovery `<link>` tags), plus one
@@ -115,7 +118,7 @@ function cdata(text) {
  */
 export function buildFeeds(
   validatedInput,
-  { feedBody, routeProfile, translations },
+  { feedBody, routeProfile, translations, selfUrlsOnly = false },
 ) {
   const { publication, authors, content, basePath, baseUrl } = validatedInput;
   const authorsById = new Map(authors.map((author) => [author.id, author]));
@@ -150,16 +153,17 @@ export function buildFeeds(
    * @returns {{atomXml: string, rssXml: string, atomSelfUrl: string, rssSelfUrl: string}}
    */
   const buildPair = (articles, atomRoute, rssRoute, language) => {
+    const shown = selfUrlsOnly ? [] : articles;
     const siteUrl = absoluteUrl(language ? `/${language.toLowerCase()}` : '/');
     const atomSelfUrl = absoluteUrl(atomRoute);
     const rssSelfUrl = absoluteUrl(rssRoute);
 
     const feedUpdated =
-      articles.length > 0
-        ? contentLastModified(articles[0].frontmatter)
+      shown.length > 0
+        ? contentLastModified(shown[0].frontmatter)
         : validatedInput.buildEpoch;
 
-    const atomEntries = articles
+    const atomEntries = shown
       .map((record) => {
         const { frontmatter } = record;
         const entryUrl = absoluteUrl(contentRoute(frontmatter));
@@ -207,7 +211,7 @@ export function buildFeeds(
       atomEntries +
       '</feed>\n';
 
-    const rssItems = articles
+    const rssItems = shown
       .map((record) => {
         const { frontmatter } = record;
         const itemUrl = absoluteUrl(contentRoute(frontmatter));

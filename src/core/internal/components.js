@@ -133,14 +133,18 @@ export function renderNewsletterPanel({ newsletter, messages, subscribeUrl }) {
  * @param {readonly {path: string, mediaType: string}[]} options.mediaAssets
  *   the media pipeline's finished `assets` list
  * @param {string} options.publicBasePath the public base path
+ * @param {(derivativePath: string) => string} [options.urlOf] the emitted URL
+ *   of a derivative (default: the path under the public base path); the
+ *   article preview supplies the caller's own image URLs
  * @returns {(ref: {path: string, sourceDigest: string} | undefined) => string | undefined}
  */
-export function createMediaUrl({ mediaAssets, publicBasePath }) {
+export function createMediaUrl({ mediaAssets, publicBasePath, urlOf }) {
   return (ref) => {
     const derivative = resolveOriginalDerivativePath(mediaAssets, ref);
-    return derivative
-      ? joinBasePathAndRoute(publicBasePath, `/${derivative}`)
-      : undefined;
+    if (!derivative) return undefined;
+    return urlOf
+      ? urlOf(derivative)
+      : joinBasePathAndRoute(publicBasePath, `/${derivative}`);
   };
 }
 
@@ -154,19 +158,24 @@ export function createMediaUrl({ mediaAssets, publicBasePath }) {
  * @param {string} options.publicBasePath the public base path
  * @param {Readonly<Record<string, {width: number, height: number}>>} [options.mediaDimensions]
  *   the pipeline's dimensions, keyed by derivative path
+ * @param {(derivativePath: string) => string} [options.urlOf] the emitted URL
+ *   of a derivative (default: the path under the public base path)
  * @returns {(ref: {path: string, sourceDigest: string} | undefined) => ({url: string, width?: number, height?: number}) | undefined}
  */
 export function createMediaImage({
   mediaAssets,
   publicBasePath,
   mediaDimensions = {},
+  urlOf,
 }) {
   return (ref) => {
     const derivative = resolveOriginalDerivativePath(mediaAssets, ref);
     if (!derivative) return undefined;
     const size = mediaDimensions[derivative];
     return {
-      url: joinBasePathAndRoute(publicBasePath, `/${derivative}`),
+      url: urlOf
+        ? urlOf(derivative)
+        : joinBasePathAndRoute(publicBasePath, `/${derivative}`),
       width: size?.width,
       height: size?.height,
     };
@@ -236,13 +245,15 @@ export const CONTENT_IMAGE_SIZES = `(max-width: ${CONTENT_IMAGE_SLOT_WIDTH}px) 1
  * @param {Readonly<Record<string, readonly {path: string, width: number, height: number}[]>>} options.mediaVariants
  *   the media pipeline's output files per source digest, ascending width
  * @param {string} options.publicBasePath the public base path
+ * @param {(derivativePath: string) => string} [options.urlOf] the emitted URL
+ *   of a derivative (default: the path under the public base path)
  * @returns {{page: (reference: {path: string, sourceDigest: string}, altAttribute: string) => string, feed: (reference: {path: string, sourceDigest: string}, altAttribute: string) => string, email: (reference: {path: string, sourceDigest: string}, altAttribute: string) => string}}
  *   the page form (responsive, lazy), the feed form (one `src`, no loading
  *   hints) and the email form (one `src`, the largest output file, a style
  *   that fits a mail client's column); `altAttribute` is the body's own
  *   entity-encoded `alt`
  */
-export function createContentImage({ mediaVariants, publicBasePath }) {
+export function createContentImage({ mediaVariants, publicBasePath, urlOf }) {
   /**
    * @param {{path: string, sourceDigest: string}} reference
    * @returns {{url: string, width: number, height: number}[]} every output
@@ -256,7 +267,9 @@ export function createContentImage({ mediaVariants, publicBasePath }) {
       );
     }
     return variants.map((variant) => ({
-      url: joinBasePathAndRoute(publicBasePath, `/${variant.path}`),
+      url: urlOf
+        ? urlOf(variant.path)
+        : joinBasePathAndRoute(publicBasePath, `/${variant.path}`),
       width: variant.width,
       height: variant.height,
     }));

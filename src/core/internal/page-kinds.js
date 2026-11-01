@@ -481,6 +481,9 @@ export function homeDocumentTitle(name, tagline) {
  *   processed derivative renders as the placeholder/monogram fallback
  * @param {Readonly<Record<string, {width: number, height: number}>>} [options.mediaDimensions]
  *   the media pipeline's pixel dimensions per derivative path
+ * @param {(derivativePath: string) => string} [options.mediaUrlOf] the
+ *   emitted URL of a media derivative (default: the path under the public
+ *   base path); the article preview supplies the caller's own image URLs
  * @param {import('../../../types/index.d.ts').InteractionsModule} [options.interactions]
  *   the validated interactions module; when set, every article page carries
  *   the interactions section and is interaction-bearing
@@ -600,6 +603,7 @@ export function buildGeneratedPages(validatedInput, options) {
     mediaAssets: options.mediaAssets ?? [],
     publicBasePath,
     mediaDimensions: options.mediaDimensions,
+    urlOf: options.mediaUrlOf,
   });
   /**
    * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} catalog
