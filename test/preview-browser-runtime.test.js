@@ -104,7 +104,7 @@ test('the preview renders with process, Buffer, global and require removed', asy
       [
         fileURLToPath(
           new URL(
-            './helpers/preview-without-node-globals.mjs',
+            '../scripts/preview-without-node-globals.mjs',
             import.meta.url,
           ),
         ),

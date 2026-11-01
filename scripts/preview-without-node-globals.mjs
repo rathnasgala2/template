@@ -1,5 +1,5 @@
 /**
- * Child process for `preview-browser-runtime.test.js`: renders an article
+ * Child process for `test/preview-browser-runtime.test.js`: renders an article
  * preview with the Node-only globals removed, as a browser has none of them.
  * The entry and its message catalogs are loaded first: a few third-party
  * packages (for example `picocolors`, under `postcss`) read `process` when
