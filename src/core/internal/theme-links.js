@@ -4,15 +4,17 @@
  * sheet and the ordered `<link>` markup, from bytes already in memory. No
  * file access and no `node:` import, so it runs in a browser;
  * `theme-assets.js` reads and validates the theme package from disk and calls
- * it.
+ * it, supplying the schema-validated palette builder. Without one, the palette
+ * is derived without the token-grammar check (and without the schema
+ * validator), which is what the browser article preview does.
  */
 
 import { digestBytes } from './canonical-jcs.js';
 import {
-  buildPaletteStylesheet,
+  derivePaletteSheet,
   PALETTE_STYLESHEET_DIRECTORY,
   PALETTE_STYLESHEET_MEDIA_TYPE,
-} from './appearance/palette-sheet.js';
+} from './appearance/palette-derive.js';
 import { projectFixedAssetPath } from './route.js';
 import {
   joinedThemeOutputPath,
@@ -34,6 +36,9 @@ import { escapeHtml } from './skeleton.js';
  * @param {string} options.publicBasePath the base path emitted `<link href>`
  *   values use
  * @param {unknown} options.appearanceTokens `appearance.tokens`
+ * @param {(themeJson: Record<string, unknown>, appearanceTokens: unknown) => ReturnType<typeof derivePaletteSheet>} [options.buildPalette]
+ *   derives the palette sheet (default: {@link derivePaletteSheet} without the
+ *   token-grammar check)
  * @returns {{
  *   files: {path: string, bytes: Uint8Array}[],
  *   assets: import('../../../types/index.d.ts').ManifestAssetEntry[],
@@ -48,6 +53,7 @@ export function assembleThemeLinks({
   basePath,
   publicBasePath,
   appearanceTokens,
+  buildPalette = derivePaletteSheet,
 }) {
   /** @type {{path: string, bytes: Uint8Array}[]} */
   const files = [];
@@ -80,7 +86,7 @@ export function assembleThemeLinks({
   // Template 4.1.0: the publication palette sheet, derived on every build
   // (`{}` selects the theme's default palette), content-addressed, linked
   // last with SRI and manifested like every theme stylesheet.
-  const paletteSheet = buildPaletteStylesheet(themeJson, appearanceTokens);
+  const paletteSheet = buildPalette(themeJson, appearanceTokens);
   const paletteRelativePath = `${PALETTE_STYLESHEET_DIRECTORY}/${paletteSheet.fileName}`;
   const paletteOutputPath = projectFixedAssetPath(
     basePath,

@@ -75,7 +75,10 @@ import { validateGalaDocument } from '@rathnasgala2/schemas';
 
 import { ThemeAssetError } from '../errors.js';
 import { digestBytes } from './canonical-jcs.js';
-import { assertThemePalette } from './appearance/palette-sheet.js';
+import {
+  assertThemePalette,
+  buildPaletteStylesheet,
+} from './appearance/palette-sheet.js';
 import { buildTemplateStylingContract } from './appearance/styling-contract.js';
 import { TEMPLATE_RENDERER_VERSION } from './package-version.js';
 import { MEDIA_TYPE_BY_FORMAT, sniffMediaFormat } from './media/sniff.js';
@@ -532,6 +535,7 @@ export async function loadThemeAssets({
     basePath,
     publicBasePath,
     appearanceTokens,
+    buildPalette: buildPaletteStylesheet,
   });
   for (const file of links.files) {
     files.push({
