@@ -123,7 +123,6 @@ import {
   CONTACT_ROUTE,
   audienceOrigins,
   followsEnabled,
-  loadAudienceScript,
   serializeAudienceMessages,
 } from './internal/audience.js';
 import {
@@ -134,8 +133,6 @@ import {
   INTERACTIONS_SCRIPT_PATH,
   countKinds,
   interactionsActive,
-  loadCountsScript,
-  loadInteractionsScript,
   validateInteractionsModule,
 } from './internal/interactions.js';
 import {
@@ -149,13 +146,18 @@ import {
   localizeAuthor,
   resolveTranslations,
 } from './internal/translations.js';
+import { loadAudienceScript } from './internal/audience-node.js';
+import {
+  loadCountsScript,
+  loadInteractionsScript,
+} from './internal/interactions-node.js';
+import { loadListenScript } from './internal/listen-node.js';
 import { listFilesSortedByUtf8Bytes } from './internal/fs-walk.js';
 import {
   LISTEN_SCRIPT_MEDIA_TYPE,
   LISTEN_SCRIPT_PATH,
   LISTEN_SECTION_ID,
   audioDigestHex,
-  loadListenScript,
   renderListenNav,
   renderListenPage,
   resolveListen,

@@ -32,8 +32,6 @@
  *   script.
  */
 
-import { readFile } from 'node:fs/promises';
-
 import { MediaPipelineError } from '../errors.js';
 import { escapeHtml } from './skeleton.js';
 import { serializeJsonLd } from './structured-data.js';
@@ -43,11 +41,6 @@ export const LISTEN_SCRIPT_PATH = 'assets/gala-listen-v1.js';
 
 /** @type {string} */
 export const LISTEN_SCRIPT_MEDIA_TYPE = 'application/javascript; charset=utf-8';
-
-const LISTEN_SCRIPT_SOURCE_URL = new URL(
-  '../../modules/interactions/browser/gala-listen.js',
-  import.meta.url,
-);
 
 /** @type {string} where the audio files are emitted (output-relative) */
 export const LISTEN_AUDIO_DIRECTORY = 'assets/listen';
@@ -193,15 +186,6 @@ export function listenTrackOf(entry, url) {
     format: entry.listen.format,
     publishedAt: frontmatter.publishedAt,
   };
-}
-
-/**
- * Read the Listen script's bytes from the template package.
- *
- * @returns {Promise<Buffer>} the script bytes
- */
-export function loadListenScript() {
-  return readFile(LISTEN_SCRIPT_SOURCE_URL);
 }
 
 /**

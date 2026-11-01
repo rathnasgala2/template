@@ -24,11 +24,11 @@ import {
   audioDigestHex,
   formatListenDuration,
   listenAudioPath,
-  loadListenScript,
   renderListenUi,
   resolveListen,
   serializeListenMessages,
 } from '../src/core/internal/listen.js';
+import { loadListenScript } from '../src/core/internal/listen-node.js';
 import { getMessages } from '../src/core/internal/messages.js';
 import {
   buildGeneratedPages,

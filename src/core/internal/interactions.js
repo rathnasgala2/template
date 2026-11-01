@@ -6,8 +6,6 @@
  * every request, token and comment lives in the browser script and the API.
  */
 
-import { readFile } from 'node:fs/promises';
-
 import { RenderPolicyViolationError } from '../errors.js';
 import { boolean, exactObject, origin } from './module-shape.js';
 import { escapeHtml } from './skeleton.js';
@@ -20,21 +18,11 @@ export const INTERACTIONS_SCRIPT_PATH = 'assets/gala-interactions-v1.js';
 export const INTERACTIONS_SCRIPT_MEDIA_TYPE =
   'application/javascript; charset=utf-8';
 
-const INTERACTIONS_SCRIPT_SOURCE_URL = new URL(
-  '../../modules/interactions/browser/gala-interactions.js',
-  import.meta.url,
-);
-
 /** @type {string} the counts script's output-relative path */
 export const COUNTS_SCRIPT_PATH = 'assets/gala-counts-v1.js';
 
 /** @type {string} */
 export const COUNTS_SCRIPT_MEDIA_TYPE = INTERACTIONS_SCRIPT_MEDIA_TYPE;
-
-const COUNTS_SCRIPT_SOURCE_URL = new URL(
-  '../../modules/interactions/browser/gala-counts.js',
-  import.meta.url,
-);
 
 /** @type {string} */
 const CONFIG_SCHEMA_ID = 'urn:gala:schema:interactions-config:2.0.0';
@@ -338,22 +326,4 @@ export function renderInteractionsSection({
     `<div class="g-interactions__status" role="status" aria-live="polite" data-gala-status></div>` +
     `</section>`
   );
-}
-
-/**
- * Read the browser script's bytes from the template package.
- *
- * @returns {Promise<Buffer>} the script bytes
- */
-export function loadInteractionsScript() {
-  return readFile(INTERACTIONS_SCRIPT_SOURCE_URL);
-}
-
-/**
- * Read the counts script's bytes from the template package.
- *
- * @returns {Promise<Buffer>} the script bytes
- */
-export function loadCountsScript() {
-  return readFile(COUNTS_SCRIPT_SOURCE_URL);
 }

@@ -22,8 +22,6 @@
  * `g-panel*` and `g-newsletter` hooks are reused as they are.
  */
 
-import { readFile } from 'node:fs/promises';
-
 import { escapeHtml } from './skeleton.js';
 import { icon } from './icons.js';
 import { PRODUCTION_API_ORIGIN } from './render-policy-content.js';
@@ -35,11 +33,6 @@ export const AUDIENCE_SCRIPT_PATH = 'assets/gala-audience-v1.js';
 /** @type {string} */
 export const AUDIENCE_SCRIPT_MEDIA_TYPE =
   'application/javascript; charset=utf-8';
-
-const AUDIENCE_SCRIPT_SOURCE_URL = new URL(
-  '../../modules/interactions/browser/gala-audience.js',
-  import.meta.url,
-);
 
 /**
  * The App's production origin: where the no-JavaScript Subscribe link points
@@ -331,13 +324,4 @@ export function serializeAudienceMessages(messages) {
     contactRateLimited: plain('contactRateLimited'),
     messageLinks: plain('contactMessageLinks'),
   });
-}
-
-/**
- * Read the audience script's bytes from the template package.
- *
- * @returns {Promise<Buffer>} the script bytes
- */
-export function loadAudienceScript() {
-  return readFile(AUDIENCE_SCRIPT_SOURCE_URL);
 }
