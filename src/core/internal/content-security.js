@@ -51,13 +51,13 @@
  *     protocol-relative (`//`) URLs before a link or image element is even
  *     produced. markdown-it's own fallback for a rejected link is to render
  *     the literal escaped source text, never a rewritten, still-unsafe URL.
- *  3. The fenced-code highlighter only ever calls into
- *     `@11ty/eleventy-plugin-syntaxhighlight`'s Prism-backed highlighter for
- *     a fence language in the closed {@link HIGHLIGHT_GRAMMARS} catalog
- *     (which always HTML-escapes code text as it tokenizes). Every other
- *     fence language returns an empty string, deferring to markdown-it's
- *     own `escapeHtml` fallback — this pipeline never reaches the
- *     upstream plugin's unescaped raw-passthrough branches.
+ *  3. The fenced-code highlighter (`highlight.js`, Prism with the markup the
+ *     `@11ty/eleventy-plugin-syntaxhighlight` markdown highlighter gives)
+ *     only ever runs for a fence language in the closed
+ *     {@link HIGHLIGHT_GRAMMARS} catalog (which always HTML-escapes code text
+ *     as it tokenizes). Every other fence language returns an empty string,
+ *     deferring to markdown-it's own `escapeHtml` fallback — this pipeline
+ *     never reaches that plugin's unescaped raw-passthrough branches.
  *  4. `sanitize-html` runs a final allowlist pass over the complete
  *     fragment: closed tag/attribute/class/scheme catalogs, `nonTextTags`
  *     extended so a discarded element's own text content (e.g. a stripped
@@ -80,10 +80,9 @@
 import MarkdownIt from 'markdown-it';
 import sanitizeHtml from 'sanitize-html';
 
-import buildPrismMarkdownHighlighter from '@11ty/eleventy-plugin-syntaxhighlight/src/markdownSyntaxHighlightOptions.js';
-
 import { RenderPolicyViolationError } from '../errors.js';
 import { digestBytes } from './canonical-jcs.js';
+import { highlightWithPrism } from './highlight.js';
 import { utf8Bytes } from './utf8.js';
 import {
   ADMITTED_LANGUAGE_CLASSES,
@@ -262,9 +261,6 @@ function assignDeterministicHeadingIds(state) {
   }
 }
 
-/** The Prism-backed highlighter this pipeline calls only for an admitted grammar. */
-const prismHighlight = buildPrismMarkdownHighlighter({});
-
 /**
  * markdown-it's `highlight` option: for a fence language in the closed
  * {@link HIGHLIGHT_GRAMMARS} catalog, delegate to the owned highlighter
@@ -272,8 +268,8 @@ const prismHighlight = buildPrismMarkdownHighlighter({});
  * For every other language — unknown, absent, or the upstream plugin's own
  * unsafe raw-passthrough special cases (`"text"`, an unloadable grammar) —
  * return an empty string so markdown-it falls back to its own
- * `escapeHtml`-wrapped `<pre><code>` rendering, never invoking the plugin
- * for a grammar this pipeline has not admitted (brief S2 section 3:
+ * `escapeHtml`-wrapped `<pre><code>` rendering, never highlighting a grammar
+ * this pipeline has not admitted (brief S2 section 3:
  * "falls back to escaped unhighlighted code for an unknown grammar").
  *
  * @param {string} code the fenced code block's exact text
@@ -285,7 +281,7 @@ function highlightFence(code, language) {
   if (!HIGHLIGHT_GRAMMARS.includes(grammar)) {
     return '';
   }
-  return prismHighlight(code, grammar);
+  return highlightWithPrism(code, grammar);
 }
 
 const markdownRenderer = new MarkdownIt({

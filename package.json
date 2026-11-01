@@ -75,6 +75,7 @@
     "@11ty/eleventy-plugin-syntaxhighlight": "5.0.2",
     "jpeg-js": "0.4.4",
     "markdown-it": "14.3.3",
+    "prismjs": "1.30.0",
     "sanitize-html": "2.18.1"
   },
   "peerDependencies": {

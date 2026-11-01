@@ -16,6 +16,10 @@ const EXACT_PINS = {
   '@11ty/eleventy': '3.1.6',
   '@11ty/eleventy-plugin-syntaxhighlight': '5.0.2',
   'markdown-it': '14.3.3',
+  // The grammar library the owned highlighter imports directly
+  // (`internal/prism-grammars.js`); the version the syntax-highlight plugin
+  // above resolved before the direct import.
+  prismjs: '1.30.0',
   'sanitize-html': '2.18.1',
   // S2-T05's media pipeline decoder/encoder, pinned per its own module
   // documentation (src/core/internal/media/jpeg-codec.js): a

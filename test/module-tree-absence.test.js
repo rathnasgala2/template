@@ -83,7 +83,11 @@ test('the published package ships src/modules and still declares no other module
     ...packageJson.dependencies,
     ...packageJson.devDependencies,
   };
+  // `prismjs` is the highlighter's grammar library (render-policy
+  // `highlighter.package` loads it), not a module package.
+  const GRAMMAR_LIBRARY = 'prismjs';
   for (const name of Object.keys(declared)) {
+    if (name === GRAMMAR_LIBRARY) continue;
     for (const term of forbidden) {
       assert.ok(
         !name.toLowerCase().includes(term),
