@@ -1515,6 +1515,40 @@
     },
     {
       "type": "library",
+      "name": "prismjs",
+      "version": "1.30.0",
+      "bom-ref": "@rathnasgala2/template@4.10.0|prismjs@1.30.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT",
+            "acknowledgement": "declared"
+          }
+        }
+      ],
+      "purl": "pkg:npm/prismjs@1.30.0",
+      "externalReferences": [
+        {
+          "url": "https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "0c4bd5d99176af6ffadd5fad2bc850beb4766469f5d2cac76d7be24e572fecaa73c3c8d688d4ea6d58233b7218f11c6bace505f153cc410172b18618bf4619c7"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/prismjs"
+        }
+      ]
+    },
+    {
+      "type": "library",
       "name": "sanitize-html",
       "version": "2.18.1",
       "bom-ref": "@rathnasgala2/template@4.10.0|sanitize-html@2.18.1",
@@ -1822,40 +1856,6 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/typescript"
-        }
-      ]
-    },
-    {
-      "type": "library",
-      "name": "prismjs",
-      "version": "1.30.0",
-      "bom-ref": "@rathnasgala2/template@4.10.0|prismjs@1.30.0",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT",
-            "acknowledgement": "declared"
-          }
-        }
-      ],
-      "purl": "pkg:npm/prismjs@1.30.0",
-      "externalReferences": [
-        {
-          "url": "https://registry.npmjs.org/prismjs/-/prismjs-1.30.0.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "0c4bd5d99176af6ffadd5fad2bc850beb4766469f5d2cac76d7be24e572fecaa73c3c8d688d4ea6d58233b7218f11c6bace505f153cc410172b18618bf4619c7"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/prismjs"
         }
       ]
     },
@@ -17581,6 +17581,7 @@
         "@rathnasgala2/template@4.10.0|parse5@8.0.1",
         "@rathnasgala2/template@4.10.0|playwright@1.64.1",
         "@rathnasgala2/template@4.10.0|prettier@3.9.6",
+        "@rathnasgala2/template@4.10.0|prismjs@1.30.0",
         "@rathnasgala2/template@4.10.0|sanitize-html@2.18.1",
         "@rathnasgala2/template@4.10.0|typescript@5.9.3"
       ]
@@ -17910,6 +17911,9 @@
       "ref": "@rathnasgala2/template@4.10.0|prettier@3.9.6"
     },
     {
+      "ref": "@rathnasgala2/template@4.10.0|prismjs@1.30.0"
+    },
+    {
       "ref": "@rathnasgala2/template@4.10.0|sanitize-html@2.18.1",
       "dependsOn": [
         "@rathnasgala2/template@4.10.0|sanitize-html@2.18.1|escape-string-regexp@4.0.0",
@@ -17962,9 +17966,6 @@
     },
     {
       "ref": "@rathnasgala2/template@4.10.0|typescript@5.9.3"
-    },
-    {
-      "ref": "@rathnasgala2/template@4.10.0|prismjs@1.30.0"
     },
     {
       "ref": "@rathnasgala2/template@4.10.0|@11ty/dependency-tree-esm@2.0.4",
