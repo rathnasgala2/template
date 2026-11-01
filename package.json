@@ -17,6 +17,10 @@
       "types": "./types/index.d.ts",
       "import": "./src/core/index.js"
     },
+    "./preview": {
+      "types": "./types/preview.d.ts",
+      "import": "./src/core/preview.js"
+    },
     "./package.json": "./package.json"
   },
   "types": "./types/index.d.ts",
