@@ -463,6 +463,9 @@ export function homeDocumentTitle(name, tagline) {
  * @param {(bcp47?: string) => import('./messages-core.js').MessageCatalog} options.getMessages
  *   the chrome-catalog lookup (`getMessages` from `messages.js` in Node, one
  *   built by `loadMessagesFor` in a browser)
+ * @param {string} [options.only] a content id: build the page of that one
+ *   record only (none of the site-wide pages, no policy pages); an unknown id
+ *   yields no pages
  * @param {(body: string) => string} options.pageBody turns a body into its
  *   page form (every image naming its media derivatives, lazily loaded)
  * @param {import('./editions.js').EditionResolution} [options.editions] where
@@ -554,7 +557,7 @@ export function buildGeneratedPages(validatedInput, options) {
   const translations =
     options.translations ??
     resolveTranslations(content, publication.defaultLanguage);
-  const { getMessages } = options;
+  const { getMessages, only } = options;
   const defaultMessages = getMessages(publication.defaultLanguage);
   // Posts per listing page: the author's `listing.pageSize`, else the default.
   const pageSize = publication.listing?.pageSize ?? LISTING_PAGE_SIZE;
@@ -993,7 +996,7 @@ export function buildGeneratedPages(validatedInput, options) {
   /** @type {GeneratedPage[]} */
   const pages = [];
 
-  if (publication.profile) {
+  if (!only && publication.profile) {
     pages.push({
       kind: 'profile',
       route: publication.profile.route,
@@ -1031,7 +1034,9 @@ export function buildGeneratedPages(validatedInput, options) {
     interactionsOn: Boolean(interactionsModule),
     analytics: options.analytics,
   });
-  for (const policy of resolvePolicyPages(validatedInput.policies)) {
+  for (const policy of only
+    ? []
+    : resolvePolicyPages(validatedInput.policies)) {
     pages.push({
       kind: 'policy',
       route: policy.route,
@@ -1065,7 +1070,7 @@ export function buildGeneratedPages(validatedInput, options) {
   // hook, indexable, in the sitemap, in no feed, search index or `llms`
   // document) that exists only while the site's contact form is on. Its intro
   // is the optional `gala/theme-pages/contact.md` body, else a short default.
-  if (publication.contactForm?.enabled) {
+  if (!only && publication.contactForm?.enabled) {
     const contactTitle = text0('contactPageTitle');
     const authoredIntro = publication.contactForm.intro
       ? dropLeadingTitleHeading(
@@ -1110,7 +1115,7 @@ export function buildGeneratedPages(validatedInput, options) {
     });
   }
 
-  for (const author of authors) {
+  for (const author of only ? [] : authors) {
     const authored = publishedArticles.filter((record) =>
       translations
         .variantsOf(record)
@@ -1225,7 +1230,9 @@ export function buildGeneratedPages(validatedInput, options) {
           }),
     };
   };
-  for (const record of content) {
+  for (const record of only
+    ? content.filter((candidate) => candidate.frontmatter.id === only)
+    : content) {
     const { frontmatter } = record;
     useChrome(frontmatter.language);
     const isArticle = frontmatter.kind === 'article';
@@ -1516,502 +1523,506 @@ export function buildGeneratedPages(validatedInput, options) {
   }
 
   useChrome(publication.defaultLanguage);
-
-  // Index: page 1 is the home page (featured, tag pills, latest cards, series
-  // card, newsletter); every index page carries a slice of the older
-  // articles with pagination.
-  const [featured, ...rest] = publishedArticles;
-  const latest = rest.slice(0, LATEST_CARD_COUNT);
-  const older = rest.slice(LATEST_CARD_COUNT);
-  const indexPages = paginate(older, pageSize);
-  const indexRoute = (/** @type {number} */ n) =>
-    site(n === 1 ? '/' : `/page/${n}`);
-  const seriesName = publishedArticles.find((r) => r.frontmatter.series)
-    ?.frontmatter.series;
-  const seriesParts = (seriesName ? bySeries.get(seriesName) : undefined) ?? [];
-  const homeFeatured = featured
-    ? (() => {
-        const fm = featured.frontmatter;
-        const cardMedia = cardMediaOf(featured);
-        const hero = mediaImage(cardMedia?.file);
-        const href = escapeHtml(recordHref(featured));
-        return (
-          `<section class="g-wrap g-hero" aria-labelledby="hero-title">` +
-          `<div class="g-hero-media">` +
-          (hero
-            ? renderImage({
-                image: hero,
-                alt:
-                  cardMedia?.role === 'decorative'
-                    ? ''
-                    : (cardMedia?.alt ?? ''),
-                priority: true,
-              })
-            : `<span class="g-card-placeholder">${icon('sparkle')}</span>`) +
-          `</div><div class="g-hero-body"><p class="g-eyebrow"><span class="g-badge">${icon('sparkle')}${text('featuredLabel')}</span>` +
-          (fm.tags[0] ? chip(fm.tags[0]) : '') +
-          langChips(featured) +
-          countSlotOf(featured) +
-          `</p><h2 id="hero-title"><a href="${href}">${escapeHtml(fm.title)}</a></h2>` +
-          (fm.description
-            ? `<p class="g-dek">${escapeHtml(fm.description)}</p>`
-            : '') +
-          byline(featured) +
-          `<a class="g-btn" href="${href}">${text('readEssayLabel')}${icon('arrow')}</a></div></section>`
-        );
-      })()
-    : `<section class="g-wrap g-topic-hero"><h2>${text('indexHeading')}</h2><p>${text('emptyListingLabel')}</p></section>`;
-  const homeHeading = `<h1 class="g-sr">${escapeHtml(publicationTitle)}</h1>`;
-  // The Listen playlist (Listen live): every listed article with audio, newest
-  // first, after the intro and before the post list.
-  const listenTracks = publishedArticles.flatMap((record) => {
-    const entry = options.listen?.byRecord.get(record);
-    return entry ? [listenTrackOf(entry, recordHref(record))] : [];
-  });
-  const homeListen =
-    listenTracks.length > 0
-      ? renderListenPlaylist({ tracks: listenTracks, messages })
-      : '';
-  const homeTags =
-    sortedTags.length > 0
-      ? `<section class="g-wrap g-topic-strip" aria-label="${text('browseByTagLabel')}"><ul class="g-pills">${[
-          ...sortedTags,
-        ]
-          .sort(
-            (a, b) =>
-              (byTag.get(b)?.length ?? 0) - (byTag.get(a)?.length ?? 0) ||
-              (a < b ? -1 : 1),
-          )
-          .slice(0, HOME_TAG_PILL_LIMIT)
-          .map((tag) => pill(tagHref(tag), tag, byTag.get(tag)?.length, 'hash'))
-          .join('')}</ul></section>`
-      : '';
-  const homeLatest =
-    latest.length > 0
-      ? `<section class="g-wrap g-section" aria-labelledby="latest-title"><div class="g-section-head"><h2 id="latest-title">${text('latestHeading')}</h2>` +
-        `<a class="g-more" href="${escapeHtml(site('/archive'))}">${text('archiveSectionLabel')}${icon('arrow')}</a></div>` +
-        `<div class="g-grid">${latest.map((r) => cardOf(r)).join('')}</div></section>`
-      : '';
-  const homeSeries =
-    seriesName && seriesParts.length > 0
-      ? `<section class="g-wrap g-section"><div class="g-series-card">` +
-        `<p class="g-label">${icon('book')}${text('seriesCardLabel')}<span class="g-dot" aria-hidden="true"></span>${call('partsCountLabel', String(seriesParts.length))}</p>` +
-        `<h2><a href="${escapeHtml(seriesHref(seriesName))}">${escapeHtml(seriesName)}</a></h2>` +
-        `<ol class="g-series-list">${seriesParts
-          .map(
-            (member, index) =>
-              `<li><a href="${escapeHtml(recordHref(member))}"><span class="g-series-n">${index + 1}</span><span>${escapeHtml(member.frontmatter.title)}</span></a></li>`,
-          )
-          .join('')}</ol>` +
-        `<a class="g-btn" href="${escapeHtml(recordHref(seriesParts[0]))}">${text('startSeriesLabel')}${icon('arrow')}</a></div></section>`
-      : '';
-  indexPages.forEach((items, pageIndex) => {
-    const pageNumber = pageIndex + 1;
-    const pagination = renderPagination({
-      currentPage: pageNumber,
-      totalPages: indexPages.length,
-      routeForPage: indexRoute,
-      messages,
+  if (!only) {
+    // Index: page 1 is the home page (featured, tag pills, latest cards, series
+    // card, newsletter); every index page carries a slice of the older
+    // articles with pagination.
+    const [featured, ...rest] = publishedArticles;
+    const latest = rest.slice(0, LATEST_CARD_COUNT);
+    const older = rest.slice(LATEST_CARD_COUNT);
+    const indexPages = paginate(older, pageSize);
+    const indexRoute = (/** @type {number} */ n) =>
+      site(n === 1 ? '/' : `/page/${n}`);
+    const seriesName = publishedArticles.find((r) => r.frontmatter.series)
+      ?.frontmatter.series;
+    const seriesParts =
+      (seriesName ? bySeries.get(seriesName) : undefined) ?? [];
+    const homeFeatured = featured
+      ? (() => {
+          const fm = featured.frontmatter;
+          const cardMedia = cardMediaOf(featured);
+          const hero = mediaImage(cardMedia?.file);
+          const href = escapeHtml(recordHref(featured));
+          return (
+            `<section class="g-wrap g-hero" aria-labelledby="hero-title">` +
+            `<div class="g-hero-media">` +
+            (hero
+              ? renderImage({
+                  image: hero,
+                  alt:
+                    cardMedia?.role === 'decorative'
+                      ? ''
+                      : (cardMedia?.alt ?? ''),
+                  priority: true,
+                })
+              : `<span class="g-card-placeholder">${icon('sparkle')}</span>`) +
+            `</div><div class="g-hero-body"><p class="g-eyebrow"><span class="g-badge">${icon('sparkle')}${text('featuredLabel')}</span>` +
+            (fm.tags[0] ? chip(fm.tags[0]) : '') +
+            langChips(featured) +
+            countSlotOf(featured) +
+            `</p><h2 id="hero-title"><a href="${href}">${escapeHtml(fm.title)}</a></h2>` +
+            (fm.description
+              ? `<p class="g-dek">${escapeHtml(fm.description)}</p>`
+              : '') +
+            byline(featured) +
+            `<a class="g-btn" href="${href}">${text('readEssayLabel')}${icon('arrow')}</a></div></section>`
+          );
+        })()
+      : `<section class="g-wrap g-topic-hero"><h2>${text('indexHeading')}</h2><p>${text('emptyListingLabel')}</p></section>`;
+    const homeHeading = `<h1 class="g-sr">${escapeHtml(publicationTitle)}</h1>`;
+    // The Listen playlist (Listen live): every listed article with audio, newest
+    // first, after the intro and before the post list.
+    const listenTracks = publishedArticles.flatMap((record) => {
+      const entry = options.listen?.byRecord.get(record);
+      return entry ? [listenTrackOf(entry, recordHref(record))] : [];
     });
-    const moreList =
-      items.length > 0
-        ? `<section class="g-wrap g-section"><div class="g-section-head"><h2>${text('moreArticlesHeading')}</h2></div>` +
-          `<div class="g-list">${items.map((r) => cardOf(r, 'row')).join('')}</div>${pagination}</section>`
+    const homeListen =
+      listenTracks.length > 0
+        ? renderListenPlaylist({ tracks: listenTracks, messages })
         : '';
-    const homeParts =
-      composition.profile === 'newsletter'
-        ? homeHeading +
-          homeTags +
-          homeFeatured +
-          homeListen +
-          homeLatest +
-          moreList +
-          homeSeries +
-          newsletterHtml
-        : composition.profile === 'visual'
+    const homeTags =
+      sortedTags.length > 0
+        ? `<section class="g-wrap g-topic-strip" aria-label="${text('browseByTagLabel')}"><ul class="g-pills">${[
+            ...sortedTags,
+          ]
+            .sort(
+              (a, b) =>
+                (byTag.get(b)?.length ?? 0) - (byTag.get(a)?.length ?? 0) ||
+                (a < b ? -1 : 1),
+            )
+            .slice(0, HOME_TAG_PILL_LIMIT)
+            .map((tag) =>
+              pill(tagHref(tag), tag, byTag.get(tag)?.length, 'hash'),
+            )
+            .join('')}</ul></section>`
+        : '';
+    const homeLatest =
+      latest.length > 0
+        ? `<section class="g-wrap g-section" aria-labelledby="latest-title"><div class="g-section-head"><h2 id="latest-title">${text('latestHeading')}</h2>` +
+          `<a class="g-more" href="${escapeHtml(site('/archive'))}">${text('archiveSectionLabel')}${icon('arrow')}</a></div>` +
+          `<div class="g-grid">${latest.map((r) => cardOf(r)).join('')}</div></section>`
+        : '';
+    const homeSeries =
+      seriesName && seriesParts.length > 0
+        ? `<section class="g-wrap g-section"><div class="g-series-card">` +
+          `<p class="g-label">${icon('book')}${text('seriesCardLabel')}<span class="g-dot" aria-hidden="true"></span>${call('partsCountLabel', String(seriesParts.length))}</p>` +
+          `<h2><a href="${escapeHtml(seriesHref(seriesName))}">${escapeHtml(seriesName)}</a></h2>` +
+          `<ol class="g-series-list">${seriesParts
+            .map(
+              (member, index) =>
+                `<li><a href="${escapeHtml(recordHref(member))}"><span class="g-series-n">${index + 1}</span><span>${escapeHtml(member.frontmatter.title)}</span></a></li>`,
+            )
+            .join('')}</ol>` +
+          `<a class="g-btn" href="${escapeHtml(recordHref(seriesParts[0]))}">${text('startSeriesLabel')}${icon('arrow')}</a></div></section>`
+        : '';
+    indexPages.forEach((items, pageIndex) => {
+      const pageNumber = pageIndex + 1;
+      const pagination = renderPagination({
+        currentPage: pageNumber,
+        totalPages: indexPages.length,
+        routeForPage: indexRoute,
+        messages,
+      });
+      const moreList =
+        items.length > 0
+          ? `<section class="g-wrap g-section"><div class="g-section-head"><h2>${text('moreArticlesHeading')}</h2></div>` +
+            `<div class="g-list">${items.map((r) => cardOf(r, 'row')).join('')}</div>${pagination}</section>`
+          : '';
+      const homeParts =
+        composition.profile === 'newsletter'
           ? homeHeading +
+            homeTags +
             homeFeatured +
             homeListen +
             homeLatest +
-            homeSeries +
-            homeTags +
             moreList +
+            homeSeries +
             newsletterHtml
-          : composition.profile === 'personal'
+          : composition.profile === 'visual'
             ? homeHeading +
+              homeFeatured +
               homeListen +
               homeLatest +
-              homeFeatured +
-              moreList +
-              homeTags +
               homeSeries +
+              homeTags +
+              moreList +
               newsletterHtml
-            : composition.profile === 'developer'
+            : composition.profile === 'personal'
               ? homeHeading +
-                homeTags +
                 homeListen +
                 homeLatest +
-                homeSeries +
                 homeFeatured +
                 moreList +
+                homeTags +
+                homeSeries +
                 newsletterHtml
-              : homeHeading +
-                homeFeatured +
-                homeTags +
-                homeListen +
-                homeLatest +
-                homeSeries +
-                moreList +
-                newsletterHtml;
-    const bodyHtml =
-      pageNumber === 1
-        ? `<div data-gala-home-layout="${composition.homeLayout}">${homeParts}</div>`
-        : listingHead({
-            breadcrumbHtml: crumbs([
-              { label: /** @type {string} */ (messages.indexHeading) },
-            ]),
-            kicker: /** @type {(c: string, t: string) => string} */ (
-              messages.pageStatusLabel
-            )(String(pageNumber), String(indexPages.length)),
-            count: undefined,
-            title: /** @type {string} */ (messages.indexHeading),
-            iconName: 'layers',
-          }) + rowList(items, pagination);
-    const indexTitle =
-      pageNumber === 1
-        ? publicationTitle
-        : `${text0('indexHeading')} \u2013 ${msg('pageStatusLabel', String(pageNumber), String(indexPages.length))}`;
-    const indexUrl = absolute(indexRoute(pageNumber));
-    pages.push({
-      kind: 'index',
-      route: pageNumber === 1 ? '/' : `/page/${pageNumber}`,
-      title: indexTitle,
-      documentTitle:
+              : composition.profile === 'developer'
+                ? homeHeading +
+                  homeTags +
+                  homeListen +
+                  homeLatest +
+                  homeSeries +
+                  homeFeatured +
+                  moreList +
+                  newsletterHtml
+                : homeHeading +
+                  homeFeatured +
+                  homeTags +
+                  homeListen +
+                  homeLatest +
+                  homeSeries +
+                  moreList +
+                  newsletterHtml;
+      const bodyHtml =
         pageNumber === 1
-          ? homeDocumentTitle(publicationTitle, publication.description)
-          : documentTitleOf(indexTitle),
-      language: publication.defaultLanguage,
-      description:
+          ? `<div data-gala-home-layout="${composition.homeLayout}">${homeParts}</div>`
+          : listingHead({
+              breadcrumbHtml: crumbs([
+                { label: /** @type {string} */ (messages.indexHeading) },
+              ]),
+              kicker: /** @type {(c: string, t: string) => string} */ (
+                messages.pageStatusLabel
+              )(String(pageNumber), String(indexPages.length)),
+              count: undefined,
+              title: /** @type {string} */ (messages.indexHeading),
+              iconName: 'layers',
+            }) + rowList(items, pagination);
+      const indexTitle =
         pageNumber === 1
-          ? publication.description
-          : msg('indexPageDescription', publicationTitle),
-      ogType: 'website',
-      ...defaultSocial,
-      jsonLd: sd.serialize(
-        pageNumber === 1
-          ? sd.home({
-              posts: publishedArticles.slice(0, 10).map((record) => ({
-                url: absolute(recordHref(record)),
-                headline: record.frontmatter.title,
-                datePublished: record.frontmatter.publishedAt,
-              })),
-            })
-          : sd.collection({
-              name: indexTitle,
-              description: msg('indexPageDescription', publicationTitle),
-              url: indexUrl,
-              language: publication.defaultLanguage,
-              trail: [
-                homeStep,
-                { label: indexTitle, route: indexRoute(pageNumber) },
-              ],
-            }),
-      ),
-      lastModified: latestContentTimestamp(
-        pageNumber === 1
-          ? publishedArticles.slice(0, 1 + LATEST_CARD_COUNT)
-          : items,
-      ),
-      bodyHtml,
-    });
-  });
-
-  if (sortedTags.length > 0) {
-    pages.push({
-      kind: 'tag',
-      route: '/tags',
-      ...listingMeta({
-        name: text0('tagsSectionLabel'),
-        description: msg(
-          'tagsRootDescription',
-          String(sortedTags.length),
-          publicationTitle,
-        ),
-        route: '/tags',
-      }),
-      language: publication.defaultLanguage,
-      lastModified: latestContentTimestamp(publishedArticles),
-      bodyHtml: listingHead({
-        breadcrumbHtml: crumbs([
-          { label: /** @type {string} */ (messages.tagsSectionLabel) },
-        ]),
-        kicker: /** @type {string} */ (messages.tagKickerLabel),
-        count: undefined,
-        title: /** @type {string} */ (messages.tagsSectionLabel),
-        extraHtml: tagPills(),
-      }),
-    });
-  }
-  for (const tag of sortedTags) {
-    const items =
-      /** @type {import('../../../types/index.d.ts').ContentBuildRecord[]} */ (
-        byTag.get(tag)
-      );
-    pages.push({
-      kind: 'tag',
-      route: `/tags/${tagSegment(tag)}`,
-      ...listingMeta({
-        name: msg('tagPageTitle', tag),
-        description: msg(
-          'tagPageDescription',
-          String(items.length),
-          tag,
-          publicationTitle,
-        ),
-        route: `/tags/${tagSegment(tag)}`,
-        parents: [{ label: text0('tagsSectionLabel'), route: site('/tags') }],
-      }),
-      language: publication.defaultLanguage,
-      lastModified: latestContentTimestamp(items),
-      bodyHtml:
-        listingHead({
-          breadcrumbHtml: crumbs(
-            [
-              {
-                label: /** @type {string} */ (messages.tagsSectionLabel),
-                route: site('/tags'),
-              },
-            ],
-            [{ label: tag }],
-          ),
-          kicker: /** @type {string} */ (messages.tagKickerLabel),
-          count: items.length,
-          title: tag,
-          extraHtml: tagPills(tag),
-        }) + rowList(items),
-    });
-  }
-
-  if (sortedSeries.length > 0) {
-    pages.push({
-      kind: 'series',
-      route: '/series',
-      ...listingMeta({
-        name: text0('seriesSectionLabel'),
-        description: msg(
-          'seriesRootDescription',
-          String(sortedSeries.length),
-          publicationTitle,
-        ),
-        route: '/series',
-      }),
-      language: publication.defaultLanguage,
-      lastModified: latestContentTimestamp([...bySeries.values()].flat()),
-      bodyHtml: listingHead({
-        breadcrumbHtml: crumbs([
-          { label: /** @type {string} */ (messages.seriesSectionLabel) },
-        ]),
-        kicker: /** @type {string} */ (messages.seriesKickerLabel),
-        count: undefined,
-        title: /** @type {string} */ (messages.seriesSectionLabel),
-        iconName: 'book',
-        extraHtml: `<ul class="g-pills">${sortedSeries
-          .map((name) =>
-            pill(seriesHref(name), name, bySeries.get(name)?.length, 'book'),
-          )
-          .join('')}</ul>`,
-      }),
-    });
-  }
-  for (const name of sortedSeries) {
-    const items =
-      /** @type {import('../../../types/index.d.ts').ContentBuildRecord[]} */ (
-        bySeries.get(name)
-      );
-    pages.push({
-      kind: 'series',
-      route: `/series/${seriesSegment(name)}`,
-      ...listingMeta({
-        name,
-        description: msg(
-          'seriesPageDescription',
-          String(items.length),
-          name,
-          publicationTitle,
-        ),
-        route: `/series/${seriesSegment(name)}`,
-        parents: [
-          { label: text0('seriesSectionLabel'), route: site('/series') },
-        ],
-      }),
-      language: publication.defaultLanguage,
-      lastModified: latestContentTimestamp(items),
-      bodyHtml:
-        listingHead({
-          breadcrumbHtml: crumbs(
-            [
-              {
-                label: /** @type {string} */ (messages.seriesSectionLabel),
-                route: site('/series'),
-              },
-            ],
-            [{ label: name }],
-          ),
-          kicker: /** @type {string} */ (messages.seriesKickerLabel),
-          count: items.length,
-          title: name,
-          iconName: 'book',
-        }) + rowList(items),
-    });
-  }
-
-  if (sortedYears.length > 0) {
-    pages.push({
-      kind: 'archive',
-      route: '/archive',
-      ...listingMeta({
-        name: text0('archiveSectionLabel'),
-        description: msg(
-          'archiveRootDescription',
-          String(publishedArticles.length),
-          publicationTitle,
-        ),
-        route: '/archive',
-      }),
-      language: publication.defaultLanguage,
-      lastModified: latestContentTimestamp(publishedArticles),
-      bodyHtml: listingHead({
-        breadcrumbHtml: crumbs([
-          { label: /** @type {string} */ (messages.archiveSectionLabel) },
-        ]),
-        kicker: /** @type {string} */ (messages.archiveKickerLabel),
-        count: publishedArticles.length,
-        title: /** @type {string} */ (messages.archiveSectionLabel),
-        iconName: 'layers',
-        extraHtml: `<ul class="g-pills">${sortedYears
-          .map((year) =>
-            pill(
-              site(`/archive/${year}`),
-              year,
-              byYear.get(year)?.length,
-              'layers',
-            ),
-          )
-          .join('')}</ul>`,
-      }),
-    });
-  }
-  for (const year of sortedYears) {
-    const items =
-      /** @type {import('../../../types/index.d.ts').ContentBuildRecord[]} */ (
-        byYear.get(year)
-      );
-    const yearPages = paginate(items, pageSize);
-    const yearRoute = (/** @type {number} */ n) =>
-      n === 1 ? `/archive/${year}` : `/archive/${year}/page/${n}`;
-    yearPages.forEach((pageItems, pageIndex) => {
-      const pageNumber = pageIndex + 1;
+          ? publicationTitle
+          : `${text0('indexHeading')} \u2013 ${msg('pageStatusLabel', String(pageNumber), String(indexPages.length))}`;
+      const indexUrl = absolute(indexRoute(pageNumber));
       pages.push({
-        kind: 'archive',
-        route: yearRoute(pageNumber),
+        kind: 'index',
+        route: pageNumber === 1 ? '/' : `/page/${pageNumber}`,
+        title: indexTitle,
+        documentTitle:
+          pageNumber === 1
+            ? homeDocumentTitle(publicationTitle, publication.description)
+            : documentTitleOf(indexTitle),
+        language: publication.defaultLanguage,
+        description:
+          pageNumber === 1
+            ? publication.description
+            : msg('indexPageDescription', publicationTitle),
+        ogType: 'website',
+        ...defaultSocial,
+        jsonLd: sd.serialize(
+          pageNumber === 1
+            ? sd.home({
+                posts: publishedArticles.slice(0, 10).map((record) => ({
+                  url: absolute(recordHref(record)),
+                  headline: record.frontmatter.title,
+                  datePublished: record.frontmatter.publishedAt,
+                })),
+              })
+            : sd.collection({
+                name: indexTitle,
+                description: msg('indexPageDescription', publicationTitle),
+                url: indexUrl,
+                language: publication.defaultLanguage,
+                trail: [
+                  homeStep,
+                  { label: indexTitle, route: indexRoute(pageNumber) },
+                ],
+              }),
+        ),
+        lastModified: latestContentTimestamp(
+          pageNumber === 1
+            ? publishedArticles.slice(0, 1 + LATEST_CARD_COUNT)
+            : items,
+        ),
+        bodyHtml,
+      });
+    });
+
+    if (sortedTags.length > 0) {
+      pages.push({
+        kind: 'tag',
+        route: '/tags',
         ...listingMeta({
-          name:
-            pageNumber === 1
-              ? msg('archivePageTitle', year)
-              : `${msg('archivePageTitle', year)} \u2013 ${msg('pageStatusLabel', String(pageNumber), String(yearPages.length))}`,
+          name: text0('tagsSectionLabel'),
           description: msg(
-            'archivePageDescription',
-            String(items.length),
-            year,
+            'tagsRootDescription',
+            String(sortedTags.length),
             publicationTitle,
           ),
-          route: yearRoute(pageNumber),
-          parents: [
-            { label: text0('archiveSectionLabel'), route: site('/archive') },
-          ],
+          route: '/tags',
         }),
         language: publication.defaultLanguage,
-        lastModified: latestContentTimestamp(pageItems),
+        lastModified: latestContentTimestamp(publishedArticles),
+        bodyHtml: listingHead({
+          breadcrumbHtml: crumbs([
+            { label: /** @type {string} */ (messages.tagsSectionLabel) },
+          ]),
+          kicker: /** @type {string} */ (messages.tagKickerLabel),
+          count: undefined,
+          title: /** @type {string} */ (messages.tagsSectionLabel),
+          extraHtml: tagPills(),
+        }),
+      });
+    }
+    for (const tag of sortedTags) {
+      const items =
+        /** @type {import('../../../types/index.d.ts').ContentBuildRecord[]} */ (
+          byTag.get(tag)
+        );
+      pages.push({
+        kind: 'tag',
+        route: `/tags/${tagSegment(tag)}`,
+        ...listingMeta({
+          name: msg('tagPageTitle', tag),
+          description: msg(
+            'tagPageDescription',
+            String(items.length),
+            tag,
+            publicationTitle,
+          ),
+          route: `/tags/${tagSegment(tag)}`,
+          parents: [{ label: text0('tagsSectionLabel'), route: site('/tags') }],
+        }),
+        language: publication.defaultLanguage,
+        lastModified: latestContentTimestamp(items),
         bodyHtml:
           listingHead({
             breadcrumbHtml: crumbs(
               [
                 {
-                  label: /** @type {string} */ (messages.archiveSectionLabel),
-                  route: site('/archive'),
+                  label: /** @type {string} */ (messages.tagsSectionLabel),
+                  route: site('/tags'),
                 },
               ],
-              [{ label: year }],
+              [{ label: tag }],
             ),
-            kicker: /** @type {string} */ (messages.archiveKickerLabel),
+            kicker: /** @type {string} */ (messages.tagKickerLabel),
             count: items.length,
-            title: year,
-            iconName: 'layers',
-          }) +
-          rowList(
-            pageItems,
-            renderPagination({
-              currentPage: pageNumber,
-              totalPages: yearPages.length,
-              routeForPage: (n) => site(yearRoute(n)),
-              messages,
-            }),
-          ),
+            title: tag,
+            extraHtml: tagPills(tag),
+          }) + rowList(items),
       });
-    });
-  }
+    }
 
-  // One section per non-default language with a published article: its own
-  // chrome catalog, every article of the language newest first (no grouping).
-  for (const section of translations.sections) {
-    useChrome(section.language);
-    const items = allPublishedArticles.filter(
-      (r) => languageSegment(r.frontmatter.language) === section.segment,
-    );
-    const name = languageLabel(section.language, translations.languages);
-    const sectionPages = paginate(items, pageSize);
-    const sectionRoute = (/** @type {number} */ n) =>
-      n === 1 ? `/${section.segment}` : `/${section.segment}/page/${n}`;
-    sectionPages.forEach((pageItems, pageIndex) => {
-      const pageNumber = pageIndex + 1;
+    if (sortedSeries.length > 0) {
       pages.push({
-        kind: 'index',
-        route: sectionRoute(pageNumber),
+        kind: 'series',
+        route: '/series',
         ...listingMeta({
-          name:
-            pageNumber === 1
-              ? name
-              : `${name} \u2013 ${msg('pageStatusLabel', String(pageNumber), String(sectionPages.length))}`,
+          name: text0('seriesSectionLabel'),
           description: msg(
-            'languageIndexDescription',
+            'seriesRootDescription',
+            String(sortedSeries.length),
+            publicationTitle,
+          ),
+          route: '/series',
+        }),
+        language: publication.defaultLanguage,
+        lastModified: latestContentTimestamp([...bySeries.values()].flat()),
+        bodyHtml: listingHead({
+          breadcrumbHtml: crumbs([
+            { label: /** @type {string} */ (messages.seriesSectionLabel) },
+          ]),
+          kicker: /** @type {string} */ (messages.seriesKickerLabel),
+          count: undefined,
+          title: /** @type {string} */ (messages.seriesSectionLabel),
+          iconName: 'book',
+          extraHtml: `<ul class="g-pills">${sortedSeries
+            .map((name) =>
+              pill(seriesHref(name), name, bySeries.get(name)?.length, 'book'),
+            )
+            .join('')}</ul>`,
+        }),
+      });
+    }
+    for (const name of sortedSeries) {
+      const items =
+        /** @type {import('../../../types/index.d.ts').ContentBuildRecord[]} */ (
+          bySeries.get(name)
+        );
+      pages.push({
+        kind: 'series',
+        route: `/series/${seriesSegment(name)}`,
+        ...listingMeta({
+          name,
+          description: msg(
+            'seriesPageDescription',
             String(items.length),
             name,
             publicationTitle,
           ),
-          route: sectionRoute(pageNumber),
-          language: section.language,
+          route: `/series/${seriesSegment(name)}`,
+          parents: [
+            { label: text0('seriesSectionLabel'), route: site('/series') },
+          ],
         }),
-        language: section.language,
-        lastModified: latestContentTimestamp(pageItems),
+        language: publication.defaultLanguage,
+        lastModified: latestContentTimestamp(items),
         bodyHtml:
           listingHead({
-            breadcrumbHtml: crumbs([{ label: name }]),
-            kicker: /** @type {string} */ (messages.languageKickerLabel),
+            breadcrumbHtml: crumbs(
+              [
+                {
+                  label: /** @type {string} */ (messages.seriesSectionLabel),
+                  route: site('/series'),
+                },
+              ],
+              [{ label: name }],
+            ),
+            kicker: /** @type {string} */ (messages.seriesKickerLabel),
             count: items.length,
             title: name,
-            iconName: 'layers',
-          }) +
-          rowList(
-            pageItems,
-            renderPagination({
-              currentPage: pageNumber,
-              totalPages: sectionPages.length,
-              routeForPage: (n) => site(sectionRoute(n)),
-              messages,
-            }),
-          ),
+            iconName: 'book',
+          }) + rowList(items),
       });
-    });
+    }
+
+    if (sortedYears.length > 0) {
+      pages.push({
+        kind: 'archive',
+        route: '/archive',
+        ...listingMeta({
+          name: text0('archiveSectionLabel'),
+          description: msg(
+            'archiveRootDescription',
+            String(publishedArticles.length),
+            publicationTitle,
+          ),
+          route: '/archive',
+        }),
+        language: publication.defaultLanguage,
+        lastModified: latestContentTimestamp(publishedArticles),
+        bodyHtml: listingHead({
+          breadcrumbHtml: crumbs([
+            { label: /** @type {string} */ (messages.archiveSectionLabel) },
+          ]),
+          kicker: /** @type {string} */ (messages.archiveKickerLabel),
+          count: publishedArticles.length,
+          title: /** @type {string} */ (messages.archiveSectionLabel),
+          iconName: 'layers',
+          extraHtml: `<ul class="g-pills">${sortedYears
+            .map((year) =>
+              pill(
+                site(`/archive/${year}`),
+                year,
+                byYear.get(year)?.length,
+                'layers',
+              ),
+            )
+            .join('')}</ul>`,
+        }),
+      });
+    }
+    for (const year of sortedYears) {
+      const items =
+        /** @type {import('../../../types/index.d.ts').ContentBuildRecord[]} */ (
+          byYear.get(year)
+        );
+      const yearPages = paginate(items, pageSize);
+      const yearRoute = (/** @type {number} */ n) =>
+        n === 1 ? `/archive/${year}` : `/archive/${year}/page/${n}`;
+      yearPages.forEach((pageItems, pageIndex) => {
+        const pageNumber = pageIndex + 1;
+        pages.push({
+          kind: 'archive',
+          route: yearRoute(pageNumber),
+          ...listingMeta({
+            name:
+              pageNumber === 1
+                ? msg('archivePageTitle', year)
+                : `${msg('archivePageTitle', year)} \u2013 ${msg('pageStatusLabel', String(pageNumber), String(yearPages.length))}`,
+            description: msg(
+              'archivePageDescription',
+              String(items.length),
+              year,
+              publicationTitle,
+            ),
+            route: yearRoute(pageNumber),
+            parents: [
+              { label: text0('archiveSectionLabel'), route: site('/archive') },
+            ],
+          }),
+          language: publication.defaultLanguage,
+          lastModified: latestContentTimestamp(pageItems),
+          bodyHtml:
+            listingHead({
+              breadcrumbHtml: crumbs(
+                [
+                  {
+                    label: /** @type {string} */ (messages.archiveSectionLabel),
+                    route: site('/archive'),
+                  },
+                ],
+                [{ label: year }],
+              ),
+              kicker: /** @type {string} */ (messages.archiveKickerLabel),
+              count: items.length,
+              title: year,
+              iconName: 'layers',
+            }) +
+            rowList(
+              pageItems,
+              renderPagination({
+                currentPage: pageNumber,
+                totalPages: yearPages.length,
+                routeForPage: (n) => site(yearRoute(n)),
+                messages,
+              }),
+            ),
+        });
+      });
+    }
+
+    // One section per non-default language with a published article: its own
+    // chrome catalog, every article of the language newest first (no grouping).
+    for (const section of translations.sections) {
+      useChrome(section.language);
+      const items = allPublishedArticles.filter(
+        (r) => languageSegment(r.frontmatter.language) === section.segment,
+      );
+      const name = languageLabel(section.language, translations.languages);
+      const sectionPages = paginate(items, pageSize);
+      const sectionRoute = (/** @type {number} */ n) =>
+        n === 1 ? `/${section.segment}` : `/${section.segment}/page/${n}`;
+      sectionPages.forEach((pageItems, pageIndex) => {
+        const pageNumber = pageIndex + 1;
+        pages.push({
+          kind: 'index',
+          route: sectionRoute(pageNumber),
+          ...listingMeta({
+            name:
+              pageNumber === 1
+                ? name
+                : `${name} \u2013 ${msg('pageStatusLabel', String(pageNumber), String(sectionPages.length))}`,
+            description: msg(
+              'languageIndexDescription',
+              String(items.length),
+              name,
+              publicationTitle,
+            ),
+            route: sectionRoute(pageNumber),
+            language: section.language,
+          }),
+          language: section.language,
+          lastModified: latestContentTimestamp(pageItems),
+          bodyHtml:
+            listingHead({
+              breadcrumbHtml: crumbs([{ label: name }]),
+              kicker: /** @type {string} */ (messages.languageKickerLabel),
+              count: items.length,
+              title: name,
+              iconName: 'layers',
+            }) +
+            rowList(
+              pageItems,
+              renderPagination({
+                currentPage: pageNumber,
+                totalPages: sectionPages.length,
+                routeForPage: (n) => site(sectionRoute(n)),
+                messages,
+              }),
+            ),
+        });
+      });
+    }
   }
   useChrome(publication.defaultLanguage);
 
