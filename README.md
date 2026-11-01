@@ -1120,6 +1120,36 @@ motion under `prefers-reduced-motion`. The classes are template-owned feature
 chrome like the Follow control's: they are not part of the published styling
 contract. Playback is the shipped script's alone; the renderer makes no request.
 
+## Browser article preview
+
+`@rathnasgala2/template/preview` renders the real article page of a draft in a
+browser (types: `types/preview.d.ts`). It runs the same page assembly as
+`renderPublication` for one article, from an in-memory input, with the caller's
+already-resolved images; no file, media pipeline, Eleventy or schema validator
+is involved. With `options.preview` unset the document is byte-identical to the
+built page (`test/preview-parity.test.js`). `options.preview` may only inline
+the stylesheets, drop scripts, set the CSP `<meta>`, make anchors inert and fix
+the resolved colour mode.
+
+```js
+import {
+  loadMessagesFor,
+  previewLanguages,
+  renderArticlePreview,
+} from '@rathnasgala2/template/preview';
+
+const getMessages = await loadMessagesFor(previewLanguages(input));
+const { html } = renderArticlePreview(input, {
+  getMessages,
+  preview: {
+    inlineStyles: true,
+    omitScripts: true,
+    inertLinks: true,
+    colorMode: 'light',
+  },
+});
+```
+
 ## Policy pages
 
 Every site carries two legal pages, `/terms` and `/privacy` (page kind

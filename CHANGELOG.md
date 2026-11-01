@@ -8,6 +8,36 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.11.0] - 2026-11-01
+
+### Added
+
+- **`@rathnasgala2/template/preview`**, a browser entry point (types in
+  `types/preview.d.ts`). `renderArticlePreview(input, options)` returns
+  `{ html, title, route, warnings }`: the complete document of one article page,
+  built by the code `renderPublication` builds it with (not a second
+  implementation), so with the preview options off it is byte-identical to the
+  built page. The input maps to the build-input sections the page reads
+  (publication, authors, navigation, appearance, modules, the post as Markdown
+  or normalized HTML, the other posts for the pager, keep-reading cards, series
+  and tags, `baseUrl`, `basePath`) plus the caller's already-resolved images
+  (`media`, by repository path: URL, width, height, optional `srcset` files) and
+  an optional theme. No file access, media pipeline, Eleventy or schema
+  validator runs, and the import graph is checked to stay browser-safe.
+  `options.preview` may change only: inline `<style>` for the stylesheet links
+  (no Subresource Integrity), no `<script>` elements, a caller-supplied CSP
+  `<meta>`, inert anchors (no `href`, `tabindex="-1"`) and a fixed resolved
+  colour mode. The entry also exports `normalizeAuthoredMarkdown`,
+  `loadMessagesFor` (one catalog per locale chunk), `previewLanguages`,
+  `buildPaletteCss` (byte-identical to the built `gala-palette-*.css`),
+  `BASE_LAYER_CSS` and `PreviewInputError`.
+
+### Fixed
+
+- Code inside a Markdown or markup fence now highlights the same in every build.
+  Before, nested grammars loaded lazily, so the result depended on which fences
+  ran earlier in the process.
+
 ### Changed
 
 - **Browser-safe article page path.** No published byte changes. The
@@ -20,6 +50,10 @@ and this project adheres to
   `site-render.js` and the outer document in `document-shell.js` (replacing the
   Nunjucks layout; Eleventy only writes files). `buildGeneratedPages` takes the
   message lookup and policy-text loader as options, and an `only` content id.
+- The palette sheet derivation (`appearance/palette-derive.js`) no longer needs
+  the schema validator; a build still checks the derived values against the
+  token grammar. Styling-contract hooks sort without `Buffer`. No published byte
+  changes.
 
 ## [4.10.0] - 2026-10-31
 
