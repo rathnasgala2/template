@@ -8,6 +8,19 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- **Browser-safe article page path.** No published byte changes. The
+  article-page modules no longer import `node:` built-ins, Eleventy or the
+  schemas package: SHA-256 is a pure module; the script, policy-text,
+  render-policy-identity and Markdown-file readers moved to `*-node.js`
+  siblings; fenced code is highlighted by statically imported Prism grammars
+  (`prismjs` is now a direct dependency at the version already resolved); chrome
+  catalogs can load one locale at a time; the per-page assembly lives in
+  `site-render.js` and the outer document in `document-shell.js` (replacing the
+  Nunjucks layout; Eleventy only writes files). `buildGeneratedPages` takes the
+  message lookup and policy-text loader as options, and an `only` content id.
+
 ## [4.10.0] - 2026-10-31
 
 ### Security
