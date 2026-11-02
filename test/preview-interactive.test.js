@@ -111,10 +111,20 @@ test('the option is validated and exclusive', async () => {
     { interactive: { ...interactive, liveBaseUrl: 'nope' } },
     { interactive: { ...interactive, scrollY: -1 } },
     { interactive: { ...interactive, extra: 1 } },
+    { interactive: { ...interactive, viewer: 'admin' } },
   ]) {
     assert.throws(() => render(bad), PreviewInputError, JSON.stringify(bad));
   }
   assert.ok(render({ interactive: { ...interactive, liveBaseUrl: null } }));
+  const viewerOf = (/** @type {any} */ i) =>
+    JSON.parse(
+      /data-gala-preview-data>([\s\S]*?)<\/script>/.exec(
+        render({ interactive: i }).html,
+      )?.[1] ?? '{}',
+    ).viewer;
+  assert.equal(viewerOf(interactive), 'reader');
+  assert.equal(viewerOf({ ...interactive, viewer: 'visitor' }), 'visitor');
+  assert.equal(viewerOf({ ...interactive, viewer: 'reader' }), 'reader');
 });
 
 test('hostile titles and bodies add no script, handler or reachable form action', async () => {

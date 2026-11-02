@@ -1175,12 +1175,13 @@ const { html } = renderContentPreview(input, {
 
 ### Interactive preview
 
-`options.preview.interactive = {apiOrigin, liveBaseUrl?, scrollY?}` makes the
-preview behave like the real page: likes, comments, Follow, the newsletter and
-contact forms, Listen, the theme switch, search, code copy and the consent
-banner run the build's own scripts. It excludes `omitScripts`, `inertLinks`,
-`contentSecurityPolicy` and `inlineStyles: false` (`PreviewInputError`): the
-template builds the policy itself, because it knows the hashes.
+`options.preview.interactive = {apiOrigin, liveBaseUrl?, scrollY?, viewer?}`
+makes the preview behave like the real page: likes, comments, Follow, the
+newsletter and contact forms, Listen, the theme switch, search, code copy and
+the consent banner run the build's own scripts. It excludes `omitScripts`,
+`inertLinks`, `contentSecurityPolicy` and `inlineStyles: false`
+(`PreviewInputError`): the template builds the policy itself, because it knows
+the hashes.
 
 **The frame contract.** Render the `html` into
 `<iframe sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" allow="clipboard-write" srcdoc=...>`:
@@ -1204,7 +1205,10 @@ unchanged.
 
 - Storage: in-memory `localStorage`, `sessionStorage` and `document.cookie` (the
   opaque origin would make the real ones throw). A "Preview reader" session is
-  seeded so likes, comments and Follow work; Sign out shows the anonymous page.
+  seeded (`viewer: 'reader'`, the default) so likes, comments and Follow work;
+  Sign out shows the anonymous page. With `viewer: 'visitor'` no session is
+  seeded: the page is anonymous, and a like or Follow starts sign-in, which
+  toasts "Sign-in isn't available in the preview".
 - Network: `fetch`, `XMLHttpRequest` and `navigator.sendBeacon` are wrapped.
   Only a `GET` of `<apiOrigin>/v2/public/` read paths reaches the network
   (`credentials: 'omit'`, no `Authorization` header; the reader's own follow
@@ -1237,7 +1241,8 @@ scripts, the runtime included; no `'unsafe-inline'`, no `'unsafe-eval'`, no
 `'unsafe-hashes'`);
 `style-src 'unsafe-inline'; img-src data:; media-src data: <liveOrigin>; connect-src <apiOrigin>; font-src data:; frame-src 'none'; form-action 'none'; base-uri 'none'`.
 Inline event-handler attributes cannot run, and the sanitizer strips them from
-bodies anyway. Images must be `data:` URLs (`media[...].url`).
+bodies anyway. Images must be `data:` URLs (`media[...].url`); `blob:` and
+remote image URLs are blocked.
 
 ## Policy pages
 

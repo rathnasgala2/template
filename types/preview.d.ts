@@ -22,7 +22,10 @@ export type GetMessages = (
 
 /** One image the caller has already resolved (the media pipeline does not run). */
 export interface PreviewImage {
-  /** Used verbatim as `src`: a `data:` or `blob:` URL, or any URL the iframe can load. */
+  /**
+   * Used verbatim as `src`. Interactive previews allow `img-src data:` only,
+   * so pass a `data:` URL there; other previews load any URL the frame can.
+   */
   url: string;
   /** Intrinsic width in pixels (reserves the image's space). */
   width: number;
@@ -252,6 +255,13 @@ export interface InteractivePreview {
    * render.
    */
   scrollY?: number;
+  /**
+   * Who is looking. `'reader'` (default) is a signed-in "Preview reader"
+   * (a seeded in-memory session), so likes, comments and Follow work locally.
+   * `'visitor'` is anonymous: likes and Follow start sign-in, which toasts
+   * "Sign-in isn't available in the preview".
+   */
+  viewer?: 'reader' | 'visitor';
 }
 
 /**

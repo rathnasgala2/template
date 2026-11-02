@@ -27,10 +27,10 @@ and this project adheres to
 - **`renderContactPreview(input, options)`**: `/contact`, the optional
   `contact.md` intro and the form, only while `publication.contactForm` is
   enabled (`contactForm.intro` is a new optional input field).
-- **`options.preview.interactive = { apiOrigin, liveBaseUrl?, scrollY? }`**: the
-  preview runs the page's own scripts in the App's sandboxed `srcdoc` frame (no
-  `allow-same-origin`, no `allow-forms`). The built `assets/gala-*.js` scripts
-  are inlined with their exact bytes (generated module
+- **`options.preview.interactive = { apiOrigin, liveBaseUrl?, scrollY?, viewer? }`**:
+  the preview runs the page's own scripts in the App's sandboxed `srcdoc` frame
+  (no `allow-same-origin`, no `allow-forms`). The built `assets/gala-*.js`
+  scripts are inlined with their exact bytes (generated module
   `preview-scripts-data.js`), a template-owned runtime comes first in `<head>`
   (in-memory storage and cookies; `fetch`, `XMLHttpRequest` and `sendBeacon`
   wrapped so only `GET` of `<apiOrigin>/v2/public/` reads reach the network and
@@ -38,11 +38,13 @@ and this project adheres to
   "Preview only. Nothing was saved." toast; link clicks intercepted, never
   navigating the frame; sign-in, reload and external script injection
   neutralized; Listen audio from `liveBaseUrl`; scroll position posted to the
-  parent and restored once), and the Content-Security-Policy is built by the
-  template with a `script-src` of SHA-256 hashes of exactly the inline scripts
-  (no `'unsafe-inline'`, `'unsafe-eval'` or `'unsafe-hashes'`). Mutually
-  exclusive with `omitScripts`, `inertLinks`, `contentSecurityPolicy` and
-  `inlineStyles: false`.
+  parent and restored once; `viewer: 'reader'`, the default, seeds an in-memory
+  "Preview reader" session so likes, comments and Follow work, `'visitor'` is
+  anonymous and sign-in toasts "Sign-in isn't available in the preview"), and
+  the Content-Security-Policy is built by the template with a `script-src` of
+  SHA-256 hashes of exactly the inline scripts (no `'unsafe-inline'`,
+  `'unsafe-eval'` or `'unsafe-hashes'`). Mutually exclusive with `omitScripts`,
+  `inertLinks`, `contentSecurityPolicy` and `inlineStyles: false`.
 - Four runtime-only messages (`previewNotSavedLabel`,
   `previewSignInUnavailableLabel`, `previewNotPublishedLabel`,
   `previewAudioUnavailableLabel`) in every locale catalog; they are never

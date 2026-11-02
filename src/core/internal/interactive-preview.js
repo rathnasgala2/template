@@ -43,7 +43,12 @@ const BUILT_SCRIPTS = [
 ];
 
 /** @type {readonly string[]} the option's keys */
-export const INTERACTIVE_KEYS = ['apiOrigin', 'liveBaseUrl', 'scrollY'];
+export const INTERACTIVE_KEYS = [
+  'apiOrigin',
+  'liveBaseUrl',
+  'scrollY',
+  'viewer',
+];
 
 /**
  * @param {unknown} value a candidate absolute http(s) URL
@@ -100,6 +105,12 @@ export function validateInteractive(preview, need) {
         Number.isFinite(interactive.scrollY) &&
         interactive.scrollY >= 0),
     'options.preview.interactive.scrollY must be a number of pixels, 0 or more',
+  );
+  need(
+    interactive.viewer === undefined ||
+      interactive.viewer === 'reader' ||
+      interactive.viewer === 'visitor',
+    'options.preview.interactive.viewer must be "reader" or "visitor"',
   );
   need(
     !preview.omitScripts,
@@ -169,7 +180,7 @@ function scriptJson(value) {
  * @param {object} args
  * @param {string} args.html the built document (as `renderDocumentShell` wrote it)
  * @param {string} args.cspMetaTag the document's built CSP `<meta>` element
- * @param {{apiOrigin: string, liveBaseUrl?: string | null, scrollY?: number}} args.interactive the option
+ * @param {{apiOrigin: string, liveBaseUrl?: string | null, scrollY?: number, viewer?: 'reader' | 'visitor'}} args.interactive the option
  * @param {string} args.siteBase the site's `baseUrl`
  * @param {{notSaved: string, signInUnavailable: string, notPublished: string, audioUnavailable: string}} args.messages the toast and notice sentences
  * @param {string} args.searchIndex the search index JSON text
@@ -221,6 +232,7 @@ export function makeInteractive({
     apiOrigin: new URL(interactive.apiOrigin).origin,
     liveBaseUrl: interactive.liveBaseUrl ?? null,
     scrollY: interactive.scrollY ?? 0,
+    viewer: interactive.viewer ?? 'reader',
     siteBase,
     messages,
     searchIndex,

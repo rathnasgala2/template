@@ -8,8 +8,9 @@
  * the parent beyond what the preview allows:
  *
  * - `localStorage`, `sessionStorage` and `document.cookie` are in-memory, so
- *   the scripts' persistence works for the session and nothing throws. A
- *   preview reader session is seeded so likes, comments and Follow work.
+ *   the scripts' persistence works for the session and nothing throws. Unless
+ *   the viewer is a visitor, a preview reader session is seeded so likes,
+ *   comments and Follow work.
  * - `fetch`, `XMLHttpRequest` and `navigator.sendBeacon` are wrapped. Only a
  *   `GET` of `<apiOrigin>/v2/public/...` read path goes to the network (no
  *   credentials, no authorization header); every other request is answered
@@ -128,7 +129,7 @@ export const PREVIEW_RUNTIME_SOURCE = String.raw`(function () {
       Object.defineProperty(target, name, { configurable: true, enumerable: true, get: getter });
     } catch (error) {}
   }
-  var local = makeStorage(cfg.seed, true);
+  var local = makeStorage(cfg.seed, cfg.viewer !== 'visitor');
   var session = makeStorage({}, false);
   defineGetter(W, 'localStorage', function () {
     return local;

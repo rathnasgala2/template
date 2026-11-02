@@ -483,11 +483,22 @@ async function assertPageParity(label, render, built, expectedRoute) {
       `${label}: ${key} alone`,
     );
   }
-  return assertInteractiveParity(
+  await assertInteractiveParity(
     label,
     built,
     render({ interactive: INTERACTIVE, colorMode: 'dark' }).html,
   );
+  // The visitor view differs from the reader view only in the data block.
+  const reader = render({ interactive: INTERACTIVE }).html;
+  const visitor = render({
+    interactive: { ...INTERACTIVE, viewer: 'visitor' },
+  }).html;
+  assert.equal(
+    visitor,
+    reader.replace('"viewer":"reader"', '"viewer":"visitor"'),
+    `${label}: viewer is the only difference`,
+  );
+  await assertInteractiveParity(label, built, visitor);
 }
 
 /**
