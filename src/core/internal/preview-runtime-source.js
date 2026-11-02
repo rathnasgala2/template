@@ -15,6 +15,10 @@
  *   `GET` of `<apiOrigin>/v2/public/...` read path goes to the network (no
  *   credentials, no authorization header); every other request is answered
  *   locally by a simulator and shows the "Preview only" toast.
+ * - A public GET is answered from `cfg.cache` (the App's copy of earlier
+ *   answers, `{url: {status: 200, body}}`) before the network is touched, and
+ *   every successful real GET of 64 KB or less is posted to the parent as
+ *   `gala-preview-cache`; keeping, expiring and offering entries is the App's.
  * - Link clicks are intercepted (capture phase) and never navigate the frame.
  * - Sign-in navigation, reloads, external script injection and form submits
  *   are neutralized (the frame has no allow-forms, so submit buttons fire the
@@ -32,6 +36,9 @@ export const PREVIEW_DATA_ATTRIBUTE = 'data-gala-preview-data';
 
 /** @type {string} the message the runtime posts to the parent on scroll */
 export const PREVIEW_SCROLL_MESSAGE = 'gala-preview-scroll';
+
+/** @type {string} the message the runtime posts to the parent after a real GET */
+export const PREVIEW_CACHE_MESSAGE = 'gala-preview-cache';
 
 export const PREVIEW_RUNTIME_SOURCE = String.raw`(function () {
   'use strict';
@@ -311,6 +318,32 @@ export const PREVIEW_RUNTIME_SOURCE = String.raw`(function () {
         .catch(function () {});
     } catch (error) {}
   }
+  // The App's read cache: answers a public GET without the network, and every
+  // successful real GET is reported to the parent so the App can offer it back.
+  var CACHE_LIMIT = 65536;
+  function cached(href) {
+    var table = cfg.cache;
+    if (!table || typeof table !== 'object') return null;
+    if (!Object.prototype.hasOwnProperty.call(table, href)) return null;
+    var entry = table[href];
+    return entry && entry.status === 200 && typeof entry.body === 'string' ? entry : null;
+  }
+  function report(href, response) {
+    try {
+      if (response.status !== 200) return;
+      response
+        .clone()
+        .text()
+        .then(function (text) {
+          var size = typeof TextEncoder === 'function' ? new TextEncoder().encode(text).length : text.length;
+          if (size > CACHE_LIMIT) return;
+          try {
+            W.parent.postMessage({ type: 'gala-preview-cache', url: href, status: 200, body: text }, '*');
+          } catch (error) {}
+        })
+        .catch(function () {});
+    } catch (error) {}
+  }
   function searchResponse() {
     return new Response(cfg.searchIndex || '{"documents":[]}', {
       status: 200,
@@ -348,6 +381,21 @@ export const PREVIEW_RUNTIME_SOURCE = String.raw`(function () {
     }
     if (
       method === 'GET' &&
+      url.origin === API_ORIGIN &&
+      url.pathname.indexOf(PUBLIC) === 0 &&
+      !isReaderState(url.pathname) &&
+      cached(url.href)
+    ) {
+      var hit = cached(url.href);
+      var served = new Response(hit.body, {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+      noteInteractions(url, served);
+      return Promise.resolve(served);
+    }
+    if (
+      method === 'GET' &&
       realFetch &&
       url.origin === API_ORIGIN &&
       url.pathname.indexOf(PUBLIC) === 0 &&
@@ -361,6 +409,7 @@ export const PREVIEW_RUNTIME_SOURCE = String.raw`(function () {
         signal: signal || undefined
       }).then(function (response) {
         noteInteractions(url, response);
+        report(url.href, response);
         return response;
       });
     }

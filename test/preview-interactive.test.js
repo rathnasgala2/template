@@ -165,3 +165,209 @@ test('the contact page renders only while the form is on', async () => {
     PreviewInputError,
   );
 });
+
+const API = 'https://api.galascribe.com';
+const COUNTS = `${API}/v2/public/publications/p/interaction-counts?contentIds=a`;
+
+test('interactive.cache is validated', async () => {
+  const getMessages = await loadMessagesFor(previewLanguages(input()));
+  const render = (/** @type {any} */ cache) =>
+    renderContentPreview(input(), {
+      getMessages,
+      preview: { interactive: { apiOrigin: API, cache } },
+    });
+  const entry = { status: 200, body: '{}' };
+  assert.ok(render({ [COUNTS]: entry }));
+  assert.ok(render({}));
+  const big = 'x'.repeat(64 * 1024);
+  assert.ok(render({ [COUNTS]: { status: 200, body: big } }));
+  const many = Object.fromEntries(
+    Array.from({ length: 16 }, (_, i) => [
+      `${COUNTS}${i}`,
+      { status: 200, body: big },
+    ]),
+  );
+  assert.ok(render(many), 'exactly 1 MB is allowed');
+  for (const bad of [
+    [],
+    null,
+    'x',
+    { 'https://evil.example/v2/public/x': entry },
+    { [`${API}/v2/private/x`]: entry },
+    { [`${API}.evil.example/v2/public/x`]: entry },
+    { [COUNTS]: { status: 404, body: '{}' } },
+    { [COUNTS]: { status: 200, body: 5 } },
+    { [COUNTS]: { status: 200 } },
+    { [COUNTS]: null },
+    { [COUNTS]: { status: 200, body: `${big}x` } },
+    { [COUNTS]: { status: 200, body: 'é'.repeat(32 * 1024 + 1) } },
+    { ...many, [`${COUNTS}z`]: entry },
+  ]) {
+    assert.throws(
+      () => render(bad),
+      PreviewInputError,
+      JSON.stringify(bad)?.slice(0, 80),
+    );
+  }
+});
+
+test('a hostile cache body cannot leave the data block', async () => {
+  const getMessages = await loadMessagesFor(previewLanguages(input()));
+  const body = '{"a":"</script><script>window.__ran=1</script><!-- x"}';
+  const { html } = renderContentPreview(input(), {
+    getMessages,
+    preview: {
+      interactive: {
+        apiOrigin: API,
+        cache: { [COUNTS]: { status: 200, body } },
+      },
+    },
+  });
+  const block = /data-gala-preview-data>([\s\S]*?)<\/script>/.exec(html)?.[1];
+  assert.ok(block);
+  assert.ok(!/<\/script|<!--|<script/i.test(block));
+  assert.equal(JSON.parse(block).cache[COUNTS].body, body);
+  const scripts = [...html.matchAll(/<script\b([^>]*)>/g)].map((m) => m[1]);
+  assert.ok(
+    scripts.every(
+      (attrs) => attrs === '' || /type="application\/(ld\+)?json"/.test(attrs),
+    ),
+  );
+  assert.ok(!html.includes('window.__ran=1</script>'));
+});
+
+test('the cache only changes the data block', async () => {
+  const getMessages = await loadMessagesFor(previewLanguages(input()));
+  const render = (/** @type {any} */ extra) =>
+    renderContentPreview(input(), {
+      getMessages,
+      preview: { interactive: { apiOrigin: API, ...extra } },
+    }).html;
+  const strip = (/** @type {string} */ html) =>
+    html.replace(/(data-gala-preview-data>)[\s\S]*?(<\/script>)/, '$1$2');
+  assert.equal(
+    strip(render({ cache: { [COUNTS]: { status: 200, body: '{}' } } })),
+    strip(render({})),
+  );
+});
+
+test('the runtime reports real GETs and serves the cache', () => {
+  assert.match(PREVIEW_RUNTIME_SOURCE, /gala-preview-cache/);
+  assert.match(PREVIEW_RUNTIME_SOURCE, /cfg\.cache/);
+});
+
+test('addresses the build refuses are refused by the preview', async () => {
+  const getMessages = await loadMessagesFor(previewLanguages(input()));
+  const refuse = (
+    /** @type {(i: any) => void} */ edit,
+    /** @type {RegExp} */ re,
+  ) => {
+    const bad = input();
+    edit(bad);
+    assert.throws(
+      () => renderContentPreview(bad, { getMessages }),
+      (/** @type {any} */ error) =>
+        error instanceof PreviewInputError &&
+        error.issues.some((/** @type {string} */ issue) => re.test(issue)),
+      String(re),
+    );
+  };
+  const accept = (/** @type {(i: any) => void} */ edit) => {
+    const ok = input();
+    edit(ok);
+    assert.ok(renderContentPreview(ok, { getMessages }).html);
+  };
+  const item = (/** @type {any} */ extra) => ({
+    type: 'external',
+    label: 'L',
+    children: [],
+    ...extra,
+  });
+  for (const scheme of [
+    'javascript:alert(1)',
+    'data:text/html,x',
+    'file:///etc/passwd',
+    'vbscript:x',
+    ' JaVaScRiPt:x',
+    'http://a.example/',
+    '//a.example/',
+    'mailto:a@b.c',
+  ]) {
+    refuse((i) => {
+      i.navigation = {
+        items: [
+          item({ url: 'https://ok.example/' }),
+          item({ url: 'https://ok.example/' }),
+          item({ url: scheme }),
+        ],
+      };
+    }, /^navigation\.items\[2\]\.url uses an address the site can't publish \(/);
+  }
+  refuse((i) => {
+    i.navigation = { items: [item({ url: 'javascript:x' })] };
+  }, /\(javascript:\)/);
+  refuse((i) => {
+    i.navigation = { items: [], footerItems: [item({ url: 'data:x' })] };
+  }, /^navigation\.footerItems\[0\]\.url .*\(data:\)/);
+  refuse((i) => {
+    i.navigation = {
+      items: [
+        { type: 'internal', label: 'L', route: 'javascript:x', children: [] },
+      ],
+    };
+  }, /^navigation\.items\[0\]\.route .*\(javascript:\)/);
+  refuse((i) => {
+    i.navigation = {
+      items: [
+        { type: 'internal', label: 'L', route: '//evil.example', children: [] },
+      ],
+    };
+  }, /navigation\.items\[0\]\.route/);
+  refuse((i) => {
+    i.navigation = {
+      items: [
+        {
+          type: 'external',
+          label: 'L',
+          url: 'https://ok.example/',
+          children: [item({ url: 'vbscript:x' })],
+        },
+      ],
+    };
+  }, /^navigation\.items\[0\]\.children\[0\]\.url .*\(vbscript:\)/);
+  refuse((i) => {
+    i.publication.socialLinks = [{ type: 'github', uri: 'javascript:x' }];
+  }, /^publication\.socialLinks\[0\]\.uri .*\(javascript:\)/);
+  refuse((i) => {
+    i.publication.socialLinks = [{ type: 'github', uri: 'mailto:a@b.c' }];
+  }, /socialLinks\[0\]\.uri/);
+  refuse((i) => {
+    i.publication.socialLinks = [{ type: 'email', uri: 'https://ok.example/' }];
+  }, /socialLinks\[0\]\.uri/);
+  refuse((i) => {
+    i.publication.socialLinks = [
+      { type: 'website', uri: 'https://user@ok.example/' },
+    ];
+  }, /socialLinks\[0\]\.uri/);
+  refuse((i) => {
+    i.authors[0].links = [{ type: 'website', uri: 'file:///x' }];
+  }, /^authors\[0\]\.links\[0\]\.uri .*\(file:\)/);
+  refuse((i) => {
+    i.publication.newsletter = { url: 'data:x', title: 't', text: 't' };
+  }, /^publication\.newsletter\.url .*\(data:\)/);
+  accept((i) => {
+    i.navigation = {
+      items: [
+        item({ url: 'https://ok.example/a?b#c' }),
+        { type: 'internal', label: 'L', route: '/about/', children: [] },
+      ],
+      footerItems: [{ type: 'internal', label: 'L', route: '/', children: [] }],
+    };
+    i.publication.socialLinks = [
+      { type: 'email', uri: 'mailto:a@b.c' },
+      { type: 'github', uri: 'https://github.com/x' },
+    ];
+    i.authors[0].links = [{ type: 'website', uri: 'https://ok.example/' }];
+    i.publication.newsletter = { mode: 'galascribe', title: 't', text: 't' };
+  });
+});

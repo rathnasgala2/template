@@ -87,6 +87,85 @@ function isObject(value) {
 }
 
 /**
+ * The address rules of the build's schemas, mirrored so the preview refuses
+ * what a build would refuse to publish. Navigation `route` is the navigation
+ * schema's `canonicalRoute` pattern; `url` is `urlHttps` (`^https://` with no
+ * credentials); a social or author link `uri` is `^mailto:` for type "email"
+ * and `urlHttps` for every other type (navigation 2.0.0, publication and
+ * author schemas); `uri` is also at most 2048 characters.
+ */
+const CANONICAL_ROUTE = /^\/(?!\/)(?!.*\/\/)(?!.*[?#]).*$/s;
+const URL_HTTPS = /^https:\/\/(?![^/?#]*@)/;
+const MAILTO = /^mailto:/;
+
+/**
+ * @param {unknown} value a rejected address
+ * @returns {string} its scheme (`javascript:`) or, without one, the text
+ */
+function describeAddress(value) {
+  const text = String(value);
+  const scheme = /^\s*([a-z][a-z0-9+.-]*:)/i.exec(text);
+  if (scheme) return scheme[1].toLowerCase();
+  return JSON.stringify(text.length > 60 ? `${text.slice(0, 60)}...` : text);
+}
+
+/**
+ * @param {unknown} value the candidate address
+ * @param {RegExp} rule the schema pattern it must match
+ * @param {string} field its field path in messages
+ * @param {(ok: boolean, what: string) => void} need records a failed check
+ * @returns {void}
+ */
+function checkAddress(value, rule, field, need) {
+  if (value === undefined) return;
+  need(
+    typeof value === 'string' && rule.test(value),
+    `${field} uses an address the site can't publish (${describeAddress(value)})`,
+  );
+}
+
+/**
+ * @param {unknown} items a navigation `items` or `footerItems` list
+ * @param {string} label its field path
+ * @param {(ok: boolean, what: string) => void} need records a failed check
+ * @returns {void}
+ */
+function checkNavigation(items, label, need) {
+  if (!Array.isArray(items)) return;
+  for (const [index, item] of items.entries()) {
+    if (!isObject(item)) continue;
+    const at = `${label}[${index}]`;
+    checkAddress(item.route, CANONICAL_ROUTE, `${at}.route`, need);
+    checkAddress(item.url, URL_HTTPS, `${at}.url`, need);
+    checkNavigation(item.children, `${at}.children`, need);
+  }
+}
+
+/**
+ * @param {unknown} links a `socialLinks` or author `links` list
+ * @param {string} label its field path
+ * @param {(ok: boolean, what: string) => void} need records a failed check
+ * @returns {void}
+ */
+function checkSocialLinks(links, label, need) {
+  if (!Array.isArray(links)) return;
+  for (const [index, link] of links.entries()) {
+    if (!isObject(link)) continue;
+    const field = `${label}[${index}].uri`;
+    checkAddress(
+      link.uri,
+      link.type === 'email' ? MAILTO : URL_HTTPS,
+      field,
+      need,
+    );
+    need(
+      typeof link.uri !== 'string' || link.uri.length <= 2048,
+      `${field} is longer than the site can publish (2048 characters)`,
+    );
+  }
+}
+
+/**
  * Check one post of the input (the article, or an entry of a home page's
  * `posts`), each failure naming its field under `label`.
  *
@@ -184,6 +263,33 @@ function validate(input, options, kind) {
     );
   }
   need(isObject(input.navigation), 'navigation must be an object');
+  if (isObject(input.navigation)) {
+    checkNavigation(input.navigation.items, 'navigation.items', need);
+    checkNavigation(
+      input.navigation.footerItems,
+      'navigation.footerItems',
+      need,
+    );
+  }
+  if (isObject(publication)) {
+    checkSocialLinks(publication.socialLinks, 'publication.socialLinks', need);
+    if (
+      isObject(publication.newsletter) &&
+      publication.newsletter.mode !== 'galascribe'
+    ) {
+      checkAddress(
+        publication.newsletter.url,
+        URL_HTTPS,
+        'publication.newsletter.url',
+        need,
+      );
+    }
+  }
+  for (const [index, author] of (input.authors ?? []).entries()) {
+    if (isObject(author)) {
+      checkSocialLinks(author.links, `authors[${index}].links`, need);
+    }
+  }
   need(
     isObject(input.appearance) &&
       isObject(input.appearance.colorMode) &&

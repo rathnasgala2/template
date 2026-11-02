@@ -48,7 +48,13 @@ export const INTERACTIVE_KEYS = [
   'liveBaseUrl',
   'scrollY',
   'viewer',
+  'cache',
 ];
+
+/** @type {number} the longest cached response body, in UTF-8 bytes */
+export const CACHE_ENTRY_MAX_BYTES = 64 * 1024;
+/** @type {number} the most the cached bodies may total, in UTF-8 bytes */
+export const CACHE_TOTAL_MAX_BYTES = 1024 * 1024;
 
 /**
  * @param {unknown} value a candidate absolute http(s) URL
@@ -64,6 +70,54 @@ function httpUrl(value) {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Check `interactive.cache`: earlier answers of the public API the runtime may
+ * serve instead of fetching.
+ *
+ * @param {unknown} cache the candidate map
+ * @param {unknown} apiOrigin the option's `apiOrigin` (checked on its own)
+ * @param {(ok: boolean, what: string) => void} need records a failed check
+ * @returns {void}
+ */
+function validateCache(cache, apiOrigin, need) {
+  const where = 'options.preview.interactive.cache';
+  const isMap =
+    typeof cache === 'object' && cache !== null && !Array.isArray(cache);
+  need(isMap, `${where} must be an object keyed by URL`);
+  if (!isMap) return;
+  const api = httpUrl(apiOrigin);
+  const prefix = api ? `${api.origin}/v2/public/` : undefined;
+  let total = 0;
+  for (const [key, entry] of Object.entries(cache)) {
+    need(
+      prefix !== undefined && key.startsWith(prefix),
+      `${where}["${key.slice(0, 80)}"] must be a URL under the apiOrigin's /v2/public/`,
+    );
+    const e = /** @type {any} */ (entry);
+    const ok =
+      typeof e === 'object' &&
+      e !== null &&
+      !Array.isArray(e) &&
+      e.status === 200 &&
+      typeof e.body === 'string';
+    need(
+      ok,
+      `${where}["${key.slice(0, 80)}"] must be {status: 200, body: string}`,
+    );
+    if (!ok) continue;
+    const bytes = utf8Bytes(e.body).length;
+    need(
+      bytes <= CACHE_ENTRY_MAX_BYTES,
+      `${where}["${key.slice(0, 80)}"].body is over ${CACHE_ENTRY_MAX_BYTES} bytes`,
+    );
+    total += bytes;
+  }
+  need(
+    total <= CACHE_TOTAL_MAX_BYTES,
+    `${where} bodies total over ${CACHE_TOTAL_MAX_BYTES} bytes`,
+  );
 }
 
 /**
@@ -112,6 +166,9 @@ export function validateInteractive(preview, need) {
       interactive.viewer === 'visitor',
     'options.preview.interactive.viewer must be "reader" or "visitor"',
   );
+  if (interactive.cache !== undefined) {
+    validateCache(interactive.cache, interactive.apiOrigin, need);
+  }
   need(
     !preview.omitScripts,
     'options.preview.interactive cannot be combined with omitScripts',
@@ -180,7 +237,7 @@ function scriptJson(value) {
  * @param {object} args
  * @param {string} args.html the built document (as `renderDocumentShell` wrote it)
  * @param {string} args.cspMetaTag the document's built CSP `<meta>` element
- * @param {{apiOrigin: string, liveBaseUrl?: string | null, scrollY?: number, viewer?: 'reader' | 'visitor'}} args.interactive the option
+ * @param {{apiOrigin: string, liveBaseUrl?: string | null, scrollY?: number, viewer?: 'reader' | 'visitor', cache?: Record<string, {status: 200, body: string}>}} args.interactive the option
  * @param {string} args.siteBase the site's `baseUrl`
  * @param {{notSaved: string, signInUnavailable: string, notPublished: string, audioUnavailable: string}} args.messages the toast and notice sentences
  * @param {string} args.searchIndex the search index JSON text
@@ -236,6 +293,7 @@ export function makeInteractive({
     siteBase,
     messages,
     searchIndex,
+    ...(interactive.cache ? { cache: interactive.cache } : {}),
     seed: colorMode ? { [APPEARANCE_STORAGE_KEY]: colorMode } : {},
   };
   const policy = interactivePolicy(inlineTexts, interactive);

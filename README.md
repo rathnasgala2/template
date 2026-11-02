@@ -1175,7 +1175,7 @@ const { html } = renderContentPreview(input, {
 
 ### Interactive preview
 
-`options.preview.interactive = {apiOrigin, liveBaseUrl?, scrollY?, viewer?}`
+`options.preview.interactive = {apiOrigin, liveBaseUrl?, scrollY?, viewer?, cache?}`
 makes the preview behave like the real page: likes, comments, Follow, the
 newsletter and contact forms, Listen, the theme switch, search, code copy and
 the consent banner run the build's own scripts. It excludes `omitScripts`,
@@ -1218,6 +1218,15 @@ unchanged.
   (reaction toggles, comment post/edit/delete, report and appeal, follow and
   unfollow, newsletter subscribe, contact message, sign-out) and shows the toast
   "Preview only. Nothing was saved." (localized).
+- Read cache: every successful (200) real `GET` of 64 KB or less is posted to
+  the parent as `{type: 'gala-preview-cache', url, status: 200, body}`
+  (`targetOrigin` `'*'`; check `event.source`). Pass the entries back as
+  `interactive.cache` (`{[url]: {status: 200, body}}`) on the next render and
+  the frame answers those `GET`s itself, with no request (a re-render otherwise
+  makes 3 per mount). Keys must start with `<apiOrigin>/v2/public/`, `status` is
+  `200`, each `body` is at most 64 KB and the bodies at most 1 MB together
+  (`PreviewInputError`). Expiry and eviction are the caller's; the template only
+  serves what it is given. The cache changes the data block only.
 - Links keep their built `href`s and clicks are intercepted in the capture phase
   (the frame never navigates): a same-document fragment scrolls in place; a link
   under `baseUrl` opens `liveBaseUrl` plus the path in a new tab
@@ -1243,6 +1252,15 @@ scripts, the runtime included; no `'unsafe-inline'`, no `'unsafe-eval'`, no
 Inline event-handler attributes cannot run, and the sanitizer strips them from
 bodies anyway. Images must be `data:` URLs (`media[...].url`); `blob:` and
 remote image URLs are blocked.
+
+**Addresses.** The preview refuses what the build's schemas refuse
+(`PreviewInputError`, naming the field): a navigation `route` must be a
+canonical route (`/…`, no query or fragment, no `//`); a navigation `url` must
+be `https://` without credentials; a social link or author link `uri` must be
+`mailto:` for type `email` and `https://` without credentials otherwise (at most
+2048 characters); so must a link-mode `newsletter.url`. `javascript:`, `data:`,
+`file:` and `vbscript:` addresses never reach an `href`; the message reads
+`navigation.items[2].url uses an address the site can't publish (javascript:)`.
 
 ## Policy pages
 

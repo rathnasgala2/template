@@ -262,6 +262,22 @@ export interface InteractivePreview {
    * "Sign-in isn't available in the preview".
    */
   viewer?: 'reader' | 'visitor';
+  /**
+   * Earlier answers of the public API, served by the frame without touching
+   * the network. Every successful (200) real `GET` the frame makes is posted
+   * to its parent as `{type: 'gala-preview-cache', url, status: 200, body}`
+   * (`targetOrigin` `'*'`; `body` is the response text; answers over 64 KB
+   * are not posted). The parent must check `event.source` is its frame, may
+   * keep what it receives (expiry and eviction are its job; the template only
+   * serves what it is given) and passes it back here on the next render, so a
+   * re-render makes no request for what it holds. Keys are the exact URLs
+   * posted. Each key must start with `apiOrigin + '/v2/public/'`, each
+   * `status` is `200`, each `body` a string of at most 64 KB (UTF-8), the
+   * bodies at most 1 MB together (`PreviewInputError` otherwise). The cache
+   * only changes the data block: the page, the policy and the scripts are
+   * the same.
+   */
+  cache?: Record<string, { status: 200; body: string }>;
 }
 
 /**
