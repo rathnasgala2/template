@@ -8,6 +8,20 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.12.0] - 2026-11-01
+
+### Added
+
+- **`renderHomePreview(input, options)`** in `@rathnasgala2/template/preview`,
+  returning `{ html, title, route, warnings }`: the complete document of the
+  site's home page (route `/`, page 1 of the listing), built by the same page
+  assembly `renderPublication` builds it with. The input is the article
+  preview's site sections plus `posts`, every post the home page lists (heroes
+  resolve through `media`); the same five preview options apply, and with them
+  off the document is byte-identical to the built `index.html`
+  (`test/preview-parity.test.js`, including the pagination boundary).
+  `previewLanguages` accepts either input.
+
 ## [4.11.0] - 2026-11-01
 
 ### Added
