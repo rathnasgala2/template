@@ -1120,16 +1120,26 @@ motion under `prefers-reduced-motion`. The classes are template-owned feature
 chrome like the Follow control's: they are not part of the published styling
 contract. Playback is the shipped script's alone; the renderer makes no request.
 
-## Browser article preview
+## Browser article and home preview
 
-`@rathnasgala2/template/preview` renders the real article page of a draft in a
-browser (types: `types/preview.d.ts`). It runs the same page assembly as
-`renderPublication` for one article, from an in-memory input, with the caller's
+`@rathnasgala2/template/preview` renders the real article page of a draft, and
+the site's home page, in a browser (types: `types/preview.d.ts`). It runs the
+same page assembly as `renderPublication` for one article
+(`renderArticlePreview`) or for the home page, route `/`, page 1 of the listing
+(`renderHomePreview`), from an in-memory input, with the caller's
 already-resolved images; no file, media pipeline, Eleventy or schema validator
 is involved. With `options.preview` unset the document is byte-identical to the
-built page (`test/preview-parity.test.js`). `options.preview` may only inline
-the stylesheets, drop scripts, set the CSP `<meta>`, make anchors inert and fix
-the resolved colour mode.
+built page of either kind (`test/preview-parity.test.js`). `options.preview` may
+only inline the stylesheets, drop scripts, set the CSP `<meta>`, make anchors
+inert and fix the resolved colour mode.
+
+`renderHomePreview` takes the article input's site sections (publication,
+authors, navigation, appearance, modules, `baseUrl`, `basePath`, `buildEpoch`,
+`theme`, `media`) and `posts`: every post the home page lists (front matter plus
+`bodyHtml` or `markdown`), whose heroes resolve through `media`. The featured
+post, latest cards and the first page of older posts follow the build's own
+rules, including `publication.listing.pageSize`. A site with language variants
+has a home per language; the preview renders the default language's.
 
 ```js
 import {

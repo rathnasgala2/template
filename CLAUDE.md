@@ -159,7 +159,7 @@ the only source root; no `bin` named `gala`; no default export other than the
 two documented entry points (`.` and the browser `./preview`); the `./preview`
 import graph still reaches no Node-only module
 (`test/browser-safe-imports.test.js`, the `preview-entry-*` dependency-cruiser
-rules) and the preview still equals the built page
+rules) and the preview still equals the built page, article and home
 (`test/preview-parity.test.js`); `contracts/*.jcs` still canonical;
 `renderPublication`'s required `options.sourceDirectory` (S2-T05: the
 caller-mounted, read-only repository source tree `build-input`'s `resolvedFile`
