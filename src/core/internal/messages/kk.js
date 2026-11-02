@@ -272,6 +272,10 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} мин`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} сағ ${minutes} мин`,
+  previewNotSavedLabel: 'Тек алдын ала қарау. Ештеңе сақталмады.',
+  previewSignInUnavailableLabel: 'Алдын ала қарауда кіру қолжетімсіз',
+  previewNotPublishedLabel: 'Бұл бет әлі жарияланбаған',
+  previewAudioUnavailableLabel: 'Аудио жазба жарияланған соң ойнатылады',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

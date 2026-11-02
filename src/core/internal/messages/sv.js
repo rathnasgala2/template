@@ -273,6 +273,12 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} min`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} tim ${minutes} min`,
+  previewNotSavedLabel: 'Endast förhandsvisning. Ingenting sparades.',
+  previewSignInUnavailableLabel:
+    'Inloggning är inte tillgänglig i förhandsvisningen',
+  previewNotPublishedLabel: 'Den här sidan är inte publicerad ännu',
+  previewAudioUnavailableLabel:
+    'Ljudet spelas upp när inlägget har publicerats',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

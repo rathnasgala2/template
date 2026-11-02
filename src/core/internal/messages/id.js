@@ -270,6 +270,10 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} mnt`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} jam ${minutes} mnt`,
+  previewNotSavedLabel: 'Hanya pratinjau. Tidak ada yang disimpan.',
+  previewSignInUnavailableLabel: 'Masuk tidak tersedia di pratinjau',
+  previewNotPublishedLabel: 'Halaman ini belum dipublikasikan',
+  previewAudioUnavailableLabel: 'Audio diputar setelah pos ini dipublikasikan',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

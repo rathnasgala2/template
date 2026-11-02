@@ -16,7 +16,9 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
+import { createHash } from 'node:crypto';
 import { renderPublication } from '../src/core/index.js';
+import { PREVIEW_RUNTIME_SOURCE } from '../src/core/internal/preview-runtime-source.js';
 import { normalizeAuthoredMarkdown } from '../src/core/internal/content-security.js';
 import { processMedia } from '../src/core/internal/media/pipeline.js';
 import { resolveContentImages } from '../src/core/internal/media/content-images.js';
@@ -30,6 +32,7 @@ import {
   loadMessagesFor,
   previewLanguages,
   renderArticlePreview,
+  renderContactPreview,
   renderContentPreview,
   renderHomePreview,
   renderPolicyPreview,
@@ -100,6 +103,178 @@ function withoutDifferences(html) {
       return `<a${rest}>`;
     }) // (d)
     .replace(/ data-gala-resolved-color-mode="[^"]*"/, ''); // (e)
+}
+
+const INTERACTIVE = {
+  apiOrigin: 'https://api.galascribe.com',
+  liveBaseUrl: 'https://live.example.com/',
+  scrollY: 120,
+};
+
+/**
+ * @param {string} html a document
+ * @returns {{start: number, end: number, attrs: string, text: string}[]} its
+ *   `<script>` elements, by position (their text may hold `<`)
+ */
+function scriptElements(html) {
+  /** @type {{start: number, end: number, attrs: string, text: string}[]} */
+  const found = [];
+  let at = html.indexOf('<script');
+  while (at >= 0) {
+    const open = html.indexOf('>', at);
+    const close = html.indexOf('</script>', open);
+    found.push({
+      start: at,
+      end: close + '</script>'.length,
+      attrs: html.slice(at + '<script'.length, open),
+      text: html.slice(open + 1, close),
+    });
+    at = html.indexOf('<script', close);
+  }
+  return found;
+}
+
+/**
+ * Remove the executable scripts (linked or inline) and the runtime's data, then
+ * the other named differences except scripts and anchors, which interactive
+ * mode leaves alone: the one strict normalizer for interactive parity.
+ *
+ * @param {string} html a built or interactive document
+ * @returns {string} the document without the interactive differences
+ */
+function withoutInteractive(html) {
+  let out = html;
+  for (const el of scriptElements(html).reverse()) {
+    if (
+      /\stype="/.test(el.attrs) &&
+      !el.attrs.includes('data-gala-preview-data')
+    ) {
+      continue;
+    }
+    out = out.slice(0, el.start) + out.slice(el.end);
+  }
+  return out
+    .replace(/<link rel="stylesheet"[^>]*>/g, '')
+    .replace(
+      /<style data-gala-preview-style="[^"]*"[^>]*>[\s\S]*?<\/style>/g,
+      '',
+    )
+    .replace(
+      /<meta http-equiv="Content-Security-Policy" content="[^"]*">/,
+      '<meta csp>',
+    )
+    .replace(/ data-gala-resolved-color-mode="[^"]*"/, '');
+}
+
+/** @type {any} the fixture being checked, for the built asset bytes */
+let currentSite;
+
+/**
+ * Interactive parity: the document equals the built page once only the
+ * inlined scripts (each text the built asset's exact bytes), the runtime and
+ * its data, the CSP, the inline styles and the colour mode are removed; and
+ * the CSP lists exactly those inline scripts by hash.
+ *
+ * @param {string} label the page
+ * @param {string} built the built file
+ * @param {string} html the interactive preview
+ * @returns {Promise<void>}
+ */
+async function assertInteractiveParity(label, built, html) {
+  const builtLinks = [
+    ...built.matchAll(/<script src="([^"]*)"([^>]*)><\/script>/g),
+  ];
+  const all = scriptElements(html);
+  const executable = all.filter((el) => !/\stype="/.test(el.attrs));
+  const data = all.filter((el) => el.attrs.includes('data-gala-preview-data'));
+  assert.equal(data.length, 1, `${label}: one data block`);
+  assert.equal(executable[0].text, PREVIEW_RUNTIME_SOURCE, `${label}: runtime`);
+  assert.ok(
+    executable[0].start < data[0].end + 1000 &&
+      data[0].start < executable[0].start,
+    `${label}: data block then runtime`,
+  );
+  const first = html.indexOf('<script');
+  assert.equal(
+    first,
+    data[0].start,
+    `${label}: runtime data is the first script`,
+  );
+  const inlined = executable.slice(1);
+  assert.equal(inlined.length, builtLinks.length, `${label}: script count`);
+  const bodyAt = html.indexOf('<body');
+  for (const [index, link] of builtLinks.entries()) {
+    const el = inlined[index];
+    const href = link[1];
+    const bytes = await site().read(
+      path.join(
+        site().buildInput.basePath,
+        href.slice(href.indexOf('assets/')),
+      ),
+    );
+    assert.equal(el.text, bytes, `${label}: ${href} inline text is the asset`);
+    assert.equal(
+      el.attrs,
+      link[2].replace(/\sdefer(?=\s|$)/, ''),
+      `${label}: ${href} attributes`,
+    );
+    assert.equal(
+      el.start > bodyAt,
+      index > 0,
+      `${label}: ${href} placed (bootstrap in head, the rest at the end of body)`,
+    );
+  }
+  assert.equal(withoutInteractive(html), withoutInteractive(built), label);
+  assert.notEqual(
+    withoutInteractive(html.replace('<h1', '<h1 data-x="1"')),
+    withoutInteractive(built),
+    `${label}: strict`,
+  );
+  // The policy: exactly these inline scripts by hash, nothing broader.
+  const meta =
+    /<meta http-equiv="Content-Security-Policy" content="([^"]*)">/.exec(html);
+  assert.ok(meta, `${label}: policy meta`);
+  const policy = meta[1].replace(/&#39;/g, "'");
+  const hashes = [...executable]
+    .map(
+      (el) =>
+        `'sha256-${createHash('sha256').update(el.text, 'utf8').digest('base64')}'`,
+    )
+    .join(' ');
+  assert.equal(
+    policy,
+    [
+      "default-src 'none'",
+      `script-src ${hashes}`,
+      "style-src 'unsafe-inline'",
+      'img-src data:',
+      'media-src data: https://live.example.com',
+      'connect-src https://api.galascribe.com',
+      'font-src data:',
+      "frame-src 'none'",
+      "form-action 'none'",
+      "base-uri 'none'",
+    ].join('; '),
+    `${label}: policy`,
+  );
+  assert.ok(!/unsafe-eval|unsafe-hashes/.test(policy));
+  assert.ok(
+    !/\son[a-z]+\s*=/i.test(html.replace(/<script[\s\S]*?<\/script>/g, '')),
+    `${label}: no inline handler attribute`,
+  );
+  // Runtime-only message keys are never in a built page.
+  for (const text of [
+    'Preview only. Nothing was saved.',
+    "isn't available in the preview",
+    'Audio plays once this post is published',
+  ]) {
+    assert.ok(!built.includes(text), `${label}: built page has no ${text}`);
+  }
+}
+
+/** @returns {any} the fixture being checked */
+function site() {
+  return currentSite;
 }
 
 /**
@@ -224,6 +399,9 @@ async function siteInputOf(site, media) {
             contactForm: {
               enabled: contactForm.enabled,
               fields: contactForm.fields,
+              ...(contactForm.intro
+                ? { intro: { html: contactForm.intro.body } }
+                : {}),
             },
           }
         : {}),
@@ -287,7 +465,7 @@ const COVERED = new Set();
  * @param {string} expectedRoute the route the preview must report
  * @returns {void}
  */
-function assertPageParity(label, render, built, expectedRoute) {
+async function assertPageParity(label, render, built, expectedRoute) {
   const off = render();
   assert.deepEqual(off.warnings, [], label);
   assert.equal(off.route, expectedRoute, label);
@@ -305,6 +483,11 @@ function assertPageParity(label, render, built, expectedRoute) {
       `${label}: ${key} alone`,
     );
   }
+  return assertInteractiveParity(
+    label,
+    built,
+    render({ interactive: INTERACTIVE, colorMode: 'dark' }).html,
+  );
 }
 
 /**
@@ -345,10 +528,11 @@ async function withPostsOf(site, media) {
  * @returns {Promise<string>} the built home page
  */
 async function assertHomeParity(name, site, media) {
+  currentSite = site;
   const input = await withPostsOf(site, media);
   const getMessages = await loadMessagesFor(previewLanguages(input));
   const built = await builtAt(site, '/');
-  assertPageParity(
+  await assertPageParity(
     `${name} / home`,
     (preview) => renderHomePreview(input, { getMessages, preview }),
     built,
@@ -363,7 +547,7 @@ async function assertHomeParity(name, site, media) {
   )) {
     if (language === defaultLanguage) continue;
     const route = `/${languageSegment(/** @type {string} */ (language))}`;
-    assertPageParity(
+    await assertPageParity(
       `${name} / section ${language}`,
       (preview) => renderHomePreview(input, { language, getMessages, preview }),
       await builtAt(site, route),
@@ -394,13 +578,22 @@ async function assertSystemPages(name, site, media, markdownOf = {}) {
       ...input,
       profile: { route: profile.route, body: { html: profile.body.body } },
     };
-    assertPageParity(
+    await assertPageParity(
       `${name} / profile`,
       (preview) => renderProfilePreview(withProfile, { getMessages, preview }),
       await builtAt(site, profile.route),
       profile.route,
     );
     COVERED.add(`profile\t${name}`);
+  }
+  if (site.buildInput.publication.contactForm?.enabled) {
+    await assertPageParity(
+      `${name} / contact`,
+      (preview) => renderContactPreview(input, { getMessages, preview }),
+      await builtAt(site, '/contact'),
+      '/contact',
+    );
+    COVERED.add(`contact\t${name}`);
   }
   const authored = site.buildInput.policies;
   const policies = authored
@@ -417,7 +610,7 @@ async function assertSystemPages(name, site, media, markdownOf = {}) {
       )
     : undefined;
   for (const page of /** @type {const} */ (['terms', 'privacy'])) {
-    assertPageParity(
+    await assertPageParity(
       `${name} / ${page}`,
       (preview) =>
         renderPolicyPreview(
@@ -453,6 +646,7 @@ async function assertParity(
       await readFile(path.join(THEME, 'theme.json'), 'utf8'),
     );
   }
+  currentSite = site;
   const media = await mediaOf(site);
   const posts = site.buildInput.content;
   const articles = posts.filter(
@@ -488,6 +682,14 @@ async function assertParity(
     assert.notEqual(on.html, built, `${label}: the differences are applied`);
     assert.equal(withoutDifferences(on.html), withoutDifferences(built), label);
     assert.equal(on.title, off.title);
+    await assertInteractiveParity(
+      label,
+      built,
+      renderContentPreview(input, {
+        getMessages,
+        preview: { interactive: INTERACTIVE, colorMode: 'dark' },
+      }).html,
+    );
     // Each applied difference is exactly what was asked for.
     assert.ok(!/<script\b/.test(on.html), `${label}: no script`);
     assert.ok(
@@ -677,6 +879,73 @@ fixture('interactions with public counts', {
         },
         apiOrigin: 'https://api.galascribe.com',
         appOrigin: 'https://app.galascribe.com',
+      },
+    };
+  },
+});
+
+fixture('contact form with an authored intro, newsletter and follows', {
+  async prepare(input) {
+    input.content = input.content.filter(
+      (/** @type {any} */ r) => r.frontmatter.slug !== 'contact',
+    );
+    input.publication.contactForm = {
+      enabled: true,
+      fields: { website: true, phone: true },
+      intro: authoredBody(
+        'Write to **us** any time.',
+        'gala/theme-pages/contact.md',
+      ),
+    };
+    input.publication.newsletter = {
+      mode: 'galascribe',
+      title: 'The Weekly',
+      text: 'One email a week.',
+      emailContent: 'card',
+      replyToOwner: false,
+    };
+    input.modules = {
+      interactions: {
+        config: {
+          schemaId: 'urn:gala:schema:interactions-config:2.0.0',
+          schemaVersion: '2.0.0',
+          reactions: { enabled: true, definitions: [] },
+          comments: { enabled: true, allowReplies: true, maxDepth: 3 },
+          publicCounts: { reactions: true, comments: true },
+          follows: { enabled: true },
+        },
+        apiOrigin: 'https://api.galascribe.com',
+        appOrigin: 'https://app.galascribe.com',
+      },
+    };
+  },
+});
+
+fixture('contact form with the default intro', {
+  async prepare(input) {
+    input.content = input.content.filter(
+      (/** @type {any} */ r) => r.frontmatter.slug !== 'contact',
+    );
+    input.publication.contactForm = {
+      enabled: true,
+      fields: { website: false, phone: false },
+    };
+  },
+});
+
+fixture('analytics: consent banner and script', {
+  async prepare(input) {
+    input.modules = {
+      analytics: {
+        config: {
+          schemaId: 'urn:gala:schema:analytics-config:2.0.0',
+          schemaVersion: '2.0.0',
+          provider: {
+            kind: 'google-analytics-4',
+            measurementId: 'G-ABC123XYZ',
+          },
+          consent: { policy: 'opt-in' },
+        },
       },
     };
   },
@@ -896,6 +1165,7 @@ test('parity: every route kind the preview renders is covered', () => {
     'terms authored',
     'privacy authored',
     'section home ta',
+    'contact',
   ]) {
     assert.ok(kinds.includes(required), `${required} is covered`);
   }

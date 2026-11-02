@@ -33,6 +33,8 @@ import { resolveContentImages } from './media/content-images.js';
 import { resolveEditions } from './editions.js';
 import { splitLiveContent } from './liveness.js';
 import { renderDocumentShell } from './document-shell.js';
+import { makeInteractive, validateInteractive } from './interactive-preview.js';
+import { buildSearchIndex } from './search-index.js';
 import { readSitePolicyDefaults } from './policy-defaults.js';
 import { SITE_POLICY_DEFAULTS_JSON } from './policy-defaults-data.js';
 import { resolveTranslations } from './translations.js';
@@ -58,7 +60,7 @@ export class PreviewInputError extends Error {
 /** The template's base layer stylesheet, exactly as a built site serves it. */
 export const BASE_LAYER_CSS = GALA_BASE_STYLESHEET_SOURCE;
 
-/** @typedef {'content' | 'home' | 'profile' | 'policy'} PreviewKind */
+/** @typedef {'content' | 'home' | 'profile' | 'policy' | 'contact'} PreviewKind */
 
 const PREVIEW_KEYS = new Set([
   'inlineStyles',
@@ -66,6 +68,7 @@ const PREVIEW_KEYS = new Set([
   'contentSecurityPolicy',
   'inertLinks',
   'colorMode',
+  'interactive',
 ]);
 const IMAGE_TYPES = {
   'image/png': 'png',
@@ -215,6 +218,16 @@ function validate(input, options, kind) {
       checkBody(profile.body, 'profile.body', need);
     }
   }
+  if (kind === 'contact') {
+    const form = isObject(publication) ? publication.contactForm : undefined;
+    need(
+      isObject(form) && form.enabled === true,
+      'publication.contactForm.enabled must be true for the contact page',
+    );
+    if (isObject(form) && form.intro !== undefined) {
+      checkBody(form.intro, 'publication.contactForm.intro', need);
+    }
+  }
   if (kind === 'policy') {
     need(
       input.policies === undefined || isObject(input.policies),
@@ -275,6 +288,7 @@ function validate(input, options, kind) {
       mode === undefined || mode === 'light' || mode === 'dark',
       'options.preview.colorMode must be "light" or "dark"',
     );
+    validateInteractive(options.preview ?? {}, need);
     const csp = options.preview?.contentSecurityPolicy;
     need(
       csp === undefined || (typeof csp === 'string' && !/["<>]/.test(csp)),
@@ -709,6 +723,17 @@ function prepare(input, options, kind) {
           },
         }
       : {}),
+    ...(input.publication.contactForm?.intro
+      ? {
+          contactForm: {
+            ...input.publication.contactForm,
+            intro: renderableBody(
+              input.publication.contactForm.intro,
+              'gala/theme-pages/contact.md',
+            ),
+          },
+        }
+      : {}),
     ...(input.profile
       ? {
           profile: {
@@ -830,6 +855,8 @@ function prepare(input, options, kind) {
       }
     : undefined;
 
+  /** @type {string | undefined} */
+  let searchIndexJson;
   /**
    * @param {import('./document-shell.js').DocumentShellData} data the page values
    * @param {string} content the page's body markup
@@ -842,6 +869,7 @@ function prepare(input, options, kind) {
     if (preview.colorMode !== undefined) {
       shellData = { ...shellData, resolvedColorMode: preview.colorMode };
     }
+    const inlineStyles = preview.inlineStyles || preview.interactive;
     if (preview.contentSecurityPolicy !== undefined) {
       shellData = {
         ...shellData,
@@ -849,14 +877,14 @@ function prepare(input, options, kind) {
       };
     }
     if (preview.inertLinks) body = makeLinksInert(body);
-    if (preview.inlineStyles) {
+    if (inlineStyles) {
       const sheets = (theme?.sheets ?? []).map((sheet) =>
         inlineStyle(sheet.css, sheet.role, sheet.media),
       );
       shellData = { ...shellData, themeStylesheetLinksHtml: sheets.join('') };
     }
     let html = renderDocumentShell(shellData, body);
-    if (preview.inlineStyles) {
+    if (inlineStyles) {
       const baseLink = `<link rel="stylesheet" href="${escapeHtml(data.baseStylesheetHref)}">`;
       if (!html.includes(baseLink)) {
         throw new Error('the document shell no longer links the base layer');
@@ -865,6 +893,24 @@ function prepare(input, options, kind) {
     }
     if (preview.omitScripts) {
       html = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '');
+    }
+    if (preview.interactive) {
+      const catalog = getMessages(data.lang);
+      searchIndexJson ??= buildSearchIndex(validatedInput, routeProfile);
+      html = makeInteractive({
+        html,
+        cspMetaTag: data.cspMetaTag,
+        interactive: preview.interactive,
+        siteBase: input.baseUrl,
+        searchIndex: searchIndexJson,
+        colorMode: preview.colorMode,
+        messages: {
+          notSaved: String(catalog.previewNotSavedLabel),
+          signInUnavailable: String(catalog.previewSignInUnavailableLabel),
+          notPublished: String(catalog.previewNotPublishedLabel),
+          audioUnavailable: String(catalog.previewAudioUnavailableLabel),
+        },
+      });
     }
     return html;
   };
@@ -993,6 +1039,21 @@ export function renderHomePreview(input, options) {
  */
 export function renderProfilePreview(input, options) {
   return renderOne(input, options, 'profile', () => ({ profile: true }));
+}
+
+/**
+ * Render the Contact page: the optional `contact.md` intro and the form,
+ * shown only while `publication.contactForm.enabled` is true.
+ *
+ * @param {any} input the site sections with `publication.contactForm`
+ *   (`ContactPreviewInput`)
+ * @param {any} options the render options (`ArticlePreviewOptions`)
+ * @returns {{html: string, title: string, route: string, warnings: string[]}}
+ *   the document, its title, its public route and what could not be shown
+ * @throws {PreviewInputError} the input is malformed or incomplete
+ */
+export function renderContactPreview(input, options) {
+  return renderOne(input, options, 'contact', () => ({ contact: true }));
 }
 
 /**

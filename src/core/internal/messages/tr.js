@@ -271,6 +271,10 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} dk`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} sa ${minutes} dk`,
+  previewNotSavedLabel: 'Yalnızca önizleme. Hiçbir şey kaydedilmedi.',
+  previewSignInUnavailableLabel: 'Önizlemede oturum açma kullanılamaz',
+  previewNotPublishedLabel: 'Bu sayfa henüz yayımlanmadı',
+  previewAudioUnavailableLabel: 'Ses, bu yazı yayımlandığında oynatılır',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

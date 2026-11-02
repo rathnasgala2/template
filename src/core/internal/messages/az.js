@@ -270,6 +270,10 @@ export default Object.freeze({
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) =>
     `${hours} saat ${minutes} dəq`,
+  previewNotSavedLabel: 'Yalnız önizləmə. Heç nə saxlanmadı.',
+  previewSignInUnavailableLabel: 'Önizləmədə daxil olmaq mümkün deyil',
+  previewNotPublishedLabel: 'Bu səhifə hələ dərc olunmayıb',
+  previewAudioUnavailableLabel: 'Audio bu yazı dərc olunduqdan sonra oxudulur',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

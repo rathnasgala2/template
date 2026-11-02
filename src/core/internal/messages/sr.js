@@ -271,6 +271,11 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} мин`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} ч ${minutes} мин`,
+  previewNotSavedLabel: 'Само преглед. Ништа није сачувано.',
+  previewSignInUnavailableLabel: 'Пријава није доступна у прегледу',
+  previewNotPublishedLabel: 'Ова страница још није објављена',
+  previewAudioUnavailableLabel:
+    'Звук се репродукује након објављивања овог чланка',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

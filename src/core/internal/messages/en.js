@@ -276,6 +276,10 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} min`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
+  previewNotSavedLabel: 'Preview only. Nothing was saved.',
+  previewSignInUnavailableLabel: "Sign-in isn't available in the preview",
+  previewNotPublishedLabel: "This page isn't published yet",
+  previewAudioUnavailableLabel: 'Audio plays once this post is published',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const months = [

@@ -276,6 +276,10 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes}分`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours}時間${minutes}分`,
+  previewNotSavedLabel: 'プレビューのみです。何も保存されていません。',
+  previewSignInUnavailableLabel: 'プレビューではサインインできません',
+  previewNotPublishedLabel: 'このページはまだ公開されていません',
+  previewAudioUnavailableLabel: 'この記事が公開されると音声を再生できます',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

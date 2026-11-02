@@ -271,6 +271,10 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes}분`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours}시간 ${minutes}분`,
+  previewNotSavedLabel: '미리보기 전용입니다. 아무것도 저장되지 않았습니다.',
+  previewSignInUnavailableLabel: '미리보기에서는 로그인할 수 없습니다',
+  previewNotPublishedLabel: '이 페이지는 아직 게시되지 않았습니다',
+  previewAudioUnavailableLabel: '이 글이 게시되면 오디오를 재생할 수 있습니다',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

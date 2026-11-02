@@ -273,6 +273,10 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} నిమి`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} గం ${minutes} నిమి`,
+  previewNotSavedLabel: 'ప్రివ్యూ మాత్రమే. ఏదీ సేవ్ కాలేదు.',
+  previewSignInUnavailableLabel: 'ప్రివ్యూలో సైన్ ఇన్ అందుబాటులో లేదు',
+  previewNotPublishedLabel: 'ఈ పేజీ ఇంకా ప్రచురించబడలేదు',
+  previewAudioUnavailableLabel: 'పోస్ట్ ప్రచురించిన తర్వాత ఆడియో ప్లే అవుతుంది',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

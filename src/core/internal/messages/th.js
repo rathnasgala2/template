@@ -267,6 +267,10 @@ export default Object.freeze({
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) =>
     `${hours} ชม. ${minutes} นาที`,
+  previewNotSavedLabel: 'เป็นการแสดงตัวอย่างเท่านั้น ไม่มีการบันทึกใดๆ',
+  previewSignInUnavailableLabel: 'ไม่สามารถลงชื่อเข้าใช้ในโหมดตัวอย่างได้',
+  previewNotPublishedLabel: 'หน้านี้ยังไม่ได้เผยแพร่',
+  previewAudioUnavailableLabel: 'เสียงจะเล่นได้เมื่อโพสต์นี้เผยแพร่แล้ว',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

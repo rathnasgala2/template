@@ -271,6 +271,11 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} min`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} j ${minutes} min`,
+  previewNotSavedLabel: 'Pratonton sahaja. Tiada apa-apa disimpan.',
+  previewSignInUnavailableLabel: 'Log masuk tidak tersedia dalam pratonton',
+  previewNotPublishedLabel: 'Halaman ini belum diterbitkan',
+  previewAudioUnavailableLabel:
+    'Audio dimainkan setelah catatan ini diterbitkan',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

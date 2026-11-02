@@ -271,6 +271,10 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} წთ`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} სთ ${minutes} წთ`,
+  previewNotSavedLabel: 'მხოლოდ გადახედვა. არაფერი შენახულა.',
+  previewSignInUnavailableLabel: 'გადახედვაში შესვლა მიუწვდომელია',
+  previewNotPublishedLabel: 'ეს გვერდი ჯერ არ არის გამოქვეყნებული',
+  previewAudioUnavailableLabel: 'აუდიო ითამაშებს პოსტის გამოქვეყნების შემდეგ',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

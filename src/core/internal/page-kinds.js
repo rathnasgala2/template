@@ -470,6 +470,7 @@ export function homeDocumentTitle(name, tagline) {
  * @param {boolean} [options.profile] build the publication's profile page
  *   only
  * @param {'terms' | 'privacy'} [options.policy] build that policy page only
+ * @param {boolean} [options.contact] build the contact page only (the site's contact form must be on)
  * @param {string} [options.section] a language segment: build that language
  *   section's home (page 1) only
  * @param {boolean} [options.home] build the home page (route `/`, page 1 of
@@ -578,11 +579,12 @@ export function buildGeneratedPages(validatedInput, options) {
     profile: profileOnly = false,
     policy: policyOnly,
     section: sectionOnly,
+    contact: contactOnly = false,
   } = options;
   // A single-page build (one record's page, the home page, the profile page,
   // one policy page or one language section home): none of the site-wide
   // pages, and the one page asked for is picked out at the end.
-  const system = profileOnly || policyOnly !== undefined;
+  const system = profileOnly || policyOnly !== undefined || contactOnly;
   const single =
     only !== undefined || home || system || sectionOnly !== undefined;
   const defaultMessages = getMessages(publication.defaultLanguage);
@@ -1098,7 +1100,7 @@ export function buildGeneratedPages(validatedInput, options) {
   // hook, indexable, in the sitemap, in no feed, search index or `llms`
   // document) that exists only while the site's contact form is on. Its intro
   // is the optional `gala/theme-pages/contact.md` body, else a short default.
-  if (!single && publication.contactForm?.enabled) {
+  if ((!single || contactOnly) && publication.contactForm?.enabled) {
     const contactTitle = text0('contactPageTitle');
     const authoredIntro = publication.contactForm.intro
       ? dropLeadingTitleHeading(
@@ -2069,6 +2071,8 @@ export function buildGeneratedPages(validatedInput, options) {
     .filter(
       (page) =>
         (!profileOnly || page.kind === 'profile') &&
+        (!contactOnly ||
+          (page.kind === 'policy' && page.route === CONTACT_ROUTE)) &&
         (policyOnly === undefined ||
           (page.kind === 'policy' && page.route === `/${policyOnly}`)) &&
         (sectionOnly === undefined ||

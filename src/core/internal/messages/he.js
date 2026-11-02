@@ -264,6 +264,10 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} דק׳`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} שע׳ ${minutes} דק׳`,
+  previewNotSavedLabel: 'תצוגה מקדימה בלבד. דבר לא נשמר.',
+  previewSignInUnavailableLabel: 'ההתחברות אינה זמינה בתצוגה המקדימה',
+  previewNotPublishedLabel: 'הדף הזה עדיין לא פורסם',
+  previewAudioUnavailableLabel: 'השמע יופעל לאחר פרסום הפוסט',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -269,6 +269,10 @@ export default Object.freeze({
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) =>
     `${hours} giờ ${minutes} phút`,
+  previewNotSavedLabel: 'Chỉ xem trước. Không có gì được lưu.',
+  previewSignInUnavailableLabel: 'Không thể đăng nhập trong chế độ xem trước',
+  previewNotPublishedLabel: 'Trang này chưa được xuất bản',
+  previewAudioUnavailableLabel: 'Âm thanh sẽ phát khi bài viết được xuất bản',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -272,6 +272,10 @@ export default Object.freeze({
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) =>
     `${hours} گھنٹہ ${minutes} منٹ`,
+  previewNotSavedLabel: 'صرف پیش نظارہ۔ کچھ محفوظ نہیں ہوا۔',
+  previewSignInUnavailableLabel: 'پیش نظارے میں سائن اِن دستیاب نہیں',
+  previewNotPublishedLabel: 'یہ صفحہ ابھی شائع نہیں ہوا',
+  previewAudioUnavailableLabel: 'پوسٹ شائع ہونے کے بعد آڈیو چلے گی',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -120,6 +120,8 @@ export interface PreviewSiteInput {
       contactForm?: {
         enabled: boolean;
         fields: { website: boolean; phone: boolean };
+        /** The `gala/theme-pages/contact.md` intro; absent shows the default sentence. */
+        intro?: PreviewBody;
       };
       footerCard?: {
         enabled: boolean;
@@ -209,13 +211,64 @@ export interface PolicyPreviewInput extends PreviewSiteInput {
 }
 
 /**
+ * The contact page's input: the site sections with
+ * `publication.contactForm.enabled` true (the page exists only then) and the
+ * optional intro. `posts` as in `ProfilePreviewInput`.
+ */
+export interface ContactPreviewInput extends PreviewSiteInput {
+  posts?: readonly PreviewSibling[];
+}
+
+/**
+ * Interactive mode (`ArticlePreviewDifferences.interactive`): the built page's
+ * own scripts run inside the App's sandboxed frame
+ * (`<iframe sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
+ * srcdoc=... allow="clipboard-write">`, no `allow-same-origin`, no
+ * `allow-forms`). The template builds the Content-Security-Policy itself, so
+ * it cannot be combined with `omitScripts`, `inertLinks`,
+ * `contentSecurityPolicy` or `inlineStyles: false` (`PreviewInputError`).
+ */
+export interface InteractivePreview {
+  /**
+   * The API origin the page's scripts read from (production
+   * `https://api.galascribe.com`). Only `GET` of its `/v2/public/` paths ever
+   * reach the network (no credentials); every other request is simulated
+   * inside the frame and shows "Preview only. Nothing was saved.". It is also
+   * the policy's `connect-src`.
+   */
+  apiOrigin: string;
+  /**
+   * Where the published site lives, once it is. Links to the site open there
+   * in a new tab and Listen audio plays from it (the policy's `media-src`).
+   * Null or absent: links show "This page isn't published yet" and audio shows
+   * "Audio plays once this post is published".
+   */
+  liveBaseUrl?: string | null;
+  /**
+   * Scroll position to restore once, after fonts and images settle. The frame
+   * posts `{type: 'gala-preview-scroll', y}` to its parent (about every
+   * 100 ms while scrolling, `targetOrigin` `'*'`); the parent must check
+   * `event.source` is its frame, keep `y` and pass it back here on the next
+   * render.
+   */
+  scrollY?: number;
+}
+
+/**
  * The only differences from the built page, each applied only when set.
  * (a) `inlineStyles`: the base, theme and palette `<link rel="stylesheet">`
  * elements become inline `<style data-gala-preview-style>` elements, without
  * Subresource Integrity. (b) `omitScripts`: every `<script>` element is
  * removed. (c) `contentSecurityPolicy`: the CSP `<meta>` carries this policy.
  * (d) `inertLinks`: every `<a>` loses its `href` and gets `tabindex="-1"`.
- * (e) `colorMode`: the root's resolved colour mode is fixed.
+ * (e) `colorMode`: the root's resolved colour mode is fixed (in interactive
+ * mode also the stored selection, so the page's script keeps it).
+ * (f) `interactive`: see {@link InteractivePreview}. The page's
+ * `assets/gala-*.js` scripts become inline scripts with exactly the built
+ * file's text (the appearance bootstrap in place, the deferred ones at the end
+ * of `<body>`, in order), a template-owned runtime and its data come first in
+ * `<head>`, the stylesheets are inlined as in (a), and the policy lists those
+ * inline scripts by SHA-256 hash.
  */
 export interface ArticlePreviewDifferences {
   inlineStyles?: boolean;
@@ -223,6 +276,7 @@ export interface ArticlePreviewDifferences {
   contentSecurityPolicy?: string;
   inertLinks?: boolean;
   colorMode?: 'light' | 'dark';
+  interactive?: InteractivePreview;
 }
 
 export interface ArticlePreviewOptions {
@@ -292,6 +346,16 @@ export function renderProfilePreview(
 ): ArticlePreviewResult;
 
 /**
+ * Render the Contact page (`/contact`): the optional intro and the form. Only
+ * while `publication.contactForm.enabled` is true, else `PreviewInputError`.
+ * Synchronous.
+ */
+export function renderContactPreview(
+  input: ContactPreviewInput,
+  options: ArticlePreviewOptions,
+): ArticlePreviewResult;
+
+/**
  * Render the Terms or the Privacy page, the template-owned Galascribe section
  * included. Synchronous; throws `PreviewInputError`.
  */
@@ -307,7 +371,8 @@ export function previewLanguages(
     | ContentPreviewInput
     | HomePreviewInput
     | ProfilePreviewInput
-    | PolicyPreviewInput,
+    | PolicyPreviewInput
+    | ContactPreviewInput,
 ): string[];
 
 /** Load `en` plus the catalogs these tags resolve to (each a separate chunk). */

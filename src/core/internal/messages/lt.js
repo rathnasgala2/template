@@ -273,6 +273,11 @@ export default Object.freeze({
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) =>
     `${hours} val. ${minutes} min.`,
+  previewNotSavedLabel: 'Tik peržiūra. Niekas neišsaugota.',
+  previewSignInUnavailableLabel: 'Prisijungti peržiūroje negalima',
+  previewNotPublishedLabel: 'Šis puslapis dar nepaskelbtas',
+  previewAudioUnavailableLabel:
+    'Garso įrašas bus leidžiamas paskelbus šį įrašą',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

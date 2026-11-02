@@ -270,6 +270,10 @@ export default Object.freeze({
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) =>
     `${hours} ساعت و ${minutes} دقیقه`,
+  previewNotSavedLabel: 'فقط پیش‌نمایش. چیزی ذخیره نشد.',
+  previewSignInUnavailableLabel: 'ورود در پیش‌نمایش در دسترس نیست',
+  previewNotPublishedLabel: 'این صفحه هنوز منتشر نشده است',
+  previewAudioUnavailableLabel: 'صدا پس از انتشار این نوشته پخش می‌شود',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

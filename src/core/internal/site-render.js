@@ -180,6 +180,7 @@ export function buildPageDocuments(validatedInput, ctx) {
     profile = false,
     policy,
     section,
+    contact = false,
     renderDocument = renderDocumentShell,
   } = ctx;
   // A single-page build (one record's page, the home page, the profile page,
@@ -188,6 +189,7 @@ export function buildPageDocuments(validatedInput, ctx) {
     only !== undefined ||
     home ||
     profile ||
+    contact ||
     policy !== undefined ||
     section !== undefined;
   const {
@@ -668,6 +670,7 @@ export function buildPageDocuments(validatedInput, ctx) {
     profile,
     policy,
     section,
+    contact,
     pageBody,
     editions,
     translations,
@@ -1053,6 +1056,7 @@ export function buildPageDocuments(validatedInput, ctx) {
  *   listing) only, with the same result shape as `only`
  * @property {boolean} [profile] build the publication's profile page only (same result shape)
  * @property {'terms' | 'privacy'} [policy] build that policy page only (same result shape)
+ * @property {boolean} [contact] build the contact page only (same result shape; the contact form must be on)
  * @property {string} [section] a language segment: build that language section's home only (same result shape)
  * @property {(data: import('./document-shell.js').DocumentShellData, content: string) => string} [renderDocument]
  *   wraps a page's body markup in its document (default: `renderDocumentShell`)

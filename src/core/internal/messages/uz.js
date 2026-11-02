@@ -278,6 +278,11 @@ export default Object.freeze({
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) =>
     `${hours} soat ${minutes} daq`,
+  previewNotSavedLabel: 'Faqat ko‘rib chiqish. Hech narsa saqlanmadi.',
+  previewSignInUnavailableLabel: 'Ko‘rib chiqishda kirish mavjud emas',
+  previewNotPublishedLabel: 'Bu sahifa hali e’lon qilinmagan',
+  previewAudioUnavailableLabel:
+    'Audio yozuv e’lon qilingandan so‘ng ijro etiladi',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -272,6 +272,10 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} min`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
+  previewNotSavedLabel: 'Iba ukážka. Nič sa neuložilo.',
+  previewSignInUnavailableLabel: 'Prihlásenie nie je v ukážke dostupné',
+  previewNotPublishedLabel: 'Táto stránka ešte nie je zverejnená',
+  previewAudioUnavailableLabel: 'Zvuk sa prehrá po zverejnení tohto príspevku',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

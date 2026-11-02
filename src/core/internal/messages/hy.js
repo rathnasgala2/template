@@ -275,6 +275,10 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} րոպե`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} ժ ${minutes} րոպե`,
+  previewNotSavedLabel: 'Միայն նախադիտում։ Ոչինչ չի պահվել։',
+  previewSignInUnavailableLabel: 'Մուտքն առկա չէ նախադիտման մեջ',
+  previewNotPublishedLabel: 'Այս էջը դեռ հրապարակված չէ',
+  previewAudioUnavailableLabel: 'Աուդիոն կնվագարկվի հրապարակումից հետո',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

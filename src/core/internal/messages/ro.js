@@ -271,6 +271,11 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} min`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
+  previewNotSavedLabel: 'Doar previzualizare. Nimic nu a fost salvat.',
+  previewSignInUnavailableLabel:
+    'Autentificarea nu este disponibilă în previzualizare',
+  previewNotPublishedLabel: 'Această pagină nu este încă publicată',
+  previewAudioUnavailableLabel: 'Audio se redă după publicarea acestei postări',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

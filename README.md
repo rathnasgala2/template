@@ -1130,16 +1130,18 @@ images; no file, media pipeline, Eleventy or schema validator is involved. With
 `options.preview` unset the document is byte-identical to the built page, for
 every renderer below (`test/preview-parity.test.js`, which lists the route kinds
 it covers). `options.preview` may only inline the stylesheets, drop scripts, set
-the CSP `<meta>`, make anchors inert and fix the resolved colour mode.
+the CSP `<meta>`, make anchors inert, fix the resolved colour mode, or turn on
+the interactive mode below.
 
-| Renderer                                      | Page                                                                                  | Input beyond the site sections                                                                                           |
-| --------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `renderContentPreview(input, options)`        | one content record of any kind: article, page or edition, each with its own layout    | `post` (front matter plus `markdown` or `bodyHtml`), `siblings` (an edition needs its original)                          |
-| `renderArticlePreview`                        | the same function, kept as an alias                                                   | as above                                                                                                                 |
-| `renderHomePreview(input, options)`           | the home page `/`, page 1 of the listing                                              | `posts`: every post the home lists                                                                                       |
-| `renderHomePreview(input, { language, ... })` | that non-default language's section home, page 1, at `/<segment>` (for example `/ta`) | `posts`, with the variants (`translationOf`) that make the section                                                       |
-| `renderProfilePreview(input, options)`        | the About page at `profile.route`                                                     | `profile: {route, body}`; optional `posts`                                                                               |
-| `renderPolicyPreview(input, {page}, options)` | `/terms` or `/privacy`, the template-owned Galascribe section included                | optional `policies: {terms, privacy}` (each `{title, body}`); absent, the shipped default text renders; optional `posts` |
+| Renderer                                      | Page                                                                                                           | Input beyond the site sections                                                                                           |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `renderContentPreview(input, options)`        | one content record of any kind: article, page or edition, each with its own layout                             | `post` (front matter plus `markdown` or `bodyHtml`), `siblings` (an edition needs its original)                          |
+| `renderArticlePreview`                        | the same function, kept as an alias                                                                            | as above                                                                                                                 |
+| `renderHomePreview(input, options)`           | the home page `/`, page 1 of the listing                                                                       | `posts`: every post the home lists                                                                                       |
+| `renderHomePreview(input, { language, ... })` | that non-default language's section home, page 1, at `/<segment>` (for example `/ta`)                          | `posts`, with the variants (`translationOf`) that make the section                                                       |
+| `renderProfilePreview(input, options)`        | the About page at `profile.route`                                                                              | `profile: {route, body}`; optional `posts`                                                                               |
+| `renderPolicyPreview(input, {page}, options)` | `/terms` or `/privacy`, the template-owned Galascribe section included                                         | optional `policies: {terms, privacy}` (each `{title, body}`); absent, the shipped default text renders; optional `posts` |
+| `renderContactPreview(input, options)`        | `/contact`: the optional `contact.md` intro and the form, only while `publication.contactForm.enabled` is true | `publication.contactForm: {enabled, fields, intro?}` (`intro` is a `{markdown}` or `{html}` body); optional `posts`      |
 
 The site sections every input takes are the publication, authors, navigation,
 appearance, modules, `baseUrl`, `basePath`, `buildEpoch`, `theme` and `media`. A
@@ -1170,6 +1172,72 @@ const { html } = renderContentPreview(input, {
   },
 });
 ```
+
+### Interactive preview
+
+`options.preview.interactive = {apiOrigin, liveBaseUrl?, scrollY?}` makes the
+preview behave like the real page: likes, comments, Follow, the newsletter and
+contact forms, Listen, the theme switch, search, code copy and the consent
+banner run the build's own scripts. It excludes `omitScripts`, `inertLinks`,
+`contentSecurityPolicy` and `inlineStyles: false` (`PreviewInputError`): the
+template builds the policy itself, because it knows the hashes.
+
+**The frame contract.** Render the `html` into
+`<iframe sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" allow="clipboard-write" srcdoc=...>`:
+no `allow-same-origin` (the frame has an opaque origin) and no `allow-forms`.
+`allow="clipboard-write"` is what lets code Copy and Copy link write the
+clipboard; without it they show their "blocked" sentence.
+
+**What the document is.** The built page with only these differences (the
+normalizer in `test/preview-parity.test.js` removes exactly them and nothing
+else): every `<script src="assets/gala-*.js">` is an inline script whose text is
+the built asset's exact bytes (`src/core/internal/preview-scripts-data.js`,
+generated by `scripts/generate-preview-scripts.mjs`; the appearance bootstrap
+stays blocking in `<head>`, the deferred ones go to the end of `<body>` in the
+same order); a JSON data block and the template-owned runtime
+(`preview-runtime-source.js`) come first in `<head>`, before every other script;
+the stylesheets are inline; the CSP `<meta>` is the preview policy; and the
+resolved colour mode is fixed when `colorMode` is set. Published bytes are
+unchanged.
+
+**The runtime.**
+
+- Storage: in-memory `localStorage`, `sessionStorage` and `document.cookie` (the
+  opaque origin would make the real ones throw). A "Preview reader" session is
+  seeded so likes, comments and Follow work; Sign out shows the anonymous page.
+- Network: `fetch`, `XMLHttpRequest` and `navigator.sendBeacon` are wrapped.
+  Only a `GET` of `<apiOrigin>/v2/public/` read paths reaches the network
+  (`credentials: 'omit'`, no `Authorization` header; the reader's own follow
+  state is simulated, not fetched). The search index request is answered from an
+  index built from the input's posts with the build's own search-index code.
+  Everything else is simulated with the shape the calling script expects
+  (reaction toggles, comment post/edit/delete, report and appeal, follow and
+  unfollow, newsletter subscribe, contact message, sign-out) and shows the toast
+  "Preview only. Nothing was saved." (localized).
+- Links keep their built `href`s and clicks are intercepted in the capture phase
+  (the frame never navigates): a same-document fragment scrolls in place; a link
+  under `baseUrl` opens `liveBaseUrl` plus the path in a new tab
+  (`window.open(url, '_blank', 'noopener')`), or toasts "This page isn't
+  published yet" without one; an external `http(s)` or `mailto:` link opens in a
+  new tab. Sign-in (`gala:navigate`) toasts "Sign-in isn't available in the
+  preview". Submit buttons fire the page's own `submit` handlers (the frame has
+  no `allow-forms`); nothing is ever submitted.
+- Listen audio resolves against `liveBaseUrl`; with none, or when it fails to
+  load, the player shows "Audio plays once this post is published".
+- Analytics consent: the banner works and its choice is kept in memory; a
+  third-party script is never injected (the `src` of a script element cannot be
+  set) and a decline does not reload.
+- Scroll: the frame posts `{type: 'gala-preview-scroll', y}` to its parent
+  (about every 100 ms, `targetOrigin` `'*'`; the parent must check
+  `event.source` is its frame). `scrollY` is restored once, after fonts and
+  images settle.
+
+**The policy.** `default-src 'none'; script-src 'sha256-…'` (exactly the inline
+scripts, the runtime included; no `'unsafe-inline'`, no `'unsafe-eval'`, no
+`'unsafe-hashes'`);
+`style-src 'unsafe-inline'; img-src data:; media-src data: <liveOrigin>; connect-src <apiOrigin>; font-src data:; frame-src 'none'; form-action 'none'; base-uri 'none'`.
+Inline event-handler attributes cannot run, and the sanitizer strips them from
+bodies anyway. Images must be `data:` URLs (`media[...].url`).
 
 ## Policy pages
 

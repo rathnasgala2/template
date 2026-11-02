@@ -281,6 +281,12 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} λ.`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} ω. ${minutes} λ.`,
+  previewNotSavedLabel: 'Μόνο προεπισκόπηση. Δεν αποθηκεύτηκε τίποτα.',
+  previewSignInUnavailableLabel:
+    'Η σύνδεση δεν είναι διαθέσιμη στην προεπισκόπηση',
+  previewNotPublishedLabel: 'Αυτή η σελίδα δεν έχει δημοσιευτεί ακόμη',
+  previewAudioUnavailableLabel:
+    'Ο ήχος αναπαράγεται μόλις δημοσιευτεί η ανάρτηση',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

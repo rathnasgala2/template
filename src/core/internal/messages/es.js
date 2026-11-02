@@ -281,6 +281,12 @@ export default Object.freeze({
   listenDurationMinutes: (minutes) => `${minutes} min`,
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) => `${hours} h ${minutes} min`,
+  previewNotSavedLabel: 'Solo vista previa. No se guardó nada.',
+  previewSignInUnavailableLabel:
+    'El inicio de sesión no está disponible en la vista previa',
+  previewNotPublishedLabel: 'Esta página aún no está publicada',
+  previewAudioUnavailableLabel:
+    'El audio se reproduce cuando se publique esta entrada',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

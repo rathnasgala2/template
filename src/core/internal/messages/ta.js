@@ -283,6 +283,11 @@ export default Object.freeze({
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) =>
     `${hours} மணி ${minutes} நிமிடம்`,
+  previewNotSavedLabel: 'முன்னோட்டம் மட்டும். எதுவும் சேமிக்கப்படவில்லை.',
+  previewSignInUnavailableLabel: 'முன்னோட்டத்தில் உள்நுழைவு கிடைக்காது',
+  previewNotPublishedLabel: 'இந்தப் பக்கம் இன்னும் வெளியிடப்படவில்லை',
+  previewAudioUnavailableLabel:
+    'இந்தப் பதிவு வெளியிடப்பட்டதும் ஆடியோ ஒலிக்கும்',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

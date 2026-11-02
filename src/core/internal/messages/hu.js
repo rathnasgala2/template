@@ -273,6 +273,11 @@ export default Object.freeze({
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) =>
     `${hours} óra ${minutes} perc`,
+  previewNotSavedLabel: 'Csak előnézet. Semmi nem lett mentve.',
+  previewSignInUnavailableLabel: 'A bejelentkezés az előnézetben nem érhető el',
+  previewNotPublishedLabel: 'Ez az oldal még nincs közzétéve',
+  previewAudioUnavailableLabel:
+    'A hang a bejegyzés közzététele után játszható le',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

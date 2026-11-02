@@ -263,6 +263,10 @@ export default Object.freeze({
   /** @type {(hours: string, minutes: string) => string} */
   listenDurationHoursMinutes: (hours, minutes) =>
     `${hours} 小时 ${minutes} 分钟`,
+  previewNotSavedLabel: '仅供预览，未保存任何内容。',
+  previewSignInUnavailableLabel: '预览中无法登录',
+  previewNotPublishedLabel: '此页面尚未发布',
+  previewAudioUnavailableLabel: '文章发布后即可播放音频',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
