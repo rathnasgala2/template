@@ -8,6 +8,48 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.13.0] - 2026-11-02
+
+### Added
+
+- **`renderContentPreview(input, options)`** in
+  `@rathnasgala2/template/preview`: one content record of any kind (article,
+  page or edition) with its own layout. `renderArticlePreview` is now the same
+  function and accepts any kind. Byte-identical to the built page with the
+  preview options off.
+- **`renderProfilePreview(input, options)`**: the About page at `profile.route`.
+- **`renderPolicyPreview(input, { page }, options)`**: `/terms` or `/privacy`
+  with the site's own text or the shipped default, and the template-owned
+  Galascribe section. The default text is carried in a generated module
+  (`scripts/generate-policy-defaults.mjs`).
+- **`renderHomePreview(input, { language })`**: a non-default language's section
+  home, page 1.
+- **`renderContactPreview(input, options)`**: `/contact`, the optional
+  `contact.md` intro and the form, only while `publication.contactForm` is
+  enabled (`contactForm.intro` is a new optional input field).
+- **`options.preview.interactive = { apiOrigin, liveBaseUrl?, scrollY? }`**: the
+  preview runs the page's own scripts in the App's sandboxed `srcdoc` frame (no
+  `allow-same-origin`, no `allow-forms`). The built `assets/gala-*.js` scripts
+  are inlined with their exact bytes (generated module
+  `preview-scripts-data.js`), a template-owned runtime comes first in `<head>`
+  (in-memory storage and cookies; `fetch`, `XMLHttpRequest` and `sendBeacon`
+  wrapped so only `GET` of `<apiOrigin>/v2/public/` reads reach the network and
+  every other request is simulated with the expected response shape and a
+  "Preview only. Nothing was saved." toast; link clicks intercepted, never
+  navigating the frame; sign-in, reload and external script injection
+  neutralized; Listen audio from `liveBaseUrl`; scroll position posted to the
+  parent and restored once), and the Content-Security-Policy is built by the
+  template with a `script-src` of SHA-256 hashes of exactly the inline scripts
+  (no `'unsafe-inline'`, `'unsafe-eval'` or `'unsafe-hashes'`). Mutually
+  exclusive with `omitScripts`, `inertLinks`, `contentSecurityPolicy` and
+  `inlineStyles: false`.
+- Four runtime-only messages (`previewNotSavedLabel`,
+  `previewSignInUnavailableLabel`, `previewNotPublishedLabel`,
+  `previewAudioUnavailableLabel`) in every locale catalog; they are never
+  written into a built page.
+
+Published bytes are unchanged.
+
 ## [4.12.0] - 2026-11-01
 
 ### Added
