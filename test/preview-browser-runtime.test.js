@@ -1,7 +1,7 @@
 /**
  * The article preview runs where a browser runs it: a child process removes
  * `process`, `Buffer`, `global` and `require` from the global scope once the
- * preview entry and its catalogs are loaded, renders an article (Markdown with a highlighted
+ * preview entry and its catalogs are loaded, renders an article and the home page (Markdown with a highlighted
  * fence, an image, a theme and palette), and the document equals the one
  * rendered here with those globals present.
  */
@@ -19,6 +19,7 @@ import {
   loadMessagesFor,
   previewLanguages,
   renderArticlePreview,
+  renderHomePreview,
 } from '../src/core/preview.js';
 
 const run = promisify(execFile);
@@ -77,6 +78,28 @@ test('the preview renders with process, Buffer, global and require removed', asy
       ),
     },
   };
+  const { post } = input;
+  const site = Object.fromEntries(
+    Object.entries(input).filter(
+      ([key]) => key !== 'post' && key !== 'siblings',
+    ),
+  );
+  const homeInput = {
+    ...site,
+    posts: [
+      {
+        frontmatter: {
+          ...post.frontmatter,
+          hero: {
+            file: { path: 'img/dot.png' },
+            alt: 'A dot',
+            role: 'informative',
+          },
+        },
+        markdown: post.markdown,
+      },
+    ],
+  };
   const options = {
     preview: {
       inlineStyles: true,
@@ -90,6 +113,16 @@ test('the preview renders with process, Buffer, global and require removed', asy
     ...options,
     getMessages: await loadMessagesFor(previewLanguages(input)),
   });
+  const expectedHome = renderHomePreview(homeInput, {
+    ...options,
+    getMessages: await loadMessagesFor(previewLanguages(homeInput)),
+  });
+  assert.equal(expectedHome.route, '/');
+  assert.match(expectedHome.html, /data-gala-home-layout=/);
+  assert.ok(
+    expectedHome.html.includes('alt="A dot"'),
+    'home lists the post with its hero',
+  );
   assert.ok(
     expected.html.includes('<span class="token keyword">const</span>'),
     'the fences are highlighted',
@@ -98,7 +131,7 @@ test('the preview renders with process, Buffer, global and require removed', asy
   const directory = await mkdtemp(path.join(tmpdir(), 'gala-preview-runtime-'));
   try {
     const requestFile = path.join(directory, 'request.json');
-    await writeFile(requestFile, JSON.stringify({ input, options }));
+    await writeFile(requestFile, JSON.stringify({ input, homeInput, options }));
     const { stdout } = await run(
       process.execPath,
       [
@@ -118,6 +151,7 @@ test('the preview renders with process, Buffer, global and require removed', asy
     const actual = JSON.parse(stdout);
     assert.equal(actual.html, expected.html);
     assert.equal(actual.title, expected.title);
+    assert.deepEqual(actual.home, expectedHome);
     assert.deepEqual(actual.warnings, []);
   } finally {
     await rm(directory, { recursive: true, force: true });

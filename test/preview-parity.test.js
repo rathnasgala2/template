@@ -1,10 +1,11 @@
 /**
- * The article preview's core guarantee: `renderArticlePreview`, given the
- * inputs a build used, returns byte-for-byte the page the build wrote. Every
- * article of each fixture is built with `renderPublication`, then previewed
- * from an input derived from the build input and the media pipeline's results,
- * with the preview options off (`===`) and on (equal once exactly the five
- * named differences are removed from both sides, by `withoutDifferences`).
+ * The preview's core guarantee: `renderArticlePreview` and `renderHomePreview`,
+ * given the inputs a build used, return byte-for-byte the page the build wrote.
+ * Every article of each fixture, and its home page, is built with
+ * `renderPublication`, then previewed from an input derived from the build
+ * input and the media pipeline's results, with the preview options off (`===`)
+ * and on (equal once exactly the five named differences are removed from both
+ * sides, by `withoutDifferences`).
  */
 
 import { strict as assert } from 'node:assert';
@@ -27,6 +28,7 @@ import {
   loadMessagesFor,
   previewLanguages,
   renderArticlePreview,
+  renderHomePreview,
 } from '../src/core/preview.js';
 import {
   buildRichFixture,
@@ -191,15 +193,14 @@ async function mediaOf(site) {
 }
 
 /**
- * The preview input for one post of a built fixture: the same sections the
+ * The site sections of a built fixture's preview input: the same sections the
  * build input holds, in the preview's own shape.
  *
  * @param {any} site a built fixture
- * @param {any} record the post
  * @param {Record<string, any>} media the images
- * @returns {Promise<any>} the `ArticlePreviewInput`
+ * @returns {Promise<any>} the sections both preview inputs share
  */
-async function previewInputOf(site, record, media) {
+async function siteInputOf(site, media) {
   const input = site.buildInput;
   const { footerCard, contactForm, ...publication } = input.publication;
   delete publication.profile;
@@ -225,13 +226,6 @@ async function previewInputOf(site, record, media) {
     navigation: input.navigation,
     appearance: input.appearance,
     modules: input.modules,
-    post: { frontmatter: record.frontmatter, bodyHtml: record.body },
-    siblings: input.content
-      .filter((/** @type {any} */ other) => other !== record)
-      .map((/** @type {any} */ other) => ({
-        frontmatter: other.frontmatter,
-        bodyHtml: other.body,
-      })),
     baseUrl: input.baseUrl,
     basePath: input.basePath,
     buildEpoch: input.buildEpoch,
@@ -253,7 +247,78 @@ async function previewInputOf(site, record, media) {
 }
 
 /**
- * Assert the parity of every article of a fixture, off and on.
+ * The preview input for one post of a built fixture.
+ *
+ * @param {any} site a built fixture
+ * @param {any} record the post
+ * @param {Record<string, any>} media the images
+ * @returns {Promise<any>} the `ArticlePreviewInput`
+ */
+async function previewInputOf(site, record, media) {
+  return {
+    ...(await siteInputOf(site, media)),
+    post: { frontmatter: record.frontmatter, bodyHtml: record.body },
+    siblings: site.buildInput.content
+      .filter((/** @type {any} */ other) => other !== record)
+      .map((/** @type {any} */ other) => ({
+        frontmatter: other.frontmatter,
+        bodyHtml: other.body,
+      })),
+  };
+}
+
+/**
+ * Assert the home page's parity, off and on: the built `index.html` equals the
+ * preview of the same site, and the preview differences are the only ones.
+ *
+ * @param {string} name the fixture
+ * @param {any} site a built fixture
+ * @param {Record<string, any>} media the images
+ * @returns {Promise<string>} the built home page
+ */
+async function assertHomeParity(name, site, media) {
+  const input = {
+    ...(await siteInputOf(site, media)),
+    posts: site.buildInput.content.map((/** @type {any} */ record) => ({
+      frontmatter: record.frontmatter,
+      bodyHtml: record.body,
+    })),
+  };
+  const getMessages = await loadMessagesFor(previewLanguages(input));
+  const label = `${name} / home`;
+  const off = renderHomePreview(input, { getMessages });
+  assert.deepEqual(off.warnings, [], label);
+  assert.equal(off.route, '/', label);
+  const built = await site.read(
+    projectRouteToFilePath(
+      joinBasePathAndRoute(site.buildInput.basePath, '/'),
+      'directory-index',
+    ),
+  );
+  assert.ok(off.html === built, `${label}: preview off equals the built page`);
+  const on = renderHomePreview(input, { getMessages, preview: ALL_ON });
+  assert.notEqual(on.html, built, `${label}: the differences are applied`);
+  assert.equal(withoutDifferences(on.html), withoutDifferences(built), label);
+  assert.equal(on.title, off.title);
+  assert.ok(!/<script\b/.test(on.html), `${label}: no script`);
+  assert.ok(!/<a\b[^>]*\shref=/.test(on.html), `${label}: anchors inert`);
+  for (const [key, value] of Object.entries(ALL_ON)) {
+    const one = renderHomePreview(input, {
+      getMessages,
+      preview: { [key]: value },
+    });
+    assert.equal(
+      withoutDifferences(one.html),
+      withoutDifferences(built),
+      `${label}: ${key} alone`,
+    );
+  }
+  return built;
+}
+
+/**
+ * Assert the parity of every article of a fixture, off and on, and of its
+ * home page.
  *
  * @param {string} name the fixture
  * @param {any} site a built fixture
@@ -369,6 +434,7 @@ async function assertParity(name, site, { minimumPosts = 1 } = {}) {
       );
     }
   }
+  await assertHomeParity(name, site, media);
   return slugs;
 }
 
@@ -602,3 +668,49 @@ for (const id of ['midnight']) {
     },
   );
 }
+
+test('parity: home page 1 only, with more posts than the page size', async () => {
+  const site = await build({
+    async prepare(input) {
+      input.publication.listing = { pageSize: 2 };
+      const first = recordOf(input, 'first-article');
+      for (let n = 0; n < 8; n += 1) {
+        const record = JSON.parse(JSON.stringify(first));
+        record.frontmatter = {
+          ...record.frontmatter,
+          id: `019c0000-0000-7000-8000-${String(700 + n).padStart(12, '0')}`,
+          title: `Extra article ${n}`,
+          slug: `extra-${n}`,
+          series: undefined,
+          seriesOrder: undefined,
+          route: undefined,
+          hero: undefined,
+          socialImage: undefined,
+          redirects: [],
+          publishedAt: `2024-0${n + 1}-01T09:00:00.000Z`,
+          createdAt: `2024-0${n + 1}-01T09:00:00.000Z`,
+        };
+        delete record.media;
+        record.resolvedAuthorIds = record.frontmatter.authorIds;
+        input.content.push(record);
+      }
+    },
+  });
+  try {
+    const built = await assertHomeParity('pagination', site, {});
+    // Page 2 exists in the build, and the home preview is page 1 alone.
+    const second = await site.read(
+      projectRouteToFilePath(
+        joinBasePathAndRoute(site.buildInput.basePath, '/page/2'),
+        'directory-index',
+      ),
+    );
+    assert.ok(second.length > 0);
+    assert.match(built, /\/page\/2\//, 'page 1 links page 2');
+    const shown = built.replace(/<script\b[\s\S]*?<\/script>/g, '');
+    assert.ok(!shown.includes('Extra article 0'), 'the oldest post is later');
+    assert.ok(second.includes('Extra article'), 'page 2 lists older posts');
+  } finally {
+    await site.cleanup();
+  }
+});

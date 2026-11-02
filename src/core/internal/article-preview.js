@@ -79,16 +79,60 @@ function isObject(value) {
 }
 
 /**
+ * Check one post of the input (the article, or an entry of a home page's
+ * `posts`), each failure naming its field under `label`.
+ *
+ * @param {any} post the candidate post
+ * @param {string} label its field path in messages
+ * @param {any} input the whole input (for its authors)
+ * @param {(ok: boolean, what: string) => void} need records a failed check
+ * @param {(v: unknown) => boolean} str whether a value is a non-empty string
+ * @param {readonly string[]} kinds the content kinds the entry may have
+ * @returns {void}
+ */
+function checkPost(post, label, input, need, str, kinds) {
+  need(isObject(post), `${label} must be an object`);
+  if (isObject(post)) {
+    const front = post.frontmatter;
+    need(isObject(front), `${label}.frontmatter must be an object`);
+    if (isObject(front)) {
+      for (const key of ['id', 'title', 'language', 'slug', 'publishedAt']) {
+        need(str(front[key]), `${label}.frontmatter.${key} must be a string`);
+      }
+      need(
+        Array.isArray(front.authorIds) && front.authorIds.length > 0,
+        `${label}.frontmatter.authorIds must list at least one author id`,
+      );
+      need(
+        front.kind === undefined || kinds.includes(front.kind),
+        `${label}.frontmatter.kind must be ${kinds.map((k) => `"${k}"`).join(' or ')}`,
+      );
+      const known = new Set(
+        (input.authors ?? []).map((/** @type {any} */ a) => a?.id),
+      );
+      for (const id of front.authorIds ?? []) {
+        need(known.has(id), `${label} author ${id} is not in authors`);
+      }
+    }
+    need(
+      typeof post.markdown === 'string' || typeof post.bodyHtml === 'string',
+      `${label} needs markdown or bodyHtml`,
+    );
+  }
+}
+
+/**
  * Cheap structural validation: the fields the article page cannot render
  * without, each failure naming its field. (The full schema validator is not
  * part of the preview.)
  *
  * @param {any} input the candidate input
  * @param {any} options the candidate options
+ * @param {'article' | 'home'} kind which renderer the input is for
  * @returns {void}
  * @throws {PreviewInputError} listing every problem
  */
-function validate(input, options) {
+function validate(input, options, kind) {
   /** @type {string[]} */
   const issues = [];
   const need = (/** @type {boolean} */ ok, /** @type {string} */ what) => {
@@ -125,33 +169,17 @@ function validate(input, options) {
       Array.isArray(input.appearance.colorMode.allowed),
     'appearance.colorMode must be {default, allowed}',
   );
-  need(isObject(post), 'post must be an object');
-  if (isObject(post)) {
-    const front = post.frontmatter;
-    need(isObject(front), 'post.frontmatter must be an object');
-    if (isObject(front)) {
-      for (const key of ['id', 'title', 'language', 'slug', 'publishedAt']) {
-        need(str(front[key]), `post.frontmatter.${key} must be a string`);
-      }
-      need(
-        Array.isArray(front.authorIds) && front.authorIds.length > 0,
-        'post.frontmatter.authorIds must list at least one author id',
-      );
-      need(
-        front.kind === undefined || front.kind === 'article',
-        'post.frontmatter.kind must be "article"',
-      );
-      const known = new Set(
-        (input.authors ?? []).map((/** @type {any} */ a) => a?.id),
-      );
-      for (const id of front.authorIds ?? []) {
-        need(known.has(id), `post author ${id} is not in authors`);
-      }
+  if (kind === 'home') {
+    need(Array.isArray(input.posts), 'posts must be an array');
+    for (const [index, entry] of (input.posts ?? []).entries()) {
+      checkPost(entry, `posts[${index}]`, input, need, str, [
+        'article',
+        'edition',
+        'page',
+      ]);
     }
-    need(
-      typeof post.markdown === 'string' || typeof post.bodyHtml === 'string',
-      'post needs markdown or bodyHtml',
-    );
+  } else {
+    checkPost(post, 'post', input, need, str, ['article']);
   }
   need(
     typeof baseUrl === 'string' && /^https?:\/\//.test(baseUrl),
@@ -208,15 +236,18 @@ function validate(input, options) {
 }
 
 /**
- * @param {any} input the preview input
+ * @param {any} input the preview input (article or home)
  * @returns {string[]} every BCP-47 tag the render may ask the message lookup
  *   for: pass it to `loadMessagesFor`
  */
 export function previewLanguages(input) {
   const tags = new Set([input.publication.defaultLanguage]);
-  tags.add(input.post.frontmatter.language);
-  for (const sibling of input.siblings ?? []) {
-    if (sibling.frontmatter?.language) tags.add(sibling.frontmatter.language);
+  for (const entry of [
+    ...(input.post ? [input.post] : []),
+    ...(input.siblings ?? []),
+    ...(input.posts ?? []),
+  ]) {
+    if (entry.frontmatter?.language) tags.add(entry.frontmatter.language);
   }
   return [...tags];
 }
@@ -521,17 +552,22 @@ export function buildPaletteCss(themeJson, appearanceTokens = {}) {
 }
 
 /**
- * Render one article page of a publication as a complete HTML document.
+ * Everything a preview render needs, derived from the input: the structures
+ * `buildPageDocuments` reads, with the five preview differences folded into
+ * `renderDocument`. Shared by the article and the home renderers.
  *
- * @param {any} input the article and the publication around it
- *   (`ArticlePreviewInput` in `types/preview.d.ts`)
- * @param {any} options the render options (`ArticlePreviewOptions`)
- * @returns {{html: string, title: string, route: string, warnings: string[]}}
- *   the document, its title, its public route and what could not be shown
- * @throws {PreviewInputError} the input is malformed or incomplete
+ * @param {any} input the preview input
+ * @param {any} options the render options
+ * @param {'article' | 'home'} kind which renderer the input is for
+ * @returns {{
+ *   warnings: string[],
+ *   post: import('../../../types/index.d.ts').ContentBuildRecord | undefined,
+ *   pageContext: Omit<Parameters<typeof buildPageDocuments>[1], 'only' | 'home'>,
+ *   validatedInput: import('../../../types/index.d.ts').NormalizedBuildInput,
+ * }} the pieces the two renderers finish with
  */
-export function renderArticlePreview(input, options) {
-  validate(input, options);
+function prepare(input, options, kind) {
+  validate(input, options, kind);
   const preview = options.preview ?? {};
   const getMessages = options.getMessages;
   const routeProfile = options.routeNormalizationProfile ?? 'directory-index';
@@ -619,19 +655,26 @@ export function renderArticlePreview(input, options) {
         }
       : {}),
   };
-  const post = toRecord(
-    input.post,
-    media,
-    synthesized.inventory,
-    warnings,
-    true,
-  );
-  const siblings = (input.siblings ?? []).map((/** @type {any} */ sibling) =>
-    toRecord(sibling, media, synthesized.inventory, warnings, false),
+  const article = kind === 'article';
+  const toRecords = (
+    /** @type {any[]} */ entries,
+    /** @type {boolean} */ full,
+  ) =>
+    entries.map((entry) =>
+      toRecord(entry, media, synthesized.inventory, warnings, full),
+    );
+  // The article page needs its own body digest; a listing never shows one.
+  const [post] = article ? toRecords([input.post], true) : [undefined];
+  const siblings = toRecords(
+    article ? (input.siblings ?? []) : input.posts,
+    false,
   );
   const buildEpoch = input.buildEpoch ?? new Date().toISOString();
-  const liveSplit = splitLiveContent([post, ...siblings], buildEpoch);
-  if (!liveSplit.live.includes(post)) {
+  const liveSplit = splitLiveContent(
+    post ? [post, ...siblings] : siblings,
+    buildEpoch,
+  );
+  if (post && !liveSplit.live.includes(post)) {
     throw new PreviewInputError([
       `post.frontmatter.deleteDate (${post.frontmatter.deleteDate}) has passed; the page is not live`,
     ]);
@@ -655,11 +698,12 @@ export function renderArticlePreview(input, options) {
     placements: [],
   });
 
+  // Only the article page shows body images; a listing card shows none.
   /** @type {ReturnType<typeof resolveContentImages>} */
   let contentImages;
   try {
     contentImages = resolveContentImages(
-      /** @type {any} */ ({ ...validatedInput, content: [post] }),
+      /** @type {any} */ ({ ...validatedInput, content: post ? [post] : [] }),
     );
   } catch (error) {
     if (error instanceof BuildInputValidationError) {
@@ -727,23 +771,79 @@ export function renderArticlePreview(input, options) {
     return html;
   };
 
-  const documents = buildPageDocuments(validatedInput, {
-    getMessages,
-    routeProfile,
-    liveSplit,
-    contentImages,
-    editions,
-    translations,
-    site,
-    themeAssets,
-    media: {
-      mediaAssets: synthesized.mediaAssets,
-      mediaDimensions: synthesized.mediaDimensions,
-      mediaVariants: synthesized.mediaVariants,
-      urlOf: synthesized.urlOf,
+  return {
+    warnings,
+    post,
+    validatedInput,
+    pageContext: {
+      getMessages,
+      routeProfile,
+      liveSplit,
+      contentImages,
+      editions,
+      translations,
+      site,
+      themeAssets,
+      media: {
+        mediaAssets: synthesized.mediaAssets,
+        mediaDimensions: synthesized.mediaDimensions,
+        mediaVariants: synthesized.mediaVariants,
+        urlOf: synthesized.urlOf,
+      },
+      renderDocument,
     },
-    only: post.frontmatter.id,
-    renderDocument,
+  };
+}
+
+/**
+ * Render one article page of a publication as a complete HTML document.
+ *
+ * @param {any} input the article and the publication around it
+ *   (`ArticlePreviewInput` in `types/preview.d.ts`)
+ * @param {any} options the render options (`ArticlePreviewOptions`)
+ * @returns {{html: string, title: string, route: string, warnings: string[]}}
+ *   the document, its title, its public route and what could not be shown
+ * @throws {PreviewInputError} the input is malformed or incomplete
+ */
+export function renderArticlePreview(input, options) {
+  const { warnings, post, validatedInput, pageContext } = prepare(
+    input,
+    options,
+    'article',
+  );
+  const documents = buildPageDocuments(validatedInput, {
+    ...pageContext,
+    only: /** @type {any} */ (post).frontmatter.id,
+  });
+  const page = documents.generatedPages[0];
+  return {
+    html: documents.contentPages[0].content,
+    title: page.documentTitle ?? page.title,
+    route: page.route,
+    warnings,
+  };
+}
+
+/**
+ * Render the home page (route `/`, page 1 of the listing) of a publication as
+ * a complete HTML document, by the code the build renders it with.
+ *
+ * @param {any} input the publication and the posts its home page lists
+ *   (`HomePreviewInput` in `types/preview.d.ts`)
+ * @param {any} options the render options (`ArticlePreviewOptions`)
+ * @returns {{html: string, title: string, route: string, warnings: string[]}}
+ *   the document, its title, its public route and what could not be shown
+ * @throws {PreviewInputError} the input is malformed or incomplete
+ */
+export function renderHomePreview(input, options) {
+  const { warnings, validatedInput, pageContext } = prepare(
+    input,
+    options,
+    'home',
+  );
+  const documents = buildPageDocuments(validatedInput, {
+    ...pageContext,
+    home: true,
   });
   const page = documents.generatedPages[0];
   return {

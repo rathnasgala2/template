@@ -109,7 +109,10 @@ test('the browser entry reaches no Node-only module, validator, Eleventy or requ
   );
   assert.deepEqual(offences, []);
   const reached = [...seen].map((file) => path.relative(INTERNAL, file));
+  // The home renderer lives in the same module, so this walk covers it.
   assert.ok(reached.includes('article-preview.js'));
+  const entry = await import('../src/core/preview.js');
+  assert.equal(typeof entry.renderHomePreview, 'function');
   assert.ok(reached.includes('appearance/palette-derive.js'));
   for (const heavy of [
     'appearance/palette-sheet.js',

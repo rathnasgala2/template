@@ -174,7 +174,9 @@ export function buildPageDocuments(validatedInput, ctx) {
     media,
   } = ctx;
   const { mediaAssets, mediaDimensions, mediaVariants, urlOf } = media;
-  const { only, renderDocument = renderDocumentShell } = ctx;
+  const { only, home = false, renderDocument = renderDocumentShell } = ctx;
+  // A single-page build (one record's page, or the home page).
+  const single = only !== undefined || home;
   const {
     siteMessages,
     publicBasePath,
@@ -579,7 +581,7 @@ export function buildPageDocuments(validatedInput, ctx) {
     feedBody,
     routeProfile,
     translations,
-    selfUrlsOnly: only !== undefined,
+    selfUrlsOnly: single,
   });
   const absoluteSiteUrl = (/** @type {string} */ route) =>
     new URL(
@@ -649,6 +651,7 @@ export function buildPageDocuments(validatedInput, ctx) {
     loadPolicyDefaults: ctx.loadPolicyDefaults,
     routeProfile,
     only,
+    home,
     pageBody,
     editions,
     translations,
@@ -781,10 +784,12 @@ export function buildPageDocuments(validatedInput, ctx) {
   // One record's page only (`only`): no redirects, notices or site-wide
   // documents; the caller wants that page's complete document and nothing
   // else.
-  if (only !== undefined) {
+  if (single) {
     if (contentPages.length === 0) {
       throw new RenderOptionsError(
-        `no page was generated for content id ${JSON.stringify(only)}`,
+        home
+          ? 'no home page was generated'
+          : `no page was generated for content id ${JSON.stringify(only)}`,
       );
     }
     return /** @type {PageDocuments} */ (
@@ -1026,6 +1031,8 @@ export function buildPageDocuments(validatedInput, ctx) {
  *   redirects, notices, version page or site-wide documents; the result then
  *   carries `contentPages`, `generatedPages`, `interactionBearingPaths`,
  *   `takenPermalinks`, `feeds`, `absoluteSiteUrl`, `emailBody` and `aiPolicy`)
+ * @property {boolean} [home] build the home page (route `/`, page 1 of the
+ *   listing) only, with the same result shape as `only`
  * @property {(data: import('./document-shell.js').DocumentShellData, content: string) => string} [renderDocument]
  *   wraps a page's body markup in its document (default: `renderDocumentShell`)
  */

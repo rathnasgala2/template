@@ -1,6 +1,6 @@
 /**
  * Types for `@rathnasgala2/template/preview`, the browser entry point that
- * renders one article page of a publication from an in-memory input.
+ * renders one article page, or the home page, of a publication from an in-memory input.
  */
 
 import type {
@@ -92,7 +92,8 @@ export interface PreviewTheme {
   }[];
 }
 
-export interface ArticlePreviewInput {
+/** The site sections both renderers read. */
+export interface PreviewSiteInput {
   publication: Omit<
     PublicationNormalized,
     | 'slug'
@@ -144,9 +145,6 @@ export interface ArticlePreviewInput {
     };
   /** Optional modules the page reads: `interactions` and `analytics`. */
   modules?: { interactions?: InteractionsModule; analytics?: unknown };
-  post: PreviewPost;
-  /** The other posts of the publication (any order). */
-  siblings?: readonly PreviewSibling[];
   /** Absolute `http(s)` URL the site is served from. */
   baseUrl: string;
   /** Path the site is published under (`/` or `/blog`). */
@@ -157,6 +155,22 @@ export interface ArticlePreviewInput {
   theme?: PreviewTheme;
   /** The clock for `deleteDate`; default now. */
   buildEpoch?: string;
+}
+
+export interface ArticlePreviewInput extends PreviewSiteInput {
+  post: PreviewPost;
+  /** The other posts of the publication (any order). */
+  siblings?: readonly PreviewSibling[];
+}
+
+/**
+ * The home page's input: the site sections, and the posts it lists (the
+ * publication's whole set of posts, any order; the page shows the featured
+ * post, the latest cards and the first page of older ones, and resolves each
+ * hero through `media`). Pagination follows `publication.listing.pageSize`.
+ */
+export interface HomePreviewInput extends PreviewSiteInput {
+  posts: readonly PreviewSibling[];
 }
 
 /**
@@ -205,8 +219,19 @@ export function renderArticlePreview(
   options: ArticlePreviewOptions,
 ): ArticlePreviewResult;
 
+/**
+ * Render the site's home page (route `/`, page 1 of the listing) by the code
+ * the build renders it with. Synchronous; throws `PreviewInputError`.
+ */
+export function renderHomePreview(
+  input: HomePreviewInput,
+  options: ArticlePreviewOptions,
+): ArticlePreviewResult;
+
 /** Tags to pass to `loadMessagesFor` for this input. */
-export function previewLanguages(input: ArticlePreviewInput): string[];
+export function previewLanguages(
+  input: ArticlePreviewInput | HomePreviewInput,
+): string[];
 
 /** Load `en` plus the catalogs these tags resolve to (each a separate chunk). */
 export function loadMessagesFor(

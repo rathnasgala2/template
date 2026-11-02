@@ -467,6 +467,8 @@ export function homeDocumentTitle(name, tagline) {
  *   returns the default Terms and Privacy text (`loadSitePolicyDefaults` from
  *   `policy-defaults-node.js` in Node); needed when the build input carries no
  *   `policies`
+ * @param {boolean} [options.home] build the home page (route `/`, page 1 of
+ *   the index listing) only; none of the other pages
  * @param {string} [options.only] a content id: build the page of that one
  *   record only (none of the site-wide pages, no policy pages); an unknown id
  *   yields no pages
@@ -564,7 +566,10 @@ export function buildGeneratedPages(validatedInput, options) {
   const translations =
     options.translations ??
     resolveTranslations(content, publication.defaultLanguage);
-  const { getMessages, only } = options;
+  const { getMessages, only, home = false } = options;
+  // A single-page build (one record's page, or the home page): none of the
+  // site-wide pages.
+  const single = only !== undefined || home;
   const defaultMessages = getMessages(publication.defaultLanguage);
   // Posts per listing page: the author's `listing.pageSize`, else the default.
   const pageSize = publication.listing?.pageSize ?? LISTING_PAGE_SIZE;
@@ -1004,7 +1009,7 @@ export function buildGeneratedPages(validatedInput, options) {
   /** @type {GeneratedPage[]} */
   const pages = [];
 
-  if (!only && publication.profile) {
+  if (!single && publication.profile) {
     pages.push({
       kind: 'profile',
       route: publication.profile.route,
@@ -1042,7 +1047,7 @@ export function buildGeneratedPages(validatedInput, options) {
     interactionsOn: Boolean(interactionsModule),
     analytics: options.analytics,
   });
-  for (const policy of only
+  for (const policy of single
     ? []
     : resolvePolicyPages(validatedInput.policies, options.loadPolicyDefaults)) {
     pages.push({
@@ -1078,7 +1083,7 @@ export function buildGeneratedPages(validatedInput, options) {
   // hook, indexable, in the sitemap, in no feed, search index or `llms`
   // document) that exists only while the site's contact form is on. Its intro
   // is the optional `gala/theme-pages/contact.md` body, else a short default.
-  if (!only && publication.contactForm?.enabled) {
+  if (!single && publication.contactForm?.enabled) {
     const contactTitle = text0('contactPageTitle');
     const authoredIntro = publication.contactForm.intro
       ? dropLeadingTitleHeading(
@@ -1123,7 +1128,7 @@ export function buildGeneratedPages(validatedInput, options) {
     });
   }
 
-  for (const author of only ? [] : authors) {
+  for (const author of single ? [] : authors) {
     const authored = publishedArticles.filter((record) =>
       translations
         .variantsOf(record)
@@ -1238,9 +1243,11 @@ export function buildGeneratedPages(validatedInput, options) {
           }),
     };
   };
-  for (const record of only
-    ? content.filter((candidate) => candidate.frontmatter.id === only)
-    : content) {
+  for (const record of home
+    ? []
+    : only
+      ? content.filter((candidate) => candidate.frontmatter.id === only)
+      : content) {
     const { frontmatter } = record;
     useChrome(frontmatter.language);
     const isArticle = frontmatter.kind === 'article';
@@ -1743,6 +1750,15 @@ export function buildGeneratedPages(validatedInput, options) {
         bodyHtml,
       });
     });
+
+    if (home) {
+      return pages
+        .filter((page) => page.kind === 'index' && page.route === '/')
+        .map((page) => ({
+          ...page,
+          direction: resolveTextDirection(page.language),
+        }));
+    }
 
     if (sortedTags.length > 0) {
       pages.push({
