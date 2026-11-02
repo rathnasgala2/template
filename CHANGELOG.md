@@ -8,6 +8,25 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.13.1] - 2026-11-02
+
+### Fixed
+
+- The interactive preview no longer makes the page's three public reads on every
+  re-render. The frame posts each successful `GET` (200, 64 KB or less) to its
+  parent as `{type: 'gala-preview-cache', url, status: 200, body}`, and the new
+  `options.preview.interactive.cache` (`{[url]: {status: 200, body}}`, keys
+  under `apiOrigin + '/v2/public/'`, bodies at most 64 KB each and 1 MB
+  together, else `PreviewInputError`) is served by the frame without touching
+  the network. Expiry and eviction stay with the caller. The cache changes the
+  data block only; published bytes and the policy are unchanged.
+- The preview refuses the addresses the build's schemas refuse: a navigation
+  `route` that is not a canonical route, a navigation `url`, social link `uri`
+  (other than `mailto:` for type `email`), author link `uri` or link-mode
+  newsletter `url` that is not `https://` without credentials (for example
+  `javascript:`, `data:`, `file:` or `vbscript:`). `PreviewInputError` names the
+  field and the scheme.
+
 ## [4.13.0] - 2026-11-02
 
 ### Added
