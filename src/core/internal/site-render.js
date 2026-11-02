@@ -174,9 +174,22 @@ export function buildPageDocuments(validatedInput, ctx) {
     media,
   } = ctx;
   const { mediaAssets, mediaDimensions, mediaVariants, urlOf } = media;
-  const { only, home = false, renderDocument = renderDocumentShell } = ctx;
-  // A single-page build (one record's page, or the home page).
-  const single = only !== undefined || home;
+  const {
+    only,
+    home = false,
+    profile = false,
+    policy,
+    section,
+    renderDocument = renderDocumentShell,
+  } = ctx;
+  // A single-page build (one record's page, the home page, the profile page,
+  // one policy page or one language section home).
+  const single =
+    only !== undefined ||
+    home ||
+    profile ||
+    policy !== undefined ||
+    section !== undefined;
   const {
     siteMessages,
     publicBasePath,
@@ -652,6 +665,9 @@ export function buildPageDocuments(validatedInput, ctx) {
     routeProfile,
     only,
     home,
+    profile,
+    policy,
+    section,
     pageBody,
     editions,
     translations,
@@ -789,7 +805,9 @@ export function buildPageDocuments(validatedInput, ctx) {
       throw new RenderOptionsError(
         home
           ? 'no home page was generated'
-          : `no page was generated for content id ${JSON.stringify(only)}`,
+          : only === undefined
+            ? 'no page was generated for the selected page'
+            : `no page was generated for content id ${JSON.stringify(only)}`,
       );
     }
     return /** @type {PageDocuments} */ (
@@ -1033,6 +1051,9 @@ export function buildPageDocuments(validatedInput, ctx) {
  *   `takenPermalinks`, `feeds`, `absoluteSiteUrl`, `emailBody` and `aiPolicy`)
  * @property {boolean} [home] build the home page (route `/`, page 1 of the
  *   listing) only, with the same result shape as `only`
+ * @property {boolean} [profile] build the publication's profile page only (same result shape)
+ * @property {'terms' | 'privacy'} [policy] build that policy page only (same result shape)
+ * @property {string} [section] a language segment: build that language section's home only (same result shape)
  * @property {(data: import('./document-shell.js').DocumentShellData, content: string) => string} [renderDocument]
  *   wraps a page's body markup in its document (default: `renderDocumentShell`)
  */

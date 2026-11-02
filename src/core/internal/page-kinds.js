@@ -467,6 +467,11 @@ export function homeDocumentTitle(name, tagline) {
  *   returns the default Terms and Privacy text (`loadSitePolicyDefaults` from
  *   `policy-defaults-node.js` in Node); needed when the build input carries no
  *   `policies`
+ * @param {boolean} [options.profile] build the publication's profile page
+ *   only
+ * @param {'terms' | 'privacy'} [options.policy] build that policy page only
+ * @param {string} [options.section] a language segment: build that language
+ *   section's home (page 1) only
  * @param {boolean} [options.home] build the home page (route `/`, page 1 of
  *   the index listing) only; none of the other pages
  * @param {string} [options.only] a content id: build the page of that one
@@ -566,10 +571,20 @@ export function buildGeneratedPages(validatedInput, options) {
   const translations =
     options.translations ??
     resolveTranslations(content, publication.defaultLanguage);
-  const { getMessages, only, home = false } = options;
-  // A single-page build (one record's page, or the home page): none of the
-  // site-wide pages.
-  const single = only !== undefined || home;
+  const {
+    getMessages,
+    only,
+    home = false,
+    profile: profileOnly = false,
+    policy: policyOnly,
+    section: sectionOnly,
+  } = options;
+  // A single-page build (one record's page, the home page, the profile page,
+  // one policy page or one language section home): none of the site-wide
+  // pages, and the one page asked for is picked out at the end.
+  const system = profileOnly || policyOnly !== undefined;
+  const single =
+    only !== undefined || home || system || sectionOnly !== undefined;
   const defaultMessages = getMessages(publication.defaultLanguage);
   // Posts per listing page: the author's `listing.pageSize`, else the default.
   const pageSize = publication.listing?.pageSize ?? LISTING_PAGE_SIZE;
@@ -1009,7 +1024,7 @@ export function buildGeneratedPages(validatedInput, options) {
   /** @type {GeneratedPage[]} */
   const pages = [];
 
-  if (!single && publication.profile) {
+  if ((!single || profileOnly) && publication.profile) {
     pages.push({
       kind: 'profile',
       route: publication.profile.route,
@@ -1047,7 +1062,7 @@ export function buildGeneratedPages(validatedInput, options) {
     interactionsOn: Boolean(interactionsModule),
     analytics: options.analytics,
   });
-  for (const policy of single
+  for (const policy of single && policyOnly === undefined
     ? []
     : resolvePolicyPages(validatedInput.policies, options.loadPolicyDefaults)) {
     pages.push({
@@ -1243,7 +1258,7 @@ export function buildGeneratedPages(validatedInput, options) {
           }),
     };
   };
-  for (const record of home
+  for (const record of home || system || sectionOnly !== undefined
     ? []
     : only
       ? content.filter((candidate) => candidate.frontmatter.id === only)
@@ -1538,7 +1553,7 @@ export function buildGeneratedPages(validatedInput, options) {
   }
 
   useChrome(publication.defaultLanguage);
-  if (!only) {
+  if (!only && !system) {
     // Index: page 1 is the home page (featured, tag pills, latest cards, series
     // card, newsletter); every index page carries a slice of the older
     // articles with pagination.
@@ -2050,10 +2065,19 @@ export function buildGeneratedPages(validatedInput, options) {
   }
   useChrome(publication.defaultLanguage);
 
-  return pages.map((page) => ({
-    ...page,
-    direction: resolveTextDirection(page.language),
-  }));
+  return pages
+    .filter(
+      (page) =>
+        (!profileOnly || page.kind === 'profile') &&
+        (policyOnly === undefined ||
+          (page.kind === 'policy' && page.route === `/${policyOnly}`)) &&
+        (sectionOnly === undefined ||
+          (page.kind === 'index' && page.route === `/${sectionOnly}`)),
+    )
+    .map((page) => ({
+      ...page,
+      direction: resolveTextDirection(page.language),
+    }));
 }
 
 /**
