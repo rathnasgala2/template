@@ -1120,36 +1120,47 @@ motion under `prefers-reduced-motion`. The classes are template-owned feature
 chrome like the Follow control's: they are not part of the published styling
 contract. Playback is the shipped script's alone; the renderer makes no request.
 
-## Browser article and home preview
+## Browser page previews
 
-`@rathnasgala2/template/preview` renders the real article page of a draft, and
-the site's home page, in a browser (types: `types/preview.d.ts`). It runs the
-same page assembly as `renderPublication` for one article
-(`renderArticlePreview`) or for the home page, route `/`, page 1 of the listing
-(`renderHomePreview`), from an in-memory input, with the caller's
-already-resolved images; no file, media pipeline, Eleventy or schema validator
-is involved. With `options.preview` unset the document is byte-identical to the
-built page of either kind (`test/preview-parity.test.js`). `options.preview` may
-only inline the stylesheets, drop scripts, set the CSP `<meta>`, make anchors
-inert and fix the resolved colour mode.
+`@rathnasgala2/template/preview` renders the real page of a draft in a browser
+(types: `types/preview.d.ts`). Each renderer runs the same page assembly as
+`renderPublication` for one page (`site-render.js#buildPageDocuments` with a
+one-page selector), from an in-memory input and the caller's already-resolved
+images; no file, media pipeline, Eleventy or schema validator is involved. With
+`options.preview` unset the document is byte-identical to the built page, for
+every renderer below (`test/preview-parity.test.js`, which lists the route kinds
+it covers). `options.preview` may only inline the stylesheets, drop scripts, set
+the CSP `<meta>`, make anchors inert and fix the resolved colour mode.
 
-`renderHomePreview` takes the article input's site sections (publication,
-authors, navigation, appearance, modules, `baseUrl`, `basePath`, `buildEpoch`,
-`theme`, `media`) and `posts`: every post the home page lists (front matter plus
-`bodyHtml` or `markdown`), whose heroes resolve through `media`. The featured
-post, latest cards and the first page of older posts follow the build's own
-rules, including `publication.listing.pageSize`. A site with language variants
-has a home per language; the preview renders the default language's.
+| Renderer                                      | Page                                                                                  | Input beyond the site sections                                                                                           |
+| --------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `renderContentPreview(input, options)`        | one content record of any kind: article, page or edition, each with its own layout    | `post` (front matter plus `markdown` or `bodyHtml`), `siblings` (an edition needs its original)                          |
+| `renderArticlePreview`                        | the same function, kept as an alias                                                   | as above                                                                                                                 |
+| `renderHomePreview(input, options)`           | the home page `/`, page 1 of the listing                                              | `posts`: every post the home lists                                                                                       |
+| `renderHomePreview(input, { language, ... })` | that non-default language's section home, page 1, at `/<segment>` (for example `/ta`) | `posts`, with the variants (`translationOf`) that make the section                                                       |
+| `renderProfilePreview(input, options)`        | the About page at `profile.route`                                                     | `profile: {route, body}`; optional `posts`                                                                               |
+| `renderPolicyPreview(input, {page}, options)` | `/terms` or `/privacy`, the template-owned Galascribe section included                | optional `policies: {terms, privacy}` (each `{title, body}`); absent, the shipped default text renders; optional `posts` |
+
+The site sections every input takes are the publication, authors, navigation,
+appearance, modules, `baseUrl`, `basePath`, `buildEpoch`, `theme` and `media`. A
+`body` is `{markdown}` (normalized with the build's own render policy) or
+`{html}`. The featured post, latest cards and first page of older posts on a
+home follow the build's rules, including `publication.listing.pageSize`. A
+language that has no section home (no published article in it, or a site with no
+`translationOf` variant) throws `PreviewInputError`. The shipped Terms and
+Privacy text is carried in `src/core/internal/policy-defaults-data.js`,
+generated by `scripts/generate-policy-defaults.mjs` from the schemas package;
+`test/policy-defaults-data.test.js` fails if it drifts.
 
 ```js
 import {
   loadMessagesFor,
   previewLanguages,
-  renderArticlePreview,
+  renderContentPreview,
 } from '@rathnasgala2/template/preview';
 
 const getMessages = await loadMessagesFor(previewLanguages(input));
-const { html } = renderArticlePreview(input, {
+const { html } = renderContentPreview(input, {
   getMessages,
   preview: {
     inlineStyles: true,
