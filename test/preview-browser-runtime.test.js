@@ -1,7 +1,8 @@
 /**
  * The article preview runs where a browser runs it: a child process removes
  * `process`, `Buffer`, `global` and `require` from the global scope once the
- * preview entry and its catalogs are loaded, renders an article and the home page (Markdown with a highlighted
+ * preview entry and its catalogs are loaded, renders an article, a page, the
+ * home page, a language section home, a profile page and a policy page (Markdown with a highlighted
  * fence, an image, a theme and palette), and the document equals the one
  * rendered here with those globals present.
  */
@@ -19,7 +20,10 @@ import {
   loadMessagesFor,
   previewLanguages,
   renderArticlePreview,
+  renderContentPreview,
   renderHomePreview,
+  renderPolicyPreview,
+  renderProfilePreview,
 } from '../src/core/preview.js';
 
 const run = promisify(execFile);
@@ -98,7 +102,43 @@ test('the preview renders with process, Buffer, global and require removed', asy
         },
         markdown: post.markdown,
       },
+      {
+        frontmatter: {
+          ...post.frontmatter,
+          id: '019c0000-0000-7000-8000-000000000002',
+          title: 'Tamil',
+          language: 'ta',
+          slug: 'tamil',
+          translationOf: 'hello',
+          tags: [],
+        },
+        markdown: 'தமிழ்\n',
+      },
     ],
+  };
+  const pageInput = {
+    ...site,
+    post: {
+      frontmatter: {
+        ...post.frontmatter,
+        id: '019c0000-0000-7000-8000-000000000003',
+        kind: 'page',
+        slug: 'colophon',
+        title: 'Colophon',
+      },
+      markdown: '# Colophon\n\nA page.\n',
+    },
+  };
+  const profileInput = {
+    ...site,
+    profile: { route: '/about', body: { markdown: 'About **us**.\n' } },
+  };
+  const policyInput = {
+    ...site,
+    policies: {
+      terms: { title: 'Terms', body: { markdown: 'Be kind.\n' } },
+      privacy: { title: 'Privacy', body: { markdown: 'No data.\n' } },
+    },
   };
   const options = {
     preview: {
@@ -117,6 +157,25 @@ test('the preview renders with process, Buffer, global and require removed', asy
     ...options,
     getMessages: await loadMessagesFor(previewLanguages(homeInput)),
   });
+  const get = async (/** @type {any} */ i) =>
+    loadMessagesFor(['en-US', 'ta', ...previewLanguages(i)]);
+  const withAll = { ...options, getMessages: await get(homeInput) };
+  const expectedPage = renderContentPreview(pageInput, withAll);
+  const expectedSection = renderHomePreview(homeInput, {
+    ...withAll,
+    language: 'ta',
+  });
+  const expectedProfile = renderProfilePreview(profileInput, withAll);
+  const expectedPolicy = renderPolicyPreview(
+    policyInput,
+    { page: 'terms' },
+    withAll,
+  );
+  assert.equal(expectedPage.route, '/colophon');
+  assert.equal(expectedSection.route, '/ta');
+  assert.equal(expectedProfile.route, '/about');
+  assert.equal(expectedPolicy.route, '/terms');
+  assert.ok(expectedPolicy.html.includes('<h2>Galascribe</h2>'));
   assert.equal(expectedHome.route, '/');
   assert.match(expectedHome.html, /data-gala-home-layout=/);
   assert.ok(
@@ -131,7 +190,17 @@ test('the preview renders with process, Buffer, global and require removed', asy
   const directory = await mkdtemp(path.join(tmpdir(), 'gala-preview-runtime-'));
   try {
     const requestFile = path.join(directory, 'request.json');
-    await writeFile(requestFile, JSON.stringify({ input, homeInput, options }));
+    await writeFile(
+      requestFile,
+      JSON.stringify({
+        input,
+        homeInput,
+        pageInput,
+        profileInput,
+        policyInput,
+        options,
+      }),
+    );
     const { stdout } = await run(
       process.execPath,
       [
@@ -152,6 +221,10 @@ test('the preview renders with process, Buffer, global and require removed', asy
     assert.equal(actual.html, expected.html);
     assert.equal(actual.title, expected.title);
     assert.deepEqual(actual.home, expectedHome);
+    assert.deepEqual(actual.page, expectedPage);
+    assert.deepEqual(actual.section, expectedSection);
+    assert.deepEqual(actual.profile, expectedProfile);
+    assert.deepEqual(actual.policy, expectedPolicy);
     assert.deepEqual(actual.warnings, []);
   } finally {
     await rm(directory, { recursive: true, force: true });

@@ -1,11 +1,13 @@
 /**
- * The preview's core guarantee: `renderArticlePreview` and `renderHomePreview`,
- * given the inputs a build used, return byte-for-byte the page the build wrote.
- * Every article of each fixture, and its home page, is built with
+ * The preview's core guarantee: `renderContentPreview`, `renderHomePreview`,
+ * `renderProfilePreview` and `renderPolicyPreview`, given the inputs a build
+ * used, return byte-for-byte the page the build wrote. Every content record of
+ * each fixture (article, page, edition), its home page, each language section
+ * home, its profile page and its Terms and Privacy pages are built with
  * `renderPublication`, then previewed from an input derived from the build
  * input and the media pipeline's results, with the preview options off (`===`)
  * and on (equal once exactly the five named differences are removed from both
- * sides, by `withoutDifferences`).
+ * sides, by `withoutDifferences`). The last test lists the route kinds covered.
  */
 
 import { strict as assert } from 'node:assert';
@@ -28,8 +30,12 @@ import {
   loadMessagesFor,
   previewLanguages,
   renderArticlePreview,
+  renderContentPreview,
   renderHomePreview,
+  renderPolicyPreview,
+  renderProfilePreview,
 } from '../src/core/preview.js';
+import { languageSegment } from '../src/core/internal/translations.js';
 import {
   buildRichFixture,
   editionRecord,
@@ -267,9 +273,71 @@ async function previewInputOf(site, record, media) {
   };
 }
 
+/** @type {Set<string>} the route kinds the parity tests covered, as `kind<TAB>fixture` */
+const COVERED = new Set();
+
 /**
- * Assert the home page's parity, off and on: the built `index.html` equals the
- * preview of the same site, and the preview differences are the only ones.
+ * Assert one page's parity, off and on: the built file equals the preview of
+ * the same site, and the preview differences are the only ones.
+ *
+ * @param {string} label the page, for messages
+ * @param {(preview?: Record<string, unknown>) => {html: string, title: string, route: string, warnings: string[]}} render
+ *   renders the preview with these preview options
+ * @param {string} built the built file
+ * @param {string} expectedRoute the route the preview must report
+ * @returns {void}
+ */
+function assertPageParity(label, render, built, expectedRoute) {
+  const off = render();
+  assert.deepEqual(off.warnings, [], label);
+  assert.equal(off.route, expectedRoute, label);
+  assert.ok(off.html === built, `${label}: preview off equals the built page`);
+  const on = render(ALL_ON);
+  assert.notEqual(on.html, built, `${label}: the differences are applied`);
+  assert.equal(withoutDifferences(on.html), withoutDifferences(built), label);
+  assert.equal(on.title, off.title);
+  assert.ok(!/<script\b/.test(on.html), `${label}: no script`);
+  assert.ok(!/<a\b[^>]*\shref=/.test(on.html), `${label}: anchors inert`);
+  for (const [key, value] of Object.entries(ALL_ON)) {
+    assert.equal(
+      withoutDifferences(render({ [key]: value }).html),
+      withoutDifferences(built),
+      `${label}: ${key} alone`,
+    );
+  }
+}
+
+/**
+ * @param {any} site a built fixture
+ * @param {string} route a route
+ * @returns {Promise<string>} the built file of that route
+ */
+const builtAt = (site, route) =>
+  site.read(
+    projectRouteToFilePath(
+      joinBasePathAndRoute(site.buildInput.basePath, route),
+      'directory-index',
+    ),
+  );
+
+/**
+ * @param {any} site a built fixture
+ * @param {Record<string, any>} media the images
+ * @returns {Promise<any>} the site sections plus every post, as the home page,
+ *   the profile page and the policy pages take them
+ */
+async function withPostsOf(site, media) {
+  return {
+    ...(await siteInputOf(site, media)),
+    posts: site.buildInput.content.map((/** @type {any} */ record) => ({
+      frontmatter: record.frontmatter,
+      bodyHtml: record.body,
+    })),
+  };
+}
+
+/**
+ * Assert the home page's parity, and that of every language section home.
  *
  * @param {string} name the fixture
  * @param {any} site a built fixture
@@ -277,43 +345,91 @@ async function previewInputOf(site, record, media) {
  * @returns {Promise<string>} the built home page
  */
 async function assertHomeParity(name, site, media) {
-  const input = {
-    ...(await siteInputOf(site, media)),
-    posts: site.buildInput.content.map((/** @type {any} */ record) => ({
-      frontmatter: record.frontmatter,
-      bodyHtml: record.body,
-    })),
-  };
+  const input = await withPostsOf(site, media);
   const getMessages = await loadMessagesFor(previewLanguages(input));
-  const label = `${name} / home`;
-  const off = renderHomePreview(input, { getMessages });
-  assert.deepEqual(off.warnings, [], label);
-  assert.equal(off.route, '/', label);
-  const built = await site.read(
-    projectRouteToFilePath(
-      joinBasePathAndRoute(site.buildInput.basePath, '/'),
-      'directory-index',
-    ),
+  const built = await builtAt(site, '/');
+  assertPageParity(
+    `${name} / home`,
+    (preview) => renderHomePreview(input, { getMessages, preview }),
+    built,
+    '/',
   );
-  assert.ok(off.html === built, `${label}: preview off equals the built page`);
-  const on = renderHomePreview(input, { getMessages, preview: ALL_ON });
-  assert.notEqual(on.html, built, `${label}: the differences are applied`);
-  assert.equal(withoutDifferences(on.html), withoutDifferences(built), label);
-  assert.equal(on.title, off.title);
-  assert.ok(!/<script\b/.test(on.html), `${label}: no script`);
-  assert.ok(!/<a\b[^>]*\shref=/.test(on.html), `${label}: anchors inert`);
-  for (const [key, value] of Object.entries(ALL_ON)) {
-    const one = renderHomePreview(input, {
-      getMessages,
-      preview: { [key]: value },
-    });
-    assert.equal(
-      withoutDifferences(one.html),
-      withoutDifferences(built),
-      `${label}: ${key} alone`,
+  COVERED.add(`home\t${name}`);
+  const defaultLanguage = site.buildInput.publication.defaultLanguage;
+  for (const language of new Set(
+    site.buildInput.content.map(
+      (/** @type {any} */ r) => r.frontmatter.language,
+    ),
+  )) {
+    if (language === defaultLanguage) continue;
+    const route = `/${languageSegment(/** @type {string} */ (language))}`;
+    assertPageParity(
+      `${name} / section ${language}`,
+      (preview) => renderHomePreview(input, { language, getMessages, preview }),
+      await builtAt(site, route),
+      route,
     );
+    COVERED.add(`section home ${language}\t${name}`);
   }
   return built;
+}
+
+/**
+ * Assert the profile page's and the policy pages' parity (the latter with the
+ * site's own text when the build input has it, else with the shipped defaults).
+ *
+ * @param {string} name the fixture
+ * @param {any} site a built fixture
+ * @param {Record<string, any>} media the images
+ * @param {Record<string, string>} [markdownOf] policy Markdown by page, to
+ *   preview from Markdown rather than the built HTML
+ * @returns {Promise<void>}
+ */
+async function assertSystemPages(name, site, media, markdownOf = {}) {
+  const input = await withPostsOf(site, media);
+  const getMessages = await loadMessagesFor(previewLanguages(input));
+  const { profile } = site.buildInput.publication;
+  if (profile) {
+    const withProfile = {
+      ...input,
+      profile: { route: profile.route, body: { html: profile.body.body } },
+    };
+    assertPageParity(
+      `${name} / profile`,
+      (preview) => renderProfilePreview(withProfile, { getMessages, preview }),
+      await builtAt(site, profile.route),
+      profile.route,
+    );
+    COVERED.add(`profile\t${name}`);
+  }
+  const authored = site.buildInput.policies;
+  const policies = authored
+    ? Object.fromEntries(
+        Object.entries(authored).map(([page, entry]) => [
+          page,
+          {
+            title: /** @type {any} */ (entry).title,
+            body: markdownOf[page]
+              ? { markdown: markdownOf[page] }
+              : { html: /** @type {any} */ (entry).body.body },
+          },
+        ]),
+      )
+    : undefined;
+  for (const page of /** @type {const} */ (['terms', 'privacy'])) {
+    assertPageParity(
+      `${name} / ${page}`,
+      (preview) =>
+        renderPolicyPreview(
+          { ...input, ...(policies ? { policies } : {}) },
+          { page },
+          { getMessages, preview },
+        ),
+      await builtAt(site, `/${page}`),
+      `/${page}`,
+    );
+    COVERED.add(`${page} ${authored ? 'authored' : 'defaults'}\t${name}`);
+  }
 }
 
 /**
@@ -324,27 +440,37 @@ async function assertHomeParity(name, site, media) {
  * @param {any} site a built fixture
  * @param {object} [more]
  * @param {number} [more.minimumPosts] how many articles the fixture must hold
+ * @param {Record<string, string>} [more.markdownOf] policy Markdown by page
  * @returns {Promise<string[]>} the slugs checked
  */
-async function assertParity(name, site, { minimumPosts = 1 } = {}) {
+async function assertParity(
+  name,
+  site,
+  { minimumPosts = 1, markdownOf = {} } = {},
+) {
   if (site.theme) {
     site.themeJson = JSON.parse(
       await readFile(path.join(THEME, 'theme.json'), 'utf8'),
     );
   }
   const media = await mediaOf(site);
-  const posts = site.buildInput.content.filter(
+  const posts = site.buildInput.content;
+  const articles = posts.filter(
     (/** @type {any} */ r) => r.frontmatter.kind === 'article',
   );
-  assert.ok(posts.length >= minimumPosts, `${name}: ${posts.length} articles`);
+  assert.ok(
+    articles.length >= minimumPosts,
+    `${name}: ${articles.length} articles`,
+  );
   const routeProfile = 'directory-index';
   const slugs = [];
   for (const record of posts) {
     const input = await previewInputOf(site, record, media);
     const getMessages = await loadMessagesFor(previewLanguages(input));
     const label = `${name} / ${record.frontmatter.slug}`;
-    const off = renderArticlePreview(input, { getMessages });
+    const off = renderContentPreview(input, { getMessages });
     assert.deepEqual(off.warnings, [], label);
+    COVERED.add(`${record.frontmatter.kind}\t${name}`);
     const file = projectRouteToFilePath(
       joinBasePathAndRoute(site.buildInput.basePath, off.route),
       routeProfile,
@@ -355,7 +481,7 @@ async function assertParity(name, site, { minimumPosts = 1 } = {}) {
       `${label}: preview off equals the built page`,
     );
 
-    const on = renderArticlePreview(input, {
+    const on = renderContentPreview(input, {
       getMessages,
       preview: ALL_ON,
     });
@@ -417,7 +543,7 @@ async function assertParity(name, site, { minimumPosts = 1 } = {}) {
     if (slugs.length === 1) {
       // Each difference alone removes only itself.
       for (const [key, value] of Object.entries(ALL_ON)) {
-        const one = renderArticlePreview(input, {
+        const one = renderContentPreview(input, {
           getMessages,
           preview: { [key]: value },
         });
@@ -434,7 +560,10 @@ async function assertParity(name, site, { minimumPosts = 1 } = {}) {
       );
     }
   }
+  // The article-only name stays an alias.
+  assert.equal(renderArticlePreview, renderContentPreview);
   await assertHomeParity(name, site, media);
+  await assertSystemPages(name, site, media, markdownOf);
   return slugs;
 }
 
@@ -459,6 +588,20 @@ function fixture(name, options, expect, mark) {
 }
 
 /**
+ * @param {string} markdown a policy's authored Markdown
+ * @param {string} sourcePath where it stands in the repository
+ * @returns {any} the normalized body (render policy set by `build`)
+ */
+const authoredBody = (markdown, sourcePath) => ({
+  sourcePath,
+  sourceDigest: sha256Of(Buffer.from(markdown, 'utf8')),
+  bodyMediaType: 'text/html',
+  body: normalizeAuthoredMarkdown(markdown).html,
+  bodyDigest: `sha256:${'0'.repeat(64)}`,
+  renderPolicy: { name: 'x', version: '0', digest: `sha256:${'0'.repeat(64)}` },
+});
+
+/**
  * @param {any} input a build input
  * @param {string} slug a slug
  * @returns {any} the record
@@ -470,6 +613,31 @@ fixture(
   'rich fixture (articles, series, tags, two authors)',
   {},
   { minimumPosts: 3 },
+);
+
+const AUTHORED = {
+  terms:
+    '# Reader Terms\n\nBe kind & careful with every <comment>.\n\n## Contact\n\nWrite to the editor.\n',
+  privacy: 'We keep **no** reader accounts.\n\n- Logs\n- Nothing else\n',
+};
+
+fixture(
+  'authored Terms and Privacy (previewed from Markdown), analytics off',
+  {
+    async prepare(input) {
+      input.policies = {
+        terms: {
+          title: 'Reader Terms',
+          body: authoredBody(AUTHORED.terms, 'gala/policies/terms.md'),
+        },
+        privacy: {
+          title: 'Data Notice',
+          body: authoredBody(AUTHORED.privacy, 'gala/policies/privacy.md'),
+        },
+      };
+    },
+  },
+  { markdownOf: AUTHORED },
 );
 
 fixture('base URL with a path', {
@@ -713,4 +881,25 @@ test('parity: home page 1 only, with more posts than the page size', async () =>
   } finally {
     await site.cleanup();
   }
+});
+
+test('parity: every route kind the preview renders is covered', () => {
+  const kinds = [...COVERED].map((entry) => entry.split('\t')[0]);
+  for (const required of [
+    'article',
+    'page',
+    'edition',
+    'home',
+    'profile',
+    'terms defaults',
+    'privacy defaults',
+    'terms authored',
+    'privacy authored',
+    'section home ta',
+  ]) {
+    assert.ok(kinds.includes(required), `${required} is covered`);
+  }
+  console.log(
+    `  route kinds covered: ${[...new Set(kinds)].sort().join(', ')}`,
+  );
 });

@@ -109,10 +109,21 @@ test('the browser entry reaches no Node-only module, validator, Eleventy or requ
   );
   assert.deepEqual(offences, []);
   const reached = [...seen].map((file) => path.relative(INTERNAL, file));
-  // The home renderer lives in the same module, so this walk covers it.
+  // Every renderer lives in this module, so this walk covers them all.
   assert.ok(reached.includes('article-preview.js'));
   const entry = await import('../src/core/preview.js');
-  assert.equal(typeof entry.renderHomePreview, 'function');
+  for (const name of [
+    'renderContentPreview',
+    'renderHomePreview',
+    'renderProfilePreview',
+    'renderPolicyPreview',
+  ]) {
+    assert.equal(typeof entry[name], 'function', name);
+  }
+  // The policy renderer reaches the generated defaults, not the Node reader.
+  assert.ok(reached.includes('policy-defaults-data.js'));
+  assert.ok(reached.includes('policy-pages.js'));
+  assert.ok(!reached.includes('policy-defaults-node.js'));
   assert.ok(reached.includes('appearance/palette-derive.js'));
   for (const heavy of [
     'appearance/palette-sheet.js',
