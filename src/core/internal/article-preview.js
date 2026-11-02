@@ -1,7 +1,8 @@
 /**
- * The browser article preview: the complete document of ONE article page,
- * built by the code `renderPublication` builds an article page with
- * (`site-render.js#buildPageDocuments` with `only`, which runs
+ * The browser preview: the complete document of ONE page (any content kind,
+ * the home page or a language section home, the profile page, a policy page),
+ * built by the code `renderPublication` builds that page with
+ * (`site-render.js#buildPageDocuments` with a one-page selector, which runs
  * `page-kinds.js#buildGeneratedPages`, `skeleton.js#renderPageBody` and
  * `document-shell.js#renderDocumentShell`). This module only turns a
  * friendlier input into the structures that code reads, synthesizes the media
@@ -32,6 +33,8 @@ import { resolveContentImages } from './media/content-images.js';
 import { resolveEditions } from './editions.js';
 import { splitLiveContent } from './liveness.js';
 import { renderDocumentShell } from './document-shell.js';
+import { readSitePolicyDefaults } from './policy-defaults.js';
+import { SITE_POLICY_DEFAULTS_JSON } from './policy-defaults-data.js';
 import { resolveTranslations } from './translations.js';
 import { utf8Bytes } from './utf8.js';
 import { BuildInputValidationError } from '../errors.js';
@@ -44,7 +47,7 @@ export class PreviewInputError extends Error {
   /** @param {readonly string[]} issues what was wrong */
   constructor(issues) {
     super(
-      `the article preview input is invalid: ${issues.slice(0, 5).join('; ')}${issues.length > 5 ? `; and ${issues.length - 5} more` : ''}`,
+      `the preview input is invalid: ${issues.slice(0, 5).join('; ')}${issues.length > 5 ? `; and ${issues.length - 5} more` : ''}`,
     );
     this.name = 'PreviewInputError';
     /** @type {readonly string[]} */
@@ -54,6 +57,8 @@ export class PreviewInputError extends Error {
 
 /** The template's base layer stylesheet, exactly as a built site serves it. */
 export const BASE_LAYER_CSS = GALA_BASE_STYLESHEET_SOURCE;
+
+/** @typedef {'content' | 'home' | 'profile' | 'policy'} PreviewKind */
 
 const PREVIEW_KEYS = new Set([
   'inlineStyles',
@@ -122,13 +127,27 @@ function checkPost(post, label, input, need, str, kinds) {
 }
 
 /**
+ * @param {any} body a `{markdown}` or `{html}` body
+ * @param {string} label its field path in messages
+ * @param {(ok: boolean, what: string) => void} need records a failed check
+ * @returns {void}
+ */
+function checkBody(body, label, need) {
+  need(
+    isObject(body) &&
+      (typeof body.markdown === 'string' || typeof body.html === 'string'),
+    `${label} must be {markdown} or {html}`,
+  );
+}
+
+/**
  * Cheap structural validation: the fields the article page cannot render
  * without, each failure naming its field. (The full schema validator is not
  * part of the preview.)
  *
  * @param {any} input the candidate input
  * @param {any} options the candidate options
- * @param {'article' | 'home'} kind which renderer the input is for
+ * @param {PreviewKind} kind which renderer the input is for
  * @returns {void}
  * @throws {PreviewInputError} listing every problem
  */
@@ -169,17 +188,47 @@ function validate(input, options, kind) {
       Array.isArray(input.appearance.colorMode.allowed),
     'appearance.colorMode must be {default, allowed}',
   );
-  if (kind === 'home') {
-    need(Array.isArray(input.posts), 'posts must be an array');
-    for (const [index, entry] of (input.posts ?? []).entries()) {
-      checkPost(entry, `posts[${index}]`, input, need, str, [
-        'article',
-        'edition',
-        'page',
-      ]);
-    }
+  const allKinds = ['article', 'edition', 'page'];
+  if (kind === 'content') {
+    checkPost(post, 'post', input, need, str, allKinds);
   } else {
-    checkPost(post, 'post', input, need, str, ['article']);
+    // The home page lists the posts; the system pages take them only for the
+    // language variants and the navigation they show.
+    need(
+      kind === 'home'
+        ? Array.isArray(input.posts)
+        : input.posts === undefined || Array.isArray(input.posts),
+      'posts must be an array',
+    );
+    for (const [index, entry] of (input.posts ?? []).entries()) {
+      checkPost(entry, `posts[${index}]`, input, need, str, allKinds);
+    }
+  }
+  if (kind === 'profile') {
+    const profile = input.profile;
+    need(isObject(profile), 'profile must be an object');
+    if (isObject(profile)) {
+      need(
+        str(profile.route) && profile.route.startsWith('/'),
+        'profile.route must be a route starting with "/"',
+      );
+      checkBody(profile.body, 'profile.body', need);
+    }
+  }
+  if (kind === 'policy') {
+    need(
+      input.policies === undefined || isObject(input.policies),
+      'policies must be an object',
+    );
+    for (const page of ['terms', 'privacy']) {
+      const entry = input.policies?.[page];
+      if (input.policies === undefined) break;
+      need(
+        isObject(entry) && str(entry.title),
+        `policies.${page}.title must be a string`,
+      );
+      checkBody(entry?.body, `policies.${page}.body`, need);
+    }
   }
   need(
     typeof baseUrl === 'string' && /^https?:\/\//.test(baseUrl),
@@ -420,6 +469,40 @@ function toRecord(entry, media, inventory, warnings, full) {
 }
 
 /**
+ * @param {{markdown?: string, html?: string} | undefined} body an authored body
+ * @param {string} sourcePath where it stands in the repository
+ * @returns {import('../../../types/index.d.ts').RenderableBody} the body in
+ *   the build-input shape (normalized HTML)
+ */
+function renderableBody(body, sourcePath) {
+  return {
+    sourcePath,
+    sourceDigest: '',
+    bodyMediaType: 'text/html',
+    bodyDigest: '',
+    renderPolicy: { name: 'preview', version: '0', digest: '' },
+    body:
+      typeof body?.html === 'string'
+        ? body.html
+        : normalizeAuthoredMarkdown(String(body?.markdown ?? '')).html,
+  };
+}
+
+/** @type {Readonly<import('./policy-defaults.js').SitePolicyDefaults> | undefined} */
+let policyDefaults;
+
+/**
+ * The shipped Terms and Privacy text, from the generated module (the browser
+ * reads no file); the same document the build reads from the schemas package.
+ *
+ * @returns {Readonly<import('./policy-defaults.js').SitePolicyDefaults>} the defaults
+ */
+function loadPolicyDefaults() {
+  policyDefaults ??= readSitePolicyDefaults(() => SITE_POLICY_DEFAULTS_JSON);
+  return policyDefaults;
+}
+
+/**
  * Inline `<style>` elements for a preview, replacing `<link rel="stylesheet">`.
  *
  * @param {string} css the stylesheet text
@@ -558,12 +641,13 @@ export function buildPaletteCss(themeJson, appearanceTokens = {}) {
  *
  * @param {any} input the preview input
  * @param {any} options the render options
- * @param {'article' | 'home'} kind which renderer the input is for
+ * @param {PreviewKind} kind which renderer the input is for
  * @returns {{
  *   warnings: string[],
  *   post: import('../../../types/index.d.ts').ContentBuildRecord | undefined,
- *   pageContext: Omit<Parameters<typeof buildPageDocuments>[1], 'only' | 'home'>,
+ *   pageContext: Omit<Parameters<typeof buildPageDocuments>[1], 'only' | 'home' | 'profile' | 'policy' | 'section'>,
  *   validatedInput: import('../../../types/index.d.ts').NormalizedBuildInput,
+ *   translations: import('./translations.js').TranslationResolution,
  * }} the pieces the two renderers finish with
  */
 function prepare(input, options, kind) {
@@ -618,23 +702,36 @@ function prepare(input, options, kind) {
           footerCard: {
             authorIds: [],
             ...input.publication.footerCard,
-            body: {
-              sourcePath: 'content/footer.md',
-              sourceDigest: '',
-              bodyMediaType: 'text/html',
-              bodyDigest: '',
-              renderPolicy: { name: 'preview', version: '0', digest: '' },
-              body:
-                typeof input.publication.footerCard.body?.html === 'string'
-                  ? input.publication.footerCard.body.html
-                  : normalizeAuthoredMarkdown(
-                      String(input.publication.footerCard.body?.markdown ?? ''),
-                    ).html,
-            },
+            body: renderableBody(
+              input.publication.footerCard.body,
+              'content/footer.md',
+            ),
+          },
+        }
+      : {}),
+    ...(input.profile
+      ? {
+          profile: {
+            route: input.profile.route,
+            body: renderableBody(input.profile.body, 'content/about.md'),
           },
         }
       : {}),
   };
+  const policies = input.policies
+    ? Object.fromEntries(
+        ['terms', 'privacy'].map((page) => [
+          page,
+          {
+            title: input.policies[page].title,
+            body: renderableBody(
+              input.policies[page].body,
+              `content/${page}.md`,
+            ),
+          },
+        ]),
+      )
+    : undefined;
   const appearance = {
     theme: '',
     headerComposition: 'mark-and-name',
@@ -655,7 +752,7 @@ function prepare(input, options, kind) {
         }
       : {}),
   };
-  const article = kind === 'article';
+  const article = kind === 'content';
   const toRecords = (
     /** @type {any[]} */ entries,
     /** @type {boolean} */ full,
@@ -666,7 +763,7 @@ function prepare(input, options, kind) {
   // The article page needs its own body digest; a listing never shows one.
   const [post] = article ? toRecords([input.post], true) : [undefined];
   const siblings = toRecords(
-    article ? (input.siblings ?? []) : input.posts,
+    article ? (input.siblings ?? []) : (input.posts ?? []),
     false,
   );
   const buildEpoch = input.buildEpoch ?? new Date().toISOString();
@@ -696,6 +793,7 @@ function prepare(input, options, kind) {
     baseUrl: input.baseUrl,
     basePath: input.basePath,
     placements: [],
+    ...(policies ? { policies } : {}),
   });
 
   // Only the article page shows body images; a listing card shows none.
@@ -775,8 +873,10 @@ function prepare(input, options, kind) {
     warnings,
     post,
     validatedInput,
+    translations,
     pageContext: {
       getMessages,
+      loadPolicyDefaults,
       routeProfile,
       liveSplit,
       contentImages,
@@ -796,62 +896,125 @@ function prepare(input, options, kind) {
 }
 
 /**
- * Render one article page of a publication as a complete HTML document.
+ * Build the one page a selector names and shape the result.
  *
- * @param {any} input the article and the publication around it
- *   (`ArticlePreviewInput` in `types/preview.d.ts`)
- * @param {any} options the render options (`ArticlePreviewOptions`)
+ * @param {any} input the preview input
+ * @param {any} options the render options
+ * @param {PreviewKind} kind which renderer the input is for
+ * @param {(prepared: ReturnType<typeof prepare>) => Record<string, unknown>} selector
+ *   the one-page selector `buildPageDocuments` reads
  * @returns {{html: string, title: string, route: string, warnings: string[]}}
  *   the document, its title, its public route and what could not be shown
- * @throws {PreviewInputError} the input is malformed or incomplete
  */
-export function renderArticlePreview(input, options) {
-  const { warnings, post, validatedInput, pageContext } = prepare(
-    input,
-    options,
-    'article',
-  );
-  const documents = buildPageDocuments(validatedInput, {
-    ...pageContext,
-    only: /** @type {any} */ (post).frontmatter.id,
+function renderOne(input, options, kind, selector) {
+  const prepared = prepare(input, options, kind);
+  const documents = buildPageDocuments(prepared.validatedInput, {
+    ...prepared.pageContext,
+    ...selector(prepared),
   });
   const page = documents.generatedPages[0];
   return {
     html: documents.contentPages[0].content,
     title: page.documentTitle ?? page.title,
     route: page.route,
-    warnings,
+    warnings: prepared.warnings,
   };
 }
 
 /**
- * Render the home page (route `/`, page 1 of the listing) of a publication as
- * a complete HTML document, by the code the build renders it with.
+ * Render one content record of any kind (article, page or edition) as a
+ * complete HTML document; the record's own kind picks the layout, as in the
+ * build.
  *
- * @param {any} input the publication and the posts its home page lists
- *   (`HomePreviewInput` in `types/preview.d.ts`)
+ * @param {any} input the record and the publication around it
+ *   (`ContentPreviewInput` in `types/preview.d.ts`)
  * @param {any} options the render options (`ArticlePreviewOptions`)
  * @returns {{html: string, title: string, route: string, warnings: string[]}}
  *   the document, its title, its public route and what could not be shown
  * @throws {PreviewInputError} the input is malformed or incomplete
  */
+export function renderContentPreview(input, options) {
+  return renderOne(input, options, 'content', ({ post }) => ({
+    only: /** @type {any} */ (post).frontmatter.id,
+  }));
+}
+
+/**
+ * The article-only name of {@link renderContentPreview}, kept as an alias: an
+ * `article` input renders exactly as before, and other kinds now render
+ * with their own layout.
+ *
+ * @param {any} input the record and the publication around it
+ * @param {any} options the render options
+ * @returns {{html: string, title: string, route: string, warnings: string[]}}
+ *   the document
+ * @throws {PreviewInputError} the input is malformed or incomplete
+ */
+export const renderArticlePreview = renderContentPreview;
+
+/**
+ * Render the home page (route `/`, page 1 of the listing) of a publication,
+ * or, with `options.language`, the section home of that non-default language
+ * (page 1, at `/<segment>`), by the code the build renders it with.
+ *
+ * @param {any} input the publication and the posts its home page lists
+ *   (`HomePreviewInput` in `types/preview.d.ts`)
+ * @param {any} options the render options (`HomePreviewOptions`)
+ * @returns {{html: string, title: string, route: string, warnings: string[]}}
+ *   the document, its title, its public route and what could not be shown
+ * @throws {PreviewInputError} the input is malformed or incomplete, or the
+ *   language has no section home
+ */
 export function renderHomePreview(input, options) {
-  const { warnings, validatedInput, pageContext } = prepare(
-    input,
-    options,
-    'home',
-  );
-  const documents = buildPageDocuments(validatedInput, {
-    ...pageContext,
-    home: true,
+  return renderOne(input, options, 'home', ({ translations }) => {
+    const wanted = options.language;
+    if (wanted === undefined) return { home: true };
+    const section = translations.sections.find(
+      (candidate) =>
+        candidate.language.toLowerCase() === String(wanted).toLowerCase(),
+    );
+    if (section === undefined) {
+      throw new PreviewInputError([
+        `options.language ${JSON.stringify(wanted)} has no section home: it needs a published article in that language other than the default`,
+      ]);
+    }
+    return { section: section.segment };
   });
-  const page = documents.generatedPages[0];
-  return {
-    html: documents.contentPages[0].content,
-    title: page.documentTitle ?? page.title,
-    route: page.route,
-    warnings,
-  };
+}
+
+/**
+ * Render the publication's profile (About) page.
+ *
+ * @param {any} input the site sections and `profile` (`ProfilePreviewInput`)
+ * @param {any} options the render options (`ArticlePreviewOptions`)
+ * @returns {{html: string, title: string, route: string, warnings: string[]}}
+ *   the document, its title, its public route and what could not be shown
+ * @throws {PreviewInputError} the input is malformed or incomplete
+ */
+export function renderProfilePreview(input, options) {
+  return renderOne(input, options, 'profile', () => ({ profile: true }));
+}
+
+/**
+ * Render the Terms or the Privacy page: the site's own text (`input.policies`)
+ * or, with none, the shipped default, then the template-owned Galascribe
+ * section.
+ *
+ * @param {any} input the site sections and optional `policies` (`PolicyPreviewInput`)
+ * @param {{page: 'terms' | 'privacy'}} which the page to render
+ * @param {any} options the render options (`ArticlePreviewOptions`)
+ * @returns {{html: string, title: string, route: string, warnings: string[]}}
+ *   the document, its title, its public route and what could not be shown
+ * @throws {PreviewInputError} the input is malformed or incomplete
+ */
+export function renderPolicyPreview(input, which, options) {
+  if (
+    !isObject(which) ||
+    (which.page !== 'terms' && which.page !== 'privacy')
+  ) {
+    throw new PreviewInputError(['page must be "terms" or "privacy"']);
+  }
+  return renderOne(input, options, 'policy', () => ({ policy: which.page }));
 }
 
 export { EDITORIAL_COMPOSITION };
