@@ -8,6 +8,80 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.14.0] - 2026-11-03
+
+### Added
+
+- **Fenced blocks** (`video`, `bookmark`, `file`): a fenced code block with one
+  of those info strings and a well-formed `key: value` body becomes a card; a
+  malformed block stays an ordinary code block. `video` (`provider` youtube or
+  vimeo, `id`, `title`, optional `poster`) is a link card to the watch page;
+  `bookmark` (`url`, `title`, optional `description`, `site`) is a text link
+  card; `file` (`path`, `title`, optional `description`) is a PDF download card.
+  The grammar is in the README ("Fenced blocks") and in the published render
+  policy (`fencedBlocks`). Cards use the new `g-video`, `g-bookmark`, `g-file`,
+  `g-block*` and `g-video__frame` classes of the base layer, existing tokens
+  only; no token is added to the styling contract, so themes need no change.
+- **Click to play.** `assets/gala-video-v1.js`, loaded only on a page that holds
+  a video card, swaps the card for one `<iframe>` from `youtube-nocookie.com` or
+  `player.vimeo.com` after a tap. The page loads nothing from either provider
+  before that.
+- **PDF files.** A `file` block's PDF (a `content[].media[]` entry of
+  `mediaType` `application/pdf`, at most 10 MiB, `%PDF-` signature) is emitted
+  once at `assets/files/<name>.<hash8>.pdf` with one manifest row
+  (`application/octet-stream`: the manifest schema pinned here has no PDF
+  member). Until schemas 3.32.0 is pinned the template checks the PDF entry
+  itself and leaves it out of the schema validation.
+- **Galleries.** Two or more adjacent image-only paragraphs are wrapped at
+  render time in `<div class="g-gallery" data-count="N">` (a grid; one column
+  under 480 px). The stored body, the first-body-image choice, feeds, search
+  index and `llms` files are unchanged.
+- **Recommendations.** `publication.recommendations` (at most 24 of
+  `{url, title, description?, addedOn?}`, validated by the template as well as
+  by the schema) renders a "Recommended by <site>" section on the About page and
+  publishes `/.well-known/recommendations.json` as a bare array of
+  `{url, created_at, updated_at}`.
+- **Comment extras** in `gala-interactions.js`: with
+  `interactions-config.comments.likes: true`, a Like button per comment that
+  carries `likeCount` (signed-in readers; optimistic count;
+  `PUT`/`DELETE /v2/public/comments/{id}/like`); a "Pinned" badge and
+  pinned-first order for a comment with `pinned: true`; a Newest / Oldest
+  control that requests `sort=`. The comments region now carries `data-labels`
+  (the sentences above in the page's language) and, with likes on, the section
+  carries `data-comment-likes="true"`.
+- Twelve message keys in all 58 catalogs (`videoPlayLabel`, `videoOpenOnLabel`,
+  `bookmarkReadOnLabel`, `fileDownloadLabel`, `recommendationsHeading`,
+  `recommendationVisitLabel`, `commentLikeLabel`, `commentUnlikeLabel`,
+  `commentPinnedLabel`, `commentSortLabel`, `commentSortNewestLabel`,
+  `commentSortOldestLabel`), translated per language.
+- Icons `play`, `file` and `download`.
+
+### Changed
+
+- **The render policy changes, so its identity changes.** The CSP gains
+  `frame-src https://player.vimeo.com https://www.youtube-nocookie.com` (in the
+  `<meta>` form and the complete header form); `figure` admits `class`,
+  `data-gala-block` and `data-gala-video`, each only as part of one block; the
+  published contract carries the block grammar. `contracts/render-policy.jcs` is
+  regenerated.
+- The interactive preview's policy allows frames from the same two hosts
+  (previously `frame-src 'none'`), and runs the video script like a built page.
+- `pageBody` takes the page's message catalog as an optional second argument.
+
+### Compatibility
+
+Existing content renders identically: a body without a block, a gallery or a
+recommendation produces the same page markup as 4.13.1, apart from the CSP
+`<meta>` (one new directive) and, on a page with comments on, the new
+`data-labels` attribute on the comments region. Because the render-policy
+identity changes (CSP, `figure` attributes, the block grammar), every consumer
+that checks the identity (`publish-action`, the App's preview, the API) must pin
+template 4.14.0 together; a body normalized by 4.13.1 is refused by 4.14.0 until
+it is normalized again. Peer range and schemas pin are unchanged (`^3.26.0`);
+the members schemas 3.32.0 adds (PDF media entries,
+`publication.recommendations`, `comments.likes`) are validated here until that
+pin.
+
 ## [4.13.1] - 2026-11-02
 
 ### Fixed
