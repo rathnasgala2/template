@@ -290,14 +290,20 @@ test('every page carries exactly one script, the CSP allows connect-src self onl
   }
 });
 
-test('the CSP baseline allows connect-src self and the production API origin only', () => {
+test('the CSP baseline allows connect-src self and the production API origin, and frames from the two video hosts only', () => {
   const csp = CONTENT_SECURITY_POLICY_META_BASELINE;
   assert.match(csp, /default-src 'none'/);
   assert.match(csp, /connect-src 'self' https:\/\/api\.galascribe\.com;/);
   assert.match(csp, /script-src 'self'/);
   assert.match(csp, /style-src 'self'/);
   assert.ok(!/unsafe-inline|unsafe-eval|data:/.test(csp));
+  assert.match(
+    csp,
+    /frame-src https:\/\/player\.vimeo\.com https:\/\/www\.youtube-nocookie\.com;/,
+  );
   assert.deepEqual(csp.match(/https?:\/\/[^\s;]+/g), [
+    'https://player.vimeo.com',
+    'https://www.youtube-nocookie.com',
     'https://api.galascribe.com',
   ]);
   assert.match(csp, /worker-src 'none'/);

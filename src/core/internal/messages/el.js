@@ -287,6 +287,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'Αυτή η σελίδα δεν έχει δημοσιευτεί ακόμη',
   previewAudioUnavailableLabel:
     'Ο ήχος αναπαράγεται μόλις δημοσιευτεί η ανάρτηση',
+  videoPlayLabel: 'Αναπαραγωγή βίντεο',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Δείτε στο ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Διαβάστε στο ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Λήψη PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Προτείνεται από το ${site}`,
+  recommendationVisitLabel: 'Επίσκεψη',
+  commentLikeLabel: 'Μου αρέσει',
+  commentUnlikeLabel: 'Δεν μου αρέσει πια',
+  commentPinnedLabel: 'Καρφιτσωμένο',
+  commentSortLabel: 'Ταξινόμηση σχολίων',
+  commentSortNewestLabel: 'Πιο πρόσφατα',
+  commentSortOldestLabel: 'Παλαιότερα',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

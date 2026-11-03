@@ -271,6 +271,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'ไม่สามารถลงชื่อเข้าใช้ในโหมดตัวอย่างได้',
   previewNotPublishedLabel: 'หน้านี้ยังไม่ได้เผยแพร่',
   previewAudioUnavailableLabel: 'เสียงจะเล่นได้เมื่อโพสต์นี้เผยแพร่แล้ว',
+  videoPlayLabel: 'เล่นวิดีโอ',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `ดูบน ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `อ่านบน ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `ดาวน์โหลด PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `แนะนำโดย ${site}`,
+  recommendationVisitLabel: 'เยี่ยมชม',
+  commentLikeLabel: 'ถูกใจ',
+  commentUnlikeLabel: 'เลิกถูกใจ',
+  commentPinnedLabel: 'ปักหมุด',
+  commentSortLabel: 'เรียงลำดับความคิดเห็น',
+  commentSortNewestLabel: 'ใหม่สุด',
+  commentSortOldestLabel: 'เก่าสุด',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

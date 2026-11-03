@@ -282,6 +282,22 @@ export default Object.freeze({
     'Innlogging er ikke tilgjengelig i forhåndsvisningen',
   previewNotPublishedLabel: 'Denne siden er ikke publisert ennå',
   previewAudioUnavailableLabel: 'Lyden spilles av når innlegget er publisert',
+  videoPlayLabel: 'Spill av video',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Se på ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Les på ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Last ned PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Anbefalt av ${site}`,
+  recommendationVisitLabel: 'Besøk',
+  commentLikeLabel: 'Lik',
+  commentUnlikeLabel: 'Fjern liker',
+  commentPinnedLabel: 'Festet',
+  commentSortLabel: 'Sorter kommentarer',
+  commentSortNewestLabel: 'Nyeste',
+  commentSortOldestLabel: 'Eldste',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

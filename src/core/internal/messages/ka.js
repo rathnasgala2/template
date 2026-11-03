@@ -275,6 +275,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'გადახედვაში შესვლა მიუწვდომელია',
   previewNotPublishedLabel: 'ეს გვერდი ჯერ არ არის გამოქვეყნებული',
   previewAudioUnavailableLabel: 'აუდიო ითამაშებს პოსტის გამოქვეყნების შემდეგ',
+  videoPlayLabel: 'ვიდეოს ჩართვა',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `უყურეთ ${provider}-ზე`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `წაიკითხეთ ${site}-ზე`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF-ის ჩამოტვირთვა (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `რეკომენდებულია ${site}-ის მიერ`,
+  recommendationVisitLabel: 'მონახულება',
+  commentLikeLabel: 'მოწონება',
+  commentUnlikeLabel: 'მოწონების გაუქმება',
+  commentPinnedLabel: 'მიმაგრებული',
+  commentSortLabel: 'კომენტარების დახარისხება',
+  commentSortNewestLabel: 'უახლესი',
+  commentSortOldestLabel: 'უძველესი',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

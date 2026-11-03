@@ -275,6 +275,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'Önizlemede oturum açma kullanılamaz',
   previewNotPublishedLabel: 'Bu sayfa henüz yayımlanmadı',
   previewAudioUnavailableLabel: 'Ses, bu yazı yayımlandığında oynatılır',
+  videoPlayLabel: 'Videoyu oynat',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider} üzerinde izle`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site} üzerinde oku`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF indir (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site} tarafından önerilir`,
+  recommendationVisitLabel: 'Ziyaret et',
+  commentLikeLabel: 'Beğen',
+  commentUnlikeLabel: 'Beğeniyi geri al',
+  commentPinnedLabel: 'Sabitlendi',
+  commentSortLabel: 'Yorumları sırala',
+  commentSortNewestLabel: 'En yeni',
+  commentSortOldestLabel: 'En eski',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -277,6 +277,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'Tato stránka ještě není zveřejněna',
   previewAudioUnavailableLabel:
     'Zvuk se přehraje po zveřejnění tohoto příspěvku',
+  videoPlayLabel: 'Přehrát video',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Sledovat na ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Číst na ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Stáhnout PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Doporučuje ${site}`,
+  recommendationVisitLabel: 'Navštívit',
+  commentLikeLabel: 'To se mi líbí',
+  commentUnlikeLabel: 'Zrušit „líbí se“',
+  commentPinnedLabel: 'Připnuto',
+  commentSortLabel: 'Seřadit komentáře',
+  commentSortNewestLabel: 'Nejnovější',
+  commentSortOldestLabel: 'Nejstarší',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

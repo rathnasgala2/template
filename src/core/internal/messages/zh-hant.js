@@ -266,6 +266,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: '預覽中無法登入',
   previewNotPublishedLabel: '此頁面尚未發佈',
   previewAudioUnavailableLabel: '文章發佈後即可播放音訊',
+  videoPlayLabel: '播放影片',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `在 ${provider} 觀看`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `在 ${site} 閱讀`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `下載 PDF（${size}）`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site} 推薦`,
+  recommendationVisitLabel: '前往',
+  commentLikeLabel: '讚',
+  commentUnlikeLabel: '收回讚',
+  commentPinnedLabel: '已置頂',
+  commentSortLabel: '排序留言',
+  commentSortNewestLabel: '最新',
+  commentSortOldestLabel: '最舊',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

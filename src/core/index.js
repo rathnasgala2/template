@@ -129,6 +129,19 @@ import {
 } from './internal/translations.js';
 import { loadSitePolicyDefaults } from './internal/policy-defaults-node.js';
 import { loadAudienceScript } from './internal/audience-node.js';
+import { loadVideoScript } from './internal/video-node.js';
+import {
+  VIDEO_SCRIPT_MEDIA_TYPE,
+  VIDEO_SCRIPT_PATH,
+} from './internal/content-blocks.js';
+import { withoutForwardMembers } from './internal/forward-compat.js';
+import { resolveContentFiles } from './internal/media/content-files.js';
+import { processContentFiles } from './internal/media/files.js';
+import {
+  RECOMMENDATIONS_ROUTE,
+  buildRecommendationsDocument,
+  readRecommendations,
+} from './internal/recommendations.js';
 import {
   loadCountsScript,
   loadInteractionsScript,
@@ -383,9 +396,11 @@ async function assertRenderPolicyCompliance(validatedInput) {
  *   the absolute candidate output directory and the assembled manifest
  */
 export async function renderPublication(buildInput, options) {
+  // The members a newer schema adds are checked here, then left out of the
+  // schema validation (`internal/forward-compat.js`).
   const inputValidation = validateGalaDocument(
     BUILD_INPUT_SCHEMA_ID,
-    buildInput,
+    withoutForwardMembers(buildInput),
   );
   if (!inputValidation.valid) {
     throw new BuildInputValidationError(inputValidation.diagnostics);
@@ -408,6 +423,8 @@ export async function renderPublication(buildInput, options) {
   // for its document; resolved here, from the verified bodies alone, so an
   // unresolved one fails closed before anything is written.
   const contentImages = resolveContentImages(validatedInput);
+  // The same for the PDFs the `file` blocks link.
+  const contentFiles = resolveContentFiles(validatedInput);
   // No document may take a route the generated policy pages own.
   // The Contact page owns `/contact` while the site's contact form is on.
   assertPolicyRoutesFree(
@@ -475,6 +492,11 @@ export async function renderPublication(buildInput, options) {
     sourceDirectory: path.resolve(options.sourceDirectory),
     contentImages: [...contentImages.values()],
   });
+  // Each linked PDF, verified the same way.
+  const contentFileOutput = await processContentFiles(
+    [...contentFiles.values()],
+    { sourceDirectory: path.resolve(options.sourceDirectory) },
+  );
   // Each published article's audio (Listen live), verified like the media
   // above and before anything is written.
   const listenAudio = listen.live
@@ -504,12 +526,18 @@ export async function renderPublication(buildInput, options) {
     routeProfile,
     liveSplit,
     contentImages,
+    contentFiles,
     editions,
     translations,
     site,
     themeAssets: themeAssetsResult,
     media: { mediaAssets, mediaDimensions, mediaVariants },
   });
+
+  // The click-to-play script is emitted exactly when a page links it.
+  const videoOn = [...contentPages, ...redirectPages].some((page) =>
+    page.content.includes('data-gala-video-script'),
+  );
 
   // Feeds, sitemap and the static search index. Each is a fixed,
   // literal-extension file — never route-normalized like an ordinary
@@ -570,6 +598,16 @@ export async function renderPublication(buildInput, options) {
     ...(aiPolicy.granular ? { license: absoluteSiteUrl(LICENSE_ROUTE) } : {}),
     routeProfile,
   });
+  // `/.well-known/recommendations.json`, only when the author recommends
+  // sites (Ghost's shape: a bare array of `{url, created_at, updated_at}`).
+  const recommendationsFilePath = projectFixedAssetPath(
+    validatedInput.basePath,
+    RECOMMENDATIONS_ROUTE,
+  );
+  const recommendationsJson = buildRecommendationsDocument(
+    readRecommendations(validatedInput.publication.recommendations),
+    validatedInput.buildEpoch,
+  );
   // Each live, indexable article's Markdown twin, read from the repository
   // file the build input digested (see `internal/static-outputs.js`). An
   // article whose file is not there, or is not that file, has no twin.
@@ -650,6 +688,15 @@ export async function renderPublication(buildInput, options) {
       permalink: versionFilePath,
     },
     { virtualPath: 'robots.html', content: robotsTxt, permalink: ROBOTS_PATH },
+    ...(recommendationsJson === undefined
+      ? []
+      : [
+          {
+            virtualPath: 'recommendations.html',
+            content: recommendationsJson,
+            permalink: recommendationsFilePath,
+          },
+        ]),
     { virtualPath: 'llms.html', content: llmsTxt, permalink: llmsFilePath },
     {
       virtualPath: 'llms-full.html',
@@ -742,6 +789,10 @@ export async function renderPublication(buildInput, options) {
     [
       ROBOTS_PATH,
       { routeClass: 'asset', mediaType: 'text/plain; charset=utf-8' },
+    ],
+    [
+      recommendationsFilePath,
+      { routeClass: 'asset', mediaType: 'application/json; charset=utf-8' },
     ],
     [
       llmsFilePath,
@@ -846,6 +897,20 @@ export async function renderPublication(buildInput, options) {
     const destination = path.join(outputDirectory, joinedPath);
     await mkdir(path.dirname(destination), { recursive: true });
     await writeFile(destination, file.bytes);
+  }
+
+  // Each linked PDF, copied as-is at its content-hashed path.
+  const joinedFileAssets = contentFileOutput.assets.map((asset) => ({
+    ...asset,
+    path: projectFixedAssetPath(validatedInput.basePath, `/${asset.path}`),
+  }));
+  for (const file of contentFileOutput.files) {
+    const destination = path.join(
+      outputDirectory,
+      projectFixedAssetPath(validatedInput.basePath, `/${file.path}`),
+    );
+    await mkdir(path.dirname(destination), { recursive: true });
+    await copyFile(file.source, destination);
   }
 
   // Each published article's audio (Listen live), copied as-is from the source
@@ -1019,6 +1084,30 @@ export async function renderPublication(buildInput, options) {
     });
   }
 
+  // The click-to-play video script, only when some page carries a video card.
+  /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
+  const videoAssets = [];
+  if (videoOn) {
+    const videoScriptBytes = await loadVideoScript();
+    const joinedVideoScriptPath = projectFixedAssetPath(
+      validatedInput.basePath,
+      `/${VIDEO_SCRIPT_PATH}`,
+    );
+    const videoScriptDestination = path.join(
+      outputDirectory,
+      joinedVideoScriptPath,
+    );
+    await mkdir(path.dirname(videoScriptDestination), { recursive: true });
+    await writeFile(videoScriptDestination, videoScriptBytes);
+    videoAssets.push({
+      path: joinedVideoScriptPath,
+      mediaType: VIDEO_SCRIPT_MEDIA_TYPE,
+      byteLength: String(videoScriptBytes.byteLength),
+      sha256: digestBytes(videoScriptBytes),
+      immutable: false,
+    });
+  }
+
   // The Listen script, only when Listen is live: the template package's own
   // file, like the audience script.
   /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
@@ -1072,6 +1161,8 @@ export async function renderPublication(buildInput, options) {
   const assets = [
     ...joinedMediaAssets,
     ...joinedListenAssets,
+    ...joinedFileAssets,
+    ...videoAssets,
     appearanceScriptAsset,
     baseStylesheetAsset,
     ...interactionsAssets,

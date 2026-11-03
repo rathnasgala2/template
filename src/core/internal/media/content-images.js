@@ -42,6 +42,9 @@ import { unescapeHtml } from '../skeleton.js';
  * @property {string} body the body HTML
  * @property {ReadonlyMap<string, ImageReference>} inventory the image
  *   assets this body may reference, keyed by repository path
+ * @property {readonly {path: string, sourceDigest: string, mediaType: string, byteLength: number}[]} media
+ *   the document's whole `media[]` (empty for a body with no inventory), for
+ *   the other kinds of file a body may reference (`content-files.js`)
  */
 
 /** The `media[]` media types a body image may resolve to. */
@@ -148,7 +151,7 @@ function inventoryOf(media) {
  *   the validated build input
  * @returns {BodyScope[]} every body, in document order
  */
-function bodyScopes(buildInput) {
+export function bodyScopes(buildInput) {
   const { profile, footerCard } = buildInput.publication;
   /** @type {BodyScope[]} */
   const scopes = [];
@@ -158,6 +161,7 @@ function bodyScopes(buildInput) {
       sourcePath: profile.body.sourcePath,
       body: profile.body.body,
       inventory: new Map(),
+      media: [],
     });
   }
   if (footerCard?.enabled) {
@@ -166,6 +170,7 @@ function bodyScopes(buildInput) {
       sourcePath: footerCard.body.sourcePath,
       body: footerCard.body.body,
       inventory: new Map(),
+      media: [],
     });
   }
   for (const key of /** @type {const} */ (['terms', 'privacy'])) {
@@ -176,6 +181,7 @@ function bodyScopes(buildInput) {
         sourcePath: page.body.sourcePath,
         body: page.body.body,
         inventory: new Map(),
+        media: [],
       });
     }
   }
@@ -185,6 +191,7 @@ function bodyScopes(buildInput) {
       sourcePath: record.sourcePath,
       body: record.body,
       inventory: inventoryOf(record.media),
+      media: record.media ?? [],
     });
   });
   return scopes;

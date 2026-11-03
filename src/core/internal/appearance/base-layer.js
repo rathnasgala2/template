@@ -831,6 +831,58 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-toast[data-tone="warning"] { border-left: .35rem solid var(--gala-color-warning); }
   .g-toast[data-tone="danger"] { border-left: .35rem solid var(--gala-color-danger); }
 
+  /* ---------- content blocks: video, bookmark and file cards, galleries (fenced blocks and runs of images in a post) ---------- */
+  .g-prose .g-block { display: flex; flex-direction: column; gap: var(--gala-space-3); min-width: 0; padding: var(--gala-space-3); border-radius: var(--gala-radius-large); background: var(--gala-color-surface); border: var(--gala-border-card); box-shadow: var(--gala-shadow-card); color: var(--gala-color-text); text-decoration: none; transition: box-shadow var(--gala-duration-base) var(--gala-ease-standard), transform var(--gala-duration-base) var(--gala-ease-standard); }
+  .g-prose .g-block:hover { box-shadow: var(--gala-shadow-card-hover); transform: translate(var(--gala-lift-x), var(--gala-lift-y)); }
+  .g-prose .g-block:focus-visible { outline-offset: 2px; }
+  .g-block--file, .g-block--bookmark { flex-direction: row; align-items: center; }
+  .g-block__text { display: flex; flex-direction: column; gap: var(--gala-space-1); min-width: 0; flex: 1; font-family: var(--gala-font-ui); }
+  .g-block__title { font-family: var(--gala-font-display); font-weight: var(--gala-weight-title); font-size: 1.05rem; line-height: 1.3; overflow-wrap: anywhere; }
+  .g-block__desc { font-size: .9rem; line-height: 1.45; color: var(--gala-color-text-muted); overflow-wrap: anywhere; }
+  .g-block__meta { display: inline-flex; align-items: center; gap: .4em; font-size: .8125rem; font-weight: var(--gala-weight-ui); color: var(--gala-color-link); }
+  .g-block__meta .g-icon { width: 1rem; height: 1rem; flex: none; }
+  .g-block__media { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--gala-radius-medium); background: var(--gala-color-surface-raised); }
+  .g-block__media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border: 0; border-radius: 0; }
+  .g-block__play { position: relative; display: grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: var(--gala-radius-pill); background: var(--gala-color-accent); color: var(--gala-color-on-accent); box-shadow: var(--gala-shadow-card); transition: transform var(--gala-duration-base) var(--gala-ease-standard); }
+  .g-block__play .g-icon { width: 1.5rem; height: 1.5rem; fill: currentColor; stroke: currentColor; margin-left: .15rem; }
+  .g-block--video:hover .g-block__play { transform: scale(1.08); }
+  .g-block__media--icon { flex: none; aspect-ratio: 1 / 1; width: 3.5rem; color: var(--gala-color-icon-accent); }
+  .g-block__media--icon .g-icon { width: 1.75rem; height: 1.75rem; }
+  .g-video__frame { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--gala-radius-large); background: var(--gala-color-surface-raised); border: var(--gala-border-card); }
+  .g-video__frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .g-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gala-space-3); align-items: center; }
+  .g-gallery[data-count="2"], .g-gallery[data-count="3"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g-gallery > p { margin: 0; }
+  .g-gallery img { display: block; width: 100%; height: auto; }
+  @media (max-width: 480px) {
+    .g-gallery, .g-gallery[data-count="2"], .g-gallery[data-count="3"] { grid-template-columns: minmax(0, 1fr); }
+  }
+  /* ---------- recommendations (the About page) ---------- */
+  .g-recommendations { display: grid; gap: var(--gala-space-4); padding-block: var(--gala-space-8); }
+  .g-recommendations__title { font-family: var(--gala-font-display); font-weight: var(--gala-weight-title); font-size: clamp(1.25rem, 1.1rem + .6vw, 1.5rem); }
+  .g-recommendations__list { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: var(--gala-space-4); list-style: none; margin: 0; padding: 0; }
+  .g-recommendation { position: relative; display: flex; flex-direction: column; gap: var(--gala-space-2); padding: var(--gala-space-4); border-radius: var(--gala-radius-large); background: var(--gala-color-surface); border: var(--gala-border-card); box-shadow: var(--gala-shadow-card); min-width: 0; transition: box-shadow var(--gala-duration-base) var(--gala-ease-standard); }
+  .g-recommendation:hover, .g-recommendation:focus-within { box-shadow: var(--gala-shadow-card-hover); }
+  .g-recommendation__title { font-family: var(--gala-font-display); font-weight: var(--gala-weight-title); font-size: 1.05rem; line-height: 1.3; overflow-wrap: anywhere; }
+  .g-recommendation__title a { color: var(--gala-color-text); text-decoration: none; }
+  .g-recommendation__title a::after { content: ""; position: absolute; inset: 0; border-radius: var(--gala-radius-large); }
+  .g-recommendation:hover .g-recommendation__title a { color: var(--gala-color-link); }
+  .g-recommendation__desc { margin: 0; font-size: .9rem; line-height: 1.45; color: var(--gala-color-text-muted); }
+  .g-recommendation__meta { display: flex; align-items: center; justify-content: space-between; gap: var(--gala-space-2); margin: auto 0 0; padding-top: var(--gala-space-2); font-family: var(--gala-font-ui); font-size: .8125rem; color: var(--gala-color-text-muted); overflow-wrap: anywhere; }
+  .g-recommendation__visit { display: inline-flex; align-items: center; gap: .3em; flex: none; color: var(--gala-color-link); font-weight: var(--gala-weight-ui); }
+  .g-recommendation__visit .g-icon { width: 1rem; height: 1rem; }
+  /* ---------- comment extras: likes, the pinned badge, the Newest / Oldest control ---------- */
+  .g-comment__like { display: inline-flex; align-items: center; gap: .4em; }
+  .g-comment__like-count { font-variant-numeric: tabular-nums; }
+  .g-comment__like-count:empty { display: none; }
+  .g-comment__like--active { color: var(--gala-color-accent); }
+  .g-comment__pinned { margin-inline-start: auto; }
+  .g-comments__sort { display: inline-flex; gap: var(--gala-space-1); }
+  .g-comments__sort[hidden] { display: none; }
+  .g-comments__sort-option { min-height: 2.5rem; padding: 0 .85rem; border-radius: var(--gala-radius-pill); border: var(--gala-border-width) solid var(--gala-color-border); background: transparent; color: var(--gala-color-text-muted); font-family: var(--gala-font-ui); font-weight: var(--gala-weight-ui); font-size: .8125rem; cursor: pointer; }
+  .g-comments__sort-option:hover { border-color: var(--gala-color-text); color: var(--gala-color-text); }
+  .g-comments__sort-option[aria-pressed="true"] { border-color: var(--gala-color-accent); background: var(--gala-paint-chip); color: var(--gala-color-chip-text); }
+
   /* ---------- listen: audio versions of posts (only in a build where Listen is live) ---------- */
   /* Top-bar button: a button on an article with audio, a link to the home playlist elsewhere. The label shows from 600px; below that the icon stands alone and the label stays in the accessible name. */
   .g-listen-nav {

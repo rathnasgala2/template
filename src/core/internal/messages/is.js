@@ -276,6 +276,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'Þessi síða hefur ekki verið birt enn',
   previewAudioUnavailableLabel:
     'Hljóðið spilast þegar færslan hefur verið birt',
+  videoPlayLabel: 'Spila myndband',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Horfa á ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Lesa á ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Sækja PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Mælt með af ${site}`,
+  recommendationVisitLabel: 'Heimsækja',
+  commentLikeLabel: 'Líkar við',
+  commentUnlikeLabel: 'Hætta að líka við',
+  commentPinnedLabel: 'Fest',
+  commentSortLabel: 'Raða athugasemdum',
+  commentSortNewestLabel: 'Nýjast',
+  commentSortOldestLabel: 'Elst',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

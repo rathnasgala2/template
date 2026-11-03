@@ -46,6 +46,9 @@ export const ICONS = Object.freeze({
     '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  play: '<path d="M8 5.5v13l11-6.5z"/>',
+  file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+  download: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
 
   // Share targets. The brand marks below are monochrome Simple Icons paths
   // (https://simpleicons.org, CC0-1.0; 24x24 grid). They are filled glyphs,

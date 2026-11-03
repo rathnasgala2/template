@@ -276,6 +276,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'ಮುನ್ನೋಟದಲ್ಲಿ ಸೈನ್ ಇನ್ ಲಭ್ಯವಿಲ್ಲ',
   previewNotPublishedLabel: 'ಈ ಪುಟವನ್ನು ಇನ್ನೂ ಪ್ರಕಟಿಸಿಲ್ಲ',
   previewAudioUnavailableLabel: 'ಪೋಸ್ಟ್ ಪ್ರಕಟವಾದ ನಂತರ ಆಡಿಯೋ ಪ್ಲೇ ಆಗುತ್ತದೆ',
+  videoPlayLabel: 'ವೀಡಿಯೊ ಪ್ಲೇ ಮಾಡಿ',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider} ನಲ್ಲಿ ವೀಕ್ಷಿಸಿ`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site} ನಲ್ಲಿ ಓದಿ`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site} ಶಿಫಾರಸು ಮಾಡಿದೆ`,
+  recommendationVisitLabel: 'ಭೇಟಿ ನೀಡಿ',
+  commentLikeLabel: 'ಇಷ್ಟ',
+  commentUnlikeLabel: 'ಇಷ್ಟ ಹಿಂತೆಗೆದುಕೊಳ್ಳಿ',
+  commentPinnedLabel: 'ಪಿನ್ ಮಾಡಲಾಗಿದೆ',
+  commentSortLabel: 'ಕಾಮೆಂಟ್‌ಗಳನ್ನು ವಿಂಗಡಿಸಿ',
+  commentSortNewestLabel: 'ಹೊಸದು',
+  commentSortOldestLabel: 'ಹಳೆಯದು',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

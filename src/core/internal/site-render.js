@@ -43,6 +43,13 @@ import {
 } from './listen.js';
 import { TEMPLATE_RENDERER_VERSION } from './package-version.js';
 import { renderDocumentShell } from './document-shell.js';
+import {
+  VIDEO_MARKER,
+  VIDEO_SCRIPT_PATH,
+  decorateBlocks,
+  leanBlocks,
+  wrapGalleries,
+} from './content-blocks.js';
 import { rewriteBodyImages } from './media/content-images.js';
 import {
   buildGeneratedPages,
@@ -167,6 +174,7 @@ export function buildPageDocuments(validatedInput, ctx) {
     routeProfile,
     liveSplit,
     contentImages,
+    contentFiles = new Map(),
     editions,
     translations,
     site,
@@ -308,6 +316,10 @@ export function buildPageDocuments(validatedInput, ctx) {
     publicBasePath,
     `/${AUDIENCE_SCRIPT_PATH}`,
   );
+  const videoScriptHref = joinBasePathAndRoute(
+    publicBasePath,
+    `/${VIDEO_SCRIPT_PATH}`,
+  );
   const listenScriptHref = joinBasePathAndRoute(
     publicBasePath,
     `/${LISTEN_SCRIPT_PATH}`,
@@ -339,15 +351,37 @@ export function buildPageDocuments(validatedInput, ctx) {
     publicBasePath,
     urlOf,
   });
-  /** @type {(body: string) => string} a body's page form */
-  const pageBody = (body) =>
-    rewriteBodyImages(body, contentImages, contentImage.page);
+  /** @type {import('./content-blocks.js').FileResolver} an emitted file's address */
+  const resolveFile = (rawHref) => {
+    const file = contentFiles.get(rawHref);
+    return file === undefined
+      ? undefined
+      : {
+          url: joinBasePathAndRoute(publicBasePath, `/${file.outputPath}`),
+          bytes: file.byteLength,
+        };
+  };
+  /** @type {(body: string, messages?: typeof siteMessages) => string} a body's page form (galleries, block cards in the page's language) */
+  const pageBody = (body, messages = siteMessages) =>
+    rewriteBodyImages(
+      decorateBlocks(wrapGalleries(body), { messages, resolveFile }),
+      contentImages,
+      contentImage.page,
+    );
   /** @type {(body: string) => string} a body's feed form */
   const feedBody = (body) =>
-    rewriteBodyImages(body, contentImages, contentImage.feed);
+    rewriteBodyImages(
+      leanBlocks(body, resolveFile),
+      contentImages,
+      contentImage.feed,
+    );
   /** @type {(body: string) => string} a body's email form (largest image) */
   const emailBody = (body) =>
-    rewriteBodyImages(body, contentImages, contentImage.email);
+    rewriteBodyImages(
+      leanBlocks(body, resolveFile),
+      contentImages,
+      contentImage.email,
+    );
   const mediaImage = createMediaImage({
     mediaAssets,
     publicBasePath,
@@ -786,6 +820,9 @@ export function buildPageDocuments(validatedInput, ctx) {
               audienceMessages: serializeAudienceMessages(pageChrome.messages),
             }
           : {}),
+        // The click-to-play script rides on exactly the pages that carry a
+        // video card.
+        ...(page.bodyHtml.includes(VIDEO_MARKER) ? { videoScriptHref } : {}),
         // The Listen script rides on every page of a live build; its blobs and
         // UI template are at the end of the body.
         ...(listen.live ? { listenScriptHref } : {}),
@@ -1043,6 +1080,7 @@ export function buildPageDocuments(validatedInput, ctx) {
  * @property {import('./route.js').RouteNormalizationProfile} routeProfile the route normalization profile
  * @property {ReturnType<typeof import('./liveness.js').splitLiveContent>} liveSplit the live and removed records
  * @property {ReturnType<typeof import('./media/content-images.js').resolveContentImages>} contentImages the resolved body images
+ * @property {ReadonlyMap<string, import('./media/content-files.js').FileReference>} [contentFiles] the resolved file blocks' PDFs (none when absent)
  * @property {import('./editions.js').EditionResolution} editions the resolved editions
  * @property {import('./translations.js').TranslationResolution} translations the resolved language variants
  * @property {SiteContext} site the site-wide facts

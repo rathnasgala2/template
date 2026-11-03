@@ -82,6 +82,7 @@ import sanitizeHtml from 'sanitize-html';
 
 import { RenderPolicyViolationError } from '../errors.js';
 import { digestBytes } from './canonical-jcs.js';
+import { renderFencedBlock } from './fenced-blocks.js';
 import { highlightWithPrism } from './highlight.js';
 import { utf8Bytes } from './utf8.js';
 import {
@@ -93,7 +94,9 @@ import {
   CONTENT_SECURITY_POLICY_META_BASELINE,
   contentSecurityPolicyMeta,
   CSP_HEADER_ONLY_DIRECTIVES,
+  FENCED_BLOCKS,
   HIGHLIGHT_GRAMMARS,
+  VIDEO_PROVIDERS,
 } from './render-policy-content.js';
 
 /**
@@ -291,6 +294,29 @@ const markdownRenderer = new MarkdownIt({
   highlight: highlightFence,
 });
 markdownRenderer.validateLink = validateGalaLink;
+// A fence whose info string names a block (`video`, `bookmark`, `file`) and
+// whose body is well formed becomes a card; anything else stays the ordinary
+// code block markdown-it renders.
+const ordinaryFence = /** @type {any} */ (
+  markdownRenderer.renderer.rules.fence
+);
+markdownRenderer.renderer.rules.fence = (
+  /** @type {any} */ tokens,
+  /** @type {number} */ index,
+  /** @type {any} */ options,
+  /** @type {any} */ env,
+  /** @type {any} */ self,
+) => {
+  const token = tokens[index];
+  const name = String(token.info ?? '')
+    .trim()
+    .split(/\s+/)[0];
+  return (
+    renderFencedBlock(name, token.content, (url) =>
+      markdownRenderer.normalizeLink(url),
+    ) ?? ordinaryFence(tokens, index, options, env, self)
+  );
+};
 markdownRenderer.core.ruler.push(
   'gala_deterministic_heading_ids',
   assignDeterministicHeadingIds,
@@ -317,6 +343,43 @@ function transformAnchorTag(tagName, attribs) {
   return { tagName: 'a', attribs: nextAttribs };
 }
 
+/** A well-formed `data-gala-video` value: `<provider>:<id>`. */
+const VIDEO_REFERENCE = new RegExp(
+  `^(${Object.keys(VIDEO_PROVIDERS).join('|')}):(.+)$`,
+);
+
+/**
+ * Keep a `figure`'s attributes only when they form one block this policy
+ * defines (`class` names a block, `data-gala-block` agrees, and a video
+ * carries a valid `data-gala-video`); otherwise the figure loses them all.
+ * This is what keeps a received body (re-sanitized, never trusted) from
+ * carrying a class or data attribute the policy does not admit.
+ *
+ * @param {string} tagName always `"figure"`
+ * @param {Record<string, string>} attribs the tag's attributes
+ * @returns {{tagName: string, attribs: Record<string, string>}} the figure
+ */
+function transformFigureTag(tagName, attribs) {
+  const name = attribs['data-gala-block'];
+  const block =
+    name !== undefined && Object.hasOwn(FENCED_BLOCKS, name)
+      ? FENCED_BLOCKS[name]
+      : undefined;
+  if (!block || attribs.class !== block.className) {
+    return { tagName: 'figure', attribs: {} };
+  }
+  /** @type {Record<string, string>} */
+  const kept = { class: block.className, 'data-gala-block': name };
+  if (name === 'video') {
+    const match = VIDEO_REFERENCE.exec(attribs['data-gala-video'] ?? '');
+    if (!match || !VIDEO_PROVIDERS[match[1]].idPattern.test(match[2])) {
+      return { tagName: 'figure', attribs: {} };
+    }
+    kept['data-gala-video'] = attribs['data-gala-video'];
+  }
+  return { tagName: 'figure', attribs: kept };
+}
+
 /** @type {import('sanitize-html').IOptions} */
 const SANITIZE_HTML_OPTIONS = {
   allowedTags: [...ALLOWED_TAGS],
@@ -336,6 +399,7 @@ const SANITIZE_HTML_OPTIONS = {
     pre: [...ADMITTED_LANGUAGE_CLASSES],
     code: [...ADMITTED_LANGUAGE_CLASSES],
     span: [...ADMITTED_TOKEN_CLASSES],
+    figure: Object.values(FENCED_BLOCKS).map((block) => block.className),
   },
   // Extend the default so a discarded tag's own text content can never
   // leak as plain text (e.g. a stripped `<script>`, `<style>`, `<iframe>`,
@@ -354,7 +418,7 @@ const SANITIZE_HTML_OPTIONS = {
     'math',
   ],
   disallowedTagsMode: 'discard',
-  transformTags: { a: transformAnchorTag },
+  transformTags: { a: transformAnchorTag, figure: transformFigureTag },
 };
 
 /**

@@ -277,6 +277,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'Тази страница още не е публикувана',
   previewAudioUnavailableLabel:
     'Аудиото се възпроизвежда след публикуване на публикацията',
+  videoPlayLabel: 'Пусни видеото',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Гледай в ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Прочети в ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Изтегли PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Препоръчано от ${site}`,
+  recommendationVisitLabel: 'Посети',
+  commentLikeLabel: 'Харесвам',
+  commentUnlikeLabel: 'Отмени харесването',
+  commentPinnedLabel: 'Закачен',
+  commentSortLabel: 'Подреди коментарите',
+  commentSortNewestLabel: 'Най-нови',
+  commentSortOldestLabel: 'Най-стари',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

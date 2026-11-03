@@ -287,6 +287,22 @@ export default Object.freeze({
   previewNotPublishedLabel: "Cette page n'est pas encore publiée",
   previewAudioUnavailableLabel:
     "L'audio sera lisible une fois cet article publié",
+  videoPlayLabel: 'Lire la vidéo',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Regarder sur ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Lire sur ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Télécharger le PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Recommandé par ${site}`,
+  recommendationVisitLabel: 'Visiter',
+  commentLikeLabel: 'J’aime',
+  commentUnlikeLabel: 'Je n’aime plus',
+  commentPinnedLabel: 'Épinglé',
+  commentSortLabel: 'Trier les commentaires',
+  commentSortNewestLabel: 'Plus récents',
+  commentSortOldestLabel: 'Plus anciens',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

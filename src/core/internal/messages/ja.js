@@ -280,6 +280,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'プレビューではサインインできません',
   previewNotPublishedLabel: 'このページはまだ公開されていません',
   previewAudioUnavailableLabel: 'この記事が公開されると音声を再生できます',
+  videoPlayLabel: '動画を再生',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider}で見る`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site}で読む`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDFをダウンロード（${size}）`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site}のおすすめ`,
+  recommendationVisitLabel: 'アクセス',
+  commentLikeLabel: 'いいね',
+  commentUnlikeLabel: 'いいねを取り消す',
+  commentPinnedLabel: '固定',
+  commentSortLabel: 'コメントを並べ替え',
+  commentSortNewestLabel: '新しい順',
+  commentSortOldestLabel: '古い順',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

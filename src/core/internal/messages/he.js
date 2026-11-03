@@ -268,6 +268,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'ההתחברות אינה זמינה בתצוגה המקדימה',
   previewNotPublishedLabel: 'הדף הזה עדיין לא פורסם',
   previewAudioUnavailableLabel: 'השמע יופעל לאחר פרסום הפוסט',
+  videoPlayLabel: 'הפעלת הסרטון',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `צפייה ב-${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `קריאה ב-${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `הורדת PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `מומלץ על ידי ${site}`,
+  recommendationVisitLabel: 'ביקור',
+  commentLikeLabel: 'לייק',
+  commentUnlikeLabel: 'ביטול לייק',
+  commentPinnedLabel: 'מוצמד',
+  commentSortLabel: 'מיון תגובות',
+  commentSortNewestLabel: 'החדשות ביותר',
+  commentSortOldestLabel: 'הישנות ביותר',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

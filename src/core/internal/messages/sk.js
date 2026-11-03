@@ -276,6 +276,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'Prihlásenie nie je v ukážke dostupné',
   previewNotPublishedLabel: 'Táto stránka ešte nie je zverejnená',
   previewAudioUnavailableLabel: 'Zvuk sa prehrá po zverejnení tohto príspevku',
+  videoPlayLabel: 'Prehrať video',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Pozrieť na ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Čítať na ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Stiahnuť PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Odporúča ${site}`,
+  recommendationVisitLabel: 'Navštíviť',
+  commentLikeLabel: 'To sa mi páči',
+  commentUnlikeLabel: 'Zrušiť „páči sa mi“',
+  commentPinnedLabel: 'Pripnuté',
+  commentSortLabel: 'Zoradiť komentáre',
+  commentSortNewestLabel: 'Najnovšie',
+  commentSortOldestLabel: 'Najstaršie',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

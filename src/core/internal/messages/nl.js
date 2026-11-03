@@ -283,6 +283,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'Deze pagina is nog niet gepubliceerd',
   previewAudioUnavailableLabel:
     'De audio speelt zodra dit bericht is gepubliceerd',
+  videoPlayLabel: 'Video afspelen',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Bekijk op ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Lees op ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF downloaden (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Aanbevolen door ${site}`,
+  recommendationVisitLabel: 'Bezoeken',
+  commentLikeLabel: 'Vind ik leuk',
+  commentUnlikeLabel: 'Vind ik niet meer leuk',
+  commentPinnedLabel: 'Vastgemaakt',
+  commentSortLabel: 'Reacties sorteren',
+  commentSortNewestLabel: 'Nieuwste',
+  commentSortOldestLabel: 'Oudste',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

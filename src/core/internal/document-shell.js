@@ -72,6 +72,7 @@ function raw(value) {
  * @property {string} [audienceAppOrigin] the audience App origin
  * @property {string} [audiencePublicationId] the publication id for the audience script
  * @property {string} [audienceReturnUrl] the return address
+ * @property {string} [videoScriptHref] the click-to-play video script, only on a page with a video card
  * @property {string} [listenScriptHref] the Listen script
  * @property {string} [consentScriptHref] the consent script
  * @property {string} title the document title
@@ -131,6 +132,9 @@ export function renderDocumentShell(data, content) {
   }
   if (d.audienceScriptHref) {
     scripts += `<script type="application/json" data-gala-audience-messages>${raw(d.audienceMessages)}</script><script src="${esc(d.audienceScriptHref)}" defer data-gala-audience-script data-api-origin="${esc(d.audienceApiOrigin)}" data-app-origin="${esc(d.audienceAppOrigin)}" data-publication-id="${esc(d.audiencePublicationId)}" data-canonical-url="${esc(d.audienceReturnUrl)}"></script>`;
+  }
+  if (d.videoScriptHref) {
+    scripts += `<script src="${esc(d.videoScriptHref)}" defer data-gala-video-script></script>`;
   }
   if (d.listenScriptHref) {
     scripts += `<script src="${esc(d.listenScriptHref)}" defer data-gala-listen-script></script>`;

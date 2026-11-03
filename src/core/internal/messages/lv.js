@@ -275,6 +275,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'Šī lapa vēl nav publicēta',
   previewAudioUnavailableLabel:
     'Audio tiks atskaņots pēc šī ieraksta publicēšanas',
+  videoPlayLabel: 'Atskaņot video',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Skatīties vietnē ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Lasīt vietnē ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Lejupielādēt PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Iesaka ${site}`,
+  recommendationVisitLabel: 'Apmeklēt',
+  commentLikeLabel: 'Patīk',
+  commentUnlikeLabel: 'Atcelt „patīk“',
+  commentPinnedLabel: 'Piesprausts',
+  commentSortLabel: 'Kārtot komentārus',
+  commentSortNewestLabel: 'Jaunākie',
+  commentSortOldestLabel: 'Vecākie',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

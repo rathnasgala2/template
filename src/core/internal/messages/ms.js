@@ -276,6 +276,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'Halaman ini belum diterbitkan',
   previewAudioUnavailableLabel:
     'Audio dimainkan setelah catatan ini diterbitkan',
+  videoPlayLabel: 'Main video',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Tonton di ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Baca di ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Muat turun PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Disyorkan oleh ${site}`,
+  recommendationVisitLabel: 'Lawati',
+  commentLikeLabel: 'Suka',
+  commentUnlikeLabel: 'Batal suka',
+  commentPinnedLabel: 'Disemat',
+  commentSortLabel: 'Susun komen',
+  commentSortNewestLabel: 'Terbaharu',
+  commentSortOldestLabel: 'Terlama',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

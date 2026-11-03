@@ -41,6 +41,7 @@ const REPO_ROOT = path.resolve(import.meta.dirname, '..');
 const SECTION_CSP =
   "default-src 'none'; base-uri 'none'; object-src 'none'; form-action 'none'; " +
   "script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; " +
+  'frame-src https://player.vimeo.com https://www.youtube-nocookie.com; ' +
   "connect-src 'self' https://api.galascribe.com; media-src 'self'; " +
   "manifest-src 'self'; worker-src 'none'";
 
@@ -254,6 +255,34 @@ test('http localhost and 127.0.0.1 origins are accepted for the local stack', ()
   assert.doesNotThrow(() => validateInteractionsModule(local));
 });
 
+test('comments.likes is optional: absent means off, a boolean is accepted, anything else is refused', () => {
+  const absent = moduleSelection();
+  assert.doesNotThrow(() => validateInteractionsModule(absent));
+  assert.equal(absent.config.comments.likes, undefined);
+  for (const likes of [true, false]) {
+    const valid = moduleSelection();
+    valid.config.comments.likes = likes;
+    assert.equal(
+      validateInteractionsModule(valid).config.comments.likes,
+      likes,
+    );
+  }
+  for (const likes of ['true', 1, null]) {
+    const bad = moduleSelection();
+    bad.config.comments.likes = likes;
+    assert.throws(
+      () => validateInteractionsModule(bad),
+      /comments\.likes must be a boolean/,
+    );
+  }
+  const extra = moduleSelection();
+  extra.config.comments.sort = 'oldest';
+  assert.throws(
+    () => validateInteractionsModule(extra),
+    /comments\.sort is not allowed/,
+  );
+});
+
 // --- markup ---
 
 /**
@@ -269,6 +298,37 @@ function section(module) {
     canonicalUrl: 'https://example.test/blog/a?x=1&y=2',
   });
 }
+
+test('the comments region carries its sentences in the page language, and likes show only when on', () => {
+  const on = moduleSelection();
+  on.config.comments.likes = true;
+  const html = section(on);
+  assert.ok(html.includes(' data-comment-likes="true">'));
+  const labels = JSON.parse(
+    /<div class="g-comments" data-gala-comments data-labels="([^"]*)">/
+      .exec(html)?.[1]
+      .replace(/&quot;/g, '"') ?? '{}',
+  );
+  assert.deepEqual(labels, {
+    like: 'Like',
+    unlike: 'Unlike',
+    pinned: 'Pinned',
+    sort: 'Sort comments',
+    newest: 'Newest',
+    oldest: 'Oldest',
+  });
+  assert.ok(!section(moduleSelection()).includes('data-comment-likes'));
+  const german = renderInteractionsSection({
+    module: moduleSelection(),
+    messages: getMessages('de'),
+    publicationId: 'p',
+    contentId: 'c',
+    canonicalUrl: 'https://example.test/',
+  });
+  assert.ok(
+    german.includes('Gef&auml;llt mir') || german.includes('Gefällt mir'),
+  );
+});
 
 test('the section carries the page contract: attributes, order, labels and escaping', () => {
   const html = section(moduleSelection());
@@ -522,6 +582,22 @@ test('a local API origin reaches connect-src on every HTML route', async () => {
     if (route.routeClass !== 'html' && route.routeClass !== 'error') continue;
     assert.ok(
       (files.get(route.path) ?? '').includes(`content="${expected}"`),
+      route.path,
+    );
+  }
+});
+
+test('a whole build with comments.likes on (a member the pinned schemas may not know) carries it to the article', async () => {
+  const module = moduleSelection();
+  module.config.comments.likes = true;
+  const { manifest, files } = await renderRich({ interactions: module });
+  const bearing = manifest.routes.filter(
+    (/** @type {any} */ r) => r.interactionBearing,
+  );
+  assert.ok(bearing.length > 0);
+  for (const route of bearing) {
+    assert.ok(
+      (files.get(route.path) ?? '').includes(' data-comment-likes="true">'),
       route.path,
     );
   }

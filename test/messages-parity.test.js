@@ -136,3 +136,55 @@ test('loadMessagesFor serves only the loaded locales and fails loudly otherwise'
   assert.equal(get('xx'), CATALOGS.en);
   assert.throws(() => get('fr'), /"fr" message catalog is not loaded/);
 });
+
+const BLOCK_AND_COMMENT_KEYS = [
+  'videoPlayLabel',
+  'videoOpenOnLabel',
+  'bookmarkReadOnLabel',
+  'fileDownloadLabel',
+  'recommendationsHeading',
+  'recommendationVisitLabel',
+  'commentLikeLabel',
+  'commentUnlikeLabel',
+  'commentPinnedLabel',
+  'commentSortLabel',
+  'commentSortNewestLabel',
+  'commentSortOldestLabel',
+];
+
+test('the block, recommendation and comment sentences are translated, not copied from English', () => {
+  const english = (/** @type {string} */ key) => {
+    const value = en[key];
+    return typeof value === 'function' ? value('X') : value;
+  };
+  assert.equal(english('videoOpenOnLabel'), 'Watch on X');
+  assert.equal(english('fileDownloadLabel'), 'Download PDF (X)');
+  for (const [tag, catalog] of Object.entries(CATALOGS)) {
+    if (tag === 'en') continue;
+    const same = BLOCK_AND_COMMENT_KEYS.filter((key) => {
+      const value = catalog[key];
+      const text = typeof value === 'function' ? value('X') : value;
+      return text === english(key);
+    });
+    // A few short words are the same in some languages (for example "Visit");
+    // a catalog that copies most of the set was not translated.
+    assert.ok(same.length <= 2, `${tag} keeps English for ${same.join(', ')}`);
+  }
+  for (const [tag, catalog] of Object.entries(CATALOGS)) {
+    for (const key of [
+      'videoOpenOnLabel',
+      'bookmarkReadOnLabel',
+      'recommendationsHeading',
+    ]) {
+      const out = /** @type {(a: string) => string} */ (catalog[key])('SITE-X');
+      assert.ok(out.includes('SITE-X'), `${tag}.${key} names the site`);
+    }
+    const size = /** @type {(a: string) => string} */ (
+      catalog.fileDownloadLabel
+    )('9 KB');
+    assert.ok(
+      size.includes('9 KB') && size.includes('PDF'),
+      `${tag}.fileDownloadLabel`,
+    );
+  }
+});

@@ -274,6 +274,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'ورود در پیش‌نمایش در دسترس نیست',
   previewNotPublishedLabel: 'این صفحه هنوز منتشر نشده است',
   previewAudioUnavailableLabel: 'صدا پس از انتشار این نوشته پخش می‌شود',
+  videoPlayLabel: 'پخش ویدیو',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `تماشا در ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `خواندن در ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `دانلود PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `توصیه‌شده توسط ${site}`,
+  recommendationVisitLabel: 'بازدید',
+  commentLikeLabel: 'پسندیدن',
+  commentUnlikeLabel: 'برداشتن پسند',
+  commentPinnedLabel: 'سنجاق‌شده',
+  commentSortLabel: 'مرتب‌سازی دیدگاه‌ها',
+  commentSortNewestLabel: 'جدیدترین',
+  commentSortOldestLabel: 'قدیمی‌ترین',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

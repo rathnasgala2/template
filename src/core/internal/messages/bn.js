@@ -272,6 +272,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'প্রিভিউতে সাইন-ইন করা যায় না',
   previewNotPublishedLabel: 'এই পৃষ্ঠাটি এখনও প্রকাশিত হয়নি',
   previewAudioUnavailableLabel: 'পোস্টটি প্রকাশিত হলে অডিও চলবে',
+  videoPlayLabel: 'ভিডিও চালান',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider}-এ দেখুন`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site}-এ পড়ুন`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF ডাউনলোড করুন (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site}-এর সুপারিশ`,
+  recommendationVisitLabel: 'ঘুরে আসুন',
+  commentLikeLabel: 'পছন্দ',
+  commentUnlikeLabel: 'পছন্দ সরান',
+  commentPinnedLabel: 'পিন করা',
+  commentSortLabel: 'মন্তব্য সাজান',
+  commentSortNewestLabel: 'সর্বশেষ',
+  commentSortOldestLabel: 'সবচেয়ে পুরোনো',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

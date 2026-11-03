@@ -7,24 +7,22 @@
  */
 
 import { strict as assert } from 'node:assert';
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { test } from 'node:test';
 
 import {
   BuildInputValidationError,
   MediaPipelineError,
-  renderPublication,
 } from '../src/core/index.js';
 import { normalizeAuthoredMarkdown } from '../src/core/internal/content-security.js';
 import { listFilesSortedByUtf8Bytes } from '../src/core/internal/fs-walk.js';
 import { repositoryPathOfImageSource } from '../src/core/internal/media/content-images.js';
 import {
-  createRenderDirectories,
-  testProvenance,
-} from './helpers/render-fixtures.js';
-import { buildRichFixture } from './helpers/page-kind-fixtures.js';
-import { applyCurrentRenderPolicy } from './helpers/schema-fixtures.js';
+  render,
+  renderExpectingRejection,
+  setBody,
+} from './helpers/body-render.js';
 import {
   buildTestGif,
   buildTestPng,
@@ -35,97 +33,6 @@ import {
 const SIZES = 'sizes="(max-width: 960px) 100vw, 960px"';
 const FIRST_ARTICLE = 'fixture-1/first-article/index.html';
 const SECOND_ARTICLE = 'fixture-1/second-article/index.html';
-
-/**
- * @typedef {{path: string, bytes: Buffer, mediaType?: string}} StagedFile
- */
-
-/**
- * Give one content record a Markdown body and a `media[]` inventory, staging
- * each inventoried file's bytes under the render's source directory.
- *
- * @param {any} buildInput the build input, mutated in place
- * @param {string} sourceDirectory the render's source directory
- * @param {number} index the content record to change
- * @param {string} markdown the record's authored Markdown body
- * @param {StagedFile[]} files the record's inventory
- * @returns {Promise<void>}
- */
-async function setBody(buildInput, sourceDirectory, index, markdown, files) {
-  const record = buildInput.content[index];
-  record.body = normalizeAuthoredMarkdown(markdown).html;
-  record.media = [];
-  for (const file of files) {
-    const absolute = path.join(sourceDirectory, file.path);
-    await mkdir(path.dirname(absolute), { recursive: true });
-    await writeFile(absolute, file.bytes);
-    record.media.push({
-      path: file.path,
-      sourceDigest: sha256Of(file.bytes),
-      mediaType: file.mediaType ?? 'image/png',
-      byteLength: file.bytes.byteLength,
-    });
-  }
-}
-
-/**
- * Render a rich fixture after `prepare` has set bodies and inventories.
- *
- * @param {(buildInput: any, sourceDirectory: string) => Promise<void>} prepare
- * @returns {Promise<{manifest: any, outputDirectory: string, read: (file: string) => Promise<string>, cleanup: () => Promise<void>}>}
- */
-async function render(prepare) {
-  const buildInput = /** @type {any} */ (await buildRichFixture());
-  const dirs = await createRenderDirectories();
-  await prepare(buildInput, dirs.sourceDirectory);
-  await applyCurrentRenderPolicy(buildInput);
-  const { manifest } = await renderPublication(buildInput, {
-    outputDirectory: dirs.outputDirectory,
-    workDirectory: dirs.workDirectory,
-    sourceDirectory: dirs.sourceDirectory,
-    provenance: testProvenance(),
-  });
-  return {
-    manifest,
-    outputDirectory: dirs.outputDirectory,
-    read: (file) => readFile(path.join(dirs.outputDirectory, file), 'utf8'),
-    cleanup: dirs.cleanup,
-  };
-}
-
-/**
- * Render a rich fixture that is expected to fail, returning the rejection
- * and whether the output directory exists afterwards.
- *
- * @param {(buildInput: any, sourceDirectory: string) => Promise<void>} prepare
- * @returns {Promise<{error: unknown, outputExists: boolean}>}
- */
-async function renderExpectingRejection(prepare) {
-  const buildInput = /** @type {any} */ (await buildRichFixture());
-  const dirs = await createRenderDirectories();
-  try {
-    await prepare(buildInput, dirs.sourceDirectory);
-    await applyCurrentRenderPolicy(buildInput);
-    let error;
-    try {
-      await renderPublication(buildInput, {
-        outputDirectory: dirs.outputDirectory,
-        workDirectory: dirs.workDirectory,
-        sourceDirectory: dirs.sourceDirectory,
-        provenance: testProvenance(),
-      });
-    } catch (caught) {
-      error = caught;
-    }
-    const outputExists = await readdir(dirs.outputDirectory).then(
-      () => true,
-      () => false,
-    );
-    return { error, outputExists };
-  } finally {
-    await dirs.cleanup();
-  }
-}
 
 test('a body image renders its largest output within 960px as src, every output in srcset, lazily', async (t) => {
   const wide = buildTestPng(1000, 500);

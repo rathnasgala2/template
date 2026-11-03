@@ -278,6 +278,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'Ez az oldal még nincs közzétéve',
   previewAudioUnavailableLabel:
     'A hang a bejegyzés közzététele után játszható le',
+  videoPlayLabel: 'Videó lejátszása',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Megnézés itt: ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Olvasás itt: ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF letöltése (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Ajánlja: ${site}`,
+  recommendationVisitLabel: 'Megnyitás',
+  commentLikeLabel: 'Tetszik',
+  commentUnlikeLabel: 'Tetszés visszavonása',
+  commentPinnedLabel: 'Kitűzve',
+  commentSortLabel: 'Hozzászólások rendezése',
+  commentSortNewestLabel: 'Legújabb',
+  commentSortOldestLabel: 'Legrégebbi',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

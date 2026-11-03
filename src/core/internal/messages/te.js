@@ -277,6 +277,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'ప్రివ్యూలో సైన్ ఇన్ అందుబాటులో లేదు',
   previewNotPublishedLabel: 'ఈ పేజీ ఇంకా ప్రచురించబడలేదు',
   previewAudioUnavailableLabel: 'పోస్ట్ ప్రచురించిన తర్వాత ఆడియో ప్లే అవుతుంది',
+  videoPlayLabel: 'వీడియో ప్లే చేయండి',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider}లో చూడండి`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site}లో చదవండి`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF డౌన్‌లోడ్ చేయండి (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site} సిఫార్సు చేస్తోంది`,
+  recommendationVisitLabel: 'సందర్శించండి',
+  commentLikeLabel: 'ఇష్టం',
+  commentUnlikeLabel: 'ఇష్టాన్ని తీసివేయండి',
+  commentPinnedLabel: 'పిన్ చేసినది',
+  commentSortLabel: 'వ్యాఖ్యలను క్రమబద్ధీకరించండి',
+  commentSortNewestLabel: 'కొత్తవి',
+  commentSortOldestLabel: 'పాతవి',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

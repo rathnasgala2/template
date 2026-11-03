@@ -273,6 +273,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'Вхід недоступний у попередньому перегляді',
   previewNotPublishedLabel: 'Цю сторінку ще не опубліковано',
   previewAudioUnavailableLabel: 'Аудіо відтворюється після публікації допису',
+  videoPlayLabel: 'Відтворити відео',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Дивитися на ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Читати на ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Завантажити PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Рекомендує ${site}`,
+  recommendationVisitLabel: 'Перейти',
+  commentLikeLabel: 'Подобається',
+  commentUnlikeLabel: 'Скасувати «подобається»',
+  commentPinnedLabel: 'Закріплено',
+  commentSortLabel: 'Сортувати коментарі',
+  commentSortNewestLabel: 'Найновіші',
+  commentSortOldestLabel: 'Найстаріші',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

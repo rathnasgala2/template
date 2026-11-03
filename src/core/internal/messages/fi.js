@@ -278,6 +278,22 @@ export default Object.freeze({
     'Kirjautuminen ei ole käytettävissä esikatselussa',
   previewNotPublishedLabel: 'Tätä sivua ei ole vielä julkaistu',
   previewAudioUnavailableLabel: 'Ääni toistuu, kun tämä kirjoitus on julkaistu',
+  videoPlayLabel: 'Toista video',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Katso palvelussa ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Lue sivustolla ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Lataa PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Suosittelija: ${site}`,
+  recommendationVisitLabel: 'Vieraile',
+  commentLikeLabel: 'Tykkää',
+  commentUnlikeLabel: 'Poista tykkäys',
+  commentPinnedLabel: 'Kiinnitetty',
+  commentSortLabel: 'Järjestä kommentit',
+  commentSortNewestLabel: 'Uusimmat',
+  commentSortOldestLabel: 'Vanhimmat',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -634,7 +634,7 @@ test('analytics module: banner, footer button, privacy paragraph, script and CSP
     assert.ok(!html.includes('googletagmanager'), route);
     assert.ok(
       html.includes(
-        `content="default-src 'none'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self' https://api.galascribe.com; media-src 'self'; manifest-src 'self'; worker-src 'none'"`,
+        `content="default-src 'none'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; frame-src https://player.vimeo.com https://www.youtube-nocookie.com; connect-src 'self' https://api.galascribe.com; media-src 'self'; manifest-src 'self'; worker-src 'none'"`,
       ),
       route,
     );

@@ -283,6 +283,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'Bu sahifa hali e’lon qilinmagan',
   previewAudioUnavailableLabel:
     'Audio yozuv e’lon qilingandan so‘ng ijro etiladi',
+  videoPlayLabel: 'Videoni ijro etish',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider} saytida ko‘rish`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site} saytida o‘qish`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF yuklab olish (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site} tavsiya qiladi`,
+  recommendationVisitLabel: 'Tashrif buyurish',
+  commentLikeLabel: 'Yoqdi',
+  commentUnlikeLabel: 'Yoqtirishni bekor qilish',
+  commentPinnedLabel: 'Mahkamlangan',
+  commentSortLabel: 'Izohlarni saralash',
+  commentSortNewestLabel: 'Eng yangi',
+  commentSortOldestLabel: 'Eng eski',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

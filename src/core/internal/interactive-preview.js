@@ -21,6 +21,8 @@ import {
 } from './appearance/contract.js';
 import { APPEARANCE_BOOTSTRAP_SCRIPT_SOURCE } from './appearance/bootstrap-script.js';
 import { AUDIENCE_SCRIPT_PATH } from './audience.js';
+import { VIDEO_SCRIPT_PATH } from './content-blocks.js';
+import { FRAME_SOURCES } from './render-policy-content.js';
 import {
   COUNTS_SCRIPT_PATH,
   INTERACTIONS_SCRIPT_PATH,
@@ -38,6 +40,7 @@ const BUILT_SCRIPTS = [
   [INTERACTIONS_SCRIPT_PATH, PREVIEW_SCRIPT_TEXTS.interactions],
   [COUNTS_SCRIPT_PATH, PREVIEW_SCRIPT_TEXTS.counts],
   [AUDIENCE_SCRIPT_PATH, PREVIEW_SCRIPT_TEXTS.audience],
+  [VIDEO_SCRIPT_PATH, PREVIEW_SCRIPT_TEXTS.video],
   [LISTEN_SCRIPT_PATH, PREVIEW_SCRIPT_TEXTS.listen],
   [CONSENT_SCRIPT_PATH, CONSENT_SCRIPT_SOURCE],
 ];
@@ -198,7 +201,8 @@ function hashSource(text) {
 /**
  * The preview's Content-Security-Policy: scripts are exactly the listed inline
  * texts, by hash; the network reaches the API origin only; media loads from
- * the live site only.
+ * the live site only; a frame loads only from the two video hosts the built
+ * page's policy admits, and only after a tap on a video card.
  *
  * @param {readonly string[]} scriptTexts the text of every inline script
  * @param {{apiOrigin: string, liveBaseUrl?: string | null}} interactive the option
@@ -217,7 +221,7 @@ export function interactivePolicy(scriptTexts, interactive) {
     `media-src data:${liveOrigin ? ` ${liveOrigin}` : ''}`,
     `connect-src ${api}`,
     'font-src data:',
-    "frame-src 'none'",
+    `frame-src ${FRAME_SOURCES.join(' ')}`,
     "form-action 'none'",
     "base-uri 'none'",
   ].join('; ');

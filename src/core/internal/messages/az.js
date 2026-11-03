@@ -274,6 +274,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'Önizləmədə daxil olmaq mümkün deyil',
   previewNotPublishedLabel: 'Bu səhifə hələ dərc olunmayıb',
   previewAudioUnavailableLabel: 'Audio bu yazı dərc olunduqdan sonra oxudulur',
+  videoPlayLabel: 'Videonu oxut',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider} üzərində izlə`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site} saytında oxu`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF yüklə (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site} tərəfindən tövsiyə olunur`,
+  recommendationVisitLabel: 'Ziyarət et',
+  commentLikeLabel: 'Bəyən',
+  commentUnlikeLabel: 'Bəyənməni geri götür',
+  commentPinnedLabel: 'Sancaqlanıb',
+  commentSortLabel: 'Şərhləri sırala',
+  commentSortNewestLabel: 'Ən yeni',
+  commentSortOldestLabel: 'Ən köhnə',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

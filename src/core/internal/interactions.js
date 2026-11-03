@@ -157,11 +157,17 @@ export function validateInteractionsModule(candidate) {
     orders.add(item.order);
     boolean(item.enabled, `${at}.enabled`);
   });
+  // `likes` (schemas 3.32.0) is the one optional member; absent means off.
+  const hasLikes =
+    typeof config.comments === 'object' &&
+    config.comments !== null &&
+    'likes' in config.comments;
   const comments = exactObject(
     config.comments,
-    ['enabled', 'allowReplies', 'maxDepth'],
+    ['enabled', 'allowReplies', 'maxDepth', ...(hasLikes ? ['likes'] : [])],
     `${where}.config.comments`,
   );
+  if (hasLikes) boolean(comments.likes, `${where}.config.comments.likes`);
   boolean(comments.enabled, `${where}.config.comments.enabled`);
   boolean(comments.allowReplies, `${where}.config.comments.allowReplies`);
   if (
@@ -254,6 +260,28 @@ export function renderCountSlot({ kinds, contentId }) {
 export const COUNT_SLOT_MARKER = '<span class="g-counts" data-gala-counts ';
 
 /**
+ * The sentences the comment script needs beyond the server-rendered markup,
+ * in the page's language (the script falls back to English for a missing one).
+ *
+ * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} messages
+ *   the chrome message catalog
+ * @returns {Record<string, string>} the labels by the script's own names
+ */
+function commentLabels(messages) {
+  const names = {
+    like: 'commentLikeLabel',
+    unlike: 'commentUnlikeLabel',
+    pinned: 'commentPinnedLabel',
+    sort: 'commentSortLabel',
+    newest: 'commentSortNewestLabel',
+    oldest: 'commentSortOldestLabel',
+  };
+  return Object.fromEntries(
+    Object.entries(names).map(([name, key]) => [name, String(messages[key])]),
+  );
+}
+
+/**
  * Render the `<section class="g-interactions">` for one article.
  *
  * @param {object} input render input
@@ -298,7 +326,7 @@ export function renderInteractionsSection({
     ? `<div class="g-reactions" data-gala-reactions role="group" aria-label="${text('reactionsGroupLabel')}">${reactionButtons}</div>`
     : '';
   const comments = config.comments.enabled
-    ? `<div class="g-comments" data-gala-comments>` +
+    ? `<div class="g-comments" data-gala-comments data-labels="${escapeHtml(JSON.stringify(commentLabels(messages)))}">` +
       `<h3 class="g-comments__title">${text('commentsHeading')} <span class="g-comments__count" data-gala-comment-count></span></h3>` +
       `<p class="g-interactions__notice" data-gala-static-notice>${text('interactionsNeedScriptNotice')}</p>` +
       `<div class="g-composer-slot" data-gala-composer-slot></div>` +
@@ -318,7 +346,8 @@ export function renderInteractionsSection({
     `data-canonical-url="${escapeHtml(canonicalUrl)}" ` +
     `data-reactions-enabled="${flag(config.reactions.enabled)}" data-comments-enabled="${flag(config.comments.enabled)}" ` +
     `data-count-reactions="${flag(config.publicCounts.reactions)}" data-count-comments="${flag(config.publicCounts.comments)}" ` +
-    `data-allow-replies="${flag(config.comments.allowReplies)}" data-max-depth="${config.comments.maxDepth}">` +
+    `data-allow-replies="${flag(config.comments.allowReplies)}" data-max-depth="${config.comments.maxDepth}"` +
+    `${config.comments.likes === true ? ' data-comment-likes="true"' : ''}>` +
     `<h2 id="g-interactions-title" class="g-interactions__title">${text('interactionsHeading')}</h2>` +
     reactions +
     staticNoticeForReactionsOnly +

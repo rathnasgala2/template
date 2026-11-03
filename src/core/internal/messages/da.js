@@ -279,6 +279,22 @@ export default Object.freeze({
     'Log ind er ikke tilgængeligt i forhåndsvisningen',
   previewNotPublishedLabel: 'Denne side er endnu ikke udgivet',
   previewAudioUnavailableLabel: 'Lyden afspilles, når indlægget er udgivet',
+  videoPlayLabel: 'Afspil video',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Se på ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Læs på ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Download PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Anbefalet af ${site}`,
+  recommendationVisitLabel: 'Besøg',
+  commentLikeLabel: 'Synes godt om',
+  commentUnlikeLabel: 'Fortryd synes godt om',
+  commentPinnedLabel: 'Fastgjort',
+  commentSortLabel: 'Sortér kommentarer',
+  commentSortNewestLabel: 'Nyeste',
+  commentSortOldestLabel: 'Ældste',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

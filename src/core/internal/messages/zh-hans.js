@@ -267,6 +267,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: '预览中无法登录',
   previewNotPublishedLabel: '此页面尚未发布',
   previewAudioUnavailableLabel: '文章发布后即可播放音频',
+  videoPlayLabel: '播放视频',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `在 ${provider} 观看`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `在 ${site} 阅读`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `下载 PDF（${size}）`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site} 推荐`,
+  recommendationVisitLabel: '访问',
+  commentLikeLabel: '赞',
+  commentUnlikeLabel: '取消赞',
+  commentPinnedLabel: '已置顶',
+  commentSortLabel: '评论排序',
+  commentSortNewestLabel: '最新',
+  commentSortOldestLabel: '最早',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

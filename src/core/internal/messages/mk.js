@@ -277,6 +277,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'Најавата не е достапна во прегледот',
   previewNotPublishedLabel: 'Оваа страница сè уште не е објавена',
   previewAudioUnavailableLabel: 'Аудиото се пушта откако ќе се објави објавата',
+  videoPlayLabel: 'Пушти го видеото',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Гледај на ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Читај на ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Преземи PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Препорачано од ${site}`,
+  recommendationVisitLabel: 'Посети',
+  commentLikeLabel: 'Ми се допаѓа',
+  commentUnlikeLabel: 'Повлечи допаѓање',
+  commentPinnedLabel: 'Закачено',
+  commentSortLabel: 'Подреди ги коментарите',
+  commentSortNewestLabel: 'Најнови',
+  commentSortOldestLabel: 'Најстари',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

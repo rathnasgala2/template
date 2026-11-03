@@ -275,6 +275,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'पूर्वावलोकनात साइन-इन उपलब्ध नाही',
   previewNotPublishedLabel: 'हे पान अद्याप प्रकाशित झालेले नाही',
   previewAudioUnavailableLabel: 'पोस्ट प्रकाशित झाल्यावर ऑडिओ वाजेल',
+  videoPlayLabel: 'व्हिडिओ प्ले करा',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider} वर पहा`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site} वर वाचा`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF डाउनलोड करा (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site} यांची शिफारस`,
+  recommendationVisitLabel: 'भेट द्या',
+  commentLikeLabel: 'आवडले',
+  commentUnlikeLabel: 'आवडले रद्द करा',
+  commentPinnedLabel: 'पिन केलेले',
+  commentSortLabel: 'टिप्पण्या क्रमवारी लावा',
+  commentSortNewestLabel: 'सर्वात नवीन',
+  commentSortOldestLabel: 'सर्वात जुने',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

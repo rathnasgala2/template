@@ -143,6 +143,19 @@ that names no article of the build, repeats one, or takes another document's
 route fails the build before anything is written (`resolveEditions`). Staleness
 is decided upstream: never compare digests here.
 
+**Fenced blocks and files:** the `video`, `bookmark` and `file` fences
+(`internal/fenced-blocks.js`, catalog in `render-policy-content.js`) emit only
+allow-listed tags and the `figure` attributes the policy names; the
+language-specific card (`internal/content-blocks.js`) is drawn at render time,
+never stored. A `file` block's PDF resolves like a body image
+(`media/content-files.js`) and is emitted content-hashed (`media/files.js`). No
+third-party script ever runs and a frame appears only after a tap
+(`gala-video.js`; CSP `frame-src` names exactly the two video hosts). Members a
+newer schemas release adds (PDF `media[]` entries,
+`publication.recommendations`, `comments.likes`) are checked by the template and
+kept out of the schema validation by `internal/forward-compat.js` until the pin
+reaches them; delete that step's matching branch when it does.
+
 ## Interactive preview
 
 `options.preview.interactive` (`internal/interactive-preview.js`) is the one

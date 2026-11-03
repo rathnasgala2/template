@@ -9,7 +9,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const names = ['interactions', 'counts', 'audience', 'listen'];
+const names = ['interactions', 'counts', 'audience', 'video', 'listen'];
 const entries = names.map((name) => {
   const text = readFileSync(
     new URL(

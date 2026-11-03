@@ -273,6 +273,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'Không thể đăng nhập trong chế độ xem trước',
   previewNotPublishedLabel: 'Trang này chưa được xuất bản',
   previewAudioUnavailableLabel: 'Âm thanh sẽ phát khi bài viết được xuất bản',
+  videoPlayLabel: 'Phát video',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Xem trên ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Đọc trên ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Tải PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Được ${site} đề xuất`,
+  recommendationVisitLabel: 'Truy cập',
+  commentLikeLabel: 'Thích',
+  commentUnlikeLabel: 'Bỏ thích',
+  commentPinnedLabel: 'Đã ghim',
+  commentSortLabel: 'Sắp xếp bình luận',
+  commentSortNewestLabel: 'Mới nhất',
+  commentSortOldestLabel: 'Cũ nhất',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

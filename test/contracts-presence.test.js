@@ -52,6 +52,7 @@ test("contracts/render-policy.jcs is S2-T04's real, closed sanitizer/parser cata
     "default-src 'none'; base-uri 'none'; object-src 'none'; " +
       "frame-ancestors 'none'; form-action 'none'; script-src 'self'; " +
       "style-src 'self'; img-src 'self'; font-src 'self'; " +
+      'frame-src https://player.vimeo.com https://www.youtube-nocookie.com; ' +
       "connect-src 'self' https://api.galascribe.com; " +
       "media-src 'self'; manifest-src 'self'; worker-src 'none'",
   );

@@ -279,6 +279,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'Den här sidan är inte publicerad ännu',
   previewAudioUnavailableLabel:
     'Ljudet spelas upp när inlägget har publicerats',
+  videoPlayLabel: 'Spela upp video',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Se på ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Läs på ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Ladda ned PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Rekommenderas av ${site}`,
+  recommendationVisitLabel: 'Besök',
+  commentLikeLabel: 'Gilla',
+  commentUnlikeLabel: 'Sluta gilla',
+  commentPinnedLabel: 'Fäst',
+  commentSortLabel: 'Sortera kommentarer',
+  commentSortNewestLabel: 'Nyaste',
+  commentSortOldestLabel: 'Äldsta',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

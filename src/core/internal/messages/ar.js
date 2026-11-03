@@ -270,6 +270,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'تسجيل الدخول غير متاح في المعاينة',
   previewNotPublishedLabel: 'هذه الصفحة لم تُنشر بعد',
   previewAudioUnavailableLabel: 'يُشغَّل الصوت بعد نشر هذه المقالة',
+  videoPlayLabel: 'تشغيل الفيديو',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `شاهد على ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `اقرأ على ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `تنزيل PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `موصى به من ${site}`,
+  recommendationVisitLabel: 'زيارة',
+  commentLikeLabel: 'إعجاب',
+  commentUnlikeLabel: 'إلغاء الإعجاب',
+  commentPinnedLabel: 'مثبّت',
+  commentSortLabel: 'ترتيب التعليقات',
+  commentSortNewestLabel: 'الأحدث',
+  commentSortOldestLabel: 'الأقدم',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

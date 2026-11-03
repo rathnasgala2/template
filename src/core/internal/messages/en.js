@@ -280,6 +280,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: "Sign-in isn't available in the preview",
   previewNotPublishedLabel: "This page isn't published yet",
   previewAudioUnavailableLabel: 'Audio plays once this post is published',
+  videoPlayLabel: 'Play video',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Watch on ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Read on ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Download PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Recommended by ${site}`,
+  recommendationVisitLabel: 'Visit',
+  commentLikeLabel: 'Like',
+  commentUnlikeLabel: 'Unlike',
+  commentPinnedLabel: 'Pinned',
+  commentSortLabel: 'Sort comments',
+  commentSortNewestLabel: 'Newest',
+  commentSortOldestLabel: 'Oldest',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const months = [

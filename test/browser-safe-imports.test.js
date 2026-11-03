@@ -28,6 +28,9 @@ const ENTRIES = [
   'audience.js',
   'interactions.js',
   'listen.js',
+  'content-blocks.js',
+  'fenced-blocks.js',
+  'recommendations.js',
 ];
 
 const FORBIDDEN = /^(node:|@11ty\/|@rathnasgala2\/schemas)/;

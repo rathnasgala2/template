@@ -251,7 +251,7 @@ async function assertInteractiveParity(label, built, html) {
       'media-src data: https://live.example.com',
       'connect-src https://api.galascribe.com',
       'font-src data:',
-      "frame-src 'none'",
+      'frame-src https://player.vimeo.com https://www.youtube-nocookie.com',
       "form-action 'none'",
       "base-uri 'none'",
     ].join('; '),
@@ -1045,6 +1045,41 @@ fixture('listen: audio on three articles', {
         format: 'narration',
       };
     }
+  },
+});
+
+fixture('blocks: video, bookmark, gallery, recommendations', {
+  async prepare(input, sourceDirectory) {
+    const png = buildTestPng(800, 400);
+    for (const file of ['poster.png', 'one.png', 'two.png']) {
+      const absolute = path.join(sourceDirectory, 'images', file);
+      await mkdir(path.dirname(absolute), { recursive: true });
+      await writeFile(absolute, png);
+    }
+    const first = recordOf(input, 'first-article');
+    first.body = normalizeAuthoredMarkdown(
+      [
+        'Intro.',
+        '```video\nprovider: vimeo\nid: 76979871\ntitle: A short film\nposter: images/poster.png\n```',
+        '```bookmark\nurl: https://www.example.com/read\ntitle: Worth reading\ndescription: A good page\n```',
+        '![One](images/one.png)',
+        '![Two](images/two.png)',
+      ].join('\n\n'),
+    ).html;
+    first.media = ['poster', 'one', 'two'].map((name) => ({
+      path: `images/${name}.png`,
+      sourceDigest: sha256Of(png),
+      mediaType: 'image/png',
+      byteLength: png.byteLength,
+    }));
+    input.publication.recommendations = [
+      {
+        url: 'https://other.example/',
+        title: 'Other',
+        description: 'Worth a read',
+        addedOn: '2026-01-02',
+      },
+    ];
   },
 });
 

@@ -288,6 +288,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'இந்தப் பக்கம் இன்னும் வெளியிடப்படவில்லை',
   previewAudioUnavailableLabel:
     'இந்தப் பதிவு வெளியிடப்பட்டதும் ஆடியோ ஒலிக்கும்',
+  videoPlayLabel: 'வீடியோவை இயக்கு',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider} இல் பாருங்கள்`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site} இல் படியுங்கள்`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF பதிவிறக்கு (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site} பரிந்துரைக்கிறது`,
+  recommendationVisitLabel: 'பார்வையிடு',
+  commentLikeLabel: 'விருப்பம்',
+  commentUnlikeLabel: 'விருப்பத்தை நீக்கு',
+  commentPinnedLabel: 'பின் செய்யப்பட்டது',
+  commentSortLabel: 'கருத்துகளை வரிசைப்படுத்து',
+  commentSortNewestLabel: 'புதியவை',
+  commentSortOldestLabel: 'பழையவை',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

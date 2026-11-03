@@ -275,6 +275,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'Prijava v predogledu ni na voljo',
   previewNotPublishedLabel: 'Ta stran še ni objavljena',
   previewAudioUnavailableLabel: 'Zvok se predvaja, ko je ta objava objavljena',
+  videoPlayLabel: 'Predvajaj videoposnetek',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Oglej si na ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Beri na ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Prenesi PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Priporoča ${site}`,
+  recommendationVisitLabel: 'Obišči',
+  commentLikeLabel: 'Všeč mi je',
+  commentUnlikeLabel: 'Odstrani všeček',
+  commentPinnedLabel: 'Pripeto',
+  commentSortLabel: 'Razvrsti komentarje',
+  commentSortNewestLabel: 'Najnovejši',
+  commentSortOldestLabel: 'Najstarejši',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

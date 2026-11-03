@@ -105,6 +105,127 @@ are processed and written once. Images use the base layer's existing `img`
 rules; no class is added. The front-matter `hero` renders as the article's cover
 `<figure>` above the body (`role: "decorative"` renders `alt=""`).
 
+### Fenced blocks: video, bookmark and file cards
+
+A fenced code block whose info string is `video`, `bookmark` or `file` is a card
+instead of code. This is the authoring contract the App editor writes and reads
+back; the blocks are part of the render policy (`fencedBlocks` in
+`contracts/render-policy.jcs`), so a change to the grammar changes the policy
+identity.
+
+Grammar. The body is `key: value` lines. The value is the rest of the line,
+trimmed (no quoting); blank lines are ignored; keys are case-insensitive; a key
+the block does not know is ignored. A block is **malformed**, and renders as an
+ordinary code block (never an error), when a non-blank line is not `key: value`,
+a key repeats, a required key is missing or empty, or a value is invalid. Text
+limits, in characters and without control characters: `title` 200, `description`
+500, `site` 100.
+
+````markdown
+```video
+provider: youtube
+id: dQw4w9WgXcQ
+title: Why we rebuilt it
+poster: assets/why-we-rebuilt-it.jpg
+```
+
+```bookmark
+url: https://example.com/essay
+title: A good essay
+description: What it argues, in a sentence.
+site: Example
+```
+
+```file
+path: docs/annual-report.pdf
+title: Annual report 2026
+description: The full report.
+```
+````
+
+| Block      | Required                  | Optional              | Notes                                                                                                                                                              |
+| ---------- | ------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `video`    | `provider`, `id`, `title` | `poster`              | `provider` is `youtube` (`id`: 11 characters of `A-Za-z0-9_-`) or `vimeo` (`id`: 1 to 12 digits). `poster` is a repository image path, resolved like a body image. |
+| `bookmark` | `url`, `title`            | `description`, `site` | `url` is `http` or `https` without credentials. `site` defaults to the hostname without `www.`. No image: images come only from the repository (`img-src 'self'`). |
+| `file`     | `path`, `title`           | `description`         | `path` is a repository path ending in `.pdf` (PDF only), resolved like a body image against the document's `media[]`.                                              |
+
+Stored form (the body is language-neutral policy output): one
+`<figure class="g-video|g-bookmark|g-file" data-gala-block="video|bookmark|file">`
+(a video also carries `data-gala-video="<provider>:<id>"`) holding one `<a>`
+with `<strong>` (title), optional `<small>` (description) and, for a bookmark,
+`<em>` (site); a video's poster is an `<img src alt="">` inside the link. The
+sanitizer keeps `figure`'s `class`, `data-gala-block` and `data-gala-video` only
+when they form one block (a known class, the matching block name, a well-formed
+video reference); otherwise it removes them all.
+
+Page form (render time, in the page's language; `internal/content-blocks.js`):
+each card is one link (`g-block`), with the icon set the template already owns.
+A video is a poster (or a plain play card), a play button, the title and "Watch
+on YouTube" as the no-JavaScript link to the provider's watch page. A bookmark
+shows title, description and "Read on <site>", with the anchor rules every
+absolute link gets (`rel="noopener noreferrer"`, no `target`). A file shows its
+title, description and "Download PDF (1.2 MB)". Feeds and email fragments carry
+the stored card with the file link pointed at the emitted file.
+
+**Files.** A `file` block's path must name a `content[].media[]` entry of
+`mediaType` `application/pdf` (declared `byteLength` 1 to 10 MiB, `sourceDigest`
+`sha256:…`) of the same document; otherwise the build fails with a
+`MEDIA_REFERENCE_UNRESOLVED` diagnostic before anything is written. Each
+referenced file is checked against its declared digest and length, must start
+with `%PDF-`, and is copied as-is, once, to
+`assets/files/<name>.<first 8 hex of sha256>.pdf` (`media/files.js`, as Listen
+audio is) with one manifest asset row. The row's media type is
+`application/octet-stream` because the artifact-manifest schema pinned here has
+no `application/pdf` member. `schemas` 3.32.0 admits the PDF entry in
+`build-input`; until it is pinned the template checks the entry itself
+(`internal/forward-compat.js`) and leaves it out of the schema validation.
+
+**Click to play.** A page that holds a video card loads
+`assets/gala-video-v1.js` (`defer`, same origin). A plain tap replaces the card
+with one `<iframe>` from `https://www.youtube-nocookie.com/embed/<id>` or
+`https://player.vimeo.com/video/<id>` (`loading="lazy"`,
+`referrerpolicy="strict-origin-when-cross-origin"`, `allowfullscreen`, a `title`
+from the card). Until then the page loads nothing from either provider. The CSP
+carries `frame-src https://player.vimeo.com https://www.youtube-nocookie.com` in
+both forms (the `<meta>` and the complete header string); nothing else may be
+framed, and no third-party script ever runs.
+
+### Galleries
+
+Two or more adjacent image-only paragraphs in a post (Markdown: one image per
+paragraph, or several images in one paragraph) are wrapped, when the page is
+rendered, in `<div class="g-gallery" data-count="N">` (N is the number of
+images): a grid of two columns for two or three images, three for more, one
+under 480 pixels. The stored body, the first-body-image choice, the feeds, the
+search index and the `llms` files do not see the wrapper.
+
+### Recommendations
+
+`publication.recommendations` (schemas 3.32.0; at most 24 items of
+`{url, title, description?, addedOn?}`) renders a "Recommended by <site>"
+section of cards at the end of the About page (the publication profile page; a
+site with no profile page shows none) and publishes
+`/.well-known/recommendations.json` (joined with `basePath` like every fixed
+output) as Ghost does: a bare JSON array of `{url, created_at, updated_at}`,
+both timestamps being `addedOn` at midnight UTC or else the build time. The
+template validates the member itself (https addresses without credentials,
+unique, a title of 1 to 120 characters, a description of up to 300, a real
+`YYYY-MM-DD` day) and fails the build on anything else; with none, there is no
+section and no file.
+
+### Comment likes, pinned comments and sort
+
+With `interactions-config.comments.likes: true` the section carries
+`data-comment-likes="true"` and a signed-in reader can like a comment
+(`PUT`/`DELETE /v2/public/comments/{id}/like`, optimistic count, reverted on
+refusal; a signed-out reader is sent to sign in, as for reactions). The button
+appears only on a comment that carries `likeCount`. A comment with
+`pinned: true` shows a "Pinned" badge and is drawn first; a Newest / Oldest
+control above the list (shown when there is more than one comment) re-requests
+the comments with `sort=newest|oldest`. The comments region carries the
+sentences these need in the page's language as `data-labels`. Absent fields mean
+the older API: no button, no badge, and a sort request an older API ignores.
+
 ### Language variants
 
 An `article` may name the article it translates with the optional front-matter
@@ -1248,10 +1369,13 @@ unchanged.
 **The policy.** `default-src 'none'; script-src 'sha256-…'` (exactly the inline
 scripts, the runtime included; no `'unsafe-inline'`, no `'unsafe-eval'`, no
 `'unsafe-hashes'`);
-`style-src 'unsafe-inline'; img-src data:; media-src data: <liveOrigin>; connect-src <apiOrigin>; font-src data:; frame-src 'none'; form-action 'none'; base-uri 'none'`.
+`style-src 'unsafe-inline'; img-src data:; media-src data: <liveOrigin>; connect-src <apiOrigin>; font-src data:; frame-src https://player.vimeo.com https://www.youtube-nocookie.com; form-action 'none'; base-uri 'none'`.
 Inline event-handler attributes cannot run, and the sanitizer strips them from
 bodies anyway. Images must be `data:` URLs (`media[...].url`); `blob:` and
-remote image URLs are blocked.
+remote image URLs are blocked. A frame loads only from the two video hosts the
+built page's policy admits, and only after a tap on a video card. The preview's
+media map holds images only, so a `file` card previews with its authored path
+and no size.
 
 **Addresses.** The preview refuses what the build's schemas refuse
 (`PreviewInputError`, naming the field): a navigation `route` must be a

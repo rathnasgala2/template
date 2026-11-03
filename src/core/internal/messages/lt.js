@@ -278,6 +278,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'Šis puslapis dar nepaskelbtas',
   previewAudioUnavailableLabel:
     'Garso įrašas bus leidžiamas paskelbus šį įrašą',
+  videoPlayLabel: 'Leisti vaizdo įrašą',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Žiūrėti ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Skaityti ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Atsisiųsti PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Rekomenduoja ${site}`,
+  recommendationVisitLabel: 'Aplankyti',
+  commentLikeLabel: 'Patinka',
+  commentUnlikeLabel: 'Nebepatinka',
+  commentPinnedLabel: 'Prisegta',
+  commentSortLabel: 'Rūšiuoti komentarus',
+  commentSortNewestLabel: 'Naujausi',
+  commentSortOldestLabel: 'Seniausi',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

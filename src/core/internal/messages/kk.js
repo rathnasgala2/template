@@ -276,6 +276,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'Алдын ала қарауда кіру қолжетімсіз',
   previewNotPublishedLabel: 'Бұл бет әлі жарияланбаған',
   previewAudioUnavailableLabel: 'Аудио жазба жарияланған соң ойнатылады',
+  videoPlayLabel: 'Бейнені ойнату',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider} сайтында қарау`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site} сайтында оқу`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF жүктеп алу (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site} ұсынады`,
+  recommendationVisitLabel: 'Кіру',
+  commentLikeLabel: 'Ұнату',
+  commentUnlikeLabel: 'Ұнатуды болдырмау',
+  commentPinnedLabel: 'Бекітілген',
+  commentSortLabel: 'Пікірлерді сұрыптау',
+  commentSortNewestLabel: 'Ең жаңасы',
+  commentSortOldestLabel: 'Ең ескісі',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -275,6 +275,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: '미리보기에서는 로그인할 수 없습니다',
   previewNotPublishedLabel: '이 페이지는 아직 게시되지 않았습니다',
   previewAudioUnavailableLabel: '이 글이 게시되면 오디오를 재생할 수 있습니다',
+  videoPlayLabel: '동영상 재생',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider}에서 보기`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site}에서 읽기`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF 다운로드(${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site}의 추천`,
+  recommendationVisitLabel: '방문',
+  commentLikeLabel: '좋아요',
+  commentUnlikeLabel: '좋아요 취소',
+  commentPinnedLabel: '고정됨',
+  commentSortLabel: '댓글 정렬',
+  commentSortNewestLabel: '최신순',
+  commentSortOldestLabel: '오래된순',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

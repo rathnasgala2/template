@@ -276,6 +276,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'پیش نظارے میں سائن اِن دستیاب نہیں',
   previewNotPublishedLabel: 'یہ صفحہ ابھی شائع نہیں ہوا',
   previewAudioUnavailableLabel: 'پوسٹ شائع ہونے کے بعد آڈیو چلے گی',
+  videoPlayLabel: 'ویڈیو چلائیں',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider} پر دیکھیں`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site} پر پڑھیں`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF ڈاؤن لوڈ کریں (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site} کی طرف سے تجویز کردہ`,
+  recommendationVisitLabel: 'ملاحظہ کریں',
+  commentLikeLabel: 'پسند کریں',
+  commentUnlikeLabel: 'پسند ہٹائیں',
+  commentPinnedLabel: 'پن کیا گیا',
+  commentSortLabel: 'تبصرے ترتیب دیں',
+  commentSortNewestLabel: 'تازہ ترین',
+  commentSortOldestLabel: 'قدیم ترین',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

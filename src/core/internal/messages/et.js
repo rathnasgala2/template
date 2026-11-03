@@ -278,6 +278,22 @@ export default Object.freeze({
   previewNotPublishedLabel: 'See leht pole veel avaldatud',
   previewAudioUnavailableLabel:
     'Heli esitatakse pärast selle postituse avaldamist',
+  videoPlayLabel: 'Esita video',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Vaata saidil ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Loe saidil ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Laadi alla PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Soovitab ${site}`,
+  recommendationVisitLabel: 'Külasta',
+  commentLikeLabel: 'Meeldib',
+  commentUnlikeLabel: 'Eemalda meeldimine',
+  commentPinnedLabel: 'Kinnitatud',
+  commentSortLabel: 'Sorteeri kommentaarid',
+  commentSortNewestLabel: 'Uusimad',
+  commentSortOldestLabel: 'Vanimad',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

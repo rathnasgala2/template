@@ -89,6 +89,10 @@ import { cardMediaOf } from './first-body-image.js';
 import { createStructuredData } from './structured-data.js';
 import { icon } from './icons.js';
 import {
+  readRecommendations,
+  renderRecommendationsSection,
+} from './recommendations.js';
+import {
   countKinds,
   interactionsActive,
   renderCountSlot,
@@ -478,8 +482,10 @@ export function homeDocumentTitle(name, tagline) {
  * @param {string} [options.only] a content id: build the page of that one
  *   record only (none of the site-wide pages, no policy pages); an unknown id
  *   yields no pages
- * @param {(body: string) => string} options.pageBody turns a body into its
- *   page form (every image naming its media derivatives, lazily loaded)
+ * @param {(body: string, messages?: import('./messages-core.js').MessageCatalog) => string} options.pageBody
+ *   turns a body into its page form (every image naming its media
+ *   derivatives, lazily loaded; galleries and block cards drawn in the given
+ *   chrome catalog)
  * @param {import('./editions.js').EditionResolution} [options.editions] where
  *   each edition sits beside its article; resolved from the build input when
  *   the caller has not already done so
@@ -1054,7 +1060,13 @@ export function buildGeneratedPages(validatedInput, options) {
       bodyHtml:
         `<article class="g-article"><div class="g-wrap g-article-head">` +
         `<h1>${escapeHtml(publication.title)}</h1></div>` +
-        `<div class="g-wrap g-article-grid"><div class="g-prose">${options.pageBody(publication.profile.body.body)}</div></div></article>`,
+        `<div class="g-wrap g-article-grid"><div class="g-prose">${options.pageBody(publication.profile.body.body, messages)}</div></div>` +
+        renderRecommendationsSection({
+          recommendations: readRecommendations(publication.recommendations),
+          siteTitle: publication.title,
+          messages,
+        }) +
+        `</article>`,
     });
   }
 
@@ -1091,7 +1103,10 @@ export function buildGeneratedPages(validatedInput, options) {
         `<article class="g-article"><div class="g-wrap g-article-head">${crumbs([{ label: policy.title }])}` +
         `<h1>${escapeHtml(policy.title)}</h1></div>` +
         `<div class="g-wrap g-article-grid"><div class="g-prose">` +
-        options.pageBody(dropLeadingTitleHeading(policy.body, policy.title)) +
+        options.pageBody(
+          dropLeadingTitleHeading(policy.body, policy.title),
+          messages,
+        ) +
         `${galascribeSection}</div></div></article>`,
     });
   }
@@ -1110,7 +1125,7 @@ export function buildGeneratedPages(validatedInput, options) {
       : undefined;
     const contactIntro =
       authoredIntro !== undefined
-        ? options.pageBody(authoredIntro)
+        ? options.pageBody(authoredIntro, messages)
         : `<p>${text('contactDefaultIntro')}</p>`;
     pages.push({
       kind: 'policy',
@@ -1369,6 +1384,7 @@ export function buildGeneratedPages(validatedInput, options) {
       (isEdition ? nofollowLinks : (/** @type {string} */ html) => html)(
         options.pageBody(
           dropLeadingTitleHeading(record.body, frontmatter.title),
+          messages,
         ),
       ) +
       tags +

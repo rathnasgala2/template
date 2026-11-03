@@ -282,6 +282,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'പ്രിവ്യൂവിൽ സൈൻ ഇൻ ലഭ്യമല്ല',
   previewNotPublishedLabel: 'ഈ പേജ് ഇതുവരെ പ്രസിദ്ധീകരിച്ചിട്ടില്ല',
   previewAudioUnavailableLabel: 'പോസ്റ്റ് പ്രസിദ്ധീകരിച്ചാൽ ഓഡിയോ പ്ലേ ചെയ്യും',
+  videoPlayLabel: 'വീഡിയോ പ്ലേ ചെയ്യുക',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `${provider}-ൽ കാണുക`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `${site}-ൽ വായിക്കുക`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `PDF ഡൗൺലോഡ് ചെയ്യുക (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `${site} ശുപാർശ ചെയ്യുന്നു`,
+  recommendationVisitLabel: 'സന്ദർശിക്കുക',
+  commentLikeLabel: 'ഇഷ്ടം',
+  commentUnlikeLabel: 'ഇഷ്ടം പിൻവലിക്കുക',
+  commentPinnedLabel: 'പിൻ ചെയ്തത്',
+  commentSortLabel: 'അഭിപ്രായങ്ങൾ ക്രമീകരിക്കുക',
+  commentSortNewestLabel: 'ഏറ്റവും പുതിയത്',
+  commentSortOldestLabel: 'ഏറ്റവും പഴയത്',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

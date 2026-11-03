@@ -276,6 +276,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'Вход недоступен в предпросмотре',
   previewNotPublishedLabel: 'Эта страница ещё не опубликована',
   previewAudioUnavailableLabel: 'Аудио воспроизведётся после публикации записи',
+  videoPlayLabel: 'Воспроизвести видео',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Смотреть на ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Читать на ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Скачать PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Рекомендует ${site}`,
+  recommendationVisitLabel: 'Перейти',
+  commentLikeLabel: 'Нравится',
+  commentUnlikeLabel: 'Отменить «нравится»',
+  commentPinnedLabel: 'Закреплено',
+  commentSortLabel: 'Сортировка комментариев',
+  commentSortNewestLabel: 'Сначала новые',
+  commentSortOldestLabel: 'Сначала старые',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

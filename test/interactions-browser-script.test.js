@@ -133,7 +133,7 @@ const NO_COUNT = null;
 async function boot(options = {}) {
   const calls = [];
   const navigations = [];
-  const dom = new JSDOM(MARKUP, {
+  const dom = new JSDOM(options.markup || MARKUP, {
     url: PAGE + (options.hash || ''),
     runScripts: 'outside-only',
     pretendToBeVisual: true,
@@ -1781,4 +1781,212 @@ test('the script does nothing when the section is absent', () => {
   };
   dom.window.eval(SOURCE);
   assert.equal(fetched, false);
+});
+
+const LIKES_MARKUP = MARKUP.replace(
+  'data-max-depth="3">',
+  'data-max-depth="3" data-comment-likes="true">',
+);
+const LABELS = {
+  like: 'Gefällt mir',
+  unlike: 'Gefällt mir nicht mehr',
+  pinned: 'Angeheftet',
+  sort: 'Kommentare sortieren',
+  newest: 'Neueste',
+  oldest: 'Älteste',
+};
+
+/**
+ * @param {Record<string, unknown>[]} items the first page of comments
+ * @param {Record<string, any>} [routes] extra fake API routes
+ * @returns {Function} a fake API with that first page
+ */
+const withComments = (items, routes = {}) =>
+  api({
+    'GET /comments': () => ({
+      status: 200,
+      body: {
+        items,
+        nextCursor: null,
+        count: { lowerBound: items.length, display: String(items.length) },
+      },
+    }),
+    ...routes,
+  });
+
+test('comment likes: a button per comment that carries likeCount, optimistic count, PUT then DELETE', async () => {
+  const h = await boot({
+    markup: LIKES_MARKUP,
+    session: SIGNED_IN,
+    handler: withComments(
+      [comment('c1', { likeCount: 2, likedByMe: false }), comment('c2')],
+      {
+        'PUT /like': { status: 204, body: null },
+        'DELETE /like': { status: 204, body: null },
+      },
+    ),
+  });
+  await h.ready();
+  assert.equal(h.$$('.g-comment__like').length, 1, 'none without likeCount');
+  const like = h.$('[data-comment-like="c1"]');
+  const text = () => like.textContent;
+  assert.equal(text(), 'Like2');
+  like.click();
+  assert.equal(text(), 'Unlike3', 'optimistic');
+  await h.waitFor(
+    () => h.bodyCalls('PUT', '/v2/public/comments/c1/like').length === 1,
+    'PUT',
+  );
+  assert.equal(h.calls.at(-1).init.headers.Authorization, 'Bearer tok-123');
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  like.click();
+  assert.equal(text(), 'Like2');
+  await h.waitFor(
+    () => h.bodyCalls('DELETE', '/v2/public/comments/c1/like').length === 1,
+    'DELETE',
+  );
+});
+
+test('comment likes: a refusal puts the count back and says why', async () => {
+  const h = await boot({
+    markup: LIKES_MARKUP,
+    session: SIGNED_IN,
+    handler: withComments([comment('c1', { likeCount: 0, likedByMe: false })], {
+      'PUT /like': problem(404, 'INTERACTIONS_DISABLED'),
+    }),
+  });
+  await h.ready();
+  const like = h.$('[data-comment-like="c1"]');
+  assert.equal(like.textContent, 'Like');
+  like.click();
+  assert.equal(like.textContent, 'Unlike1');
+  await h.waitFor(() => like.textContent === 'Like', 'revert');
+  await h.waitFor(() => h.status() !== '', 'message');
+});
+
+test('comment likes: signed out starts sign-in and sends no like; off by default', async () => {
+  const signedOut = await boot({
+    markup: LIKES_MARKUP,
+    handler: withComments([comment('c1', { likeCount: 1 })]),
+  });
+  await signedOut.ready();
+  signedOut.$('[data-comment-like="c1"]').click();
+  await signedOut.waitFor(() => signedOut.navigations.length === 1, 'sign-in');
+  assert.match(signedOut.navigations[0], /\/reader\/connect\?/);
+  assert.equal(signedOut.bodyCalls('PUT', '/like').length, 0);
+
+  const off = await boot({
+    session: SIGNED_IN,
+    handler: withComments([comment('c1', { likeCount: 5, likedByMe: false })]),
+  });
+  await off.ready();
+  assert.equal(
+    off.$$('.g-comment__like').length,
+    0,
+    'config comments.likes is off',
+  );
+});
+
+test('a pinned comment is badged and shown first; labels come from the page', async () => {
+  const h = await boot({
+    markup: LIKES_MARKUP.replace(
+      'data-gala-comments>',
+      `data-gala-comments data-labels='${JSON.stringify(LABELS)}'>`,
+    ),
+    handler: withComments([
+      comment('c1'),
+      comment('c2', { pinned: true, likeCount: 1 }),
+    ]),
+  });
+  await h.ready();
+  const order = h
+    .$$('.g-comment')
+    .map((node) => node.getAttribute('data-comment-id'));
+  assert.deepEqual(order, ['c2', 'c1']);
+  const badge = h.$('[data-comment-id="c2"] .g-comment__pinned');
+  assert.equal(badge.textContent, 'Angeheftet');
+  assert.ok(badge.classList.contains('g-badge'));
+  assert.ok(
+    h.$('[data-comment-id="c2"]').classList.contains('g-comment--pinned'),
+  );
+  assert.equal(h.$('[data-comment-id="c1"] .g-comment__pinned'), null);
+  assert.equal(
+    h.$('[data-comment-like="c2"] .g-comment__like-label').textContent,
+    'Gefällt mir',
+  );
+  assert.equal(
+    h.$('.g-comments__sort').getAttribute('aria-label'),
+    'Kommentare sortieren',
+  );
+  assert.deepEqual(
+    h.$$('.g-comments__sort-option').map((node) => node.textContent),
+    ['Neueste', 'Älteste'],
+  );
+});
+
+test('sort: Newest / Oldest re-requests the comments with sort= and keeps the cursor to its sort', async () => {
+  const seen = [];
+  const h = await boot({
+    handler: (call) => {
+      if (call.method === 'GET' && call.url.includes('/comments')) {
+        seen.push(call.url);
+        const oldest = call.url.includes('sort=oldest');
+        const cursor = call.url.includes('cursor=');
+        return {
+          status: 200,
+          body: {
+            items: cursor
+              ? [comment('c9')]
+              : oldest
+                ? [comment('c1'), comment('c2')]
+                : [comment('c2'), comment('c1')],
+            nextCursor: cursor ? null : 'cur1',
+            count: { lowerBound: 3, display: '3' },
+          },
+        };
+      }
+      return api()(call);
+    },
+  });
+  await h.ready();
+  assert.ok(
+    !seen[0].includes('sort='),
+    'the first request keeps the default order',
+  );
+  const [newest, oldest] = h.$$('.g-comments__sort-option');
+  assert.equal(newest.getAttribute('aria-pressed'), 'true');
+  assert.equal(oldest.getAttribute('aria-pressed'), 'false');
+  assert.equal(
+    h.$('.g-comments__sort').getAttribute('aria-label'),
+    'Sort comments',
+  );
+  oldest.click();
+  await h.waitFor(
+    () => seen.some((url) => url.includes('sort=oldest')),
+    'sorted request',
+  );
+  await h.waitFor(
+    () =>
+      h
+        .$$('.g-comment')
+        .map((n) => n.getAttribute('data-comment-id'))
+        .join() === 'c1,c2',
+    'reordered',
+  );
+  assert.equal(oldest.getAttribute('aria-pressed'), 'true');
+  assert.equal(newest.getAttribute('aria-pressed'), 'false');
+  h.$('[data-gala-more]').click();
+  await h.waitFor(
+    () => seen.some((url) => url.includes('cursor=cur1')),
+    'next page',
+  );
+  assert.match(seen.at(-1), /cursor=cur1/);
+  assert.match(seen.at(-1), /sort=oldest/);
+});
+
+test('sort: no control for a single comment', async () => {
+  const h = await boot({ handler: withComments([comment('c1')]) });
+  await h.ready();
+  const sort = h.$('.g-comments__sort');
+  assert.ok(sort === null || sort.hidden);
 });

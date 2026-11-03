@@ -279,6 +279,22 @@ export default Object.freeze({
   previewSignInUnavailableLabel: 'Մուտքն առկա չէ նախադիտման մեջ',
   previewNotPublishedLabel: 'Այս էջը դեռ հրապարակված չէ',
   previewAudioUnavailableLabel: 'Աուդիոն կնվագարկվի հրապարակումից հետո',
+  videoPlayLabel: 'Նվագարկել տեսանյութը',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Դիտել ${provider}-ում`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Կարդալ ${site}-ում`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Ներբեռնել PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Խորհուրդ է տալիս ${site}-ը`,
+  recommendationVisitLabel: 'Այցելել',
+  commentLikeLabel: 'Հավանել',
+  commentUnlikeLabel: 'Չեղարկել հավանումը',
+  commentPinnedLabel: 'Ամրացված',
+  commentSortLabel: 'Դասավորել մեկնաբանությունները',
+  commentSortNewestLabel: 'Ամենանորերը',
+  commentSortOldestLabel: 'Ամենահինները',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

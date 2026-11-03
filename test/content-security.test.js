@@ -33,6 +33,7 @@ const CSP_BASELINE_STRING =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
   "form-action 'none'; script-src 'self'; " +
   "style-src 'self'; img-src 'self'; font-src 'self'; " +
+  'frame-src https://player.vimeo.com https://www.youtube-nocookie.com; ' +
   "connect-src 'self' https://api.galascribe.com; " +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
@@ -517,6 +518,7 @@ test('analytics provider sources join script-src, connect-src and img-src, sorte
   const baseline =
     "default-src 'none'; base-uri 'none'; object-src 'none'; form-action 'none'; " +
     "script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; " +
+    'frame-src https://player.vimeo.com https://www.youtube-nocookie.com; ' +
     "connect-src 'self' https://api.galascribe.com; media-src 'self'; " +
     "manifest-src 'self'; worker-src 'none'";
   assert.equal(contentSecurityPolicyMeta(undefined, undefined), baseline);

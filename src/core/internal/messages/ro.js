@@ -276,6 +276,22 @@ export default Object.freeze({
     'Autentificarea nu este disponibilă în previzualizare',
   previewNotPublishedLabel: 'Această pagină nu este încă publicată',
   previewAudioUnavailableLabel: 'Audio se redă după publicarea acestei postări',
+  videoPlayLabel: 'Redă videoclipul',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Vizionează pe ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Citește pe ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Descarcă PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Recomandat de ${site}`,
+  recommendationVisitLabel: 'Vizitează',
+  commentLikeLabel: 'Îmi place',
+  commentUnlikeLabel: 'Nu-mi mai place',
+  commentPinnedLabel: 'Fixat',
+  commentSortLabel: 'Sortează comentariile',
+  commentSortNewestLabel: 'Cele mai noi',
+  commentSortOldestLabel: 'Cele mai vechi',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

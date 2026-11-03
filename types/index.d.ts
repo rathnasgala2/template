@@ -234,6 +234,16 @@ export interface PublicationNormalized {
     fields: { website: boolean; phone: boolean };
     intro?: RenderableBody;
   };
+  /**
+   * The sites the author recommends (schemas 3.32.0): at most 24, shown on the
+   * About page and published as `/.well-known/recommendations.json`.
+   */
+  recommendations?: {
+    url: string;
+    title: string;
+    description?: string;
+    addedOn?: string;
+  }[];
   /** The article share group; absent means `["copy-link"]`, `[]` none. */
   sharing?: { targets: readonly ShareTarget[] };
   /**
@@ -314,7 +324,13 @@ export interface InteractionsConfig {
     enabled: boolean;
     definitions: InteractionsReactionDefinition[];
   };
-  comments: { enabled: boolean; allowReplies: boolean; maxDepth: number };
+  comments: {
+    enabled: boolean;
+    allowReplies: boolean;
+    maxDepth: number;
+    /** Reader likes on comments (schemas 3.32.0); absent means off. */
+    likes?: boolean;
+  };
   publicCounts: { reactions: boolean; comments: boolean };
   /** The author Follow control (schemas 3.22.0); absent means off. */
   follows?: { enabled: boolean };

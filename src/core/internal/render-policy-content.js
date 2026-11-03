@@ -125,12 +125,78 @@ export const ALLOWED_ATTRIBUTES_BY_TAG = Object.freeze({
   h5: Object.freeze(['id']),
   h6: Object.freeze(['id']),
   a: Object.freeze(['href', 'rel']),
+  figure: Object.freeze(['class', 'data-gala-block', 'data-gala-video']),
   img: Object.freeze(['src', 'alt']),
   ol: Object.freeze(['start']),
   pre: Object.freeze(['class']),
   code: Object.freeze(['class']),
   span: Object.freeze(['class']),
 });
+
+/**
+ * The fenced-block catalog (render-policy 4.14.0): the fence info strings the
+ * markdown pipeline turns into a `<figure>` card instead of a code block. The
+ * body of each block is `key: value` lines; `required` and `optional` name the
+ * keys that matter (any other key is ignored). The grammar and its output are
+ * documented in the README ("Fenced blocks"); this catalog is part of the
+ * published render policy, so a change to it changes the policy identity.
+ * Each block's `figure` carries exactly `class`, `data-gala-block` and (video
+ * only) `data-gala-video="<provider>:<id>"`.
+ *
+ * @type {Readonly<Record<string, {className: string, required: readonly string[], optional: readonly string[]}>>}
+ */
+export const FENCED_BLOCKS = Object.freeze({
+  bookmark: Object.freeze({
+    className: 'g-bookmark',
+    required: Object.freeze(['url', 'title']),
+    optional: Object.freeze(['description', 'site']),
+  }),
+  file: Object.freeze({
+    className: 'g-file',
+    required: Object.freeze(['path', 'title']),
+    optional: Object.freeze(['description']),
+  }),
+  video: Object.freeze({
+    className: 'g-video',
+    required: Object.freeze(['provider', 'id', 'title']),
+    optional: Object.freeze(['poster']),
+  }),
+});
+
+/**
+ * The video providers a `video` block may name, with the watch URL the
+ * no-JavaScript link points at and the embed URL the click-to-play script
+ * frames (the two hosts the CSP's `frame-src` admits).
+ *
+ * @type {Readonly<Record<string, {name: string, idPattern: RegExp, watchUrl: (id: string) => string, embedUrl: (id: string) => string}>>}
+ */
+export const VIDEO_PROVIDERS = Object.freeze({
+  youtube: Object.freeze({
+    name: 'YouTube',
+    idPattern: /^[A-Za-z0-9_-]{11}$/,
+    watchUrl: (/** @type {string} */ id) =>
+      `https://www.youtube.com/watch?v=${id}`,
+    embedUrl: (/** @type {string} */ id) =>
+      `https://www.youtube-nocookie.com/embed/${id}`,
+  }),
+  vimeo: Object.freeze({
+    name: 'Vimeo',
+    idPattern: /^[0-9]{1,12}$/,
+    watchUrl: (/** @type {string} */ id) => `https://vimeo.com/${id}`,
+    embedUrl: (/** @type {string} */ id) =>
+      `https://player.vimeo.com/video/${id}`,
+  }),
+});
+
+/**
+ * The hosts a frame may load from: only after a reader taps a video card.
+ *
+ * @type {readonly string[]}
+ */
+export const FRAME_SOURCES = Object.freeze([
+  'https://player.vimeo.com',
+  'https://www.youtube-nocookie.com',
+]);
 
 /** @type {string} */
 export const HIGHLIGHTER_PACKAGE = '@11ty/eleventy-plugin-syntaxhighlight';
@@ -285,6 +351,7 @@ export const CONTENT_SECURITY_POLICY_META_BASELINE =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
   "form-action 'none'; script-src 'self'; " +
   "style-src 'self'; img-src 'self'; font-src 'self'; " +
+  `frame-src ${FRAME_SOURCES.join(' ')}; ` +
   `connect-src 'self' ${PRODUCTION_API_ORIGIN}; ` +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
@@ -302,6 +369,7 @@ export const CONTENT_SECURITY_POLICY_COMPLETE =
   "default-src 'none'; base-uri 'none'; object-src 'none'; " +
   "frame-ancestors 'none'; form-action 'none'; script-src 'self'; " +
   "style-src 'self'; img-src 'self'; font-src 'self'; " +
+  `frame-src ${FRAME_SOURCES.join(' ')}; ` +
   `connect-src 'self' ${PRODUCTION_API_ORIGIN}; ` +
   "media-src 'self'; manifest-src 'self'; worker-src 'none'";
 
@@ -393,6 +461,23 @@ export function renderPolicyDocument() {
         ]),
       ),
       allowedUrlSchemes: [...ALLOWED_URL_SCHEMES],
+    },
+    fencedBlocks: {
+      figureClasses: Object.values(FENCED_BLOCKS)
+        .map((block) => block.className)
+        .sort(),
+      blocks: Object.fromEntries(
+        Object.entries(FENCED_BLOCKS).map(([name, block]) => [
+          name,
+          {
+            class: block.className,
+            required: [...block.required],
+            optional: [...block.optional],
+          },
+        ]),
+      ),
+      videoProviders: Object.keys(VIDEO_PROVIDERS).sort(),
+      frameSources: [...FRAME_SOURCES],
     },
     highlighter: {
       package: HIGHLIGHTER_PACKAGE,

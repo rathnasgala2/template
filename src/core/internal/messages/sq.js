@@ -276,6 +276,22 @@ export default Object.freeze({
     'Hyrja nuk është e disponueshme në paraqitjen paraprake',
   previewNotPublishedLabel: 'Kjo faqe nuk është botuar ende',
   previewAudioUnavailableLabel: 'Audioja luhet pasi të botohet ky postim',
+  videoPlayLabel: 'Luaj videon',
+  /** @type {(provider: string) => string} */
+  videoOpenOnLabel: (provider) => `Shiko në ${provider}`,
+  /** @type {(site: string) => string} */
+  bookmarkReadOnLabel: (site) => `Lexo në ${site}`,
+  /** @type {(size: string) => string} */
+  fileDownloadLabel: (size) => `Shkarko PDF (${size})`,
+  /** @type {(site: string) => string} */
+  recommendationsHeading: (site) => `Rekomandohet nga ${site}`,
+  recommendationVisitLabel: 'Vizito',
+  commentLikeLabel: 'Pëlqej',
+  commentUnlikeLabel: 'Hiq pëlqimin',
+  commentPinnedLabel: 'I fiksuar',
+  commentSortLabel: 'Rendit komentet',
+  commentSortNewestLabel: 'Më të rejat',
+  commentSortOldestLabel: 'Më të vjetrat',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

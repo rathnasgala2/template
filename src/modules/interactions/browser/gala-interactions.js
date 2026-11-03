@@ -156,6 +156,12 @@
     reportSubmit: 'Send report',
     justNow: 'just now',
     edited: ' (edited)',
+    like: 'Like',
+    unlike: 'Unlike',
+    pinned: 'Pinned',
+    sort: 'Sort comments',
+    newest: 'Newest',
+    oldest: 'Oldest',
   };
 
   const REPORT_REASONS = [
@@ -183,6 +189,7 @@
     countComments: data.countComments !== 'false',
     allowReplies: data.allowReplies === 'true',
     maxDepth: clampDepth(Number.parseInt(data.maxDepth || '3', 10)),
+    commentLikes: data.commentLikes === 'true',
   };
   if (!config.apiOrigin || !config.publicationId || !config.contentId) return;
 
@@ -222,6 +229,28 @@
     root.querySelector('.g-comments__title')
   );
 
+  // The comment sentences the page was rendered with, in its language
+  // (`data-labels` on the comments region); a missing one stays English.
+  try {
+    const labels = JSON.parse(
+      (commentsEl && commentsEl.getAttribute('data-labels')) || '{}',
+    );
+    for (const name of [
+      'like',
+      'unlike',
+      'pinned',
+      'sort',
+      'newest',
+      'oldest',
+    ]) {
+      if (labels && typeof labels[name] === 'string' && labels[name]) {
+        /** @type {Record<string, string>} */ (MESSAGES)[name] = labels[name];
+      }
+    }
+  } catch {
+    // keep the English defaults
+  }
+
   // --------------------------------------------------------------------- state
 
   /**
@@ -232,7 +261,7 @@
    * @typedef {{isAuthor: boolean, canEdit: boolean, canDelete: boolean, canReply: boolean}} CommentViewer
    * @typedef {{state: 'PENDING' | 'RESTORED' | 'DENIED', decidedAt?: string}} CommentAppeal
    * @typedef {{state: 'REMOVED' | 'HELD', appeal: CommentAppeal | null, canAppeal: boolean}} CommentOwn
-   * @typedef {{id: string, parentId: string | null, depth: number, state: 'VISIBLE' | 'REMOVED' | 'DELETED' | 'HELD', author: ReaderView | null, body: string | null, createdAt: string, editedAt: string | null, replies: CommentView[], moreReplies: boolean, viewer: CommentViewer, own?: CommentOwn}} CommentView
+   * @typedef {{id: string, parentId: string | null, depth: number, state: 'VISIBLE' | 'REMOVED' | 'DELETED' | 'HELD', author: ReaderView | null, body: string | null, createdAt: string, editedAt: string | null, replies: CommentView[], moreReplies: boolean, viewer: CommentViewer, own?: CommentOwn, pinned?: boolean, likeCount?: number, likedByMe?: boolean}} CommentView
    * @typedef {{items: CommentView[], nextCursor: string | null, count: PublicCount | null}} CommentPage
    * @typedef {{key: string, label: string, visual: {kind: string, token: string}, count: PublicCount | null, viewerActive: boolean}} ReactionItem
    * @typedef {{enabled: boolean, items: ReactionItem[]}} ReactionsBlock
@@ -252,7 +281,10 @@
     commentsOpen: config.commentsEnabled,
     nextCursor: /** @type {string | null} */ (null),
     loadedIds: new Set(),
+    sort: /** @type {'newest' | 'oldest'} */ ('newest'),
+    sortChosen: false,
   };
+  const likeBusy = new Set();
   const composers = new Set();
   let rootComposer = /** @type {Composer | null} */ (null);
   let inline =
@@ -1219,6 +1251,7 @@
       'g-comment--tombstone',
       comment.state !== 'VISIBLE' || !!own,
     );
+    item.classList.toggle('g-comment--pinned', comment.pinned === true);
     item.classList.toggle(
       'g-comment--mine',
       !!own || !!(comment.viewer && comment.viewer.isAuthor),
@@ -1252,6 +1285,11 @@
           timeLabel(comment.createdAt, !!comment.editedAt),
         ),
       );
+      if (comment.pinned === true) {
+        head.appendChild(
+          make('span', 'g-badge g-comment__pinned', MESSAGES.pinned),
+        );
+      }
       item.appendChild(head);
       item.appendChild(renderBody(comment.body || ''));
       // A comment restored on appeal says so.
@@ -1364,6 +1402,9 @@
       });
       actions.appendChild(reply);
     }
+    if (config.commentLikes && typeof comment.likeCount === 'number') {
+      actions.appendChild(renderLike(comment));
+    }
     if (comment.viewer && comment.viewer.canEdit) {
       const edit = button(
         'g-comment__action',
@@ -1397,6 +1438,74 @@
       actions.appendChild(report);
     }
     return actions;
+  }
+
+  /**
+   * The like button of one comment: its label says what a press does, its
+   * count follows the reader's own like at once and is put back if the server
+   * refuses.
+   *
+   * @param {CommentView} comment
+   * @returns {HTMLButtonElement}
+   */
+  function renderLike(comment) {
+    const like = button('g-comment__action g-comment__like', '');
+    like.setAttribute('data-comment-like', comment.id);
+    like.appendChild(make('span', 'g-comment__like-label'));
+    like.appendChild(make('span', 'g-comment__like-count'));
+    paintLike(like, comment);
+    like.addEventListener('click', () => {
+      if (like.getAttribute('aria-disabled') === 'true') return;
+      if (!session) {
+        startSignIn({ kind: 'signin' });
+        return;
+      }
+      setLike(like, comment, !comment.likedByMe);
+    });
+    return like;
+  }
+
+  /**
+   * @param {HTMLElement} node
+   * @param {CommentView} comment
+   */
+  function paintLike(node, comment) {
+    const liked = comment.likedByMe === true;
+    const count = comment.likeCount || 0;
+    node.classList.toggle('g-comment__like--active', liked);
+    const label = node.querySelector('.g-comment__like-label');
+    const total = node.querySelector('.g-comment__like-count');
+    if (label) label.textContent = liked ? MESSAGES.unlike : MESSAGES.like;
+    if (total) total.textContent = count > 0 ? String(count) : '';
+  }
+
+  /**
+   * @param {HTMLElement} node
+   * @param {CommentView} comment
+   * @param {boolean} wantLiked
+   * @returns {Promise<void>}
+   */
+  async function setLike(node, comment, wantLiked) {
+    if (likeBusy.has(comment.id)) return;
+    likeBusy.add(comment.id);
+    const wasLiked = comment.likedByMe === true;
+    const wasCount = comment.likeCount || 0;
+    comment.likedByMe = wantLiked;
+    comment.likeCount = Math.max(0, wasCount + (wantLiked ? 1 : -1));
+    paintLike(node, comment);
+    try {
+      await api(
+        wantLiked ? 'PUT' : 'DELETE',
+        '/v2/public/comments/' + encodeURIComponent(comment.id) + '/like',
+      );
+    } catch (error) {
+      comment.likedByMe = wasLiked;
+      comment.likeCount = wasCount;
+      paintLike(node, comment);
+      announce(failureMessage(error));
+    } finally {
+      likeBusy.delete(comment.id);
+    }
   }
 
   /**
@@ -2074,12 +2183,80 @@
       while (listEl.firstChild) listEl.removeChild(listEl.firstChild);
       live.loadedIds.clear();
     }
-    for (const comment of page.items || []) {
+    // The pinned comment first, whatever order the page came in.
+    const items = (page.items || [])
+      .slice()
+      .sort(
+        (a, b) => (b.pinned === true ? 1 : 0) - (a.pinned === true ? 1 : 0),
+      );
+    for (const comment of items) {
       if (live.loadedIds.has(comment.id)) continue;
       listEl.appendChild(renderComment(comment));
     }
     live.nextCursor = page.nextCursor || null;
     if (moreEl) moreEl.hidden = !live.nextCursor;
+    if (replace) showSort((page.items || []).length > 1 || !!page.nextCursor);
+  }
+
+  // ---------------------------------------------------------------------- sort
+  /** @type {HTMLElement | null} */
+  let sortEl = null;
+
+  /**
+   * The Newest / Oldest control above the list: made on first use, shown only
+   * when there is more than one comment to order.
+   *
+   * @param {boolean} wanted
+   */
+  function showSort(wanted) {
+    if (!listEl || !listEl.parentNode) return;
+    if (!sortEl) {
+      if (!wanted) return;
+      sortEl = make('div', 'g-comments__sort');
+      sortEl.setAttribute('role', 'group');
+      sortEl.setAttribute('aria-label', MESSAGES.sort);
+      for (const [value, label] of [
+        ['newest', MESSAGES.newest],
+        ['oldest', MESSAGES.oldest],
+      ]) {
+        const choice = button('g-comments__sort-option', label);
+        choice.setAttribute('data-sort', value);
+        choice.addEventListener('click', () => chooseSort(value));
+        sortEl.appendChild(choice);
+      }
+      listEl.parentNode.insertBefore(sortEl, listEl);
+    }
+    sortEl.hidden = !wanted && !live.sortChosen;
+    for (const choice of Array.from(sortEl.querySelectorAll('[data-sort]'))) {
+      choice.setAttribute(
+        'aria-pressed',
+        choice.getAttribute('data-sort') === live.sort ? 'true' : 'false',
+      );
+    }
+  }
+
+  /**
+   * @param {string} value
+   * @returns {Promise<void>}
+   */
+  async function chooseSort(value) {
+    if ((value !== 'newest' && value !== 'oldest') || value === live.sort) {
+      return;
+    }
+    live.sort = value;
+    live.sortChosen = true;
+    const token = (loadToken += 1);
+    showSort(true);
+    try {
+      const page = await api(
+        'GET',
+        CONTENT_PATH + '/comments?' + new URLSearchParams({ sort: value }),
+      );
+      if (token !== loadToken) return;
+      renderPage(page, true);
+    } catch (error) {
+      announce(failureMessage(error));
+    }
   }
 
   async function loadAll() {
@@ -2148,6 +2325,8 @@
     setBusy(moreEl, true);
     try {
       const query = new URLSearchParams({ cursor: live.nextCursor });
+      // A cursor is valid only with the sort it was issued for.
+      if (live.sortChosen) query.set('sort', live.sort);
       const page = await api(
         'GET',
         CONTENT_PATH + '/comments?' + query.toString(),
