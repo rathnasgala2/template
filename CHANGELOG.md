@@ -8,6 +8,25 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.15.0] - 2026-11-04
+
+### Changed
+
+- **No empty box when a post has no cover.** The base stylesheet
+  (`assets/gala-base-v1.css`) now hides the cover placeholder
+  (`.g-card-placeholder`), collapses the featured hero to one full-width text
+  column when its media slot holds only the placeholder, and makes a row card
+  single-column when its media is the placeholder. Cards stay compact. The three
+  rules use `:has()`; a browser without `:has()` still shows the old box.
+- The rendered markup is byte-identical to 4.14.0 (the placeholder elements are
+  still emitted; only the stylesheet changed), so site bytes equal 4.14.0 apart
+  from the stylesheet and the version string. The article page is unchanged.
+- The render policy is unchanged (no sanitizer, Markdown or CSP change), so its
+  identity and `contracts/render-policy.jcs` are unchanged. The styling contract
+  is unchanged: `catalogDigest` stays
+  `sha256:4afdcb555d21fc205ab332a9e8996a09e1eb607053353c399eb070d0f0525f29`, so
+  themes need no rebuild.
+
 ## [4.14.0] - 2026-11-03
 
 ### Added
