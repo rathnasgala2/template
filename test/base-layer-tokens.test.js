@@ -321,3 +321,20 @@ test('the script never embeds language, fetches only the declared index and crea
   }
   assert.ok(source.includes("getAttribute('data-search-index')"));
 });
+
+test('a post without a cover collapses the placeholder box in the base stylesheet', () => {
+  const css = GALA_BASE_STYLESHEET_SOURCE;
+  assert.match(css, /\.g-card-placeholder \{ display: none; \}/);
+  assert.match(
+    css,
+    /\.g-hero:has\(> \.g-hero-media > \.g-card-placeholder\) \{ grid-template-columns: minmax\(0, 1fr\); \}/,
+  );
+  assert.match(
+    css,
+    /\.g-hero-media:has\(> \.g-card-placeholder\) \{ display: none; \}/,
+  );
+  assert.match(
+    css,
+    /\.g-card-row:has\(> \.g-card-placeholder\) \{ grid-template-columns: minmax\(0, 1fr\); \}/,
+  );
+});

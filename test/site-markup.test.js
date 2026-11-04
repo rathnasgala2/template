@@ -284,6 +284,12 @@ test('header, home, article, listings and footer render the redesigned structure
       assert.match(home, /<div class="g-card-placeholder" aria-hidden="true">/);
       assert.equal(count(home, /<figure class="g-card-media">/g), 0);
       // A post with no hero and no body image is still a placeholder card.
+      // The cover-less hero keeps its media slot and placeholder too; the base
+      // stylesheet collapses it, so the markup equals 4.14.0.
+      assert.match(
+        home,
+        /<div class="g-hero-media"><span class="g-card-placeholder">/,
+      );
     },
   );
 

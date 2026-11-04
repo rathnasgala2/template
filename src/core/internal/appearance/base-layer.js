@@ -458,9 +458,11 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-card-media { margin: 0; aspect-ratio: 16 / 10; overflow: hidden; border-radius: var(--gala-radius-media); background: var(--gala-color-surface-raised); border-bottom: var(--gala-border-media-divider); max-width: 100%; }
   .g-card-media img { width: 100%; height: 100%; object-fit: cover; filter: var(--gala-media-filter); transition: transform 1s var(--gala-ease-standard), filter var(--gala-duration-slow) var(--gala-ease-standard); }
   .g-card:hover .g-card-media img { transform: scale(var(--gala-media-zoom)); filter: var(--gala-media-filter-hover); }
-  .g-card-placeholder { display: grid; place-items: center; aspect-ratio: 16 / 10; width: 100%; overflow: hidden; border-radius: var(--gala-radius-media); background: var(--gala-color-surface-raised); color: var(--gala-color-text-muted); }
-  .g-card-placeholder .g-icon { width: 2.25rem; height: 2.25rem; opacity: .7; }
-  .g-hero-media .g-card-placeholder { height: 100%; aspect-ratio: auto; border-radius: 0; }
+  /* a post without a cover: no empty box (the markup keeps the placeholder) */
+  .g-card-placeholder { display: none; }
+  .g-hero:has(> .g-hero-media > .g-card-placeholder) { grid-template-columns: minmax(0, 1fr); }
+  .g-hero-media:has(> .g-card-placeholder) { display: none; }
+  .g-card-row:has(> .g-card-placeholder) { grid-template-columns: minmax(0, 1fr); }
   .g-card-body { display: flex; flex-direction: column; gap: .6rem; padding: var(--gala-card-pad); flex: 1; min-width: 0; }
   .g-card-top { display: flex; align-items: center; justify-content: space-between; gap: var(--gala-space-2); min-height: 1.6rem; }
   .g-card h2, .g-card h3 {
