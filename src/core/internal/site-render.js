@@ -29,6 +29,7 @@ import {
   COUNTS_SCRIPT_PATH,
   COUNT_SLOT_MARKER,
   INTERACTIONS_SCRIPT_PATH,
+  SIGNALS_SCRIPT_PATH,
   countKinds,
   interactionsActive,
 } from './interactions.js';
@@ -311,6 +312,10 @@ export function buildPageDocuments(validatedInput, ctx) {
   const countsScriptHref = joinBasePathAndRoute(
     publicBasePath,
     `/${COUNTS_SCRIPT_PATH}`,
+  );
+  const signalsScriptHref = joinBasePathAndRoute(
+    publicBasePath,
+    `/${SIGNALS_SCRIPT_PATH}`,
   );
   const audienceScriptHref = joinBasePathAndRoute(
     publicBasePath,
@@ -798,6 +803,9 @@ export function buildPageDocuments(validatedInput, ctx) {
         interactionsScriptHref: page.interactionBearing
           ? interactionsScriptHref
           : undefined,
+        // The reading-signals script (Today) rides with the interactions
+        // section: it reads the section's origin, publication and content ids.
+        ...(page.interactionBearing ? { signalsScriptHref } : {}),
         // The counts script rides on exactly the pages that carry a count
         // slot, and reads its API origin and publication id from its own tag.
         ...(countsOn && page.bodyHtml.includes(COUNT_SLOT_MARKER)

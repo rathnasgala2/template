@@ -64,6 +64,7 @@ function raw(value) {
  * @property {string} appearanceScriptHref the appearance bootstrap script
  * @property {string} [interactionsScriptHref] the interactions script
  * @property {string} [countsScriptHref] the counts script
+ * @property {string} [signalsScriptHref] the reading-signals script (Today), only on article pages with the interactions root
  * @property {string} [countsApiOrigin] the counts API origin
  * @property {string} [countsPublicationId] the publication id for counts
  * @property {string} [audienceScriptHref] the audience script
@@ -129,6 +130,9 @@ export function renderDocumentShell(data, content) {
   }
   if (d.countsScriptHref) {
     scripts += `<script src="${esc(d.countsScriptHref)}" defer data-api-origin="${esc(d.countsApiOrigin)}" data-publication-id="${esc(d.countsPublicationId)}"></script>`;
+  }
+  if (d.signalsScriptHref) {
+    scripts += `<script src="${esc(d.signalsScriptHref)}" defer data-gala-signals-script></script>`;
   }
   if (d.audienceScriptHref) {
     scripts += `<script type="application/json" data-gala-audience-messages>${raw(d.audienceMessages)}</script><script src="${esc(d.audienceScriptHref)}" defer data-gala-audience-script data-api-origin="${esc(d.audienceApiOrigin)}" data-app-origin="${esc(d.audienceAppOrigin)}" data-publication-id="${esc(d.audiencePublicationId)}" data-canonical-url="${esc(d.audienceReturnUrl)}"></script>`;

@@ -16,6 +16,11 @@ const COUNTS_SCRIPT_SOURCE_URL = new URL(
   import.meta.url,
 );
 
+const SIGNALS_SCRIPT_SOURCE_URL = new URL(
+  '../../modules/interactions/browser/gala-signals.js',
+  import.meta.url,
+);
+
 /**
  * Read the browser script's bytes from the template package.
  *
@@ -32,4 +37,13 @@ export function loadInteractionsScript() {
  */
 export function loadCountsScript() {
   return readFile(COUNTS_SCRIPT_SOURCE_URL);
+}
+
+/**
+ * Read the reading-signals script's bytes from the template package.
+ *
+ * @returns {Promise<Buffer>} the script bytes
+ */
+export function loadSignalsScript() {
+  return readFile(SIGNALS_SCRIPT_SOURCE_URL);
 }

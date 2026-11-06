@@ -26,7 +26,13 @@ import {
 const AUTHOR = '019c0000-0000-7000-8000-000000000001';
 
 test('the generated script texts are the browser script files, byte for byte', async () => {
-  for (const name of ['interactions', 'counts', 'audience', 'listen']) {
+  for (const name of [
+    'interactions',
+    'counts',
+    'signals',
+    'audience',
+    'listen',
+  ]) {
     const text = await readFile(
       new URL(
         `../src/modules/interactions/browser/gala-${name}.js`,

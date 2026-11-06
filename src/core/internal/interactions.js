@@ -24,6 +24,12 @@ export const COUNTS_SCRIPT_PATH = 'assets/gala-counts-v1.js';
 /** @type {string} */
 export const COUNTS_SCRIPT_MEDIA_TYPE = INTERACTIONS_SCRIPT_MEDIA_TYPE;
 
+/** @type {string} the reading-signals script's output-relative path (Today) */
+export const SIGNALS_SCRIPT_PATH = 'assets/gala-signals-v1.js';
+
+/** @type {string} */
+export const SIGNALS_SCRIPT_MEDIA_TYPE = INTERACTIONS_SCRIPT_MEDIA_TYPE;
+
 /** @type {string} */
 const CONFIG_SCHEMA_ID = 'urn:gala:schema:interactions-config:2.0.0';
 

@@ -474,6 +474,17 @@ test('module on: article routes carry the section and the deferred script; every
   );
   assert.equal(scriptEntry.mediaType, 'application/javascript; charset=utf-8');
   assert.deepEqual(await bytes(scriptPath), source);
+  // The reading-signals script (Today) rides beside it, byte for byte.
+  const signalsPath = manifest.assets
+    .map((/** @type {any} */ asset) => asset.path)
+    .find((/** @type {string} */ p) => p.endsWith('gala-signals-v1.js'));
+  assert.ok(signalsPath, 'the signals script is a manifest asset');
+  assert.deepEqual(
+    await bytes(signalsPath),
+    await readFile(
+      path.join(REPO_ROOT, 'src/modules/interactions/browser/gala-signals.js'),
+    ),
+  );
 
   let bearing = 0;
   for (const route of manifest.routes) {
@@ -494,13 +505,20 @@ test('module on: article routes carry the section and the deferred script; every
       isArticle,
       `${route.path}: script tag presence`,
     );
+    assert.equal(
+      html.includes(
+        'gala-signals-v1.js" defer data-gala-signals-script></script>',
+      ),
+      isArticle,
+      `${route.path}: signals script tag presence`,
+    );
     assert.ok(html.includes(`content="${SECTION_CSP}"`), route.path);
     if (!isArticle) continue;
     bearing += 1;
     assert.equal(
       html.match(/<script[^>]*\bsrc=/g)?.length,
-      3,
-      'appearance script, interactions script and (reaction counts are on) the counts script',
+      4,
+      'appearance script, interactions script, the reading-signals script and (reaction counts are on) the counts script',
     );
     const contentId = /data-content-id="([^"]+)"/.exec(html)?.[1];
     assert.match(contentId ?? '', /^019c0000-0000-7000-8000-/);

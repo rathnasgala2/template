@@ -964,11 +964,13 @@ contracts/theme-styling-contract.jcs     # published styling catalog (real and c
 `src/core/` and `src/modules/interactions/` are the only source roots, and
 `src/core` never imports from `src/modules`: the interactions browser script is
 read from disk and emitted as `assets/gala-interactions-v1.js` when
-`build-input.modules.interactions` is present (and, when its `publicCounts` show
-reaction or comment counts, `assets/gala-counts-v1.js`; see Counts on cards and
-article headers; and, for the audience features, `assets/gala-audience-v1.js`;
-see Audience features; and, when Listen is live, `assets/gala-listen-v1.js`,
-read from `src/modules/interactions/browser/gala-listen.js`; see Listen).
+`build-input.modules.interactions` is present (with `assets/gala-signals-v1.js`,
+the Today reading-signals script that rides on the same article pages; and, when
+its `publicCounts` show reaction or comment counts, `assets/gala-counts-v1.js`;
+see Counts on cards and article headers; and, for the audience features,
+`assets/gala-audience-v1.js`; see Audience features; and, when Listen is live,
+`assets/gala-listen-v1.js`, read from
+`src/modules/interactions/browser/gala-listen.js`; see Listen).
 `test/module-tree-absence.test.js`, `.dependency-cruiser.cjs` and the ESLint
 `no-restricted-imports` rule enforce this. `newsletter` and `prism` have no
 module directory, package, configuration schema, stub, output or runtime code in

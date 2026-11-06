@@ -8,6 +8,33 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.16.0] - 2026-11-06
+
+### Added
+
+- **Reading signals for Today.** Article pages of a site with the interactions
+  module now also load `assets/gala-signals-v1.js` (`defer`,
+  `data-gala-signals-script`, read from
+  `src/modules/interactions/browser/gala-signals.js`, a manifest asset beside
+  the interactions script). For a reader who holds the site's reader session
+  (the same `localStorage` token the interactions and audience scripts keep) it
+  batches a view, the deepest scroll reached (25/50/75/100) and the visible
+  seconds into `POST <apiOrigin>/v2/reader/signals` with the bearer token: one
+  envelope every 15 s while there is something to say and one more (`keepalive`)
+  when the page is hidden or left. An address carrying `?gala-item=<id>` adds
+  the Today open. A visitor sends nothing; a 401/403/404 (no consent, Today off,
+  a lost token) stops the page and keeps the site quiet for an hour. The page
+  never shows anything for it.
+- The interactive preview inlines the new script like the others
+  (`preview-scripts-data.js` regenerated).
+
+### Changed
+
+- The rendered markup differs from 4.15.0 only by the one `<script>` tag on
+  article pages with the interactions root. The render policy, its identity,
+  `contracts/render-policy.jcs` and the styling contract are unchanged, so
+  themes need no rebuild.
+
 ## [4.15.0] - 2026-11-04
 
 ### Changed

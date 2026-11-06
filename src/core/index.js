@@ -120,6 +120,8 @@ import {
   COUNTS_SCRIPT_PATH,
   INTERACTIONS_SCRIPT_MEDIA_TYPE,
   INTERACTIONS_SCRIPT_PATH,
+  SIGNALS_SCRIPT_MEDIA_TYPE,
+  SIGNALS_SCRIPT_PATH,
   validateInteractionsModule,
 } from './internal/interactions.js';
 import { ATOM_FEED_ROUTE, RSS_FEED_ROUTE } from './internal/feeds.js';
@@ -145,6 +147,7 @@ import {
 import {
   loadCountsScript,
   loadInteractionsScript,
+  loadSignalsScript,
 } from './internal/interactions-node.js';
 import { loadListenScript } from './internal/listen-node.js';
 import { listFilesSortedByUtf8Bytes } from './internal/fs-walk.js';
@@ -1034,6 +1037,32 @@ export async function renderPublication(buildInput, options) {
     });
   }
 
+  // The reading-signals script (Today), beside the interactions script: the
+  // template package's own file, so the asset row is a pure function of the
+  // template version.
+  /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
+  const signalsAssets = [];
+  if (interactionsOn) {
+    const signalsScriptBytes = await loadSignalsScript();
+    const joinedSignalsScriptPath = projectFixedAssetPath(
+      validatedInput.basePath,
+      `/${SIGNALS_SCRIPT_PATH}`,
+    );
+    const signalsScriptDestination = path.join(
+      outputDirectory,
+      joinedSignalsScriptPath,
+    );
+    await mkdir(path.dirname(signalsScriptDestination), { recursive: true });
+    await writeFile(signalsScriptDestination, signalsScriptBytes);
+    signalsAssets.push({
+      path: joinedSignalsScriptPath,
+      mediaType: SIGNALS_SCRIPT_MEDIA_TYPE,
+      byteLength: String(signalsScriptBytes.byteLength),
+      sha256: digestBytes(signalsScriptBytes),
+      immutable: false,
+    });
+  }
+
   // The counts script, only when public counts are shown on cards and article
   // headers: the template package's own file, like the interactions script.
   /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
@@ -1166,6 +1195,7 @@ export async function renderPublication(buildInput, options) {
     appearanceScriptAsset,
     baseStylesheetAsset,
     ...interactionsAssets,
+    ...signalsAssets,
     ...countsAssets,
     ...audienceAssets,
     ...listenAssets,
