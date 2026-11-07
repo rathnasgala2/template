@@ -149,6 +149,7 @@ test('every network is an anchor on its documented intent URL with the title and
   const expected = {
     x: `https://twitter.com/intent/tweet?text=${t}&url=${u}`,
     bluesky: `https://bsky.app/intent/compose?text=${x}`,
+    threads: `https://www.threads.net/intent/post?text=${x}`,
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${u}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${u}`,
     'hacker-news': `https://news.ycombinator.com/submitlink?u=${u}&t=${t}`,
@@ -185,6 +186,7 @@ test('accessible names: "Share on <network>", per language', () => {
   const targets = [
     'x',
     'bluesky',
+    'threads',
     'linkedin',
     'facebook',
     'hacker-news',
@@ -195,6 +197,7 @@ test('accessible names: "Share on <network>", per language', () => {
   const names = [
     'X',
     'Bluesky',
+    'Threads',
     'LinkedIn',
     'Facebook',
     'Hacker News',
@@ -277,7 +280,7 @@ test('duplicates collapse, an unknown target fails loudly, the list is the schem
     () => resolveShareTargets({ targets: ['mastodon'] }),
     /unknown share target "mastodon"/,
   );
-  assert.equal(SHARE_TARGETS.length, 11);
+  assert.equal(SHARE_TARGETS.length, 12);
   // Every network target has an icon in the fixed set.
   for (const target of SHARE_TARGETS) {
     if (target === 'copy-link' || target === 'native' || target === 'email')
@@ -437,4 +440,56 @@ test('script: the empty-list group is revealed with Bookmark only', () => {
   );
   assert.equal(hiddenOf(window, 'bookmark'), false);
   assert.equal(hiddenOf(window, 'copy-link'), undefined);
+});
+
+test('Reddit goes to the community submit page when the site input names one, else the plain page', () => {
+  const title = 'A & B';
+  const url = 'https://example.test/a/';
+  const messages = getMessages('en');
+  const href = (/** @type {any} */ sharing) =>
+    renderShareGroup({ sharing, title, url, messages })
+      .match(/href="([^"]*)"[^>]* data-share="reddit"/)[1]
+      .replaceAll('&amp;', '&');
+  const tail = `submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`;
+  const targets = ['reddit'];
+  assert.equal(
+    href({ targets, reddit: { community: 'Galascribe' } }),
+    `https://www.reddit.com/r/Galascribe/${tail}`,
+  );
+  assert.equal(
+    href({ targets, reddit: { community: '' } }),
+    `https://www.reddit.com/${tail}`,
+  );
+  assert.equal(href({ targets }), `https://www.reddit.com/${tail}`);
+});
+
+test('X appends via only when the site input carries a handle', () => {
+  const title = 'A & B';
+  const url = 'https://example.test/a/';
+  const messages = getMessages('en');
+  const href = (/** @type {any} */ sharing) =>
+    renderShareGroup({ sharing, title, url, messages })
+      .match(/href="([^"]*)"[^>]* data-share="x"/)[1]
+      .replaceAll('&amp;', '&');
+  const base = `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`;
+  const targets = ['x'];
+  assert.equal(
+    href({ targets, x: { via: 'galascribe' } }),
+    `${base}&via=galascribe`,
+  );
+  assert.equal(href({ targets, x: { via: '' } }), base);
+  assert.equal(href({ targets }), base);
+});
+
+test('Threads has a label, an intent link and a Simple Icons mark', () => {
+  const html = renderShareGroup({
+    sharing: { targets: ['bluesky', 'threads'] },
+    title: TITLE,
+    url: URL_,
+    messages: getMessages('en'),
+  });
+  assert.deepEqual(order(html), ['bluesky', 'threads', 'bookmark']);
+  assert.ok(html.includes('aria-label="Share on Threads"'));
+  assert.ok(html.includes(icon('threads')));
+  assert.ok(html.includes('https://www.threads.net/intent/post?text='));
 });

@@ -8,6 +8,21 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.17.0] - 2026-11-07
+
+### Added
+
+- **One sharing list.** The article share group gains a `threads` network
+  (`https://www.threads.net/intent/post?text=<title URL>`, Simple Icons mark,
+  label "Threads"), placed after Bluesky. When the build input's
+  `publication.sharing.reddit.community` is non-empty the Reddit link opens
+  `https://www.reddit.com/r/<community>/submit?...`, else the plain submit page;
+  when `publication.sharing.x.via` is non-empty the X intent gains
+  `&via=<handle>`. A build input with no `sharing` member still renders
+  `["copy-link"]`, and a `targets` list is used as given (the toolchain resolves
+  it). The `ShareTarget` and `sharing` types carry the new members; the schemas
+  pin is unchanged and moves in a later round (schemas 3.44.0).
+
 ## [4.16.0] - 2026-11-06
 
 ### Added

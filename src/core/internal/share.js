@@ -38,6 +38,7 @@ export const SHARE_TARGETS = Object.freeze([
   'native',
   'x',
   'bluesky',
+  'threads',
   'linkedin',
   'facebook',
   'hacker-news',
@@ -62,12 +63,18 @@ export const DEFAULT_SHARE_TARGETS = Object.freeze(['copy-link']);
  */
 
 /**
+ * @typedef {object} ShareOptions
+ * @property {string} redditCommunity subreddit name without `r/`; empty = none
+ * @property {string} xVia X handle without `@`; empty = none
+ */
+
+/**
  * The network targets: the brand name (never localized), the icon key and the
  * documented share URL. `source` cites where each URL shape is documented;
  * the first six repeat `v1/site-template/lib/provider-fixtures/share-intents.v1.json`
  * (verified 2026-08-13/14).
  *
- * @type {Readonly<Record<string, {name: string, icon: string, source: string, href: (content: ShareContent) => string}>>}
+ * @type {Readonly<Record<string, {name: string, icon: string, source: string, href: (content: ShareContent, options: ShareOptions) => string}>>}
  */
 const NETWORKS = Object.freeze({
   x: {
@@ -75,8 +82,9 @@ const NETWORKS = Object.freeze({
     icon: 'x',
     // https://developer.x.com/en/docs/twitter-for-websites/tweet-button/guides/web-intent
     source: 'developer.x.com web intent',
-    href: ({ title, url }) =>
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
+    href: ({ title, url }, options) =>
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}` +
+      (options.xVia ? `&via=${encodeURIComponent(options.xVia)}` : ''),
   },
   bluesky: {
     name: 'Bluesky',
@@ -85,6 +93,14 @@ const NETWORKS = Object.freeze({
     source: 'docs.bsky.app intent links',
     href: ({ text }) =>
       `https://bsky.app/intent/compose?text=${encodeURIComponent(text)}`,
+  },
+  threads: {
+    name: 'Threads',
+    icon: 'threads',
+    // https://developers.facebook.com/docs/threads/threads-web-intents
+    source: 'Threads web intents',
+    href: ({ text }) =>
+      `https://www.threads.net/intent/post?text=${encodeURIComponent(text)}`,
   },
   linkedin: {
     name: 'LinkedIn',
@@ -137,8 +153,8 @@ const NETWORKS = Object.freeze({
     // the link always opens Reddit's submit page, and the prefill is Reddit's
     // to honor.
     source: 'Reddit submit link (prefill not a stable contract)',
-    href: ({ title, url }) =>
-      `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`,
+    href: ({ title, url }, options) =>
+      `https://www.reddit.com/${options.redditCommunity ? `r/${encodeURIComponent(options.redditCommunity)}/` : ''}submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`,
   },
 });
 
@@ -164,7 +180,7 @@ const isLinkTarget = (target) => target !== 'copy-link' && target !== 'native';
  * The publication's targets: its own list when it set one (an empty list
  * included), else today's `["copy-link"]`.
  *
- * @param {{targets: readonly string[]} | undefined} sharing `publication.sharing`
+ * @param {{targets: readonly string[], reddit?: {community?: string}, x?: {via?: string}} | undefined} sharing `publication.sharing`
  * @returns {string[]} the ordered, de-duplicated targets
  * @throws {RenderPolicyViolationError} for a target this renderer does not know
  */
@@ -187,7 +203,7 @@ export function resolveShareTargets(sharing) {
  * Render the article's share group.
  *
  * @param {object} options
- * @param {{targets: readonly string[]} | undefined} options.sharing
+ * @param {{targets: readonly string[], reddit?: {community?: string}, x?: {via?: string}} | undefined} options.sharing
  *   `publication.sharing`
  * @param {string} options.title the post title
  * @param {string} options.url the post's absolute canonical URL
@@ -197,6 +213,14 @@ export function resolveShareTargets(sharing) {
  */
 export function renderShareGroup({ sharing, title, url, messages }) {
   const targets = resolveShareTargets(sharing);
+  /** @type {ShareOptions} */
+  const options = {
+    redditCommunity:
+      typeof sharing?.reddit?.community === 'string'
+        ? sharing.reddit.community
+        : '',
+    xVia: typeof sharing?.x?.via === 'string' ? sharing.x.via : '',
+  };
   /** @type {ShareContent} */
   const content = { title, url, text: `${title} ${url}` };
   const text = (/** @type {string} */ key) =>
@@ -234,7 +258,7 @@ export function renderShareGroup({ sharing, title, url, messages }) {
     const network = NETWORKS[target];
     return anchor(
       target,
-      network.href(content),
+      network.href(content, options),
       call('shareOnLabel', network.name),
       network.icon,
     );

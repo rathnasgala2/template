@@ -191,6 +191,7 @@ export type ShareTarget =
   | 'native'
   | 'x'
   | 'bluesky'
+  | 'threads'
   | 'linkedin'
   | 'facebook'
   | 'hacker-news'
@@ -245,7 +246,13 @@ export interface PublicationNormalized {
     addedOn?: string;
   }[];
   /** The article share group; absent means `["copy-link"]`, `[]` none. */
-  sharing?: { targets: readonly ShareTarget[] };
+  sharing?: {
+    targets: readonly ShareTarget[];
+    /** Subreddit name without `r/`; empty or absent means plain submit. */
+    reddit?: { community?: string };
+    /** X handle without `@`, appended as `via=`; empty or absent means none. */
+    x?: { via?: string };
+  };
   /**
    * Listen (schemas 3.26.0): audio versions of posts. Absent means off; it is
    * live for a build only with a published article that has audio.
