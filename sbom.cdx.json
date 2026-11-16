@@ -297,8 +297,8 @@
       "type": "library",
       "name": "schemas",
       "group": "@rathnasgala2",
-      "version": "3.26.0",
-      "bom-ref": "@rathnasgala2/template@4.17.0|@rathnasgala2/schemas@3.26.0",
+      "version": "3.45.0",
+      "bom-ref": "@rathnasgala2/template@4.17.0|@rathnasgala2/schemas@3.45.0",
       "licenses": [
         {
           "license": {
@@ -307,15 +307,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/%40rathnasgala2/schemas@3.26.0",
+      "purl": "pkg:npm/%40rathnasgala2/schemas@3.45.0",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.26.0.tgz",
+          "url": "https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.45.0.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "21c8ddd06c429da95ad89285cf2e1386784b2013e81e9cf7d4ee5d1a6a83025d576ef99827574701eec0e174e7a6c0bc28bb24c6b340d34356ee1815e36adc28"
+              "content": "232cca83492781fd932e1f7ff6a706cfc96d420e822a3ffad4007ceb0ce4657d88e6bdd4978116546a4670f4b07c3f9dc82e4e781184deba4a37a615e132d998"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -17566,7 +17566,7 @@
         "@rathnasgala2/template@4.17.0|@11ty/eleventy@3.1.6",
         "@rathnasgala2/template@4.17.0|@cyclonedx/cyclonedx-npm@6.0.1",
         "@rathnasgala2/template@4.17.0|@eslint/js@10.0.1",
-        "@rathnasgala2/template@4.17.0|@rathnasgala2/schemas@3.26.0",
+        "@rathnasgala2/template@4.17.0|@rathnasgala2/schemas@3.45.0",
         "@rathnasgala2/template@4.17.0|@types/markdown-it@14.2.0",
         "@rathnasgala2/template@4.17.0|@types/node@24.13.4",
         "@rathnasgala2/template@4.17.0|@types/sanitize-html@2.16.1",
@@ -17652,7 +17652,7 @@
       ]
     },
     {
-      "ref": "@rathnasgala2/template@4.17.0|@rathnasgala2/schemas@3.26.0",
+      "ref": "@rathnasgala2/template@4.17.0|@rathnasgala2/schemas@3.45.0",
       "dependsOn": [
         "@rathnasgala2/template@4.17.0|ajv-formats@3.0.1",
         "@rathnasgala2/template@4.17.0|ajv@8.20.0"

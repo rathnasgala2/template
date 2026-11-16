@@ -5,7 +5,7 @@
  * template and the script; an article with audio gets its track and the home
  * page gets the playlist. A build that is not live renders nothing of it.
  *
- * These tests build whole sites, so they need `@rathnasgala2/schemas` 3.26.0
+ * These tests build whole sites, so they need `@rathnasgala2/schemas` 3.26.0 or later
  * (`publication.listen` and a post's `listen`).
  */
 

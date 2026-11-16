@@ -1430,18 +1430,19 @@ slash and ignoring letter case) fails the build closed with
 
 ## Consuming `@rathnasgala2/schemas`
 
-This source targets `@rathnasgala2/schemas@3.26.0` with a `^3.26.0` peer range
-(any 3.x from 3.26.0; 3.26.0 adds `publication.listen` and a post's `listen`
-member; 3.25.0 adds `deleteDate`, `publication.listing`, `publication.aiRights`
-and `publication.performance`; 3.22.0 adds `publication.sharing`, the Galascribe
-newsletter mode with `emailContent`, `publication.contactForm`, and `follows` in
-the interactions config; 3.21.0 adds `translationOf`; 3.16.0 adds
-`modules.analytics`, `build-input.policies` and the `site-policy-defaults`
-export, and its `theme-contract` admits styling contract 4.1.0); the lock
-installs 3.26.0 exactly from the npm registry, with its registry integrity. The
-2.8.0->2.11.0 convergence changes none of the four roots this renderer
-validates, for the same reason the 2.7.0-2.8.0 delta below did not. Only the
-`"."` export (`validateGalaDocument`, `GALA_SCHEMA_IDS`) and, since 4.4.0, the
+This source develops and tests against `@rathnasgala2/schemas@3.45.0` (the lock)
+and supports a `^3.26.0` peer range (any 3.x from 3.26.0; 3.26.0 adds
+`publication.listen` and a post's `listen` member; 3.25.0 adds `deleteDate`,
+`publication.listing`, `publication.aiRights` and `publication.performance`;
+3.22.0 adds `publication.sharing`, the Galascribe newsletter mode with
+`emailContent`, `publication.contactForm`, and `follows` in the interactions
+config; 3.21.0 adds `translationOf`; 3.16.0 adds `modules.analytics`,
+`build-input.policies` and the `site-policy-defaults` export, and its
+`theme-contract` admits styling contract 4.1.0); the lock installs 3.45.0
+exactly from the npm registry, with its registry integrity. The 2.8.0->2.11.0
+convergence changes none of the four roots this renderer validates, for the same
+reason the 2.7.0-2.8.0 delta below did not. Only the `"."` export
+(`validateGalaDocument`, `GALA_SCHEMA_IDS`) and, since 4.4.0, the
 `./site-policy-defaults` export (the default policy text) are consumed; the
 2.6.0 `./runtime-origins` narrow export and every other addition through 2.6.1
 (new OpenAPI operations, App route/catalog copy, the
