@@ -8,6 +8,39 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.18.0] - 2026-11-17
+
+### Added
+
+- **Language sections are full mirrors of the site.** `/<lang>/` is that
+  language's home, built by the same home builder as `/`, and tags, series,
+  archive (with years) and author pages are generated under it from that
+  language's articles only. Every listing link, breadcrumb, pager, related card
+  and the brand on a section page resolves to the section counterpart when it
+  exists. Section navigation takes system-route labels from the page language's
+  catalog (new `aboutLinkLabel` key) and points at the section pages. The
+  language switcher links the same page in the other language. Mirrored listing
+  pages carry reciprocal `hreflang` and `x-default`, and the sitemap carries the
+  matching alternates. A translation whose `translationOf` is `tags`, `series`,
+  `archive`, `authors` or `page` now fails the build
+  (`LANGUAGE_SEGMENT_CONFLICT`). On a section-language article, previous/next,
+  "Keep reading" and the series box draw from that language's articles only.
+- **Remembered language.** On sites with language sections, clicking a language
+  chip stores the choice (`gala:language:v1`) and every page then moves to its
+  same-origin alternate in that language, keeping search and hash
+  (`assets/gala-language-v1.js`, about 1 KB, loop-guarded, inert without
+  JavaScript or storage). Sites without translations are byte-for-byte
+  unchanged.
+
+### Fixed
+
+- The language switcher and language chips rendered as glued uppercase text
+  under every theme. The switcher is now a segmented control with a marked
+  current language, and meta-row chips are quiet gapped pills. The header
+  switcher hides under 360px; the footer one remains.
+- The article share row and section heads wrap instead of forcing the page wider
+  than a phone screen (twelve share targets; long translated "more" labels).
+
 ## [4.17.0] - 2026-11-07
 
 ### Added

@@ -463,7 +463,7 @@ export const GALA_BASE_COMPONENT_CSS = `
 
   /* ---------- sections ---------- */
   .g-section { padding-block: clamp(2rem, 5vw, 3.5rem); }
-  .g-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--gala-space-4); padding-top: .9rem; margin-bottom: var(--gala-space-6); border-top: var(--gala-border-section-rule); }
+  .g-section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--gala-space-4); padding-top: .9rem; margin-bottom: var(--gala-space-6); border-top: var(--gala-border-section-rule); }
   .g-more { display: inline-flex; align-items: center; gap: .35rem; font-family: var(--gala-font-ui); font-size: .875rem; font-weight: var(--gala-weight-ui); color: var(--gala-color-link); white-space: nowrap; }
   .g-more .g-icon { transition: transform var(--gala-duration-base) var(--gala-ease-spring); }
   .g-more:hover .g-icon { transform: translateX(4px); }
@@ -555,7 +555,7 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-article-labels { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; }
   .g-article-head h1 { font-size: clamp(2.25rem, 1.2rem + 3.8vw, var(--gala-display-max)); }
   .g-article-meta { display: flex; align-items: center; justify-content: space-between; gap: var(--gala-space-4); width: 100%; padding-top: 1.1rem; border-top: var(--gala-border-width) solid var(--gala-color-border); flex-wrap: wrap; }
-  .g-share { display: flex; gap: var(--gala-space-1); }
+  .g-share { display: flex; flex-wrap: wrap; gap: var(--gala-space-1); }
   /* Public counts, at the end of a card's top row, the cover story's eyebrow and the article's label row, where each row already has the height of a line of them (so filling a slot moves nothing). The slots carry the hidden attribute until the counts script fills them, so they take no space before then. */
   .g-counts { display: inline-flex; align-items: center; gap: var(--gala-space-3); flex: none; margin-inline-start: auto; white-space: nowrap; font-family: var(--gala-font-ui); font-size: .8125rem; color: var(--gala-color-text-muted); font-variant-numeric: tabular-nums; }
   .g-count { display: inline-flex; align-items: center; gap: .3em; }

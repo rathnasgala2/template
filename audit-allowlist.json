@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "advisory": "GHSA-fc5q-39xc-vjpf",
+    "packages": ["picomatch"],
+    "reason": "ReDoS in picomatch glob compilation; no fixed release exists (4.0.7 is the latest and is affected). The globs this build compiles come from the toolchain and the site's own repository settings, never from readers, so the only party who could slow a build is the site's own author.",
+    "expires": "2026-12-01"
+  }
+]
