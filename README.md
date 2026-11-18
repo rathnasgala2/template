@@ -250,12 +250,44 @@ names no article of the build renders as a standalone article. A site with no
   language's own name; the current one is a marked span). The article page shows
   the same chips in the meta row. A group whose primary is unpublished shows its
   earliest published variant.
-- **Sections.** Each non-default language with a published article gets
-  `/<lang>/` (paginated, newest first, one card per article, that language's
-  chrome), and a compact switcher in the header and footer.
+- **Sections are full mirrors.** Each non-default language with a published
+  article gets a mirror of the site under `/<lang>/`, built by the same builders
+  as the default language's pages from that language's own articles only (one
+  card per article, no grouping), in that language's chrome catalog: `/<lang>/`
+  is that language's home (featured story, tag pills, latest cards, series card,
+  the theme's `data-gala-home-layout`; `/<lang>/page/N` continue it),
+  `/<lang>/tags` and `/<lang>/tags/<tag>`, `/<lang>/series` and
+  `/<lang>/series/<name>`, `/<lang>/archive` and `/<lang>/archive/<year>`
+  (paginated as the default's), and `/<lang>/authors/<slug>` (the author as the
+  language shows them). A tag, series or year with no article in the language,
+  and an author with none, gets no page. A translation whose `translationOf` is
+  `tags`, `series`, `archive`, `authors` or `page` fails the build, as its route
+  would take a mirrored page.
+- **Links stay in the language.** On every page of a section language (its
+  listings and its article pages) one resolver, `route(language, defaultRoute)`
+  from `internal/listing-model.js`, maps a link to a listing to the section
+  counterpart when that page exists, else leaves the default-language route: the
+  brand, breadcrumbs, tag links and pills, "Archive", series and author links,
+  pagination, prev/next, related cards and the footer. An article's prev/next,
+  related cards and series box come from the page's own language. Navigation
+  (header, mobile menu, footer): an internal item naming `/`, `/archive`,
+  `/tags`, `/series`, `/authors` or `/about` takes its label from the page
+  language's catalog (`homeLinkLabel`, `archiveSectionLabel`,
+  `tagsSectionLabel`, `seriesSectionLabel`, `authorsSectionLabel`,
+  `aboutLinkLabel`) and its route from the resolver; other and external items,
+  and every item on a default-language page, keep the author's label and route.
+- **Switcher and hreflang.** The compact switcher (header and footer) links each
+  language chip to the same page in that language when it exists (a paginated
+  page maps to page 1 of the counterpart), else to that language's home; an
+  article page links its variants. Each mirrored listing page is self-canonical,
+  carries `<html lang>` of its language and, with its twins, reciprocal
+  `<link rel="alternate" hreflang>` for every language where it exists plus
+  `x-default` (the default-language page, when it exists). Paginated pages carry
+  none. The publication title and tagline stay as authored in every language.
 - **Feeds and sitemap.** The default feeds list a group once; each non-default
   language has `/feed/<lang>/atom.xml` and `/feed/<lang>/rss.xml`, advertised
-  with `hreflang`. The sitemap adds `xhtml:link` alternates for group members.
+  with `hreflang`. The sitemap adds `xhtml:link` alternates for group members
+  and for mirrored listing pages.
 - **Chrome language.** On a site with `translationOf`, a page whose own language
   has a message catalog (`en`, `ta`) renders its chrome, dates and reading time
   in it; other languages keep the site's catalog. A site without `translationOf`

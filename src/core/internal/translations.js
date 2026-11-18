@@ -23,6 +23,15 @@ const DOCUMENTATION_URL =
  * @typedef {import('../../../types/index.d.ts').ContentBuildRecord} ContentBuildRecord
  */
 
+/** The first path segments a language section generates itself. */
+const MIRRORED_ROOTS = new Set([
+  'tags',
+  'series',
+  'archive',
+  'authors',
+  'page',
+]);
+
 /**
  * @typedef {object} TranslationGroup
  * @property {ContentBuildRecord} primary the member listings show
@@ -310,9 +319,14 @@ export function assertLanguageSegmentsFree(
     const { frontmatter } = record;
     // A translation's derived route legitimately sits under its segment.
     const derived = !frontmatter.route && frontmatter.translationOf;
+    // ...unless it lands on a page the section itself generates.
+    const derivedClaim =
+      derived && MIRRORED_ROOTS.has(String(frontmatter.translationOf))
+        ? [routeOf(frontmatter)]
+        : [];
     const claims = [
       frontmatter.slug,
-      ...(derived ? [] : [routeOf(frontmatter)]),
+      ...(derived ? derivedClaim : [routeOf(frontmatter)]),
       ...(frontmatter.redirects ?? []),
     ].map(normalise);
     for (const segment of segments) {

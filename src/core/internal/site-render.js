@@ -35,6 +35,7 @@ import {
 } from './interactions.js';
 import { RSS_FEED_ROUTE, buildFeeds } from './feeds.js';
 import { languageLabel, localizeAuthor } from './translations.js';
+import { localizeNavigation } from './listing-model.js';
 import {
   LISTEN_SCRIPT_PATH,
   LISTEN_SECTION_ID,
@@ -55,6 +56,7 @@ import { rewriteBodyImages } from './media/content-images.js';
 import {
   buildGeneratedPages,
   contentRoute,
+  sectionRouterFor,
   renderErrorPageBody,
   selectPublishedArticles,
 } from './page-kinds.js';
@@ -331,6 +333,15 @@ export function buildPageDocuments(validatedInput, ctx) {
   );
   const urlPrefix = derivePublicBasePath(validatedInput.baseUrl, '/');
   const homeRoute = joinPublicRoute(publicBasePath, '/', routeProfile);
+  // The language sections' mirrored routes: a section page's brand, footer
+  // and navigation resolve to its own language's pages.
+  const router = sectionRouterFor(validatedInput, translations);
+  const homeRouteFor = (/** @type {string} */ language) =>
+    joinPublicRoute(
+      publicBasePath,
+      translations.active ? router.route(language, '/') : '/',
+      routeProfile,
+    );
   // Where the top-bar Listen link and the script go for the playlist.
   const listenPlaylistUrl = `${homeRoute}#${LISTEN_SECTION_ID}`;
 
@@ -465,10 +476,14 @@ export function buildPageDocuments(validatedInput, ctx) {
   const authorSlugs = deriveAuthorSlugs(validatedInput.authors);
   const authorHref = (
     /** @type {import('../../../types/index.d.ts').AuthorNormalized} */ author,
+    /** @type {string} */ language = publication.defaultLanguage,
   ) =>
     joinPublicRoute(
       publicBasePath,
-      `/authors/${authorSlugs.get(author.id) ?? author.id}`,
+      router.route(
+        language,
+        `/authors/${authorSlugs.get(author.id) ?? author.id}`,
+      ),
       routeProfile,
     );
   const footerTagSegments = deriveTagSegments(validatedInput.content);
@@ -502,7 +517,7 @@ export function buildPageDocuments(validatedInput, ctx) {
     return (
       `<p class="g-label">${escapeHtml(/** @type {string} */ (pageMessages.writtenByLabel))}</p>` +
       `<div class="g-byline">${footerComponents.avatar(shownAuthor)}<div class="g-byline-text">` +
-      `<a href="${escapeHtml(authorHref(footerAuthor))}">${escapeHtml(shownAuthor.displayName)}</a>` +
+      `<a href="${escapeHtml(authorHref(footerAuthor, language))}">${escapeHtml(shownAuthor.displayName)}</a>` +
       `</div></div>`
     );
   };
@@ -553,14 +568,26 @@ export function buildPageDocuments(validatedInput, ctx) {
     /** @type {string} */ language,
   ) =>
     renderFooter({
-      homeRoute,
+      homeRoute: homeRouteFor(language),
       publicationName: publication.title,
       description: publication.description,
       brandMark,
       socialLinks: publication.socialLinks,
       rssHref,
-      primaryItems: validatedInput.navigation.items,
-      footerItems: validatedInput.navigation.footerItems,
+      primaryItems: localizeNavigation(
+        validatedInput.navigation.items,
+        language,
+        router,
+        pageMessages,
+        validatedInput.basePath,
+      ),
+      footerItems: localizeNavigation(
+        validatedInput.navigation.footerItems,
+        language,
+        router,
+        pageMessages,
+        validatedInput.basePath,
+      ),
       urlPrefix,
       routeProfile,
       authorHtml: footerAuthorHtmlFor(language, pageMessages),
@@ -599,18 +626,30 @@ export function buildPageDocuments(validatedInput, ctx) {
   ) => {
     const chrome = chromeFor(language);
     return renderHeader({
-      homeRoute,
+      homeRoute: homeRouteFor(language),
       publicationName: publication.title,
       tagline: publication.description,
       brandMark,
       navHtml: renderPrimaryNavigation({
-        items: validatedInput.navigation.items,
+        items: localizeNavigation(
+          validatedInput.navigation.items,
+          language,
+          router,
+          chrome.messages,
+          validatedInput.basePath,
+        ),
         currentRoute,
         messages: chrome.messages,
         urlPrefix,
         routeProfile,
       }),
-      navItems: validatedInput.navigation.items,
+      navItems: localizeNavigation(
+        validatedInput.navigation.items,
+        language,
+        router,
+        chrome.messages,
+        validatedInput.basePath,
+      ),
       currentRoute,
       urlPrefix,
       routeProfile,

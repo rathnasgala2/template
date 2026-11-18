@@ -433,7 +433,7 @@ test('language variants: ta and ta-IN are two languages with two sections', asyn
 
 test('language variants: a long language section paginates with its own canonical', async (t) => {
   let input = await bilingualFixture(await buildRichFixture());
-  for (let n = 705; n < 716; n += 1) input = await addTamil(input, n, {});
+  for (let n = 705; n < 728; n += 1) input = await addTamil(input, n, {});
   const { outputDirectory } = await renderFixture(input, t);
   const html = await read(outputDirectory, 'fixture-1/ta/page/2/index.html');
   assert.match(html, /<link rel="canonical" href="[^"]*\/ta\/page\/2\/">/);
@@ -482,7 +482,11 @@ test('language variants: a noindex variant is left out of every alternate', asyn
     assert.ok(!html.includes('<link rel="alternate" hreflang='));
   }
   const sitemap = await read(outputDirectory, 'fixture-1/sitemap.xml');
-  assert.ok(!sitemap.includes('xhtml:link'));
+  // Only the mirrored listing pages carry alternates, no article page.
+  const articleEntries =
+    sitemap.match(/<url><loc>[^<]*\/first-article\/<\/loc>.*?<\/url>/g) ?? [];
+  assert.equal(articleEntries.length, 1);
+  for (const entry of articleEntries) assert.ok(!entry.includes('xhtml:link'));
 });
 
 test('language variants: cards carry language chips and the Tamil feed entry carries its body', async (t) => {
@@ -553,7 +557,8 @@ test('language variants: a Tamil page shows the localized author, the English pa
   const href = (html) =>
     html.match(/<div class="g-byline-text"><span><a href="([^"]*)"/)?.[1];
   assert.ok(href(en));
-  assert.equal(href(en), href(ta));
+  // The Tamil page's author link goes to the Tamil author page.
+  assert.equal(href(ta), href(en).replace('/authors/', '/ta/authors/'));
   const section = await read(outputDirectory, 'fixture-1/ta/index.html');
   assert.ok(section.includes(LOCAL_NAME));
 });
@@ -566,4 +571,270 @@ test('language variants: without translationOf a localized author is ignored', a
   const html = await read(outputDirectory, 'fixture-1/tamil-721/index.html');
   assert.ok(!html.includes(LOCAL_NAME));
   assert.ok(html.includes(`>${input.authors[0].displayName}</a>`));
+});
+
+const NAV = [
+  { type: 'internal', label: 'Home', route: '/fixture-1', children: [] },
+  {
+    type: 'internal',
+    label: 'Journal',
+    route: '/fixture-1/archive',
+    children: [],
+  },
+  { type: 'internal', label: 'About', route: '/fixture-1/about', children: [] },
+  {
+    type: 'internal',
+    label: 'Essays',
+    route: '/fixture-1/essays',
+    children: [],
+  },
+  {
+    type: 'external',
+    label: 'Elsewhere',
+    url: 'https://x.example/',
+    children: [],
+  },
+];
+
+/** @returns {Promise<object>} the bilingual fixture with a primary navigation */
+async function bilingualWithNav() {
+  const input = await bilingualFixture(await buildRichFixture());
+  input.navigation = { ...input.navigation, items: NAV, footerItems: NAV };
+  return input;
+}
+
+/**
+ * @param {string} html
+ * @returns {string[]} the document's internal hrefs
+ */
+const hrefsOf = (html) =>
+  [...html.matchAll(/ href="(\/fixture-1\/[^"#]*)"/g)].map((m) => m[1]);
+
+test('language variants: the language section is a full mirror of the site', async (t) => {
+  const input = await bilingualWithNav();
+  const { outputDirectory, manifest } = await renderFixture(input, t);
+  const paths = manifest.routes.map((r) => r.path);
+  const base = 'https://fixture-1.example.com/fixture-1';
+
+  await t.test(
+    '/ta/ is a home: wrapper, featured, tag pills, latest',
+    async () => {
+      const html = await read(outputDirectory, 'fixture-1/ta/index.html');
+      assert.match(html, /data-gala-home-layout="/);
+      assert.match(html, /class="g-wrap g-hero"/);
+      assert.match(html, /class="g-wrap g-topic-strip"/);
+      assert.match(html, /id="latest-title"/);
+      assert.ok(html.includes('/fixture-1/ta/tags/alpha/'));
+      assert.ok(!html.includes('First article'));
+      assert.match(html, /<html[^>]*lang="ta"/);
+      assert.ok(html.includes(`<link rel="canonical" href="${base}/ta/">`));
+    },
+  );
+
+  await t.test(
+    'tag, tags index and archive pages exist with Tamil articles only',
+    async () => {
+      for (const route of [
+        'fixture-1/ta/tags/alpha/index.html',
+        'fixture-1/ta/tags/index.html',
+        'fixture-1/ta/archive/index.html',
+        'fixture-1/ta/archive/2025/index.html',
+        'fixture-1/ta/authors/fixture-1/index.html',
+      ]) {
+        assert.ok(paths.includes(route), route);
+      }
+      const tag = await read(
+        outputDirectory,
+        'fixture-1/ta/tags/alpha/index.html',
+      );
+      assert.ok(tag.includes('முதல் கட்டுரை'));
+      assert.ok(
+        !tag.includes('Second article') && !tag.includes('First article'),
+      );
+      assert.match(tag, /<html[^>]*lang="ta"/);
+      assert.ok(
+        tag.includes(`<link rel="canonical" href="${base}/ta/tags/alpha/">`),
+      );
+      const archive = await read(
+        outputDirectory,
+        'fixture-1/ta/archive/2025/index.html',
+      );
+      assert.ok(
+        archive.includes('தனி கட்டுரை') && !archive.includes('Second article'),
+      );
+      assert.ok(tag.includes('"@type":"BreadcrumbList"'));
+      assert.ok(tag.includes(`${base}/ta/tags/alpha/`));
+    },
+  );
+
+  await t.test(
+    'a tag with no Tamil article has no page and the switcher falls back',
+    async () => {
+      assert.ok(!paths.includes('fixture-1/ta/tags/beta/index.html'));
+      const beta = await read(
+        outputDirectory,
+        'fixture-1/tags/beta/index.html',
+      );
+      assert.match(beta, /hreflang="ta" href="\/fixture-1\/ta\/">தமிழ்/);
+      assert.ok(
+        !beta.includes(
+          'hreflang="ta" href="https://fixture-1.example.com/fixture-1/ta/tags',
+        ),
+      );
+    },
+  );
+
+  await t.test(
+    'a Tamil article links to the Tamil listings, the English one does not',
+    async () => {
+      const ta = await read(
+        outputDirectory,
+        'fixture-1/ta/first-article/index.html',
+      );
+      assert.match(ta, /class="g-tag" href="\/fixture-1\/ta\/tags\/alpha\/"/);
+      assert.ok(ta.includes('class="g-brand" href="/fixture-1/ta/"'));
+      assert.ok(!ta.includes('href="/fixture-1/tags/'));
+      const en = await read(
+        outputDirectory,
+        'fixture-1/first-article/index.html',
+      );
+      assert.match(en, /class="g-tag" href="\/fixture-1\/tags\/alpha\/"/);
+      assert.ok(!en.includes('href="/fixture-1/ta/tags/'));
+    },
+  );
+
+  await t.test(
+    'navigation: catalog labels and section routes on Tamil pages only',
+    async () => {
+      const ta = await read(outputDirectory, 'fixture-1/ta/archive/index.html');
+      const nav = ta.match(/<nav class="g-nav"[^]*?<\/nav>/)?.[0] ?? '';
+      assert.ok(nav.includes('<a href="/fixture-1/ta/">முகப்பு</a>'));
+      assert.ok(
+        nav.includes('<a href="/fixture-1/ta/archive/" aria-current="page">'),
+      );
+      assert.ok(nav.includes('>பற்றி</a>'));
+      // No Tamil counterpart of /about: the default route, the catalog label.
+      assert.ok(nav.includes('<a href="/fixture-1/about/">பற்றி</a>'));
+      // A non-system and an external item keep the author's label.
+      assert.ok(nav.includes('>Essays</a>') && nav.includes('>Elsewhere</a>'));
+      assert.ok(!nav.includes('>Home</a>') && !nav.includes('>Journal</a>'));
+      const en = await read(outputDirectory, 'fixture-1/archive/index.html');
+      const enNav = en.match(/<nav class="g-nav"[^]*?<\/nav>/)?.[0] ?? '';
+      assert.ok(enNav.includes('>Home</a>') && enNav.includes('>Journal</a>'));
+      assert.ok(
+        enNav.includes('href="/fixture-1/archive/" aria-current="page"'),
+      );
+      assert.ok(ta.includes('<a href="/fixture-1/ta/">முகப்பு</a>'));
+    },
+  );
+
+  await t.test('switcher: the same page in the other language', async () => {
+    const tag = await read(outputDirectory, 'fixture-1/tags/alpha/index.html');
+    assert.match(
+      tag,
+      /hreflang="ta" href="\/fixture-1\/ta\/tags\/alpha\/">தமிழ்/,
+    );
+    const taTag = await read(
+      outputDirectory,
+      'fixture-1/ta/tags/alpha/index.html',
+    );
+    assert.match(
+      taTag,
+      /hreflang="en-US" href="\/fixture-1\/tags\/alpha\/">English/,
+    );
+    const archive = await read(outputDirectory, 'fixture-1/archive/index.html');
+    assert.match(archive, /hreflang="ta" href="\/fixture-1\/ta\/archive\/">/);
+    const home = await read(outputDirectory, 'fixture-1/index.html');
+    assert.match(home, /hreflang="ta" href="\/fixture-1\/ta\/">/);
+    const taHome = await read(outputDirectory, 'fixture-1/ta/index.html');
+    assert.match(taHome, /hreflang="en-US" href="\/fixture-1\/">/);
+  });
+
+  await t.test(
+    'hreflang pairs and x-default on both twins, mirrored in the sitemap',
+    async () => {
+      for (const route of [
+        'fixture-1/tags/alpha/index.html',
+        'fixture-1/ta/tags/alpha/index.html',
+      ]) {
+        const html = await read(outputDirectory, route);
+        assert.ok(
+          html.includes(
+            `<link rel="alternate" hreflang="en-US" href="${base}/tags/alpha/">`,
+          ),
+        );
+        assert.ok(
+          html.includes(
+            `<link rel="alternate" hreflang="ta" href="${base}/ta/tags/alpha/">`,
+          ),
+        );
+        assert.ok(
+          html.includes(
+            `<link rel="alternate" hreflang="x-default" href="${base}/tags/alpha/">`,
+          ),
+        );
+      }
+      const beta = await read(
+        outputDirectory,
+        'fixture-1/tags/beta/index.html',
+      );
+      assert.ok(!beta.includes('<link rel="alternate" hreflang="'));
+      const sitemap = await read(outputDirectory, 'fixture-1/sitemap.xml');
+      assert.ok(sitemap.includes(`<loc>${base}/ta/tags/alpha/</loc>`));
+      assert.ok(
+        sitemap.includes(
+          `<xhtml:link rel="alternate" hreflang="ta" href="${base}/ta/tags/alpha/"/>`,
+        ),
+      );
+      assert.ok(
+        sitemap.includes(
+          `<xhtml:link rel="alternate" hreflang="x-default" href="${base}/ta/"/>`,
+        ) === false,
+      );
+      assert.ok(
+        sitemap.includes(
+          `<xhtml:link rel="alternate" hreflang="x-default" href="${base}/archive/"/>`,
+        ),
+      );
+    },
+  );
+
+  await t.test(
+    'every internal link on a Tamil page resolves to a generated page',
+    async () => {
+      const known = new Set(
+        paths.map((p) => `/${p.replace(/index\.html$/, '')}`),
+      );
+      for (const route of paths.filter(
+        (p) => p.startsWith('fixture-1/ta/') && p.endsWith('index.html'),
+      )) {
+        const html = await read(outputDirectory, route);
+        for (const href of hrefsOf(html)) {
+          if (!href.startsWith('/fixture-1/ta/')) continue;
+          assert.ok(known.has(href), `${route} links to missing ${href}`);
+        }
+      }
+    },
+  );
+});
+
+test('language variants: a translation landing on a mirrored route fails the build', async (t) => {
+  const input = await bilingualFixture(await buildRichFixture());
+  input.content[0].frontmatter.slug = 'tags';
+  input.content[0].frontmatter.route = '/elsewhere';
+  input.content[4].frontmatter.translationOf = 'tags';
+  const dir = await createRenderDirectories();
+  t.after(dir.cleanup);
+  await assert.rejects(
+    renderPublication(input, {
+      outputDirectory: dir.outputDirectory,
+      workDirectory: dir.workDirectory,
+      sourceDirectory: dir.sourceDirectory,
+      provenance: testProvenance(),
+    }),
+    (error) =>
+      JSON.stringify(error.diagnostics ?? error).includes(
+        'LANGUAGE_SEGMENT_CONFLICT',
+      ),
+  );
 });

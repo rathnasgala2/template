@@ -122,6 +122,12 @@ import {
 } from './route-labels.js';
 import { derivePublicBasePath, joinPublicRoute } from './route.js';
 import {
+  buildListingModel,
+  createCounterparts,
+  createSectionRouter,
+  paginate,
+} from './listing-model.js';
+import {
   assertSupportedComposition,
   EDITORIAL_COMPOSITION,
 } from './template-composition.js';
@@ -182,25 +188,6 @@ export function contentRoute(frontmatter) {
     return `/${languageSegment(frontmatter.language)}/${frontmatter.translationOf}`;
   }
   return `/${frontmatter.slug}`;
-}
-
-/**
- * Split an array into fixed-size, order-preserving pages.
- *
- * @template T
- * @param {readonly T[]} items items, already in final display order
- * @param {number} pageSize maximum items per page (at least 1)
- * @returns {T[][]} one array per page, always at least one (possibly empty)
- *   page
- */
-function paginate(items, pageSize) {
-  if (items.length === 0) return [[]];
-  /** @type {T[][]} */
-  const pages = [];
-  for (let index = 0; index < items.length; index += pageSize) {
-    pages.push(items.slice(index, index + pageSize));
-  }
-  return pages;
 }
 
 /**
@@ -348,27 +335,6 @@ function latestContentTimestamp(records) {
   );
 }
 
-/**
- * Group records by derived keys, preserving the input order within each
- * bucket.
- *
- * @param {readonly import('../../../types/index.d.ts').ContentBuildRecord[]} records
- * @param {(record: import('../../../types/index.d.ts').ContentBuildRecord) => readonly string[]} keysOf
- * @returns {Map<string, import('../../../types/index.d.ts').ContentBuildRecord[]>}
- */
-function groupBy(records, keysOf) {
-  /** @type {Map<string, import('../../../types/index.d.ts').ContentBuildRecord[]>} */
-  const groups = new Map();
-  for (const record of records) {
-    for (const key of keysOf(record)) {
-      const bucket = groups.get(key) ?? [];
-      bucket.push(record);
-      groups.set(key, bucket);
-    }
-  }
-  return groups;
-}
-
 /** Number of articles after the featured one shown as cards on the home page. */
 export const LATEST_CARD_COUNT = 6;
 /** Number of related articles shown in "Keep reading". */
@@ -456,6 +422,41 @@ export function homeDocumentTitle(name, tagline) {
   const clipped = Array.from(line).slice(0, room).join('');
   const cut = /\s/.test(clipped) ? clipped.replace(/\s+\S*$/, '') : clipped;
   return `${name}${separator}${cut.replace(/[\s,;:.\u2013-]+$/, '')}\u2026`;
+}
+
+/**
+ * The language-section router of a build: which routes every non-default
+ * language mirrors, and each default route's section counterpart. Built from
+ * the same inputs `buildGeneratedPages` uses, so the chrome (navigation,
+ * footer, brand) and the page builders agree.
+ *
+ * @param {import('../../../types/index.d.ts').NormalizedBuildInput} validatedInput
+ * @param {import('./translations.js').TranslationResolution} translations
+ * @returns {import('./listing-model.js').SectionRouter}
+ */
+export function sectionRouterFor(validatedInput, translations) {
+  const { publication, authors, content } = validatedInput;
+  const tagSegments = deriveTagSegments(content);
+  const seriesSegments = deriveSeriesSegments(content);
+  const authorSlugs = deriveAuthorSlugs(authors);
+  return createSectionRouter({
+    sections: translations.sections,
+    published: selectPublishedArticles(content),
+    seriesPool: content.filter(
+      (r) =>
+        r.frontmatter.kind !== 'edition' &&
+        r.frontmatter.status === 'published',
+    ),
+    authors,
+    segmentOf: (r) => languageSegment(r.frontmatter.language),
+    pageSize: publication.listing?.pageSize ?? LISTING_PAGE_SIZE,
+    latestCount: LATEST_CARD_COUNT,
+    tagSegment: (tag) => tagSegments.get(tag) ?? routeSegmentForLabel(tag),
+    seriesSegment: (name) =>
+      seriesSegments.get(name) ?? routeSegmentForLabel(name),
+    authorRoute: (author) =>
+      `/authors/${authorSlugs.get(author.id) ?? author.id}`,
+  });
 }
 
 /**
@@ -613,10 +614,22 @@ export function buildGeneratedPages(validatedInput, options) {
     tagSegments.get(tag) ?? routeSegmentForLabel(tag);
   const seriesSegment = (/** @type {string} */ name) =>
     seriesSegments.get(name) ?? routeSegmentForLabel(name);
+  // Which routes each language section mirrors, and the language of the page
+  // being built: a link to a listing resolves to the page's own section
+  // counterpart when that page exists, else to the default-language page.
+  const router = sectionRouterFor(validatedInput, translations);
+  let pageLanguage = publication.defaultLanguage;
+  const localRoute = (/** @type {string} */ route) =>
+    router.route(pageLanguage, route);
+  /**
+   * @param {string} route a default-language route
+   * @returns {string} its joined href in the page's language
+   */
+  const siteLocal = (route) => site(localRoute(route));
   const tagHref = (/** @type {string} */ tag) =>
-    site(`/tags/${tagSegment(tag)}`);
+    siteLocal(`/tags/${tagSegment(tag)}`);
   const seriesHref = (/** @type {string} */ series) =>
-    site(`/series/${seriesSegment(series)}`);
+    siteLocal(`/series/${seriesSegment(series)}`);
   const recordHref = (
     /** @type {import('../../../types/index.d.ts').ContentBuildRecord} */ record,
   ) => site(contentRoute(record.frontmatter));
@@ -626,7 +639,7 @@ export function buildGeneratedPages(validatedInput, options) {
   ) => `/authors/${authorSlugs.get(author.id) ?? author.id}`;
   const authorHref = (
     /** @type {import('../../../types/index.d.ts').AuthorNormalized} */ author,
-  ) => site(authorRoute(author));
+  ) => siteLocal(authorRoute(author));
   const mediaImage = createMediaImage({
     mediaAssets: options.mediaAssets ?? [],
     publicBasePath,
@@ -674,12 +687,13 @@ export function buildGeneratedPages(validatedInput, options) {
     messages = getMessages(
       translations.active ? language : publication.defaultLanguage,
     );
+    pageLanguage = translations.active ? language : publication.defaultLanguage;
     ui = uiByCatalog.get(messages) ?? createUi(messages);
     uiByCatalog.set(messages, ui);
     ({ text, call, chip, langChips, byline, card, avatar, follow } = ui);
     homeStep = {
       label: /** @type {string} */ (messages.homeLinkLabel),
-      route: site('/'),
+      route: siteLocal('/'),
     };
   };
 
@@ -767,14 +781,18 @@ export function buildGeneratedPages(validatedInput, options) {
   const allPublishedArticles = selectPublishedArticles(content);
   const publishedArticles = allPublishedArticles.filter(translations.isListed);
   /**
-   * The articles a page's pager and "Keep reading" draw from: the listed
-   * ones, each in the page's own language when its group has a variant in it.
+   * The articles a page's pager and "Keep reading" draw from: a section
+   * language's own articles, else the listed ones, each in the page's own
+   * language when its group has a variant in it.
    *
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
    * @returns {import('../../../types/index.d.ts').ContentBuildRecord[]}
    */
   const poolFor = (record) => {
     if (!translations.active) return publishedArticles;
+    // A section language's pager and related cards stay in that language.
+    const section = router.sectionOf(record.frontmatter.language);
+    if (section) return section.model.articles;
     return publishedArticles.map((listed) =>
       variantIn(listed, record.frontmatter.language),
     );
@@ -803,16 +821,6 @@ export function buildGeneratedPages(validatedInput, options) {
   const unionOf = (r, pick) => [
     ...new Set(translations.variantsOf(r).flatMap((v) => pick(v.frontmatter))),
   ];
-  const byTag = groupBy(publishedArticles, (r) => unionOf(r, (f) => f.tags));
-  const bySeries = groupBy(
-    content.filter(
-      (r) =>
-        r.frontmatter.kind !== 'edition' &&
-        r.frontmatter.status === 'published' &&
-        translations.isListed(r),
-    ),
-    (r) => unionOf(r, (f) => (f.series ? [f.series] : [])),
-  );
   /**
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} r
    * @param {string} name
@@ -823,28 +831,39 @@ export function buildGeneratedPages(validatedInput, options) {
       .variantsOf(r)
       .find((v) => v.frontmatter.series === name && v.frontmatter.seriesOrder)
       ?.frontmatter.seriesOrder ?? 0;
-  for (const [name, bucket] of bySeries) {
-    bucket.sort((a, b) => seriesOrderIn(a, name) - seriesOrderIn(b, name));
-  }
+  // The default language's listing model; each language section has its own
+  // (`router.sections`), built from that language's articles only.
+  const defaultModel = buildListingModel({
+    segment: undefined,
+    language: publication.defaultLanguage,
+    articles: publishedArticles,
+    seriesRecords: content.filter(
+      (r) =>
+        r.frontmatter.kind !== 'edition' &&
+        r.frontmatter.status === 'published' &&
+        translations.isListed(r),
+    ),
+    tagsOf: (r) => unionOf(r, (f) => f.tags),
+    seriesOf: (r) => unionOf(r, (f) => (f.series ? [f.series] : [])),
+    orderOf: seriesOrderIn,
+  });
   /**
-   * The members of a series as the given record's language shows them.
+   * The members of a series as the given record's language shows them: a
+   * section language's own articles, else the default groups each in the
+   * record's language.
    *
    * @param {string | undefined} series
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
    * @returns {import('../../../types/index.d.ts').ContentBuildRecord[] | undefined}
    */
-  const seriesMembersFor = (series, record) =>
-    series
-      ? bySeries
-          .get(series)
-          ?.map((member) => variantIn(member, record.frontmatter.language))
-      : undefined;
-  const sortedTags = [...byTag.keys()].sort();
-  const sortedSeries = [...bySeries.keys()].sort();
-  const byYear = groupBy(publishedArticles, (r) => [
-    r.frontmatter.publishedAt.slice(0, 4),
-  ]);
-  const sortedYears = [...byYear.keys()].sort().reverse();
+  const seriesMembersFor = (series, record) => {
+    if (!series) return undefined;
+    const section = router.sectionOf(record.frontmatter.language);
+    if (section) return section.model.bySeries.get(series);
+    return defaultModel.bySeries
+      .get(series)
+      ?.map((member) => variantIn(member, record.frontmatter.language));
+  };
 
   /**
    * @param {import('../../../types/index.d.ts').ContentBuildRecord} record
@@ -884,16 +903,17 @@ export function buildGeneratedPages(validatedInput, options) {
     (count === undefined ? '' : `<span class="g-pill-count">${count}</span>`) +
     `</a></li>`;
   /**
+   * @param {import('./listing-model.js').ListingModel} model
    * @param {string} [currentTag]
    * @returns {string}
    */
-  const tagPills = (currentTag = '') =>
-    `<ul class="g-pills">${sortedTags
+  const tagPills = (model, currentTag = '') =>
+    `<ul class="g-pills">${model.sortedTags
       .map((tag) =>
         pill(
           tagHref(tag),
           tag,
-          byTag.get(tag)?.length,
+          model.byTag.get(tag)?.length,
           'hash',
           tag === currentTag,
         ),
@@ -987,7 +1007,7 @@ export function buildGeneratedPages(validatedInput, options) {
     description,
     route,
     parents = [],
-    language = publication.defaultLanguage,
+    language = pageLanguage,
   }) => ({
     title: name,
     documentTitle: documentTitleOf(name),
@@ -1160,12 +1180,20 @@ export function buildGeneratedPages(validatedInput, options) {
     });
   }
 
-  for (const author of single ? [] : authors) {
-    const authored = publishedArticles.filter((record) =>
-      translations
-        .variantsOf(record)
-        .some((variant) => variant.frontmatter.authorIds.includes(author.id)),
-    );
+  const ownRoute = (
+    /** @type {string | undefined} */ segment,
+    /** @type {string} */ route,
+  ) =>
+    segment === undefined ? route : `/${segment}${route === '/' ? '' : route}`;
+  /**
+   * One author page: the default language's, or a language section's (the
+   * author as that language shows them, listing only its articles).
+   *
+   * @param {import('../../../types/index.d.ts').AuthorNormalized} author
+   * @param {import('../../../types/index.d.ts').ContentBuildRecord[]} authored
+   * @param {import('./listing-model.js').ListingModel} model
+   */
+  const pushAuthorPage = (author, authored, model) => {
     const links =
       author.links.length > 0
         ? `<ul class="g-social">${author.links
@@ -1208,10 +1236,10 @@ export function buildGeneratedPages(validatedInput, options) {
               : authorHead + authoredList;
     pages.push({
       kind: 'author',
-      route: authorRoute(author),
+      route: ownRoute(model.segment, authorRoute(author)),
       title: author.displayName,
       documentTitle: documentTitleOf(author.displayName),
-      language: publication.defaultLanguage,
+      language: model.language,
       description:
         truncateAtWord(author.biography, DESCRIPTION_MAX) ||
         msg('authorPageDescription', author.displayName, publicationTitle),
@@ -1228,7 +1256,7 @@ export function buildGeneratedPages(validatedInput, options) {
           name: author.displayName,
           description: author.biography || undefined,
           url: absolute(authorHref(author)),
-          language: publication.defaultLanguage,
+          language: model.language,
           image: absoluteImage(author.avatar),
           sameAs: author.links.map((link) => link.uri),
         }),
@@ -1238,6 +1266,17 @@ export function buildGeneratedPages(validatedInput, options) {
         authorContents +
         `</div>`,
     });
+  };
+  for (const author of single ? [] : authors) {
+    pushAuthorPage(
+      author,
+      publishedArticles.filter((record) =>
+        translations
+          .variantsOf(record)
+          .some((variant) => variant.frontmatter.authorIds.includes(author.id)),
+      ),
+      defaultModel,
+    );
   }
 
   /**
@@ -1571,20 +1610,49 @@ export function buildGeneratedPages(validatedInput, options) {
   }
 
   useChrome(publication.defaultLanguage);
-  if (!only && !system) {
+  const counterpartsOf = createCounterparts({
+    defaultLanguage: publication.defaultLanguage,
+    router,
+  });
+  /**
+   * @param {GeneratedPage[]} selected the pages to return
+   * @returns {GeneratedPage[]} them with their text direction and, on a
+   *   mirrored listing page, its counterparts in the other languages
+   */
+  const finalize = (selected) => {
+    const existing = new Set([
+      ...pages.map((page) => page.route),
+      ...[...router.sections.values()].flatMap((plan) => [...plan.routes]),
+    ]);
+    return selected.map((page) => ({
+      ...counterpartsOf(page, existing),
+      direction: resolveTextDirection(page.language),
+    }));
+  };
+  /**
+   * The index of one listing model: page 1 is the home page (featured, tag
+   * pills, latest cards, series card, newsletter); every index page carries a
+   * slice of the older articles with pagination. The default language's model
+   * is `/`, a section's is `/<segment>/`.
+   *
+   * @param {import('./listing-model.js').ListingModel} model
+   */
+  const pushIndexPages = (model) => {
+    const indexNewsletter =
+      model.segment === undefined ? newsletterHtml : articleNewsletter();
     // Index: page 1 is the home page (featured, tag pills, latest cards, series
     // card, newsletter); every index page carries a slice of the older
     // articles with pagination.
-    const [featured, ...rest] = publishedArticles;
+    const [featured, ...rest] = model.articles;
     const latest = rest.slice(0, LATEST_CARD_COUNT);
     const older = rest.slice(LATEST_CARD_COUNT);
     const indexPages = paginate(older, pageSize);
     const indexRoute = (/** @type {number} */ n) =>
-      site(n === 1 ? '/' : `/page/${n}`);
-    const seriesName = publishedArticles.find((r) => r.frontmatter.series)
+      siteLocal(n === 1 ? '/' : `/page/${n}`);
+    const seriesName = model.articles.find((r) => r.frontmatter.series)
       ?.frontmatter.series;
     const seriesParts =
-      (seriesName ? bySeries.get(seriesName) : undefined) ?? [];
+      (seriesName ? model.bySeries.get(seriesName) : undefined) ?? [];
     const homeFeatured = featured
       ? (() => {
           const fm = featured.frontmatter;
@@ -1620,7 +1688,7 @@ export function buildGeneratedPages(validatedInput, options) {
     const homeHeading = `<h1 class="g-sr">${escapeHtml(publicationTitle)}</h1>`;
     // The Listen playlist (Listen live): every listed article with audio, newest
     // first, after the intro and before the post list.
-    const listenTracks = publishedArticles.flatMap((record) => {
+    const listenTracks = model.articles.flatMap((record) => {
       const entry = options.listen?.byRecord.get(record);
       return entry ? [listenTrackOf(entry, recordHref(record))] : [];
     });
@@ -1629,25 +1697,25 @@ export function buildGeneratedPages(validatedInput, options) {
         ? renderListenPlaylist({ tracks: listenTracks, messages })
         : '';
     const homeTags =
-      sortedTags.length > 0
+      model.sortedTags.length > 0
         ? `<section class="g-wrap g-topic-strip" aria-label="${text('browseByTagLabel')}"><ul class="g-pills">${[
-            ...sortedTags,
+            ...model.sortedTags,
           ]
             .sort(
               (a, b) =>
-                (byTag.get(b)?.length ?? 0) - (byTag.get(a)?.length ?? 0) ||
-                (a < b ? -1 : 1),
+                (model.byTag.get(b)?.length ?? 0) -
+                  (model.byTag.get(a)?.length ?? 0) || (a < b ? -1 : 1),
             )
             .slice(0, HOME_TAG_PILL_LIMIT)
             .map((tag) =>
-              pill(tagHref(tag), tag, byTag.get(tag)?.length, 'hash'),
+              pill(tagHref(tag), tag, model.byTag.get(tag)?.length, 'hash'),
             )
             .join('')}</ul></section>`
         : '';
     const homeLatest =
       latest.length > 0
         ? `<section class="g-wrap g-section" aria-labelledby="latest-title"><div class="g-section-head"><h2 id="latest-title">${text('latestHeading')}</h2>` +
-          `<a class="g-more" href="${escapeHtml(site('/archive'))}">${text('archiveSectionLabel')}${icon('arrow')}</a></div>` +
+          `<a class="g-more" href="${escapeHtml(siteLocal('/archive'))}">${text('archiveSectionLabel')}${icon('arrow')}</a></div>` +
           `<div class="g-grid">${latest.map((r) => cardOf(r)).join('')}</div></section>`
         : '';
     const homeSeries =
@@ -1685,7 +1753,7 @@ export function buildGeneratedPages(validatedInput, options) {
             homeLatest +
             moreList +
             homeSeries +
-            newsletterHtml
+            indexNewsletter
           : composition.profile === 'visual'
             ? homeHeading +
               homeFeatured +
@@ -1694,7 +1762,7 @@ export function buildGeneratedPages(validatedInput, options) {
               homeSeries +
               homeTags +
               moreList +
-              newsletterHtml
+              indexNewsletter
             : composition.profile === 'personal'
               ? homeHeading +
                 homeListen +
@@ -1703,7 +1771,7 @@ export function buildGeneratedPages(validatedInput, options) {
                 moreList +
                 homeTags +
                 homeSeries +
-                newsletterHtml
+                indexNewsletter
               : composition.profile === 'developer'
                 ? homeHeading +
                   homeTags +
@@ -1712,7 +1780,7 @@ export function buildGeneratedPages(validatedInput, options) {
                   homeSeries +
                   homeFeatured +
                   moreList +
-                  newsletterHtml
+                  indexNewsletter
                 : homeHeading +
                   homeFeatured +
                   homeTags +
@@ -1720,7 +1788,7 @@ export function buildGeneratedPages(validatedInput, options) {
                   homeLatest +
                   homeSeries +
                   moreList +
-                  newsletterHtml;
+                  indexNewsletter;
       const bodyHtml =
         pageNumber === 1
           ? `<div data-gala-home-layout="${composition.homeLayout}">${homeParts}</div>`
@@ -1742,13 +1810,16 @@ export function buildGeneratedPages(validatedInput, options) {
       const indexUrl = absolute(indexRoute(pageNumber));
       pages.push({
         kind: 'index',
-        route: pageNumber === 1 ? '/' : `/page/${pageNumber}`,
+        route: ownRoute(
+          model.segment,
+          pageNumber === 1 ? '/' : `/page/${pageNumber}`,
+        ),
         title: indexTitle,
         documentTitle:
           pageNumber === 1
             ? homeDocumentTitle(publicationTitle, publication.description)
             : documentTitleOf(indexTitle),
-        language: publication.defaultLanguage,
+        language: model.language,
         description:
           pageNumber === 1
             ? publication.description
@@ -1758,7 +1829,10 @@ export function buildGeneratedPages(validatedInput, options) {
         jsonLd: sd.serialize(
           pageNumber === 1
             ? sd.home({
-                posts: publishedArticles.slice(0, 10).map((record) => ({
+                ...(model.segment === undefined
+                  ? {}
+                  : { url: indexUrl, language: model.language }),
+                posts: model.articles.slice(0, 10).map((record) => ({
                   url: absolute(recordHref(record)),
                   headline: record.frontmatter.title,
                   datePublished: record.frontmatter.publishedAt,
@@ -1768,7 +1842,7 @@ export function buildGeneratedPages(validatedInput, options) {
                 name: indexTitle,
                 description: msg('indexPageDescription', publicationTitle),
                 url: indexUrl,
-                language: publication.defaultLanguage,
+                language: model.language,
                 trail: [
                   homeStep,
                   { label: indexTitle, route: indexRoute(pageNumber) },
@@ -1777,37 +1851,35 @@ export function buildGeneratedPages(validatedInput, options) {
         ),
         lastModified: latestContentTimestamp(
           pageNumber === 1
-            ? publishedArticles.slice(0, 1 + LATEST_CARD_COUNT)
+            ? model.articles.slice(0, 1 + LATEST_CARD_COUNT)
             : items,
         ),
         bodyHtml,
       });
     });
-
-    if (home) {
-      return pages
-        .filter((page) => page.kind === 'index' && page.route === '/')
-        .map((page) => ({
-          ...page,
-          direction: resolveTextDirection(page.language),
-        }));
-    }
-
-    if (sortedTags.length > 0) {
+  };
+  /**
+   * The tag, series and archive pages of one listing model.
+   *
+   * @param {import('./listing-model.js').ListingModel} model
+   */
+  const pushListingPages = (model) => {
+    const R = (/** @type {string} */ route) => ownRoute(model.segment, route);
+    if (model.sortedTags.length > 0) {
       pages.push({
         kind: 'tag',
-        route: '/tags',
+        route: R('/tags'),
         ...listingMeta({
           name: text0('tagsSectionLabel'),
           description: msg(
             'tagsRootDescription',
-            String(sortedTags.length),
+            String(model.sortedTags.length),
             publicationTitle,
           ),
-          route: '/tags',
+          route: R('/tags'),
         }),
-        language: publication.defaultLanguage,
-        lastModified: latestContentTimestamp(publishedArticles),
+        language: model.language,
+        lastModified: latestContentTimestamp(model.articles),
         bodyHtml: listingHead({
           breadcrumbHtml: crumbs([
             { label: /** @type {string} */ (messages.tagsSectionLabel) },
@@ -1815,18 +1887,18 @@ export function buildGeneratedPages(validatedInput, options) {
           kicker: /** @type {string} */ (messages.tagKickerLabel),
           count: undefined,
           title: /** @type {string} */ (messages.tagsSectionLabel),
-          extraHtml: tagPills(),
+          extraHtml: tagPills(model),
         }),
       });
     }
-    for (const tag of sortedTags) {
+    for (const tag of model.sortedTags) {
       const items =
         /** @type {import('../../../types/index.d.ts').ContentBuildRecord[]} */ (
-          byTag.get(tag)
+          model.byTag.get(tag)
         );
       pages.push({
         kind: 'tag',
-        route: `/tags/${tagSegment(tag)}`,
+        route: R(`/tags/${tagSegment(tag)}`),
         ...listingMeta({
           name: msg('tagPageTitle', tag),
           description: msg(
@@ -1835,10 +1907,12 @@ export function buildGeneratedPages(validatedInput, options) {
             tag,
             publicationTitle,
           ),
-          route: `/tags/${tagSegment(tag)}`,
-          parents: [{ label: text0('tagsSectionLabel'), route: site('/tags') }],
+          route: R(`/tags/${tagSegment(tag)}`),
+          parents: [
+            { label: text0('tagsSectionLabel'), route: siteLocal('/tags') },
+          ],
         }),
-        language: publication.defaultLanguage,
+        language: model.language,
         lastModified: latestContentTimestamp(items),
         bodyHtml:
           listingHead({
@@ -1846,7 +1920,7 @@ export function buildGeneratedPages(validatedInput, options) {
               [
                 {
                   label: /** @type {string} */ (messages.tagsSectionLabel),
-                  route: site('/tags'),
+                  route: siteLocal('/tags'),
                 },
               ],
               [{ label: tag }],
@@ -1854,26 +1928,28 @@ export function buildGeneratedPages(validatedInput, options) {
             kicker: /** @type {string} */ (messages.tagKickerLabel),
             count: items.length,
             title: tag,
-            extraHtml: tagPills(tag),
+            extraHtml: tagPills(model, tag),
           }) + rowList(items),
       });
     }
 
-    if (sortedSeries.length > 0) {
+    if (model.sortedSeries.length > 0) {
       pages.push({
         kind: 'series',
-        route: '/series',
+        route: R('/series'),
         ...listingMeta({
           name: text0('seriesSectionLabel'),
           description: msg(
             'seriesRootDescription',
-            String(sortedSeries.length),
+            String(model.sortedSeries.length),
             publicationTitle,
           ),
-          route: '/series',
+          route: R('/series'),
         }),
-        language: publication.defaultLanguage,
-        lastModified: latestContentTimestamp([...bySeries.values()].flat()),
+        language: model.language,
+        lastModified: latestContentTimestamp(
+          [...model.bySeries.values()].flat(),
+        ),
         bodyHtml: listingHead({
           breadcrumbHtml: crumbs([
             { label: /** @type {string} */ (messages.seriesSectionLabel) },
@@ -1882,22 +1958,27 @@ export function buildGeneratedPages(validatedInput, options) {
           count: undefined,
           title: /** @type {string} */ (messages.seriesSectionLabel),
           iconName: 'book',
-          extraHtml: `<ul class="g-pills">${sortedSeries
+          extraHtml: `<ul class="g-pills">${model.sortedSeries
             .map((name) =>
-              pill(seriesHref(name), name, bySeries.get(name)?.length, 'book'),
+              pill(
+                seriesHref(name),
+                name,
+                model.bySeries.get(name)?.length,
+                'book',
+              ),
             )
             .join('')}</ul>`,
         }),
       });
     }
-    for (const name of sortedSeries) {
+    for (const name of model.sortedSeries) {
       const items =
         /** @type {import('../../../types/index.d.ts').ContentBuildRecord[]} */ (
-          bySeries.get(name)
+          model.bySeries.get(name)
         );
       pages.push({
         kind: 'series',
-        route: `/series/${seriesSegment(name)}`,
+        route: R(`/series/${seriesSegment(name)}`),
         ...listingMeta({
           name,
           description: msg(
@@ -1906,12 +1987,12 @@ export function buildGeneratedPages(validatedInput, options) {
             name,
             publicationTitle,
           ),
-          route: `/series/${seriesSegment(name)}`,
+          route: R(`/series/${seriesSegment(name)}`),
           parents: [
-            { label: text0('seriesSectionLabel'), route: site('/series') },
+            { label: text0('seriesSectionLabel'), route: siteLocal('/series') },
           ],
         }),
-        language: publication.defaultLanguage,
+        language: model.language,
         lastModified: latestContentTimestamp(items),
         bodyHtml:
           listingHead({
@@ -1919,7 +2000,7 @@ export function buildGeneratedPages(validatedInput, options) {
               [
                 {
                   label: /** @type {string} */ (messages.seriesSectionLabel),
-                  route: site('/series'),
+                  route: siteLocal('/series'),
                 },
               ],
               [{ label: name }],
@@ -1932,35 +2013,35 @@ export function buildGeneratedPages(validatedInput, options) {
       });
     }
 
-    if (sortedYears.length > 0) {
+    if (model.sortedYears.length > 0) {
       pages.push({
         kind: 'archive',
-        route: '/archive',
+        route: R('/archive'),
         ...listingMeta({
           name: text0('archiveSectionLabel'),
           description: msg(
             'archiveRootDescription',
-            String(publishedArticles.length),
+            String(model.articles.length),
             publicationTitle,
           ),
-          route: '/archive',
+          route: R('/archive'),
         }),
-        language: publication.defaultLanguage,
-        lastModified: latestContentTimestamp(publishedArticles),
+        language: model.language,
+        lastModified: latestContentTimestamp(model.articles),
         bodyHtml: listingHead({
           breadcrumbHtml: crumbs([
             { label: /** @type {string} */ (messages.archiveSectionLabel) },
           ]),
           kicker: /** @type {string} */ (messages.archiveKickerLabel),
-          count: publishedArticles.length,
+          count: model.articles.length,
           title: /** @type {string} */ (messages.archiveSectionLabel),
           iconName: 'layers',
-          extraHtml: `<ul class="g-pills">${sortedYears
+          extraHtml: `<ul class="g-pills">${model.sortedYears
             .map((year) =>
               pill(
-                site(`/archive/${year}`),
+                siteLocal(`/archive/${year}`),
                 year,
-                byYear.get(year)?.length,
+                model.byYear.get(year)?.length,
                 'layers',
               ),
             )
@@ -1968,10 +2049,10 @@ export function buildGeneratedPages(validatedInput, options) {
         }),
       });
     }
-    for (const year of sortedYears) {
+    for (const year of model.sortedYears) {
       const items =
         /** @type {import('../../../types/index.d.ts').ContentBuildRecord[]} */ (
-          byYear.get(year)
+          model.byYear.get(year)
         );
       const yearPages = paginate(items, pageSize);
       const yearRoute = (/** @type {number} */ n) =>
@@ -1980,7 +2061,7 @@ export function buildGeneratedPages(validatedInput, options) {
         const pageNumber = pageIndex + 1;
         pages.push({
           kind: 'archive',
-          route: yearRoute(pageNumber),
+          route: R(yearRoute(pageNumber)),
           ...listingMeta({
             name:
               pageNumber === 1
@@ -1992,12 +2073,15 @@ export function buildGeneratedPages(validatedInput, options) {
               year,
               publicationTitle,
             ),
-            route: yearRoute(pageNumber),
+            route: R(yearRoute(pageNumber)),
             parents: [
-              { label: text0('archiveSectionLabel'), route: site('/archive') },
+              {
+                label: text0('archiveSectionLabel'),
+                route: siteLocal('/archive'),
+              },
             ],
           }),
-          language: publication.defaultLanguage,
+          language: model.language,
           lastModified: latestContentTimestamp(pageItems),
           bodyHtml:
             listingHead({
@@ -2005,7 +2089,7 @@ export function buildGeneratedPages(validatedInput, options) {
                 [
                   {
                     label: /** @type {string} */ (messages.archiveSectionLabel),
-                    route: site('/archive'),
+                    route: siteLocal('/archive'),
                   },
                 ],
                 [{ label: year }],
@@ -2020,71 +2104,47 @@ export function buildGeneratedPages(validatedInput, options) {
               renderPagination({
                 currentPage: pageNumber,
                 totalPages: yearPages.length,
-                routeForPage: (n) => site(yearRoute(n)),
+                routeForPage: (n) => siteLocal(yearRoute(n)),
                 messages,
               }),
             ),
         });
       });
     }
-
-    // One section per non-default language with a published article: its own
-    // chrome catalog, every article of the language newest first (no grouping).
-    for (const section of translations.sections) {
-      useChrome(section.language);
-      const items = allPublishedArticles.filter(
-        (r) => languageSegment(r.frontmatter.language) === section.segment,
+  };
+  if (!only && !system) {
+    pushIndexPages(defaultModel);
+    if (home) {
+      return finalize(
+        pages.filter((page) => page.kind === 'index' && page.route === '/'),
       );
-      const name = languageLabel(section.language, translations.languages);
-      const sectionPages = paginate(items, pageSize);
-      const sectionRoute = (/** @type {number} */ n) =>
-        n === 1 ? `/${section.segment}` : `/${section.segment}/page/${n}`;
-      sectionPages.forEach((pageItems, pageIndex) => {
-        const pageNumber = pageIndex + 1;
-        pages.push({
-          kind: 'index',
-          route: sectionRoute(pageNumber),
-          ...listingMeta({
-            name:
-              pageNumber === 1
-                ? name
-                : `${name} \u2013 ${msg('pageStatusLabel', String(pageNumber), String(sectionPages.length))}`,
-            description: msg(
-              'languageIndexDescription',
-              String(items.length),
-              name,
-              publicationTitle,
-            ),
-            route: sectionRoute(pageNumber),
-            language: section.language,
-          }),
-          language: section.language,
-          lastModified: latestContentTimestamp(pageItems),
-          bodyHtml:
-            listingHead({
-              breadcrumbHtml: crumbs([{ label: name }]),
-              kicker: /** @type {string} */ (messages.languageKickerLabel),
-              count: items.length,
-              title: name,
-              iconName: 'layers',
-            }) +
-            rowList(
-              pageItems,
-              renderPagination({
-                currentPage: pageNumber,
-                totalPages: sectionPages.length,
-                routeForPage: (n) => site(sectionRoute(n)),
-                messages,
-              }),
-            ),
-        });
-      });
+    }
+
+    pushListingPages(defaultModel);
+
+    // One mirror per non-default language with a published article: its own
+    // chrome catalog and every listing kind built from that language's
+    // articles only, by the same builders as the default language's.
+    for (const plan of router.sections.values()) {
+      useChrome(plan.language);
+      pushIndexPages(plan.model);
+      if (sectionOnly !== undefined) continue;
+      pushListingPages(plan.model);
+      for (const author of plan.authors) {
+        pushAuthorPage(
+          localizeAuthor(author, plan.language),
+          plan.model.articles.filter((record) =>
+            record.frontmatter.authorIds.includes(author.id),
+          ),
+          plan.model,
+        );
+      }
     }
   }
   useChrome(publication.defaultLanguage);
 
-  return pages
-    .filter(
+  return finalize(
+    pages.filter(
       (page) =>
         (!profileOnly || page.kind === 'profile') &&
         (!contactOnly ||
@@ -2093,11 +2153,8 @@ export function buildGeneratedPages(validatedInput, options) {
           (page.kind === 'policy' && page.route === `/${policyOnly}`)) &&
         (sectionOnly === undefined ||
           (page.kind === 'index' && page.route === `/${sectionOnly}`)),
-    )
-    .map((page) => ({
-      ...page,
-      direction: resolveTextDirection(page.language),
-    }));
+    ),
+  );
 }
 
 /**

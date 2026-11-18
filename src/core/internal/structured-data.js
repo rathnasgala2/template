@@ -87,7 +87,7 @@ function bound(text, max) {
  * @param {readonly string[]} [context.sameAs] the publication's profile URLs
  * @returns {{
  *   serialize: (graph: readonly unknown[]) => string,
- *   home: (input: {posts: readonly {url: string, headline: string, datePublished: string}[]}) => unknown[],
+ *   home: (input: {posts: readonly {url: string, headline: string, datePublished: string}[], url?: string, language?: string}) => unknown[],
  *   article: (input: ArticleInput) => unknown[],
  *   collection: (input: {name: string, description?: string, url: string, language: string, trail: readonly CrumbStep[], image?: ImageInfo}) => unknown[],
  *   profile: (input: {name: string, description?: string, url: string, language: string, image?: ImageInfo, sameAs: readonly string[]}) => unknown[],
@@ -129,7 +129,11 @@ export function createStructuredData({
     serialize: (graph) =>
       serializeJsonLd({ '@context': 'https://schema.org', '@graph': graph }),
 
-    home: ({ posts }) => [
+    home: ({
+      posts,
+      url: blogUrl = origin,
+      language = publication.defaultLanguage,
+    }) => [
       {
         '@type': 'WebSite',
         '@id': `${origin}#website`,
@@ -143,11 +147,11 @@ export function createStructuredData({
       },
       {
         '@type': 'Blog',
-        '@id': `${origin}#blog`,
-        url: origin,
+        '@id': `${blogUrl}#blog`,
+        url: blogUrl,
         name: publication.title,
         description: publication.description,
-        inLanguage: publication.defaultLanguage,
+        inLanguage: language,
         publisher: { '@id': organization['@id'] },
         blogPost: posts.map((post) => ({
           '@type': 'BlogPosting',
