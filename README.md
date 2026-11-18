@@ -261,6 +261,14 @@ names no article of the build renders as a standalone article. A site with no
   in it; other languages keep the site's catalog. A site without `translationOf`
   uses its default language's catalog on every page (so a `ta` default language
   gets Tamil chrome).
+- **Remembered language.** A site with a language section also ships
+  `assets/gala-language-v1.js` (under 1 KB, no dependencies). Clicking a
+  language chip stores its `lang` in `localStorage` (`gala:language:v1`); on
+  every page the script, running in `<head>` after the hreflang alternates,
+  replaces the location with the same-origin alternate in the stored language
+  (search and hash kept, a `sessionStorage` marker prevents loops). Visiting a
+  page never writes the preference; without JavaScript or storage nothing
+  changes. Sites without translations do not get the file.
 
 ### Editions
 
