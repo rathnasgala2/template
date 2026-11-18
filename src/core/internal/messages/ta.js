@@ -180,6 +180,7 @@ export default Object.freeze({
   /** @type {(title: string, edition: string) => string} */
   editionPageTitle: (title, edition) => `${title} (${edition})`,
   aboutPageTitle: 'பற்றி',
+  aboutLinkLabel: 'பற்றி',
   /** @type {(date: string) => string} */
   updatedLabel: (date) => `புதுப்பிக்கப்பட்டது ${date}`,
   /** @type {(tag: string) => string} */

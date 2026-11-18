@@ -164,6 +164,7 @@ export default Object.freeze({
   /** @type {(title: string, edition: string) => string} */
   editionPageTitle: (title, edition) => `${title} (${edition})`,
   aboutPageTitle: 'حول',
+  aboutLinkLabel: 'حول',
   /** @type {(date: string) => string} */
   updatedLabel: (date) => `آخر تحديث: ${date}`,
   /** @type {(tag: string) => string} */

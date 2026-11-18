@@ -171,6 +171,7 @@ export default Object.freeze({
   /** @type {(title: string, edition: string) => string} */
   editionPageTitle: (title, edition) => `${title} (${edition})`,
   aboutPageTitle: 'Tietoa',
+  aboutLinkLabel: 'Tietoa',
   /** @type {(date: string) => string} */
   updatedLabel: (date) => `Päivitetty ${date}`,
   /** @type {(tag: string) => string} */

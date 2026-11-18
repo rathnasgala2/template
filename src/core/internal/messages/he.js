@@ -162,6 +162,7 @@ export default Object.freeze({
   /** @type {(title: string, edition: string) => string} */
   editionPageTitle: (title, edition) => `${title} (${edition})`,
   aboutPageTitle: 'אודות',
+  aboutLinkLabel: 'אודות',
   /** @type {(date: string) => string} */
   updatedLabel: (date) => `עודכן ב-${date}`,
   /** @type {(tag: string) => string} */

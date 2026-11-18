@@ -165,6 +165,7 @@ export default Object.freeze({
   /** @type {(title: string, edition: string) => string} */
   editionPageTitle: (title, edition) => `${title} (${edition})`,
   aboutPageTitle: 'เกี่ยวกับ',
+  aboutLinkLabel: 'เกี่ยวกับ',
   /** @type {(date: string) => string} */
   updatedLabel: (date) => `อัปเดต ${date}`,
   /** @type {(tag: string) => string} */

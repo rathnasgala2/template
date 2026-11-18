@@ -172,6 +172,7 @@ export default Object.freeze({
   /** @type {(title: string, edition: string) => string} */
   editionPageTitle: (title, edition) => `${title} (${edition})`,
   aboutPageTitle: 'Meist',
+  aboutLinkLabel: 'Meist',
   /** @type {(date: string) => string} */
   updatedLabel: (date) => `Uuendatud ${date}`,
   /** @type {(tag: string) => string} */

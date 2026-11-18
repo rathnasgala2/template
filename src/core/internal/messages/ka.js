@@ -170,6 +170,7 @@ export default Object.freeze({
   /** @type {(title: string, edition: string) => string} */
   editionPageTitle: (title, edition) => `${title} (${edition})`,
   aboutPageTitle: 'შესახებ',
+  aboutLinkLabel: 'შესახებ',
   /** @type {(date: string) => string} */
   updatedLabel: (date) => `განახლდა: ${date}`,
   /** @type {(tag: string) => string} */

@@ -169,6 +169,7 @@ export default Object.freeze({
   /** @type {(title: string, edition: string) => string} */
   editionPageTitle: (title, edition) => `${title} (${edition})`,
   aboutPageTitle: 'O nama',
+  aboutLinkLabel: 'O nama',
   /** @type {(date: string) => string} */
   updatedLabel: (date) => `Ažurirano ${date}`,
   /** @type {(tag: string) => string} */
