@@ -74,6 +74,11 @@ import {
 } from './internal/appearance/contract.js';
 import { APPEARANCE_BOOTSTRAP_SCRIPT_SOURCE } from './internal/appearance/bootstrap-script.js';
 import {
+  LANGUAGE_SCRIPT_MEDIA_TYPE,
+  LANGUAGE_SCRIPT_PATH,
+  LANGUAGE_SCRIPT_SOURCE,
+} from './internal/language-preference.js';
+import {
   GALA_BASE_STYLESHEET_MEDIA_TYPE,
   GALA_BASE_STYLESHEET_PATH,
   GALA_BASE_STYLESHEET_SOURCE,
@@ -1187,6 +1192,30 @@ export async function renderPublication(buildInput, options) {
     });
   }
 
+  // The remembered-language script, only when the build has a language section.
+  /** @type {import('../../types/index.d.ts').ManifestAssetEntry[]} */
+  const languageAssets = [];
+  if (translations.active && translations.sections.length > 0) {
+    const languageScriptBytes = Buffer.from(LANGUAGE_SCRIPT_SOURCE, 'utf8');
+    const joinedLanguageScriptPath = projectFixedAssetPath(
+      validatedInput.basePath,
+      `/${LANGUAGE_SCRIPT_PATH}`,
+    );
+    const languageScriptDestination = path.join(
+      outputDirectory,
+      joinedLanguageScriptPath,
+    );
+    await mkdir(path.dirname(languageScriptDestination), { recursive: true });
+    await writeFile(languageScriptDestination, languageScriptBytes);
+    languageAssets.push({
+      path: joinedLanguageScriptPath,
+      mediaType: LANGUAGE_SCRIPT_MEDIA_TYPE,
+      byteLength: String(languageScriptBytes.byteLength),
+      sha256: digestBytes(languageScriptBytes),
+      immutable: false,
+    });
+  }
+
   const assets = [
     ...joinedMediaAssets,
     ...joinedListenAssets,
@@ -1200,6 +1229,7 @@ export async function renderPublication(buildInput, options) {
     ...audienceAssets,
     ...listenAssets,
     ...consentAssets,
+    ...languageAssets,
     ...(themeAssetsResult ? themeAssetsResult.assets : []),
   ].sort((a, b) => compareUtf8Bytes(a.path, b.path));
 

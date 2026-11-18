@@ -29,6 +29,10 @@ import {
   SIGNALS_SCRIPT_PATH,
 } from './interactions.js';
 import { LISTEN_SCRIPT_PATH } from './listen.js';
+import {
+  LANGUAGE_SCRIPT_PATH,
+  LANGUAGE_SCRIPT_SOURCE,
+} from './language-preference.js';
 import { PREVIEW_RUNTIME_SOURCE } from './preview-runtime-source.js';
 import { PREVIEW_SCRIPT_TEXTS } from './preview-scripts-data.js';
 import { sha256Base64 } from './sha256.js';
@@ -45,6 +49,7 @@ const BUILT_SCRIPTS = [
   [VIDEO_SCRIPT_PATH, PREVIEW_SCRIPT_TEXTS.video],
   [LISTEN_SCRIPT_PATH, PREVIEW_SCRIPT_TEXTS.listen],
   [CONSENT_SCRIPT_PATH, CONSENT_SCRIPT_SOURCE],
+  [LANGUAGE_SCRIPT_PATH, LANGUAGE_SCRIPT_SOURCE],
 ];
 
 /** @type {readonly string[]} the option's keys */

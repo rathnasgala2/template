@@ -16,6 +16,7 @@ import { resolveColorModePresentation } from './appearance/contract.js';
 import { RenderOptionsError } from '../errors.js';
 import { contentSecurityPolicyMetaTag } from './content-security.js';
 import { CONSENT_SCRIPT_PATH } from './analytics/consent-script.js';
+import { LANGUAGE_SCRIPT_PATH } from './language-preference.js';
 import { renderConsentBanner } from './analytics/markup.js';
 import { analyticsActive } from './analytics/module.js';
 import {
@@ -230,6 +231,10 @@ export function buildPageDocuments(validatedInput, ctx) {
   const consentScriptHref = analyticsOn
     ? joinBasePathAndRoute(publicBasePath, `/${CONSENT_SCRIPT_PATH}`)
     : undefined;
+  const languageScriptHref =
+    translations.active && translations.sections.length > 0
+      ? joinBasePathAndRoute(publicBasePath, `/${LANGUAGE_SCRIPT_PATH}`)
+      : undefined;
   /**
    * The chrome a page of the given language renders with: its message
    * catalog (the site's own when the language has none), consent banner and
@@ -874,6 +879,7 @@ export function buildPageDocuments(validatedInput, ctx) {
         // UI template are at the end of the body.
         ...(listen.live ? { listenScriptHref } : {}),
         consentScriptHref,
+        languageScriptHref,
         cspMetaTag,
         baseStylesheetHref: baseStylesheetHrefValue,
         themeStylesheetLinksHtml,
@@ -1008,6 +1014,7 @@ export function buildPageDocuments(validatedInput, ctx) {
         appearanceScriptHref: appearanceScriptHrefValue,
         ...(listen.live ? { listenScriptHref } : {}),
         consentScriptHref,
+        languageScriptHref,
         cspMetaTag,
         baseStylesheetHref: baseStylesheetHrefValue,
         themeStylesheetLinksHtml,

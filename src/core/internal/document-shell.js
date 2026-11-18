@@ -76,6 +76,7 @@ function raw(value) {
  * @property {string} [videoScriptHref] the click-to-play video script, only on a page with a video card
  * @property {string} [listenScriptHref] the Listen script
  * @property {string} [consentScriptHref] the consent script
+ * @property {string} [languageScriptHref] the remembered-language script
  * @property {string} title the document title
  * @property {string} [description] the plain-text description
  * @property {string} [robotsContent] the robots directive
@@ -223,7 +224,7 @@ export function renderDocumentShell(data, content) {
       ? `<script type="application/ld+json">${raw(d.jsonLd)}</script>`
       : '',
     `<link rel="alternate" type="application/atom+xml" href="${esc(d.atomFeedUrl)}" title="${esc(d.siteName)}">`,
-    `<link rel="alternate" type="application/rss+xml" href="${esc(d.rssFeedUrl)}" title="${esc(d.siteName)}">${raw(d.languageFeedLinksHtml)}${raw(d.hreflangLinksHtml)}`,
+    `<link rel="alternate" type="application/rss+xml" href="${esc(d.rssFeedUrl)}" title="${esc(d.siteName)}">${raw(d.languageFeedLinksHtml)}${raw(d.hreflangLinksHtml)}${d.languageScriptHref ? `<script src="${esc(d.languageScriptHref)}"></script>` : ''}`,
     `<link rel="stylesheet" href="${esc(d.baseStylesheetHref)}">`,
     raw(d.themeStylesheetLinksHtml),
     '</head>',
