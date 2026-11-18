@@ -105,3 +105,16 @@ test('the anchor reset does not outrank link component colors', () => {
     /\[data-gala-publication-root\] a\s*\{/u,
   );
 });
+
+test('base stylesheet: the language switcher and chips override theme chip tokens on the element', () => {
+  const css = GALA_BASE_STYLESHEET_SOURCE;
+  assert.match(css, /\.g-lang-chip\s*\{[^}]*--gala-label-transform:\s*none/u);
+  assert.match(css, /\.g-lang-chip\s*\{[^}]*--gala-chip-pad:/u);
+  assert.match(css, /\.g-lang-switch\s*\{[^}]*display:\s*inline-flex/u);
+  assert.match(css, /\.g-lang-switch \.g-lang-chip\[aria-current\]/u);
+  assert.match(css, /a\.g-lang-chip:hover/u);
+  assert.doesNotMatch(
+    css,
+    /\.g-lang-chip\s*\{[^}]*text-transform:\s*(?!\s|none)/u,
+  );
+});

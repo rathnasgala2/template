@@ -335,6 +335,31 @@ export const GALA_BASE_COMPONENT_CSS = `
     transition: filter var(--gala-duration-fast) var(--gala-ease-standard), transform var(--gala-duration-fast) var(--gala-ease-standard);
   }
   .g-chip:hover { filter: brightness(.96) saturate(1.2); }
+  /* Language chips. Themes restyle .g-chip in the later gala-components layer
+     (text-transform, background, sometimes colour), so a plain declaration here
+     cannot win; the chip instead overrides the tokens those theme rules read,
+     on the element itself, which beats the inherited root values. */
+  .g-lang-chip {
+    --gala-label-transform: none; --gala-tracking-label: 0;
+    --gala-chip-pad: .1rem .6rem; --gala-border-chip: 1px solid var(--gala-color-border);
+    --gala-paint-chip: transparent; --gala-color-chip-text: var(--gala-color-text-muted);
+    margin-inline-end: .4rem; margin-block: .1rem; text-transform: none; letter-spacing: 0;
+    font-family: var(--gala-font-ui); font-size: .78rem; line-height: 1.55; white-space: nowrap;
+  }
+  .g-lang-chip[aria-current] { --gala-color-chip-text: var(--gala-color-text); --gala-border-chip: 1px solid var(--gala-color-text-muted); font-weight: 600; }
+  a.g-lang-chip:hover { --gala-paint-chip: var(--gala-color-surface-raised); --gala-color-chip-text: var(--gala-color-text); filter: none; }
+  [role="group"]:has(> .g-lang-chip) { display: inline-flex; flex-wrap: wrap; align-items: center; margin-inline: .5rem 0; }
+  .g-lang-switch {
+    display: inline-flex; align-items: center; gap: 2px; flex: none; padding: 2px;
+    border: 1px solid var(--gala-color-border); border-radius: var(--gala-radius-pill); background: var(--gala-color-surface);
+  }
+  .g-lang-switch .g-lang-chip {
+    --gala-border-chip: 1px solid transparent; --gala-chip-pad: 0 .85rem; --gala-color-chip-text: var(--gala-color-text-muted);
+    justify-content: center; min-height: 2rem; min-width: 2.25rem; margin: 0; font-size: .875rem; line-height: 1.6;
+  }
+  @media (max-width: 359px) { .g-actions .g-lang-switch { display: none; } }
+  .g-lang-switch .g-lang-chip[aria-current] { --gala-paint-chip: var(--gala-color-text); --gala-color-chip-text: var(--gala-color-surface); --gala-border-chip: 1px solid transparent; }
+  .g-lang-switch a.g-lang-chip:hover { --gala-paint-chip: var(--gala-color-surface-raised); --gala-color-chip-text: var(--gala-color-text); }
   .g-badge { display: inline-flex; align-items: center; gap: .35em; font-family: var(--gala-font-label); font-size: .72rem; font-weight: var(--gala-weight-ui); text-transform: var(--gala-label-transform); letter-spacing: var(--gala-tracking-label); color: var(--gala-color-link); }
   .g-series-tag { display: inline-flex; align-items: center; gap: .35em; font-family: var(--gala-font-ui); font-size: .78rem; color: var(--gala-color-text-muted); }
   .g-avatar { display: inline-grid; place-items: center; width: 2.5rem; height: 2.5rem; aspect-ratio: 1 / 1; border-radius: var(--gala-radius-avatar); object-fit: cover; flex: none; box-shadow: var(--gala-shadow-avatar-ring); background: var(--gala-paint-button); color: var(--gala-color-btn-text); font-family: var(--gala-font-display); font-weight: var(--gala-weight-display); font-size: .9rem; overflow: hidden; }
