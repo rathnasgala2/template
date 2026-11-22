@@ -8,6 +8,31 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.19.0] - 2026-11-22
+
+### Added
+
+- **Poll block.** A fenced `poll` block (`id`, `question`, `option1` to
+  `option6`) renders as `figure.g-poll` with the question and the options as a
+  plain list (the page without scripts, the feeds and the newsletter email show
+  it). With the interactions module on, the interactions script turns the list
+  into option buttons, reads the page's polls once
+  (`GET .../contents/{contentId}/polls`), and a signed-in reader's click sends
+  `PUT .../polls/{pollId}/vote` with `{option}`, then shows each option's
+  percentage and the total; the reader may change the vote. A signed-out reader
+  is sent to sign in as a like does; a failure leaves the list and is announced.
+  The render policy gains the `poll` block, `figure[data-gala-poll]` and
+  `li[data-gala-option]`; the base layer styles the poll with tokens; the
+  interactive preview simulates the read and the vote; four new sentences are in
+  every message catalog.
+- **Podcast feed.** With Listen live and `publication.listen.podcast` enabled,
+  `/feed/podcast.xml` (RSS 2.0 with the iTunes namespace) lists the published,
+  indexable articles that have Listen audio, newest first, and every page links
+  it. The cover must be a square PNG or JPEG of 1400 to 3000 pixels, else the
+  build fails before anything is written. The member is validated by the
+  template and kept out of the schema validation until the pin reaches the
+  schemas release that adds it.
+
 ## [4.18.0] - 2026-11-17
 
 ### Added
