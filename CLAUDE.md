@@ -35,6 +35,26 @@ Eleventy 3.1.6 (added in S2-T03) must stay fully confined behind the renderer
 adapter: no Eleventy object, plug-in API, config object or Nunjucks environment
 may cross the adapter boundary in either direction.
 
+## Journey documents
+
+One document per user journey, end to end (App, API, workers, the person's
+repository, this template and the published site), lives in the App repository
+at `../app/docs/journeys/`, indexed by goal and by route in
+`../app/docs/journeys/README.md`. The reader-side journeys
+(`reader-site-experience`, `reader-follows-and-feed`,
+`reader-comments-and-moderation`, `reader-subscribes-newsletter`,
+`audience-manage`) describe this repository's pages and scripts.
+
+- Before changing what a published page shows or what a reader script does, read
+  the journeys that name it and each one's "Connections to other journeys".
+- A change here that alters what a reader or a writer sees (a sentence, a state
+  of a reader script, when a post is shown or hidden, a consent or legal piece)
+  updates the journey document in the App repository as part of the same piece
+  of work. The App's tests cannot see this repository, so nothing fails if the
+  document is left stale.
+- A defect found while reading goes under that document's "Known open gaps"; a
+  gap fixed here is removed from the list.
+
 ## What never goes here
 
 Do not add any `src/modules/` tree other than `interactions`, provider adapters,
