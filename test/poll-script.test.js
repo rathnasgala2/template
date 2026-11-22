@@ -60,7 +60,11 @@ async function boot(options = {}) {
   data-app-origin="https://app.galascribe.com" data-publication-id="${PUBLICATION}" data-content-id="${CONTENT}"
   data-canonical-url="${PAGE}" data-poll-labels='${LABELS}' data-reactions-enabled="false" data-comments-enabled="false">
   <div class="g-interactions__status" role="status" data-gala-status></div></section></body>`,
-    { url: PAGE, runScripts: 'outside-only', pretendToBeVisual: true },
+    {
+      url: options.url ?? PAGE,
+      runScripts: 'outside-only',
+      pretendToBeVisual: true,
+    },
   );
   const { window } = dom;
   Object.defineProperty(window, 'crypto', {
@@ -68,6 +72,7 @@ async function boot(options = {}) {
     configurable: true,
   });
   window.TextEncoder = TextEncoder;
+  if (options.setup) options.setup(window);
   if (options.session) {
     window.localStorage.setItem(SESSION_KEY, JSON.stringify(options.session));
   }
@@ -293,4 +298,176 @@ test('an answer with no usable body is applied locally', async () => {
     'Votes: 1 · Pick again to change.',
     'an answer with no body is applied locally',
   );
+});
+
+const THREE_WAY = {
+  'GET polls': {
+    status: 200,
+    body: {
+      polls: [
+        {
+          pollId: 'best-day',
+          total: 3,
+          options: [
+            { index: 0, count: 1 },
+            { index: 1, count: 1 },
+            { index: 2, count: 1 },
+          ],
+          myOption: 0,
+        },
+      ],
+    },
+  },
+};
+
+test('the percentages of a poll add up to 100 and never pass it', async () => {
+  const h = await boot({ session: SIGNED_IN, handler: handler(THREE_WAY) });
+  await h.waitFor(() => h.$$('.g-poll__percent')[0]?.textContent);
+  const sum = h
+    .$$('.g-poll__percent')
+    .reduce((n, node) => n + Number.parseInt(node.textContent ?? '0', 10), 0);
+  assert.equal(sum, 100, 'three equal thirds');
+  // A total smaller than the counts (an inconsistent answer) is bounded.
+  const g = await boot({
+    session: SIGNED_IN,
+    handler: handler({
+      'GET polls': {
+        status: 200,
+        body: {
+          polls: [
+            {
+              pollId: 'best-day',
+              total: 2,
+              options: [
+                { index: 0, count: 5 },
+                { index: 1, count: 5 },
+              ],
+              myOption: 0,
+            },
+          ],
+        },
+      },
+    }),
+  });
+  await g.waitFor(() => g.$$('.g-poll__percent')[0]?.textContent);
+  assert.deepEqual(
+    g.$$('.g-poll__percent').map((n) => n.textContent),
+    ['50%', '50%', '0%'],
+  );
+  assert.equal(
+    g.$('.g-poll__meta')?.textContent?.startsWith('Votes: 10'),
+    true,
+  );
+});
+
+test('keyboard focus stays on the voted option after the answer', async () => {
+  const h = await boot({ session: SIGNED_IN, handler: handler() });
+  await h.waitFor(() => h.$$('button.g-poll__option').length === 3);
+  const second = h.$$('button.g-poll__option')[1];
+  second.focus();
+  second.click();
+  await h.waitFor(() => h.$$('.g-poll__percent')[1].textContent === '100%');
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(h.window.document.activeElement, second);
+});
+
+test('a vote answer about another poll is not applied to this one', async () => {
+  const h = await boot({
+    session: SIGNED_IN,
+    handler: handler({
+      'PUT vote': {
+        status: 200,
+        body: {
+          pollId: 'other',
+          total: 50,
+          options: [{ index: 2, count: 50 }],
+          myOption: 2,
+        },
+      },
+    }),
+  });
+  await h.waitFor(() => h.$$('button.g-poll__option').length === 3);
+  h.$$('button.g-poll__option')[0].click();
+  await h.waitFor(() => h.$$('.g-poll__percent')[0].textContent === '100%');
+  assert.equal(
+    h.$('.g-poll__meta')?.textContent?.startsWith('Votes: 1 '),
+    true,
+  );
+});
+
+test('a vote answer that does not count the voter still shows the vote', async () => {
+  const h = await boot({
+    session: SIGNED_IN,
+    handler: handler({
+      'PUT vote': {
+        status: 200,
+        body: { pollId: 'best-day', total: 0, options: [] },
+      },
+    }),
+  });
+  await h.waitFor(() => h.$$('button.g-poll__option').length === 3);
+  h.$$('button.g-poll__option')[2].click();
+  await h.waitFor(() => h.$$('.g-poll__percent')[2].textContent !== '');
+  assert.equal(h.$$('.g-poll__percent')[2].textContent, '100%');
+});
+
+test('two polls on one page vote on their own', async () => {
+  const second = normalizeAuthoredMarkdown(
+    '```poll\nid: lunch\nquestion: Lunch?\noption1: Yes\noption2: No\n```\n',
+  ).html;
+  const h = await boot({
+    session: SIGNED_IN,
+    body: POLL + second,
+    handler: handler(),
+  });
+  await h.waitFor(() => h.$$('button.g-poll__option').length === 5);
+  h.$$('figure[data-gala-poll="lunch"] button')[1].click();
+  await h.waitFor(
+    () =>
+      h.$$('figure[data-gala-poll="lunch"] .g-poll__percent')[1].textContent ===
+      '100%',
+  );
+  assert.ok(
+    h.calls.some((c) => c.method === 'PUT' && c.url.endsWith('/lunch/vote')),
+  );
+  assert.deepEqual(
+    h
+      .$$('figure[data-gala-poll="best-day"] .g-poll__percent')
+      .map((n) => n.textContent),
+    ['', '', ''],
+  );
+});
+
+test('the vote kept before sign-in is cast once, for its poll and option, after return', async () => {
+  const pending = {
+    state: 's1',
+    codeVerifier: 'v'.repeat(64),
+    intent: { kind: 'poll', pollId: 'best-day', option: 2 },
+    createdAt: Date.now(),
+  };
+  const h = await boot({
+    url: PAGE + '#gala-reader-code=c1&gala-reader-state=s1',
+    setup: (/** @type {any} */ window) =>
+      window.sessionStorage.setItem(
+        'gala.reader.pending.' + PUBLICATION,
+        JSON.stringify(pending),
+      ),
+    handler: (/** @type {any} */ call) => {
+      if (call.method === 'POST') {
+        return {
+          status: 200,
+          body: {
+            accessToken: 'tok-9',
+            expiresAt: new Date(Date.now() + 86_400_000).toISOString(),
+            reader: { displayName: 'Ana Lima', initials: 'AL' },
+          },
+        };
+      }
+      return handler()(call);
+    },
+  });
+  await h.waitFor(() => h.$$('.g-poll__percent')[2]?.textContent === '100%');
+  const puts = h.calls.filter((c) => c.method === 'PUT');
+  assert.equal(puts.length, 1);
+  assert.deepEqual(JSON.parse(puts[0].init.body), { option: 2 });
 });

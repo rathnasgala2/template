@@ -2444,16 +2444,42 @@
   }
 
   /**
+   * Whole percentages that add up to 100 (largest remainder) of the larger of
+   * the answer's total and the counts' sum, so none passes 100 and a poll
+   * without votes is all zeros.
+   *
+   * @param {PollState} state
+   * @returns {number[]}
+   */
+  function pollPercents(state) {
+    const sum = state.counts.reduce((n, count) => n + count, 0);
+    const whole = Math.max(state.total, sum);
+    if (whole <= 0) return state.counts.map(() => 0);
+    const exact = state.counts.map((count) => (count / whole) * 100);
+    const floors = exact.map((value) => Math.floor(value));
+    let left =
+      Math.round((sum / whole) * 100) - floors.reduce((n, f) => n + f, 0);
+    exact
+      .map((value, index) => ({ index, rest: value - Math.floor(value) }))
+      .sort((a, b) => b.rest - a.rest || a.index - b.index)
+      .forEach(({ index }) => {
+        if (left > 0) {
+          floors[index] += 1;
+          left -= 1;
+        }
+      });
+    return floors;
+  }
+
+  /**
    * @param {PollState} state
    */
   function paintPoll(state) {
     const voted = state.mine !== null;
     const meta = state.figure.querySelector('[data-gala-poll-meta]');
+    const percents = pollPercents(state);
     pollButtons(state.figure).forEach((node, index) => {
-      const percent =
-        state.total > 0
-          ? Math.round((state.counts[index] / state.total) * 100)
-          : 0;
+      const percent = percents[index] || 0;
       const mine = voted && state.mine === index;
       node.setAttribute('aria-pressed', mine ? 'true' : 'false');
       const bar = /** @type {HTMLElement | null} */ (
@@ -2485,10 +2511,12 @@
   /**
    * @param {PollState} state
    * @param {any} entry one `{pollId, total, options, myOption?}` from the API
+   * @param {string} [pollId] the poll the entry must be about, when known
    * @returns {boolean} whether the entry was well formed and applied
    */
-  function applyPollEntry(state, entry) {
+  function applyPollEntry(state, entry, pollId) {
     if (!entry || !Array.isArray(entry.options)) return false;
+    if (pollId !== undefined && entry.pollId !== pollId) return false;
     const counts = state.counts.map(() => 0);
     for (const option of entry.options) {
       if (
@@ -2503,9 +2531,10 @@
       }
     }
     state.counts = counts;
+    const sum = counts.reduce((n, count) => n + count, 0);
     state.total = Number.isInteger(entry.total)
-      ? Math.max(entry.total, 0)
-      : counts.reduce((sum, count) => sum + count, 0);
+      ? Math.max(entry.total, sum)
+      : sum;
     state.mine =
       Number.isInteger(entry.myOption) &&
       entry.myOption >= 0 &&
@@ -2554,6 +2583,7 @@
     if (!state || pollBusy.has(pollId) || state.mine === option) return;
     pollBusy.add(pollId);
     const buttons = pollButtons(state.figure);
+    const focused = buttons.find((node) => node === document.activeElement);
     buttons.forEach((node) => setDisabled(node, true));
     try {
       const result = await api(
@@ -2562,14 +2592,23 @@
         { body: { option } },
       );
       const previous = state.mine;
-      if (!applyPollEntry(state, result)) {
+      if (!applyPollEntry(state, result, pollId)) {
         // No usable answer body: apply the vote locally.
-        if (previous !== null) state.counts[previous] -= 1;
-        else state.total += 1;
+        if (previous !== null) {
+          state.counts[previous] = Math.max(state.counts[previous] - 1, 0);
+        } else state.total += 1;
         state.counts[option] += 1;
         state.mine = option;
-      } else if (state.mine === null) {
-        state.mine = option;
+      } else {
+        if (state.mine === null) state.mine = option;
+        // The reader's own vote is always one of the counts.
+        if (state.counts[state.mine] === 0) {
+          state.counts[state.mine] = 1;
+          state.total = Math.max(
+            state.total,
+            state.counts.reduce((n, count) => n + count, 0),
+          );
+        }
       }
       paintPoll(state);
       announce(POLL_TEXT.saved);
@@ -2578,6 +2617,14 @@
     } finally {
       buttons.forEach((node) => setDisabled(node, false));
       pollBusy.delete(pollId);
+      // A disabled button drops the keyboard focus; give it back.
+      if (focused && document.activeElement !== focused) {
+        try {
+          focused.focus({ preventScroll: true });
+        } catch {
+          focused.focus();
+        }
+      }
     }
   }
 
