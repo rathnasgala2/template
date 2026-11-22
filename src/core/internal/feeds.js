@@ -21,6 +21,7 @@
 import { escapeHtml, unescapeHtml } from './skeleton.js';
 import { derivePublicBasePath, joinPublicRoute } from './route.js';
 import { deriveAuthorSlugs } from './route-labels.js';
+import { PODCAST_FEED_ROUTE } from './podcast.js';
 import {
   contentLastModified,
   contentRoute,
@@ -44,6 +45,8 @@ export const FEED_ITEM_LIMIT = 50;
 
 /** @type {string} the un-joined route the Atom feed is published at. */
 export const ATOM_FEED_ROUTE = '/feed/atom.xml';
+/** @type {string} the un-joined route the podcast feed is published at. */
+export { PODCAST_FEED_ROUTE };
 /** @type {string} the un-joined route the RSS feed is published at. */
 export const RSS_FEED_ROUTE = '/feed/rss.xml';
 
@@ -107,10 +110,13 @@ function cdata(text) {
  *   the language-variant resolution: the default feeds then list a group of
  *   variants once (its primary), and each non-default language gets its own
  *   pair of feeds
+ * @param {{config: import('./podcast.js').PodcastConfig, entries: readonly import('./listen.js').ListenEntry[], coverUrl?: string}} [options.podcast]
+ *   the podcast feed: its settings, every published article with Listen audio
+ *   (newest first) and the cover's absolute URL (not needed without entries)
  * @param {boolean} [options.selfUrlsOnly] build the feeds without entries: the
  *   self URLs (and so every page's feed-discovery links) are the same, the
  *   documents are not wanted (the article preview)
- * @returns {{atomXml: string, rssXml: string, atomSelfUrl: string, rssSelfUrl: string, languageFeeds: LanguageFeed[]}}
+ * @returns {{atomXml: string, rssXml: string, atomSelfUrl: string, rssSelfUrl: string, podcastXml?: string, podcastSelfUrl?: string, languageFeeds: LanguageFeed[]}}
  *   both feed documents' exact UTF-8 text, plus each feed's own absolute
  *   self URL (for the shared layout's feed-discovery `<link>` tags), plus one
  *   {@link LanguageFeed} per non-default language (empty without
@@ -118,7 +124,7 @@ function cdata(text) {
  */
 export function buildFeeds(
   validatedInput,
-  { feedBody, routeProfile, translations, selfUrlsOnly = false },
+  { feedBody, routeProfile, translations, podcast, selfUrlsOnly = false },
 ) {
   const { publication, authors, content, basePath, baseUrl } = validatedInput;
   const authorsById = new Map(authors.map((author) => [author.id, author]));
@@ -265,6 +271,16 @@ export function buildFeeds(
   };
 
   const main = buildPair(articles, ATOM_FEED_ROUTE, RSS_FEED_ROUTE);
+  const podcastFeed = podcast
+    ? buildPodcastFeed({
+        podcast,
+        validatedInput,
+        authorsById,
+        absoluteUrl,
+        translations,
+        selfUrlsOnly,
+      })
+    : undefined;
   /** @type {LanguageFeed[]} */
   const languageFeeds = (translations?.sections ?? []).map((section) => {
     const atomRoute = languageFeedRoute(section.segment, 'atom');
@@ -286,7 +302,7 @@ export function buildFeeds(
       ),
     };
   });
-  return { ...main, languageFeeds };
+  return { ...main, ...podcastFeed, languageFeeds };
 }
 
 /**
@@ -296,4 +312,97 @@ export function buildFeeds(
  */
 export function languageFeedRoute(segment, format) {
   return `/feed/${segment}/${format}.xml`;
+}
+
+/** @type {Readonly<Record<string, string>>} Listen media type -> the type Apple Podcasts accepts in an enclosure */
+const PODCAST_ENCLOSURE_TYPES = Object.freeze({
+  'audio/mpeg': 'audio/mpeg',
+  'audio/mp4': 'audio/x-m4a',
+});
+
+/**
+ * The podcast feed: RSS 2.0 with the iTunes namespace, one item per published,
+ * indexable article that has Listen audio (newest first, at most
+ * {@link FEED_ITEM_LIMIT}). It exists only with at least one such article.
+ * Required tags are Apple Podcasts' (channel: title, description, language,
+ * `itunes:image`, `itunes:category`, `itunes:explicit`; item: title,
+ * `enclosure`, `guid`), with the recommended ones Apple names (`itunes:author`,
+ * `link`, `pubDate`, `description`, `itunes:duration`).
+ *
+ * @param {object} options
+ * @param {NonNullable<Parameters<typeof buildFeeds>[1]['podcast']>} options.podcast
+ * @param {import('../../../types/index.d.ts').NormalizedBuildInput} options.validatedInput
+ * @param {Map<string, {displayName: string}>} options.authorsById
+ * @param {(route: string) => string} options.absoluteUrl
+ * @param {import('./translations.js').TranslationResolution} [options.translations]
+ * @param {boolean} options.selfUrlsOnly
+ * @returns {{podcastXml: string, podcastSelfUrl: string} | undefined}
+ */
+function buildPodcastFeed({
+  podcast,
+  validatedInput,
+  authorsById,
+  absoluteUrl,
+  translations,
+  selfUrlsOnly,
+}) {
+  const { publication, baseUrl } = validatedInput;
+  const { config } = podcast;
+  const eligible = podcast.entries
+    .filter(
+      (entry) =>
+        !isSeoNoindex(entry.record.frontmatter) &&
+        (translations?.isListed(entry.record) ?? true),
+    )
+    .slice(0, FEED_ITEM_LIMIT);
+  if (eligible.length === 0) return undefined;
+  const podcastSelfUrl = absoluteUrl(PODCAST_FEED_ROUTE);
+  if (selfUrlsOnly) return { podcastXml: '', podcastSelfUrl };
+  const siteUrl = absoluteUrl('/');
+  const author =
+    publication.authorIds
+      .map((id) => authorsById.get(id)?.displayName)
+      .filter(Boolean)
+      .join(', ') || publication.title;
+  const coverUrl = escapeHtml(podcast.coverUrl ?? '');
+  const items = eligible
+    .map((entry) => {
+      const { frontmatter } = entry.record;
+      const itemUrl = absoluteUrl(contentRoute(frontmatter));
+      const { audio, durationSeconds } = entry.listen;
+      return (
+        `<item>` +
+        `<title>${escapeHtml(frontmatter.title)}</title>` +
+        `<link>${escapeHtml(itemUrl)}</link>` +
+        `<guid isPermaLink="true">${escapeHtml(itemUrl)}</guid>` +
+        `<pubDate>${escapeHtml(toRfc822(frontmatter.publishedAt))}</pubDate>` +
+        `<description>${escapeHtml(frontmatter.description ?? frontmatter.title)}</description>` +
+        `<enclosure url="${escapeHtml(new URL(entry.href, baseUrl).toString())}" length="${audio.bytes}" type="${PODCAST_ENCLOSURE_TYPES[audio.mediaType]}"/>` +
+        `<itunes:duration>${durationSeconds}</itunes:duration>` +
+        `</item>`
+      );
+    })
+    .join('');
+  const podcastXml =
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">' +
+    '<channel>' +
+    `<title>${escapeHtml(publication.title)}</title>` +
+    `<link>${escapeHtml(siteUrl)}</link>` +
+    `<description>${escapeHtml(config.description ?? publication.description)}</description>` +
+    `<language>${escapeHtml(publication.defaultLanguage)}</language>` +
+    `<lastBuildDate>${escapeHtml(toRfc822(contentLastModified(eligible[0].record.frontmatter)))}</lastBuildDate>` +
+    `<atom:link href="${escapeHtml(podcastSelfUrl)}" rel="self" type="application/rss+xml"/>` +
+    `<itunes:author>${escapeHtml(author)}</itunes:author>` +
+    (config.ownerEmail
+      ? `<itunes:owner><itunes:name>${escapeHtml(author)}</itunes:name><itunes:email>${escapeHtml(config.ownerEmail)}</itunes:email></itunes:owner>`
+      : '') +
+    `<itunes:category text="${escapeHtml(config.category)}"/>` +
+    `<itunes:explicit>${config.explicit ? 'true' : 'false'}</itunes:explicit>` +
+    `<itunes:image href="${coverUrl}"/>` +
+    `<image><url>${coverUrl}</url><title>${escapeHtml(publication.title)}</title><link>${escapeHtml(siteUrl)}</link></image>` +
+    items +
+    '</channel>' +
+    '</rss>\n';
+  return { podcastXml, podcastSelfUrl };
 }

@@ -153,9 +153,10 @@ never stored. A `file` block's PDF resolves like a body image
 third-party script ever runs and a frame appears only after a tap
 (`gala-video.js`; CSP `frame-src` names exactly the two video hosts). Members a
 newer schemas release adds (PDF `media[]` entries,
-`publication.recommendations`, `comments.likes`) are checked by the template and
-kept out of the schema validation by `internal/forward-compat.js` until the pin
-reaches them; delete that step's matching branch when it does.
+`publication.recommendations`, `comments.likes`, `publication.listen.podcast`)
+are checked by the template and kept out of the schema validation by
+`internal/forward-compat.js` until the pin reaches them; delete that step's
+matching branch when it does.
 
 ## Interactive preview
 

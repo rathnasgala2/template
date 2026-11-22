@@ -9,11 +9,15 @@
  * without them and the renderer validates them itself (the file entries here,
  * the other two where they are read: `recommendations.js`, `interactions.js`).
  * When the pin reaches 3.32.0 this step changes nothing a valid input can see.
+ *
+ * The same holds for `publication.listen.podcast` (the podcast feed's settings,
+ * `internal/podcast.js`), which a schemas release after 3.45.0 adds.
  */
 
 import { BuildInputValidationError } from '../errors.js';
 import { FILE_MEDIA_TYPE } from './media/content-files.js';
 import { MAX_CONTENT_FILE_BYTES } from './media/files.js';
+import { withoutPodcast } from './podcast.js';
 import { readRecommendations } from './recommendations.js';
 
 /**
@@ -101,6 +105,20 @@ export function withoutForwardMembers(buildInput) {
     const rest = { ...publication };
     delete rest.recommendations;
     result = { ...result, publication: rest };
+  }
+
+  if (
+    isRecord(result.publication) &&
+    isRecord(result.publication.listen) &&
+    'podcast' in result.publication.listen
+  ) {
+    result = {
+      ...result,
+      publication: {
+        ...result.publication,
+        listen: withoutPodcast(result.publication.listen),
+      },
+    };
   }
 
   const config = buildInput.modules?.interactions?.config;

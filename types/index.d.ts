@@ -257,7 +257,21 @@ export interface PublicationNormalized {
    * Listen (schemas 3.26.0): audio versions of posts. Absent means off; it is
    * live for a build only with a published article that has audio.
    */
-  listen?: { enabled: boolean };
+  listen?: {
+    enabled: boolean;
+    /**
+     * The podcast feed's settings (a schemas release after 3.45.0 adds it; the
+     * renderer validates it itself, `internal/podcast.js`).
+     */
+    podcast?: {
+      enabled: boolean;
+      category: string;
+      explicit: boolean;
+      cover: ResolvedFileRef;
+      description?: string;
+      ownerEmail?: string;
+    };
+  };
   crawlers?: { ai: 'allow' | 'block' };
   /** Posts per listing page, 1 to 50; absent means 10 (schemas 3.25.0). */
   listing?: { pageSize?: number };

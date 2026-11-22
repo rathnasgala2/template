@@ -1314,6 +1314,37 @@ motion under `prefers-reduced-motion`. The classes are template-owned feature
 chrome like the Follow control's: they are not part of the published styling
 contract. Playback is the shipped script's alone; the renderer makes no request.
 
+### Podcast feed
+
+With Listen live and `publication.listen.podcast` enabled, the build also writes
+`/feed/podcast.xml`: RSS 2.0 with the iTunes namespace, one item per published,
+indexable article that has Listen audio (newest first, at most 50; unlisted and
+`seo.noindex` posts stay out, as in the other feeds). It is absent when the
+podcast is off, Listen is off or no such article exists, and every page links it
+with `<link rel="alternate" type="application/rss+xml">`.
+
+The member, `publication.listen.podcast`, is
+`{enabled, category, explicit, cover, description?, ownerEmail?}`. This renderer
+validates it (a schemas release after 3.45.0 adds it) and keeps it out of the
+schema validation (`internal/forward-compat.js`); an invalid member fails the
+build (`LISTEN_PODCAST_INVALID`). `category` is the Apple Podcasts category
+name, `cover` a repository image reference (`{path, sourceDigest}`) the media
+pipeline processes like the other site images, `description` defaults to the
+site description, and `ownerEmail` (optional; Spotify and Amazon Music verify
+ownership with the address in the feed) is written as `itunes:owner` only when
+given.
+
+Channel: `title`, `link`, `description`, `language`, `atom:link rel="self"`,
+`itunes:author`, `itunes:category`, `itunes:explicit`, `itunes:image` (and the
+RSS `image`), optional `itunes:owner`. Item: `title`, `link`, `guid` (the post
+URL, a permalink), `pubDate`, `description`, `enclosure` (the emitted audio's
+absolute URL, its byte length and type: `audio/mpeg`, or `audio/x-m4a` for an
+`audio/mp4` file), `itunes:duration` (seconds). The cover is held to Apple's
+show-cover rule before anything is written: a PNG or JPEG, square, 1400 to 3000
+pixels (`MEDIA_FORMAT_INVALID` otherwise). The feed uses the media pipeline's
+full-size file, `assets/media/<digest>/original.<png|jpg>`. The template cannot
+tell whether a PNG has an alpha channel, which Apple asks covers not to have.
+
 ## Browser page previews
 
 `@rathnasgala2/template/preview` renders the real page of a draft in a browser

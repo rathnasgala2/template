@@ -35,6 +35,7 @@ import {
   interactionsActive,
 } from './interactions.js';
 import { RSS_FEED_ROUTE, buildFeeds } from './feeds.js';
+import { readPodcast } from './podcast.js';
 import { languageLabel, localizeAuthor } from './translations.js';
 import { localizeNavigation } from './listing-model.js';
 import {
@@ -79,6 +80,7 @@ import {
   renderHreflangLinks,
   resolveOriginalDerivativePath,
   resolveSocialImage,
+  resolveSocialImageUrl,
   twitterCardType,
 } from './seo.js';
 import { readAiPolicy, withTrainingOptOut } from './robots.js';
@@ -675,10 +677,26 @@ export function buildPageDocuments(validatedInput, ctx) {
   // `<link>` tags and the feed documents themselves agree on the exact same
   // self URLs.
   const siteName = validatedInput.publication.title;
+  const podcastConfig = readPodcast(validatedInput.publication);
   const feeds = buildFeeds(validatedInput, {
     feedBody,
     routeProfile,
     translations,
+    ...(podcastConfig
+      ? {
+          podcast: {
+            config: podcastConfig,
+            entries: listen.entries,
+            coverUrl: resolveSocialImageUrl({
+              mediaAssets,
+              reference: podcastConfig.cover,
+              baseUrl: validatedInput.baseUrl,
+              basePath: publicBasePath,
+              urlOf,
+            }),
+          },
+        }
+      : {}),
     selfUrlsOnly: single,
   });
   const absoluteSiteUrl = (/** @type {string} */ route) =>
@@ -687,13 +705,18 @@ export function buildPageDocuments(validatedInput, ctx) {
       validatedInput.baseUrl,
     ).toString();
   // Per-language feeds, advertised in every page's `<head>` with `hreflang`.
-  const languageFeedLinksHtml = feeds.languageFeeds
-    .map(
-      (feed) =>
-        `<link rel="alternate" type="application/atom+xml" hreflang="${escapeHtml(feed.language)}" href="${escapeHtml(feed.atomSelfUrl)}" title="${escapeHtml(siteName)}">` +
-        `<link rel="alternate" type="application/rss+xml" hreflang="${escapeHtml(feed.language)}" href="${escapeHtml(feed.rssSelfUrl)}" title="${escapeHtml(siteName)}">`,
-    )
-    .join('');
+  const podcastFeedLinkHtml = feeds.podcastSelfUrl
+    ? `<link rel="alternate" type="application/rss+xml" href="${escapeHtml(feeds.podcastSelfUrl)}" title="${escapeHtml(siteName)}">`
+    : '';
+  const languageFeedLinksHtml =
+    podcastFeedLinkHtml +
+    feeds.languageFeeds
+      .map(
+        (feed) =>
+          `<link rel="alternate" type="application/atom+xml" hreflang="${escapeHtml(feed.language)}" href="${escapeHtml(feed.atomSelfUrl)}" title="${escapeHtml(siteName)}">` +
+          `<link rel="alternate" type="application/rss+xml" hreflang="${escapeHtml(feed.language)}" href="${escapeHtml(feed.rssSelfUrl)}" title="${escapeHtml(siteName)}">`,
+      )
+      .join('');
   const defaultLanguage = validatedInput.publication.defaultLanguage;
   /**
    * The compact language switcher of a page: the variants of its article

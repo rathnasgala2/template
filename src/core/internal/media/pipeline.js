@@ -11,7 +11,7 @@
  * posture as every other adapter boundary in this renderer.
  *
  * Every distinct image/font reference in the publication (publication
- * default image, each author's avatar, each content record's hero and
+ * default image, the podcast feed's cover, each author's avatar, each content record's hero and
  * social image, every content image a rendered body references (resolved
  * by `content-images.js` before this pipeline runs), the appearance
  * package's brand mark, wordmark and font assets) is collected once,
@@ -98,6 +98,11 @@ function collectImageReferences(buildInput, contentImages) {
   };
 
   add(buildInput.publication.defaultImage);
+  // The podcast feed's cover, when the feed is on (`internal/podcast.js`).
+  const podcast = /** @type {any} */ (buildInput.publication.listen);
+  if (podcast?.enabled === true && podcast.podcast?.enabled === true) {
+    add(podcast.podcast.cover);
+  }
   for (const author of buildInput.authors) add(author.avatar);
   for (const record of buildInput.content) {
     if (record.frontmatter.hero) add(record.frontmatter.hero.file);

@@ -129,7 +129,12 @@ import {
   SIGNALS_SCRIPT_PATH,
   validateInteractionsModule,
 } from './internal/interactions.js';
-import { ATOM_FEED_ROUTE, RSS_FEED_ROUTE } from './internal/feeds.js';
+import {
+  ATOM_FEED_ROUTE,
+  PODCAST_FEED_ROUTE,
+  RSS_FEED_ROUTE,
+} from './internal/feeds.js';
+import { assertPodcastCover, readPodcast } from './internal/podcast.js';
 import {
   assertLanguageSegmentsFree,
   resolveTranslations,
@@ -500,6 +505,11 @@ export async function renderPublication(buildInput, options) {
     sourceDirectory: path.resolve(options.sourceDirectory),
     contentImages: [...contentImages.values()],
   });
+  // The podcast cover must meet the artwork rule (`internal/podcast.js`).
+  assertPodcastCover(readPodcast(validatedInput.publication), {
+    mediaAssets,
+    mediaDimensions,
+  });
   // Each linked PDF, verified the same way.
   const contentFileOutput = await processContentFiles(
     [...contentFiles.values()],
@@ -560,6 +570,10 @@ export async function renderPublication(buildInput, options) {
   const rssFilePath = projectFixedAssetPath(
     validatedInput.basePath,
     RSS_FEED_ROUTE,
+  );
+  const podcastFilePath = projectFixedAssetPath(
+    validatedInput.basePath,
+    PODCAST_FEED_ROUTE,
   );
   const sitemapFilePath = projectFixedAssetPath(
     validatedInput.basePath,
@@ -721,6 +735,15 @@ export async function renderPublication(buildInput, options) {
       content: feeds.rssXml,
       permalink: rssFilePath,
     },
+    ...(feeds.podcastXml
+      ? [
+          {
+            virtualPath: 'feeds/podcast.html',
+            content: feeds.podcastXml,
+            permalink: podcastFilePath,
+          },
+        ]
+      : []),
     ...feeds.languageFeeds.flatMap((feed, feedIndex) => [
       {
         virtualPath: `feeds/language-${feedIndex}-atom.html`,
@@ -772,6 +795,10 @@ export async function renderPublication(buildInput, options) {
     ],
     [
       rssFilePath,
+      { routeClass: 'feed', mediaType: 'application/rss+xml; charset=utf-8' },
+    ],
+    [
+      podcastFilePath,
       { routeClass: 'feed', mediaType: 'application/rss+xml; charset=utf-8' },
     ],
     [
