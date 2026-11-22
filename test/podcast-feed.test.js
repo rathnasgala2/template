@@ -473,3 +473,42 @@ test('the member is validated by the template and left out of the schema validat
     );
   }
 });
+
+test('hostile text in titles, descriptions and settings is escaped: the feed parses and the values round-trip', async () => {
+  const { JSDOM } = await import('jsdom');
+  const nasty = `A & B <i>"x"</i> ]]> 'q' 😀`;
+  const site = await build(async (dir) => {
+    const input = await podcastInput(dir);
+    input.publication.title = nasty;
+    input.publication.listen.podcast.category = nasty;
+    input.publication.listen.podcast.description = nasty;
+    for (const record of input.content) {
+      record.frontmatter.title = nasty;
+      record.frontmatter.description = nasty;
+    }
+    return input;
+  });
+  try {
+    const xml = await site.html(FEED);
+    const dom = new JSDOM(xml, { contentType: 'application/xml' });
+    const doc = dom.window.document;
+    assert.equal(doc.querySelector('parsererror'), null, 'well-formed XML');
+    assert.equal(doc.querySelector('channel > title')?.textContent, nasty);
+    assert.equal(
+      doc.querySelector('channel > description')?.textContent,
+      nasty,
+    );
+    assert.equal(
+      doc.querySelector('itunes\\:category, category')?.getAttribute('text'),
+      nasty,
+    );
+    for (const node of Array.from(doc.querySelectorAll('item > title'))) {
+      assert.equal(node.textContent, nasty);
+    }
+    for (const node of Array.from(doc.querySelectorAll('item > description'))) {
+      assert.equal(node.textContent, nasty);
+    }
+  } finally {
+    await site.cleanup();
+  }
+});
