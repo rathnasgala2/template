@@ -293,6 +293,11 @@ export default Object.freeze({
   commentSortLabel: 'Сортировка комментариев',
   commentSortNewestLabel: 'Сначала новые',
   commentSortOldestLabel: 'Сначала старые',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Всего голосов: ${n}`,
+  pollYourVoteLabel: 'Ваш голос',
+  pollChangeHintLabel: 'Выберите другой вариант, чтобы изменить голос.',
+  pollSavedLabel: 'Ваш голос сохранён.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

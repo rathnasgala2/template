@@ -291,6 +291,11 @@ export default Object.freeze({
   commentSortLabel: 'مرتب‌سازی دیدگاه‌ها',
   commentSortNewestLabel: 'جدیدترین',
   commentSortOldestLabel: 'قدیمی‌ترین',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `مجموع رأی‌ها: ${n}`,
+  pollYourVoteLabel: 'رأی شما',
+  pollChangeHintLabel: 'برای تغییر رأی خود گزینهٔ دیگری را انتخاب کنید.',
+  pollSavedLabel: 'رأی شما ذخیره شد.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

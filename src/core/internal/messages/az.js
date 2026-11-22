@@ -291,6 +291,11 @@ export default Object.freeze({
   commentSortLabel: 'Şərhləri sırala',
   commentSortNewestLabel: 'Ən yeni',
   commentSortOldestLabel: 'Ən köhnə',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Cəmi səs: ${n}`,
+  pollYourVoteLabel: 'Sizin səsiniz',
+  pollChangeHintLabel: 'Səsinizi dəyişmək üçün başqa variant seçin.',
+  pollSavedLabel: 'Səsiniz yadda saxlanıldı.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

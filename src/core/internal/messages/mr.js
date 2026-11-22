@@ -292,6 +292,11 @@ export default Object.freeze({
   commentSortLabel: 'टिप्पण्या क्रमवारी लावा',
   commentSortNewestLabel: 'सर्वात नवीन',
   commentSortOldestLabel: 'सर्वात जुने',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `एकूण मते: ${n}`,
+  pollYourVoteLabel: 'तुमचे मत',
+  pollChangeHintLabel: 'तुमचे मत बदलण्यासाठी दुसरा पर्याय निवडा.',
+  pollSavedLabel: 'तुमचे मत जतन झाले.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

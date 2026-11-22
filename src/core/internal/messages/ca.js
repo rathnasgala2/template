@@ -304,6 +304,11 @@ export default Object.freeze({
   commentSortLabel: 'Ordena els comentaris',
   commentSortNewestLabel: 'Més recents',
   commentSortOldestLabel: 'Més antics',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Vots en total: ${n}`,
+  pollYourVoteLabel: 'El teu vot',
+  pollChangeHintLabel: 'Tria una altra opció per canviar el teu vot.',
+  pollSavedLabel: "S'ha desat el teu vot.",
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

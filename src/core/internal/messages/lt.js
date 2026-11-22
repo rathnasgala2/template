@@ -295,6 +295,11 @@ export default Object.freeze({
   commentSortLabel: 'Rūšiuoti komentarus',
   commentSortNewestLabel: 'Naujausi',
   commentSortOldestLabel: 'Seniausi',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Iš viso balsų: ${n}`,
+  pollYourVoteLabel: 'Jūsų balsas',
+  pollChangeHintLabel: 'Norėdami pakeisti balsą, pasirinkite kitą variantą.',
+  pollSavedLabel: 'Jūsų balsas išsaugotas.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

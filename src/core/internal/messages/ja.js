@@ -297,6 +297,11 @@ export default Object.freeze({
   commentSortLabel: 'コメントを並べ替え',
   commentSortNewestLabel: '新しい順',
   commentSortOldestLabel: '古い順',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `投票数の合計: ${n}`,
+  pollYourVoteLabel: 'あなたの投票',
+  pollChangeHintLabel: '投票を変更するには、別の選択肢を選んでください。',
+  pollSavedLabel: '投票を保存しました。',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

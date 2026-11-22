@@ -305,6 +305,11 @@ export default Object.freeze({
   commentSortLabel: 'கருத்துகளை வரிசைப்படுத்து',
   commentSortNewestLabel: 'புதியவை',
   commentSortOldestLabel: 'பழையவை',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `மொத்த வாக்குகள்: ${n}`,
+  pollYourVoteLabel: 'உங்கள் வாக்கு',
+  pollChangeHintLabel: 'உங்கள் வாக்கை மாற்ற வேறு தேர்வைத் தேர்ந்தெடுங்கள்.',
+  pollSavedLabel: 'உங்கள் வாக்கு சேமிக்கப்பட்டது.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

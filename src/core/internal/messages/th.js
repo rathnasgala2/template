@@ -288,6 +288,11 @@ export default Object.freeze({
   commentSortLabel: 'เรียงลำดับความคิดเห็น',
   commentSortNewestLabel: 'ใหม่สุด',
   commentSortOldestLabel: 'เก่าสุด',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `คะแนนโหวตรวม: ${n}`,
+  pollYourVoteLabel: 'โหวตของคุณ',
+  pollChangeHintLabel: 'เลือกตัวเลือกอื่นเพื่อเปลี่ยนโหวตของคุณ',
+  pollSavedLabel: 'บันทึกโหวตของคุณแล้ว',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

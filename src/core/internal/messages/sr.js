@@ -293,6 +293,11 @@ export default Object.freeze({
   commentSortLabel: 'Поређај коментаре',
   commentSortNewestLabel: 'Најновији',
   commentSortOldestLabel: 'Најстарији',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Укупно гласова: ${n}`,
+  pollYourVoteLabel: 'Ваш глас',
+  pollChangeHintLabel: 'Изаберите другу опцију да промените глас.',
+  pollSavedLabel: 'Ваш глас је сачуван.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

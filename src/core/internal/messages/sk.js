@@ -293,6 +293,11 @@ export default Object.freeze({
   commentSortLabel: 'Zoradiť komentáre',
   commentSortNewestLabel: 'Najnovšie',
   commentSortOldestLabel: 'Najstaršie',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Hlasov spolu: ${n}`,
+  pollYourVoteLabel: 'Váš hlas',
+  pollChangeHintLabel: 'Ak chcete hlas zmeniť, vyberte inú možnosť.',
+  pollSavedLabel: 'Váš hlas bol uložený.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

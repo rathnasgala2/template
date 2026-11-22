@@ -304,6 +304,11 @@ export default Object.freeze({
   commentSortLabel: 'Trier les commentaires',
   commentSortNewestLabel: 'Plus récents',
   commentSortOldestLabel: 'Plus anciens',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Total des votes : ${n}`,
+  pollYourVoteLabel: 'Votre vote',
+  pollChangeHintLabel: 'Choisissez une autre option pour changer votre vote.',
+  pollSavedLabel: 'Votre vote a été enregistré.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

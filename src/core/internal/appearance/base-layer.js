@@ -884,6 +884,25 @@ export const GALA_BASE_COMPONENT_CSS = `
   @media (max-width: 480px) {
     .g-gallery, .g-gallery[data-count="2"], .g-gallery[data-count="3"] { grid-template-columns: minmax(0, 1fr); }
   }
+  /* ---------- poll block (the figure's list is the page without scripts; the interactions script turns it into buttons and results) ---------- */
+  .g-poll { display: grid; gap: var(--gala-space-3); min-width: 0; margin-inline: 0; padding: var(--gala-space-4); border-radius: var(--gala-radius-large); background: var(--gala-color-surface); border: var(--gala-border-card); box-shadow: var(--gala-shadow-card); color: var(--gala-color-text); font-family: var(--gala-font-ui); }
+  .g-poll figcaption { font-family: var(--gala-font-display); font-weight: var(--gala-weight-title); font-size: 1.05rem; line-height: 1.35; overflow-wrap: anywhere; }
+  .g-poll ul { display: grid; gap: var(--gala-space-2); margin: 0; padding-left: 1.25rem; }
+  .g-poll li { min-width: 0; overflow-wrap: anywhere; }
+  .g-poll[data-gala-poll-live] ul { padding-left: 0; list-style: none; }
+  .g-poll__option { position: relative; display: flex; align-items: center; justify-content: space-between; gap: var(--gala-space-3); width: 100%; min-height: 2.75rem; padding: .6rem var(--gala-space-3); overflow: hidden; border-radius: var(--gala-radius-medium); border: var(--gala-border-width) solid var(--gala-color-border); background: var(--gala-color-surface); color: var(--gala-color-text); font: inherit; text-align: start; cursor: pointer; }
+  .g-poll__option:hover:not(:disabled) { border-color: var(--gala-color-text); }
+  .g-poll__option:disabled { cursor: progress; }
+  .g-poll__option[aria-pressed="true"] { border-color: var(--gala-color-accent); }
+  .g-poll__bar { position: absolute; inset-block: 0; inset-inline-start: 0; width: 0; background: var(--gala-paint-chip); pointer-events: none; transition: width var(--gala-duration-base) var(--gala-ease-standard); }
+  .g-poll__text, .g-poll__percent { position: relative; min-width: 0; overflow-wrap: anywhere; }
+  .g-poll__percent { flex: none; font-variant-numeric: tabular-nums; font-size: .875rem; color: var(--gala-color-text-muted); }
+  .g-poll__option[aria-pressed="true"] .g-poll__percent { color: var(--gala-color-chip-text); font-weight: var(--gala-weight-ui); }
+  .g-poll__meta { margin: 0; font-size: .8125rem; color: var(--gala-color-text-muted); }
+  .g-poll__meta:empty { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .g-poll__bar { transition: none; }
+  }
   /* ---------- recommendations (the About page) ---------- */
   .g-recommendations { display: grid; gap: var(--gala-space-4); padding-block: var(--gala-space-8); }
   .g-recommendations__title { font-family: var(--gala-font-display); font-weight: var(--gala-weight-title); font-size: clamp(1.25rem, 1.1rem + .6vw, 1.5rem); }

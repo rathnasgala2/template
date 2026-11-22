@@ -297,6 +297,11 @@ export default Object.freeze({
   commentSortLabel: 'Sort comments',
   commentSortNewestLabel: 'Newest',
   commentSortOldestLabel: 'Oldest',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Total votes: ${n}`,
+  pollYourVoteLabel: 'Your vote',
+  pollChangeHintLabel: 'Choose another option to change your vote.',
+  pollSavedLabel: 'Your vote was saved.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const months = [

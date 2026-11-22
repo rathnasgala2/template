@@ -95,6 +95,7 @@ import {
   contentSecurityPolicyMeta,
   CSP_HEADER_ONLY_DIRECTIVES,
   FENCED_BLOCKS,
+  POLL_LIMITS,
   HIGHLIGHT_GRAMMARS,
   VIDEO_PROVIDERS,
 } from './render-policy-content.js';
@@ -312,8 +313,11 @@ markdownRenderer.renderer.rules.fence = (
     .trim()
     .split(/\s+/)[0];
   return (
-    renderFencedBlock(name, token.content, (url) =>
-      markdownRenderer.normalizeLink(url),
+    renderFencedBlock(
+      name,
+      token.content,
+      (url) => markdownRenderer.normalizeLink(url),
+      env,
     ) ?? ordinaryFence(tokens, index, options, env, self)
   );
 };
@@ -377,7 +381,29 @@ function transformFigureTag(tagName, attribs) {
     }
     kept['data-gala-video'] = attribs['data-gala-video'];
   }
+  if (name === 'poll') {
+    if (!POLL_LIMITS.idPattern.test(attribs['data-gala-poll'] ?? '')) {
+      return { tagName: 'figure', attribs: {} };
+    }
+    kept['data-gala-poll'] = attribs['data-gala-poll'];
+  }
   return { tagName: 'figure', attribs: kept };
+}
+
+/**
+ * Keep a list item's `data-gala-option` only as a poll option index (0 to 5).
+ *
+ * @param {string} tagName always `"li"`
+ * @param {Record<string, string>} attribs the tag's attributes
+ * @returns {{tagName: string, attribs: Record<string, string>}} the item
+ */
+function transformListItemTag(tagName, attribs) {
+  return /^[0-5]$/.test(attribs['data-gala-option'] ?? '')
+    ? {
+        tagName: 'li',
+        attribs: { 'data-gala-option': attribs['data-gala-option'] },
+      }
+    : { tagName: 'li', attribs: {} };
 }
 
 /** @type {import('sanitize-html').IOptions} */
@@ -418,7 +444,11 @@ const SANITIZE_HTML_OPTIONS = {
     'math',
   ],
   disallowedTagsMode: 'discard',
-  transformTags: { a: transformAnchorTag, figure: transformFigureTag },
+  transformTags: {
+    a: transformAnchorTag,
+    figure: transformFigureTag,
+    li: transformListItemTag,
+  },
 };
 
 /**
@@ -478,7 +508,9 @@ function assertNoResidualActiveContent(sanitized) {
  * @returns {string} the sanitized, render-policy-conformant HTML fragment
  */
 function sanitizeAndHighlightMarkdown(markdownSource) {
-  const rawHtml = markdownRenderer.render(markdownSource);
+  const rawHtml = markdownRenderer.render(markdownSource, {
+    galaPollIds: new Set(),
+  });
   const sanitized = sanitizeHtml(rawHtml, SANITIZE_HTML_OPTIONS);
   assertNoResidualActiveContent(sanitized);
   return sanitized;

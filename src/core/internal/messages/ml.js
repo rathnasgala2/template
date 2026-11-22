@@ -299,6 +299,11 @@ export default Object.freeze({
   commentSortLabel: 'അഭിപ്രായങ്ങൾ ക്രമീകരിക്കുക',
   commentSortNewestLabel: 'ഏറ്റവും പുതിയത്',
   commentSortOldestLabel: 'ഏറ്റവും പഴയത്',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `ആകെ വോട്ടുകൾ: ${n}`,
+  pollYourVoteLabel: 'നിങ്ങളുടെ വോട്ട്',
+  pollChangeHintLabel: 'വോട്ട് മാറ്റാൻ മറ്റൊരു ഓപ്ഷൻ തിരഞ്ഞെടുക്കുക.',
+  pollSavedLabel: 'നിങ്ങളുടെ വോട്ട് സേവ് ചെയ്തു.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

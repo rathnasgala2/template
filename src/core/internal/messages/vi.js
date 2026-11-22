@@ -290,6 +290,11 @@ export default Object.freeze({
   commentSortLabel: 'Sắp xếp bình luận',
   commentSortNewestLabel: 'Mới nhất',
   commentSortOldestLabel: 'Cũ nhất',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Tổng số phiếu: ${n}`,
+  pollYourVoteLabel: 'Phiếu của bạn',
+  pollChangeHintLabel: 'Chọn lựa chọn khác để đổi phiếu bầu của bạn.',
+  pollSavedLabel: 'Đã lưu phiếu bầu của bạn.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

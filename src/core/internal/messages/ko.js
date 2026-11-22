@@ -292,6 +292,11 @@ export default Object.freeze({
   commentSortLabel: '댓글 정렬',
   commentSortNewestLabel: '최신순',
   commentSortOldestLabel: '오래된순',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `총 투표 수: ${n}`,
+  pollYourVoteLabel: '내 투표',
+  pollChangeHintLabel: '투표를 바꾸려면 다른 항목을 선택하세요.',
+  pollSavedLabel: '투표가 저장되었습니다.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -304,6 +304,11 @@ export default Object.freeze({
   commentSortLabel: 'Ταξινόμηση σχολίων',
   commentSortNewestLabel: 'Πιο πρόσφατα',
   commentSortOldestLabel: 'Παλαιότερα',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Σύνολο ψήφων: ${n}`,
+  pollYourVoteLabel: 'Η ψήφος σας',
+  pollChangeHintLabel: 'Επιλέξτε άλλη απάντηση για να αλλάξετε την ψήφο σας.',
+  pollSavedLabel: 'Η ψήφος σας αποθηκεύτηκε.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

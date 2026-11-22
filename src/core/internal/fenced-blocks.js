@@ -1,5 +1,5 @@
 /**
- * Fenced blocks: the `video`, `bookmark` and `file` fence info strings.
+ * Fenced blocks: the `video`, `bookmark`, `file` and `poll` fence info strings.
  *
  * A fenced block's body is `key: value` lines. The markdown pipeline
  * (`content-security.js`) hands each fence here; when the info string names a
@@ -16,6 +16,7 @@
  * - a key the block does not know is ignored; a repeated key, a line that is
  *   not `key: value`, a missing required key or an invalid value makes the
  *   block malformed;
+ * - a `poll` block's keys are `id`, `question` and `option1` .. `option6`;
  * - text values: title up to 200, description up to 500, site up to 100
  *   characters, no control characters.
  *
@@ -24,7 +25,11 @@
  * (`content-blocks.js`), because the body is stored once for every language.
  */
 
-import { FENCED_BLOCKS, VIDEO_PROVIDERS } from './render-policy-content.js';
+import {
+  FENCED_BLOCKS,
+  POLL_LIMITS,
+  VIDEO_PROVIDERS,
+} from './render-policy-content.js';
 import { escapeHtml } from './skeleton.js';
 
 const LINE = /^([A-Za-z][A-Za-z0-9_-]*)[ \t]*:[ \t]*(.*)$/;
@@ -235,20 +240,75 @@ function fileBlock(values, normalizeLink) {
 }
 
 /**
+ * A poll: `id`, `question` and `option1` .. `option6` (two to six, no gap).
+ * The figure is the page's no-script form: the question and the options as a
+ * plain list, the poll id and each option's index in data attributes.
+ *
+ * @param {Map<string, string>} values the parsed keys
+ * @param {{galaPollIds?: Set<string>} | undefined} env the render's state
+ * @returns {string | undefined} the `poll` block's markup
+ */
+function pollBlock(values, env) {
+  if (!hasRequired(values, FENCED_BLOCKS.poll)) return undefined;
+  const id = values.get('id') ?? '';
+  const question = values.get('question');
+  if (
+    !POLL_LIMITS.idPattern.test(id) ||
+    !validText(question, POLL_LIMITS.questionMax)
+  ) {
+    return undefined;
+  }
+  /** @type {string[]} */
+  const options = [];
+  for (let n = 1; n <= POLL_LIMITS.optionsMax; n += 1) {
+    const value = values.get(`option${n}`);
+    if (value === undefined) break;
+    if (!validText(value, POLL_LIMITS.optionMax)) return undefined;
+    options.push(value);
+  }
+  // A gap (`option4` without `option3`) or an `option7` is malformed.
+  const named = [...values.keys()].filter((key) => /^option\d+$/.test(key));
+  if (
+    options.length < POLL_LIMITS.optionsMin ||
+    named.length !== options.length
+  ) {
+    return undefined;
+  }
+  // An id is unique within a post: the second poll with it stays a code block.
+  const seen = env?.galaPollIds;
+  if (seen) {
+    if (seen.has(id)) return undefined;
+    seen.add(id);
+  }
+  return figure(
+    'poll',
+    ` data-gala-poll="${id}"`,
+    `<figcaption>${escapeHtml(/** @type {string} */ (question))}</figcaption><ul>` +
+      options
+        .map((o, i) => `<li data-gala-option="${i}">${escapeHtml(o)}</li>`)
+        .join('') +
+      '</ul>',
+  );
+}
+
+/**
  * Render one fence as a block card.
  *
  * @param {string} name the fence's first info word
  * @param {string} body the fence's text
  * @param {(url: string) => string} normalizeLink markdown-it's link encoder,
  *   so a poster or file path is encoded exactly like a Markdown image's
+ * @param {{galaPollIds?: Set<string>}} [env] the render's state, which keeps a
+ *   post's poll ids unique
  * @returns {string | undefined} the card markup, or `undefined` when the
  *   fence is not a block or is malformed (it then renders as a code block)
  */
-export function renderFencedBlock(name, body, normalizeLink) {
+export function renderFencedBlock(name, body, normalizeLink, env) {
   if (!Object.hasOwn(FENCED_BLOCKS, name)) return undefined;
   const values = parseKeyValues(body);
   if (values === undefined) return undefined;
   if (name === 'video') return videoBlock(values, normalizeLink);
   if (name === 'bookmark') return bookmarkBlock(values);
+  if (name === 'poll') return pollBlock(values, env);
   return fileBlock(values, normalizeLink);
 }

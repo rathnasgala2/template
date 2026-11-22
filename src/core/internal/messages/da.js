@@ -296,6 +296,11 @@ export default Object.freeze({
   commentSortLabel: 'Sortér kommentarer',
   commentSortNewestLabel: 'Nyeste',
   commentSortOldestLabel: 'Ældste',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Stemmer i alt: ${n}`,
+  pollYourVoteLabel: 'Din stemme',
+  pollChangeHintLabel: 'Vælg en anden mulighed for at ændre din stemme.',
+  pollSavedLabel: 'Din stemme er gemt.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

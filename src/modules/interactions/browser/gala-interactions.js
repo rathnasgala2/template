@@ -48,6 +48,13 @@
  * read again. There is one appeal per removal; the moderators decide, never the
  * script.
  *
+ * Polls: a `figure.g-poll` in the post body (a plain list without this
+ * script) gets buttons for its options. The page's polls are read once with
+ * `GET <content>/polls` (the reader's token when there is one); a click by a
+ * signed-in reader sends `PUT <content>/polls/<pollId>/vote` with `{option}`
+ * and then shows each option's percentage and the total, a signed-out reader
+ * is sent to sign in as a like does, and a failure leaves the list as it was.
+ *
  * Not used, by design: iframes, popups (`window.open`), `postMessage`,
  * FedCM, cookies, third-party scripts or requests.
  *
@@ -266,7 +273,7 @@
    * @typedef {{key: string, label: string, visual: {kind: string, token: string}, count: PublicCount | null, viewerActive: boolean}} ReactionItem
    * @typedef {{enabled: boolean, items: ReactionItem[]}} ReactionsBlock
    * @typedef {{reactions: ReactionsBlock, comments: {enabled: boolean, open: boolean, allowReplies: boolean, maxDepth: number}, viewer: ReaderView | null, asOf: string}} InteractionsView
-   * @typedef {{kind: 'reaction', key: string} | {kind: 'comment', parentId: string | null, body: string} | {kind: 'signin'}} Intent
+   * @typedef {{kind: 'reaction', key: string} | {kind: 'comment', parentId: string | null, body: string} | {kind: 'poll', pollId: string, option: number} | {kind: 'signin'}} Intent
    * @typedef {{auth?: boolean, body?: unknown, idempotencyKey?: string}} ApiOptions
    * @typedef {HTMLLIElement & {_comment: CommentView}} CommentItem
    * @typedef {{mode: string, parentId: string | null, commentId: string | null, draft: {body: string, parentId: string | null, key: string} | null, busy: boolean, update: () => void, element: HTMLElement, input: HTMLTextAreaElement, close: () => void}} Composer
@@ -2339,6 +2346,253 @@
     }
   }
 
+  // --------------------------------------------------------------------- polls
+  // A `figure.g-poll` in the post body is a plain list without this script.
+  // Here its options become buttons; a vote is `PUT .../polls/{pollId}/vote`
+  // with `{option}`, and the percentages and the total appear once the reader
+  // has voted (a reader who has voted may vote again to change it). Every
+  // failure leaves the list as it was and says why in the live region.
+  const POLL_TEXT = {
+    total: 'Total votes: {n}',
+    yourVote: 'Your vote',
+    changeHint: 'Choose another option to change your vote.',
+    saved: 'Your vote was saved.',
+  };
+  try {
+    const pollLabels = JSON.parse(
+      root.getAttribute('data-poll-labels') || '{}',
+    );
+    for (const name of Object.keys(POLL_TEXT)) {
+      if (
+        pollLabels &&
+        typeof pollLabels[name] === 'string' &&
+        pollLabels[name]
+      ) {
+        /** @type {Record<string, string>} */ (POLL_TEXT)[name] =
+          pollLabels[name];
+      }
+    }
+  } catch {
+    // keep the English defaults
+  }
+  /** @typedef {{figure: HTMLElement, counts: number[], total: number, mine: number | null}} PollState */
+  /** @type {Map<string, PollState>} */
+  const polls = new Map();
+  const pollBusy = new Set();
+
+  /**
+   * @returns {HTMLElement[]}
+   */
+  function pollFigures() {
+    return Array.from(
+      /** @type {NodeListOf<HTMLElement>} */ (
+        document.querySelectorAll('figure.g-poll[data-gala-poll]')
+      ),
+    );
+  }
+
+  /**
+   * @param {HTMLElement} figure
+   * @returns {HTMLButtonElement[]}
+   */
+  function pollButtons(figure) {
+    return Array.from(
+      /** @type {NodeListOf<HTMLButtonElement>} */ (
+        figure.querySelectorAll('button.g-poll__option')
+      ),
+    );
+  }
+
+  /**
+   * Turn a poll's list items into buttons (once).
+   *
+   * @param {HTMLElement} figure
+   * @returns {PollState | null}
+   */
+  function upgradePoll(figure) {
+    const pollId = figure.getAttribute('data-gala-poll') || '';
+    const known = polls.get(pollId);
+    if (known) return known;
+    const items = Array.from(
+      /** @type {NodeListOf<HTMLElement>} */ (
+        figure.querySelectorAll('li[data-gala-option]')
+      ),
+    );
+    if (items.length < 2) return null;
+    const state = { figure, counts: items.map(() => 0), total: 0, mine: null };
+    items.forEach((item, index) => {
+      const label = item.textContent || '';
+      const node = /** @type {HTMLButtonElement} */ (
+        make('button', 'g-poll__option')
+      );
+      node.type = 'button';
+      node.setAttribute('aria-pressed', 'false');
+      node.setAttribute('data-gala-option', String(index));
+      node.appendChild(make('span', 'g-poll__bar'));
+      node.appendChild(make('span', 'g-poll__text', label));
+      node.appendChild(make('span', 'g-poll__percent'));
+      node.addEventListener('click', () => onPollClick(pollId, index));
+      item.textContent = '';
+      item.appendChild(node);
+    });
+    const meta = make('p', 'g-poll__meta');
+    meta.setAttribute('data-gala-poll-meta', '');
+    figure.appendChild(meta);
+    figure.setAttribute('data-gala-poll-live', '');
+    polls.set(pollId, state);
+    return state;
+  }
+
+  /**
+   * @param {PollState} state
+   */
+  function paintPoll(state) {
+    const voted = state.mine !== null;
+    const meta = state.figure.querySelector('[data-gala-poll-meta]');
+    pollButtons(state.figure).forEach((node, index) => {
+      const percent =
+        state.total > 0
+          ? Math.round((state.counts[index] / state.total) * 100)
+          : 0;
+      const mine = voted && state.mine === index;
+      node.setAttribute('aria-pressed', mine ? 'true' : 'false');
+      const bar = /** @type {HTMLElement | null} */ (
+        node.querySelector('.g-poll__bar')
+      );
+      if (bar) bar.style.setProperty('width', voted ? percent + '%' : '0');
+      const text = node.querySelector('.g-poll__text');
+      const percentEl = node.querySelector('.g-poll__percent');
+      if (percentEl) percentEl.textContent = voted ? percent + '%' : '';
+      const base = text ? text.textContent : '';
+      if (voted) {
+        node.setAttribute(
+          'aria-label',
+          (mine ? POLL_TEXT.yourVote + ': ' : '') + base + ': ' + percent + '%',
+        );
+      } else {
+        node.removeAttribute('aria-label');
+      }
+    });
+    if (meta) {
+      meta.textContent = voted
+        ? POLL_TEXT.total.replace('{n}', String(state.total)) +
+          ' · ' +
+          POLL_TEXT.changeHint
+        : '';
+    }
+  }
+
+  /**
+   * @param {PollState} state
+   * @param {any} entry one `{pollId, total, options, myOption?}` from the API
+   * @returns {boolean} whether the entry was well formed and applied
+   */
+  function applyPollEntry(state, entry) {
+    if (!entry || !Array.isArray(entry.options)) return false;
+    const counts = state.counts.map(() => 0);
+    for (const option of entry.options) {
+      if (
+        option &&
+        Number.isInteger(option.index) &&
+        option.index >= 0 &&
+        option.index < counts.length &&
+        Number.isInteger(option.count) &&
+        option.count >= 0
+      ) {
+        counts[option.index] = option.count;
+      }
+    }
+    state.counts = counts;
+    state.total = Number.isInteger(entry.total)
+      ? Math.max(entry.total, 0)
+      : counts.reduce((sum, count) => sum + count, 0);
+    state.mine =
+      Number.isInteger(entry.myOption) &&
+      entry.myOption >= 0 &&
+      entry.myOption < counts.length
+        ? entry.myOption
+        : null;
+    return true;
+  }
+
+  async function loadPolls() {
+    const figures = pollFigures();
+    if (figures.length === 0) return;
+    try {
+      const view = await api('GET', CONTENT_PATH + '/polls');
+      const entries = new Map();
+      for (const entry of (view && view.polls) || []) {
+        if (entry && typeof entry.pollId === 'string') {
+          entries.set(entry.pollId, entry);
+        }
+      }
+      for (const figure of figures) {
+        const state = upgradePoll(figure);
+        if (!state) continue;
+        const entry = entries.get(figure.getAttribute('data-gala-poll'));
+        if (entry) applyPollEntry(state, entry);
+        else {
+          state.counts = state.counts.map(() => 0);
+          state.total = 0;
+          state.mine = null;
+        }
+        paintPoll(state);
+      }
+    } catch (error) {
+      // The static list stays; say why.
+      announce(failureMessage(error));
+    }
+  }
+
+  /**
+   * @param {string} pollId
+   * @param {number} option
+   * @returns {Promise<void>}
+   */
+  async function votePoll(pollId, option) {
+    const state = polls.get(pollId);
+    if (!state || pollBusy.has(pollId) || state.mine === option) return;
+    pollBusy.add(pollId);
+    const buttons = pollButtons(state.figure);
+    buttons.forEach((node) => setDisabled(node, true));
+    try {
+      const result = await api(
+        'PUT',
+        CONTENT_PATH + '/polls/' + encodeURIComponent(pollId) + '/vote',
+        { body: { option } },
+      );
+      const previous = state.mine;
+      if (!applyPollEntry(state, result)) {
+        // No usable answer body: apply the vote locally.
+        if (previous !== null) state.counts[previous] -= 1;
+        else state.total += 1;
+        state.counts[option] += 1;
+        state.mine = option;
+      } else if (state.mine === null) {
+        state.mine = option;
+      }
+      paintPoll(state);
+      announce(POLL_TEXT.saved);
+    } catch (error) {
+      announce(failureMessage(error));
+    } finally {
+      buttons.forEach((node) => setDisabled(node, false));
+      pollBusy.delete(pollId);
+    }
+  }
+
+  /**
+   * @param {string} pollId
+   * @param {number} option
+   */
+  function onPollClick(pollId, option) {
+    if (!session) {
+      startSignIn({ kind: 'poll', pollId, option });
+      return;
+    }
+    votePoll(pollId, option);
+  }
+
   // -------------------------------------------------------------------- replay
   /**
    * @param {Intent|null} intent
@@ -2359,6 +2613,17 @@
         await setReaction(node, true);
       }
       if (node) focusNode(node);
+    } else if (
+      intent.kind === 'poll' &&
+      typeof intent.pollId === 'string' &&
+      Number.isInteger(intent.option)
+    ) {
+      const state = polls.get(intent.pollId);
+      if (state && intent.option >= 0 && intent.option < state.counts.length) {
+        await votePoll(intent.pollId, intent.option);
+        const node = pollButtons(state.figure)[intent.option];
+        if (node) focusNode(node);
+      }
     } else if (intent.kind === 'comment') {
       const body = typeof intent.body === 'string' ? intent.body : '';
       /** @type {any} */
@@ -2402,7 +2667,7 @@
     const intent = await completeSignInFromFragment();
     if (!session) session = loadSession();
     refreshComposers();
-    await loadAll();
+    await Promise.all([loadAll(), loadPolls()]);
     if (intent) await replay(intent);
   }
 
@@ -2412,6 +2677,7 @@
     session = loadSession();
     refreshComposers();
     loadAll();
+    loadPolls();
   });
 
   init().catch(() => {

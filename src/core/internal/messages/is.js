@@ -293,6 +293,11 @@ export default Object.freeze({
   commentSortLabel: 'Raða athugasemdum',
   commentSortNewestLabel: 'Nýjast',
   commentSortOldestLabel: 'Elst',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Atkvæði alls: ${n}`,
+  pollYourVoteLabel: 'Atkvæðið þitt',
+  pollChangeHintLabel: 'Veldu annan valkost til að breyta atkvæðinu.',
+  pollSavedLabel: 'Atkvæðið þitt var vistað.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

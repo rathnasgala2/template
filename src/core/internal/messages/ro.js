@@ -293,6 +293,11 @@ export default Object.freeze({
   commentSortLabel: 'Sortează comentariile',
   commentSortNewestLabel: 'Cele mai noi',
   commentSortOldestLabel: 'Cele mai vechi',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Total voturi: ${n}`,
+  pollYourVoteLabel: 'Votul tău',
+  pollChangeHintLabel: 'Alege altă opțiune pentru a-ți schimba votul.',
+  pollSavedLabel: 'Votul tău a fost salvat.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

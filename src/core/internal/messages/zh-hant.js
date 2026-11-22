@@ -283,6 +283,11 @@ export default Object.freeze({
   commentSortLabel: '排序留言',
   commentSortNewestLabel: '最新',
   commentSortOldestLabel: '最舊',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `總票數：${n}`,
+  pollYourVoteLabel: '你的投票',
+  pollChangeHintLabel: '選擇其他選項即可更改投票。',
+  pollSavedLabel: '你的投票已儲存。',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

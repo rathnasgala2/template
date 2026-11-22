@@ -144,7 +144,7 @@ that names no article of the build, repeats one, or takes another document's
 route fails the build before anything is written (`resolveEditions`). Staleness
 is decided upstream: never compare digests here.
 
-**Fenced blocks and files:** the `video`, `bookmark` and `file` fences
+**Fenced blocks and files:** the `video`, `bookmark`, `file` and `poll` fences
 (`internal/fenced-blocks.js`, catalog in `render-policy-content.js`) emit only
 allow-listed tags and the `figure` attributes the policy names; the
 language-specific card (`internal/content-blocks.js`) is drawn at render time,

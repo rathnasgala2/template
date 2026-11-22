@@ -291,6 +291,11 @@ export default Object.freeze({
   commentSortLabel: 'Urutkan komentar',
   commentSortNewestLabel: 'Terbaru',
   commentSortOldestLabel: 'Terlama',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Total suara: ${n}`,
+  pollYourVoteLabel: 'Suara Anda',
+  pollChangeHintLabel: 'Pilih opsi lain untuk mengubah suara Anda.',
+  pollSavedLabel: 'Suara Anda telah disimpan.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

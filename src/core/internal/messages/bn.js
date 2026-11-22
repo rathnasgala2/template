@@ -289,6 +289,11 @@ export default Object.freeze({
   commentSortLabel: 'মন্তব্য সাজান',
   commentSortNewestLabel: 'সর্বশেষ',
   commentSortOldestLabel: 'সবচেয়ে পুরোনো',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `মোট ভোট: ${n}`,
+  pollYourVoteLabel: 'আপনার ভোট',
+  pollChangeHintLabel: 'ভোট বদলাতে অন্য একটি বিকল্প বেছে নিন।',
+  pollSavedLabel: 'আপনার ভোট সংরক্ষিত হয়েছে।',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

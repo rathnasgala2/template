@@ -295,6 +295,11 @@ export default Object.freeze({
   commentSortLabel: 'Hozzászólások rendezése',
   commentSortNewestLabel: 'Legújabb',
   commentSortOldestLabel: 'Legrégebbi',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Összes szavazat: ${n}`,
+  pollYourVoteLabel: 'Az Ön szavazata',
+  pollChangeHintLabel: 'Szavazata módosításához válasszon másik lehetőséget.',
+  pollSavedLabel: 'Szavazatát mentettük.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

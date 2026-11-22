@@ -287,6 +287,11 @@ export default Object.freeze({
   commentSortLabel: 'ترتيب التعليقات',
   commentSortNewestLabel: 'الأحدث',
   commentSortOldestLabel: 'الأقدم',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `إجمالي الأصوات: ${n}`,
+  pollYourVoteLabel: 'صوتك',
+  pollChangeHintLabel: 'اختر خيارًا آخر لتغيير صوتك.',
+  pollSavedLabel: 'تم حفظ صوتك.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

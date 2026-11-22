@@ -300,6 +300,12 @@ export default Object.freeze({
   commentSortLabel: 'Izohlarni saralash',
   commentSortNewestLabel: 'Eng yangi',
   commentSortOldestLabel: 'Eng eski',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Jami ovozlar: ${n}`,
+  pollYourVoteLabel: 'Sizning ovozingiz',
+  pollChangeHintLabel:
+    'Ovozingizni o‘zgartirish uchun boshqa variantni tanlang.',
+  pollSavedLabel: 'Ovozingiz saqlandi.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

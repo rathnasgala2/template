@@ -293,6 +293,11 @@ export default Object.freeze({
   commentSortLabel: 'ಕಾಮೆಂಟ್‌ಗಳನ್ನು ವಿಂಗಡಿಸಿ',
   commentSortNewestLabel: 'ಹೊಸದು',
   commentSortOldestLabel: 'ಹಳೆಯದು',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `ಒಟ್ಟು ಮತಗಳು: ${n}`,
+  pollYourVoteLabel: 'ನಿಮ್ಮ ಮತ',
+  pollChangeHintLabel: 'ನಿಮ್ಮ ಮತ ಬದಲಾಯಿಸಲು ಬೇರೆ ಆಯ್ಕೆಯನ್ನು ಆರಿಸಿ.',
+  pollSavedLabel: 'ನಿಮ್ಮ ಮತವನ್ನು ಉಳಿಸಲಾಗಿದೆ.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

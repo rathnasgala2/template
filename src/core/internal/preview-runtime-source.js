@@ -180,6 +180,7 @@ export const PREVIEW_RUNTIME_SOURCE = String.raw`(function () {
   var realFetch = typeof W.fetch === 'function' ? W.fetch.bind(W) : null;
   var reactionBase = {};
   var reactionActive = {};
+  var pollVotes = {};
   var made = {};
   var follows = {};
   var serial = 0;
@@ -200,8 +201,31 @@ export const PREVIEW_RUNTIME_SOURCE = String.raw`(function () {
   }
   // The simulator: what the page's scripts expect of each write, from the
   // public API's contract. Returns {status, body}; body null means no content.
+  function pollEntries() {
+    return Object.keys(pollVotes).map(function (id) {
+      var mine = pollVotes[id];
+      return { pollId: id, total: 1, options: [{ index: mine, count: 1 }], myOption: mine };
+    });
+  }
   function simulate(method, path, body) {
     var m;
+    m = /^\/v2\/public\/publications\/([^/]+)\/contents\/([^/]+)\/polls$/.exec(path);
+    if (m && method === 'GET') {
+      return { status: 200, body: { polls: pollEntries() } };
+    }
+    m = /^\/v2\/public\/publications\/([^/]+)\/contents\/([^/]+)\/polls\/([^/]+)\/vote$/.exec(path);
+    if (m && method === 'PUT') {
+      var option = body && body.option;
+      if (typeof option !== 'number' || option < 0 || option > 5 || option % 1 !== 0) {
+        return problem(400, 'POLL_VOTE_INVALID');
+      }
+      var pollId = decodeURIComponent(m[3]);
+      pollVotes[pollId] = option;
+      return {
+        status: 200,
+        body: { pollId: pollId, total: 1, options: [{ index: option, count: 1 }], myOption: option }
+      };
+    }
     m = /^\/v2\/public\/publications\/([^/]+)\/contents\/([^/]+)\/reactions\/([^/]+)$/.exec(path);
     if (m && (method === 'PUT' || method === 'DELETE')) {
       var key = decodeURIComponent(m[3]);
@@ -292,7 +316,7 @@ export const PREVIEW_RUNTIME_SOURCE = String.raw`(function () {
   }
   // A read that carries the signed-in reader's own state, never fetched.
   function isReaderState(path) {
-    return /\/authors\/[^/]+\/follow$/.test(path);
+    return /\/authors\/[^/]+\/follow$/.test(path) || /\/contents\/[^/]+\/polls$/.test(path);
   }
   function jsonResponse(result) {
     var empty = result.body === null || result.status === 204;

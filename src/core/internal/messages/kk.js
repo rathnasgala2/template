@@ -293,6 +293,11 @@ export default Object.freeze({
   commentSortLabel: 'Пікірлерді сұрыптау',
   commentSortNewestLabel: 'Ең жаңасы',
   commentSortOldestLabel: 'Ең ескісі',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Барлық дауыс: ${n}`,
+  pollYourVoteLabel: 'Сіздің дауысыңыз',
+  pollChangeHintLabel: 'Дауысты өзгерту үшін басқа нұсқаны таңдаңыз.',
+  pollSavedLabel: 'Дауысыңыз сақталды.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

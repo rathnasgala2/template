@@ -330,6 +330,30 @@ test('the comments region carries its sentences in the page language, and likes 
   );
 });
 
+test('the section carries the poll sentences in the page language, the count left as {n}', () => {
+  const read = (/** @type {string} */ html) =>
+    JSON.parse(
+      /data-poll-labels="([^"]*)"/
+        .exec(html)?.[1]
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, '&') ?? '{}',
+    );
+  assert.deepEqual(read(section(moduleSelection())), {
+    total: 'Total votes: {n}',
+    yourVote: 'Your vote',
+    changeHint: 'Choose another option to change your vote.',
+    saved: 'Your vote was saved.',
+  });
+  const german = renderInteractionsSection({
+    module: moduleSelection(),
+    messages: getMessages('de'),
+    publicationId: 'p',
+    contentId: 'c',
+    canonicalUrl: 'https://example.test/',
+  });
+  assert.equal(read(german).total, 'Stimmen insgesamt: {n}');
+});
+
 test('the section carries the page contract: attributes, order, labels and escaping', () => {
   const html = section(moduleSelection());
   assert.match(

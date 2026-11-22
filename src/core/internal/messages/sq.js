@@ -293,6 +293,11 @@ export default Object.freeze({
   commentSortLabel: 'Rendit komentet',
   commentSortNewestLabel: 'Më të rejat',
   commentSortOldestLabel: 'Më të vjetrat',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Gjithsej vota: ${n}`,
+  pollYourVoteLabel: 'Vota juaj',
+  pollChangeHintLabel: 'Zgjidhni një opsion tjetër për të ndryshuar votën.',
+  pollSavedLabel: 'Vota juaj u ruajt.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

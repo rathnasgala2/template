@@ -295,6 +295,11 @@ export default Object.freeze({
   commentSortLabel: 'Järjestä kommentit',
   commentSortNewestLabel: 'Uusimmat',
   commentSortOldestLabel: 'Vanhimmat',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Ääniä yhteensä: ${n}`,
+  pollYourVoteLabel: 'Äänesi',
+  pollChangeHintLabel: 'Vaihda ääntäsi valitsemalla toinen vaihtoehto.',
+  pollSavedLabel: 'Äänesi tallennettiin.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

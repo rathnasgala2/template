@@ -105,11 +105,11 @@ are processed and written once. Images use the base layer's existing `img`
 rules; no class is added. The front-matter `hero` renders as the article's cover
 `<figure>` above the body (`role: "decorative"` renders `alt=""`).
 
-### Fenced blocks: video, bookmark and file cards
+### Fenced blocks: video, bookmark, file and poll cards
 
-A fenced code block whose info string is `video`, `bookmark` or `file` is a card
-instead of code. This is the authoring contract the App editor writes and reads
-back; the blocks are part of the render policy (`fencedBlocks` in
+A fenced code block whose info string is `video`, `bookmark`, `file` or `poll`
+is a card instead of code. This is the authoring contract the App editor writes
+and reads back; the blocks are part of the render policy (`fencedBlocks` in
 `contracts/render-policy.jcs`), so a change to the grammar changes the policy
 identity.
 
@@ -148,6 +148,37 @@ description: The full report.
 | `video`    | `provider`, `id`, `title` | `poster`              | `provider` is `youtube` (`id`: 11 characters of `A-Za-z0-9_-`) or `vimeo` (`id`: 1 to 12 digits). `poster` is a repository image path, resolved like a body image. |
 | `bookmark` | `url`, `title`            | `description`, `site` | `url` is `http` or `https` without credentials. `site` defaults to the hostname without `www.`. No image: images come only from the repository (`img-src 'self'`). |
 | `file`     | `path`, `title`           | `description`         | `path` is a repository path ending in `.pdf` (PDF only), resolved like a body image against the document's `media[]`.                                              |
+
+**Polls.** A `poll` block asks one question with two to six options:
+
+````markdown
+```poll
+id: best-day
+question: Which day should the newsletter go out?
+option1: Monday
+option2: Friday
+option3: Sunday
+```
+````
+
+Keys: `id` (`^[a-z0-9][a-z0-9-]{0,30}$`, unique within the post: a second poll
+with the same id is an ordinary code block), `question` (1 to 200 characters),
+`option1` and `option2` (required), `option3` to `option6` (optional, no gaps;
+`option7` or a gap makes the block malformed), each option 1 to 80 characters.
+The stored and page form is the same, with no script needed:
+`<figure class="g-poll" data-gala-block="poll" data-gala-poll="<id>"><figcaption>question</figcaption><ul><li data-gala-option="0">option</li>...</ul></figure>`.
+The sanitizer keeps `data-gala-poll` only as a valid id and a list item's
+`data-gala-option` only as `0` to `5`. With the interactions module on, the
+interactions script reads the page's polls once
+(`GET /v2/public/publications/{publicationId}/contents/{contentId}/polls`,
+answering `{polls: [{pollId, total, options: [{index, count}], myOption?}]}`),
+turns each list into option buttons, and a signed-in reader's click sends
+`PUT .../polls/{pollId}/vote` with `{option}`; the percentages and the total
+then show, and the reader may vote again to change it. A signed-out reader is
+sent to sign in as a like does; every failure leaves the list and is announced
+in the live region. The reader-visible sentences are in every message catalog
+(`pollTotalLabel`, `pollYourVoteLabel`, `pollChangeHintLabel`,
+`pollSavedLabel`). The interactive preview simulates the read and the vote.
 
 Stored form (the body is language-neutral policy output): one
 `<figure class="g-video|g-bookmark|g-file" data-gala-block="video|bookmark|file">`

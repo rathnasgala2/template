@@ -188,3 +188,21 @@ test('the block, recommendation and comment sentences are translated, not copied
     );
   }
 });
+
+test('the poll sentences are translated, not copied from English', () => {
+  const keys = ['pollYourVoteLabel', 'pollChangeHintLabel', 'pollSavedLabel'];
+  for (const [tag, catalog] of Object.entries(CATALOGS)) {
+    const total = /** @type {(n: string) => string} */ (catalog.pollTotalLabel)(
+      'N-X',
+    );
+    assert.ok(total.includes('N-X'), `${tag}.pollTotalLabel names the count`);
+    if (tag === 'en') continue;
+    const same = keys.filter((key) => catalog[key] === en[key]);
+    assert.ok(same.length <= 1, `${tag} keeps English for ${same.join(', ')}`);
+    assert.notEqual(
+      total,
+      /** @type {(n: string) => string} */ (en.pollTotalLabel)('N-X'),
+      tag,
+    );
+  }
+});

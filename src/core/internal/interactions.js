@@ -288,6 +288,24 @@ function commentLabels(messages) {
 }
 
 /**
+ * The sentences the poll code needs, in the page's language. The total's
+ * count is left as `{n}` for the script to fill in.
+ *
+ * @param {Readonly<Record<string, string | ((...args: string[]) => string)>>} messages
+ *   the chrome message catalog
+ * @returns {Record<string, string>} the labels by the script's own names
+ */
+function pollLabels(messages) {
+  const total = /** @type {(n: string) => string} */ (messages.pollTotalLabel);
+  return {
+    total: total('{n}'),
+    yourVote: String(messages.pollYourVoteLabel),
+    changeHint: String(messages.pollChangeHintLabel),
+    saved: String(messages.pollSavedLabel),
+  };
+}
+
+/**
  * Render the `<section class="g-interactions">` for one article.
  *
  * @param {object} input render input
@@ -350,6 +368,7 @@ export function renderInteractionsSection({
     `data-api-origin="${escapeHtml(module.apiOrigin)}" data-app-origin="${escapeHtml(module.appOrigin)}" ` +
     `data-publication-id="${escapeHtml(publicationId)}" data-content-id="${escapeHtml(contentId)}" ` +
     `data-canonical-url="${escapeHtml(canonicalUrl)}" ` +
+    `data-poll-labels="${escapeHtml(JSON.stringify(pollLabels(messages)))}" ` +
     `data-reactions-enabled="${flag(config.reactions.enabled)}" data-comments-enabled="${flag(config.comments.enabled)}" ` +
     `data-count-reactions="${flag(config.publicCounts.reactions)}" data-count-comments="${flag(config.publicCounts.comments)}" ` +
     `data-allow-replies="${flag(config.comments.allowReplies)}" data-max-depth="${config.comments.maxDepth}"` +

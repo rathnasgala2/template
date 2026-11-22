@@ -180,6 +180,7 @@ test('the policy publishes figure attributes, the block grammar, the frame hosts
     'class',
     'data-gala-block',
     'data-gala-video',
+    'data-gala-poll',
   ]);
   const frame =
     'frame-src https://player.vimeo.com https://www.youtube-nocookie.com; ';
@@ -189,14 +190,21 @@ test('the policy publishes figure attributes, the block grammar, the frame hosts
   assert.deepEqual(document.fencedBlocks.figureClasses, [
     'g-bookmark',
     'g-file',
+    'g-poll',
     'g-video',
   ]);
   assert.deepEqual(Object.keys(document.fencedBlocks.blocks), [
     'bookmark',
     'file',
+    'poll',
     'video',
   ]);
-  assert.deepEqual(Object.keys(FENCED_BLOCKS), ['bookmark', 'file', 'video']);
+  assert.deepEqual(Object.keys(FENCED_BLOCKS), [
+    'bookmark',
+    'file',
+    'poll',
+    'video',
+  ]);
   assert.deepEqual(document.fencedBlocks.videoProviders, ['vimeo', 'youtube']);
   const published = JSON.parse(
     await readFile(
@@ -211,5 +219,6 @@ test('the policy publishes figure attributes, the block grammar, the frame hosts
     'class',
     'data-gala-block',
     'data-gala-video',
+    'data-gala-poll',
   ]);
 });

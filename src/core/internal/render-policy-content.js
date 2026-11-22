@@ -125,7 +125,13 @@ export const ALLOWED_ATTRIBUTES_BY_TAG = Object.freeze({
   h5: Object.freeze(['id']),
   h6: Object.freeze(['id']),
   a: Object.freeze(['href', 'rel']),
-  figure: Object.freeze(['class', 'data-gala-block', 'data-gala-video']),
+  figure: Object.freeze([
+    'class',
+    'data-gala-block',
+    'data-gala-video',
+    'data-gala-poll',
+  ]),
+  li: Object.freeze(['data-gala-option']),
   img: Object.freeze(['src', 'alt']),
   ol: Object.freeze(['start']),
   pre: Object.freeze(['class']),
@@ -141,7 +147,8 @@ export const ALLOWED_ATTRIBUTES_BY_TAG = Object.freeze({
  * documented in the README ("Fenced blocks"); this catalog is part of the
  * published render policy, so a change to it changes the policy identity.
  * Each block's `figure` carries exactly `class`, `data-gala-block` and (video
- * only) `data-gala-video="<provider>:<id>"`.
+ * only) `data-gala-video="<provider>:<id>"`; a poll's `figure` also carries
+ * `data-gala-poll="<id>"` and each of its `li` a `data-gala-option="<0..5>"`.
  *
  * @type {Readonly<Record<string, {className: string, required: readonly string[], optional: readonly string[]}>>}
  */
@@ -156,11 +163,28 @@ export const FENCED_BLOCKS = Object.freeze({
     required: Object.freeze(['path', 'title']),
     optional: Object.freeze(['description']),
   }),
+  poll: Object.freeze({
+    className: 'g-poll',
+    required: Object.freeze(['id', 'question', 'option1', 'option2']),
+    optional: Object.freeze(['option3', 'option4', 'option5', 'option6']),
+  }),
   video: Object.freeze({
     className: 'g-video',
     required: Object.freeze(['provider', 'id', 'title']),
     optional: Object.freeze(['poster']),
   }),
+});
+
+/**
+ * The poll block's limits: the id pattern, the question's and each option's
+ * length in characters, and the option count (`option1` .. `option6`).
+ */
+export const POLL_LIMITS = Object.freeze({
+  idPattern: /^[a-z0-9][a-z0-9-]{0,30}$/,
+  questionMax: 200,
+  optionMax: 80,
+  optionsMin: 2,
+  optionsMax: 6,
 });
 
 /**

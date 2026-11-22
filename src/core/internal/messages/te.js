@@ -294,6 +294,11 @@ export default Object.freeze({
   commentSortLabel: 'వ్యాఖ్యలను క్రమబద్ధీకరించండి',
   commentSortNewestLabel: 'కొత్తవి',
   commentSortOldestLabel: 'పాతవి',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `మొత్తం ఓట్లు: ${n}`,
+  pollYourVoteLabel: 'మీ ఓటు',
+  pollChangeHintLabel: 'మీ ఓటును మార్చడానికి మరో ఎంపికను ఎంచుకోండి.',
+  pollSavedLabel: 'మీ ఓటు సేవ్ అయింది.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

@@ -295,6 +295,11 @@ export default Object.freeze({
   commentSortLabel: 'Sorteeri kommentaarid',
   commentSortNewestLabel: 'Uusimad',
   commentSortOldestLabel: 'Vanimad',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Hääli kokku: ${n}`,
+  pollYourVoteLabel: 'Sinu hääl',
+  pollChangeHintLabel: 'Hääle muutmiseks vali mõni teine variant.',
+  pollSavedLabel: 'Sinu hääl on salvestatud.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

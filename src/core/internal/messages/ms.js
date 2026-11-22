@@ -293,6 +293,11 @@ export default Object.freeze({
   commentSortLabel: 'Susun komen',
   commentSortNewestLabel: 'Terbaharu',
   commentSortOldestLabel: 'Terlama',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Jumlah undi: ${n}`,
+  pollYourVoteLabel: 'Undi anda',
+  pollChangeHintLabel: 'Pilih pilihan lain untuk menukar undi anda.',
+  pollSavedLabel: 'Undi anda telah disimpan.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

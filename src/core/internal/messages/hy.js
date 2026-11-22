@@ -296,6 +296,11 @@ export default Object.freeze({
   commentSortLabel: 'Դասավորել մեկնաբանությունները',
   commentSortNewestLabel: 'Ամենանորերը',
   commentSortOldestLabel: 'Ամենահինները',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `Ընդամենը ձայներ՝ ${n}`,
+  pollYourVoteLabel: 'Ձեր ձայնը',
+  pollChangeHintLabel: 'Ձայնը փոխելու համար ընտրեք մեկ այլ տարբերակ։',
+  pollSavedLabel: 'Ձեր ձայնը պահպանվեց։',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

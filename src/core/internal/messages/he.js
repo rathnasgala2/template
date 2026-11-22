@@ -285,6 +285,11 @@ export default Object.freeze({
   commentSortLabel: 'מיון תגובות',
   commentSortNewestLabel: 'החדשות ביותר',
   commentSortOldestLabel: 'הישנות ביותר',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `סך כל ההצבעות: ${n}`,
+  pollYourVoteLabel: 'ההצבעה שלך',
+  pollChangeHintLabel: 'בחרו אפשרות אחרת כדי לשנות את ההצבעה.',
+  pollSavedLabel: 'ההצבעה שלך נשמרה.',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);

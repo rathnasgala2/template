@@ -291,6 +291,11 @@ export default Object.freeze({
   commentSortLabel: 'टिप्पणीहरू क्रमबद्ध गर्नुहोस्',
   commentSortNewestLabel: 'पछिल्लो',
   commentSortOldestLabel: 'सबैभन्दा पुरानो',
+  /** @type {(n: string) => string} */
+  pollTotalLabel: (n) => `कुल मत: ${n}`,
+  pollYourVoteLabel: 'तपाईंको मत',
+  pollChangeHintLabel: 'आफ्नो मत बदल्न अर्को विकल्प छान्नुहोस्।',
+  pollSavedLabel: 'तपाईंको मत सुरक्षित गरियो।',
   /** @type {(iso: string) => string} */
   formatDate: (iso) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
