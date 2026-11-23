@@ -134,7 +134,12 @@ import {
   PODCAST_FEED_ROUTE,
   RSS_FEED_ROUTE,
 } from './internal/feeds.js';
-import { assertPodcastCover, readPodcast } from './internal/podcast.js';
+import {
+  assertPodcastCover,
+  PODCAST_COVER_UNUSABLE_FINDING,
+  readPodcast,
+  withoutPodcastFeed,
+} from './internal/podcast.js';
 import {
   assertLanguageSegmentsFree,
   resolveTranslations,
@@ -431,7 +436,7 @@ export async function renderPublication(buildInput, options) {
     authoredInput.content,
     authoredInput.buildEpoch,
   );
-  const validatedInput = { ...authoredInput, content: liveSplit.live };
+  let validatedInput = { ...authoredInput, content: liveSplit.live };
   // Every body image must name an image asset the build input inventories
   // for its document; resolved here, from the verified bodies alone, so an
   // unresolved one fails closed before anything is written.
@@ -501,10 +506,20 @@ export async function renderPublication(buildInput, options) {
     files: mediaFiles,
     dimensions: mediaDimensions,
     variants: mediaVariants,
+    podcastCoverFailure,
   } = await processMedia(validatedInput, {
     sourceDirectory: path.resolve(options.sourceDirectory),
     contentImages: [...contentImages.values()],
   });
+  // A podcast cover that cannot be decoded turns the feed off for this build
+  // and is reported as a manifest warning (`internal/podcast.js`); the site
+  // renders exactly as with `podcast.enabled: false`.
+  /** @type {import('./manifest.js').ManifestFinding[]} */
+  const findings = [];
+  if (podcastCoverFailure !== undefined) {
+    validatedInput = withoutPodcastFeed(validatedInput);
+    findings.push(PODCAST_COVER_UNUSABLE_FINDING);
+  }
   // The podcast cover must meet the artwork rule (`internal/podcast.js`).
   assertPodcastCover(readPodcast(validatedInput.publication), {
     mediaAssets,
@@ -1278,6 +1293,7 @@ export async function renderPublication(buildInput, options) {
     includedSources,
     excludedInputs: options.provenance.additionalExcludedInputs ?? [],
     provenance: options.provenance,
+    findings,
     generateArtifactId: generateUuidV7,
   });
 

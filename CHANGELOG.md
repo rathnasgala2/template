@@ -8,6 +8,21 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.19.1] - 2026-11-22
+
+### Fixed
+
+- **A podcast cover that cannot be decoded no longer stops the site.** A PNG or
+  JPEG cover whose header is fine but whose image data is truncated or corrupt
+  made the media pipeline throw and failed the whole build. The build now turns
+  the podcast feed off for that run: no `/feed/podcast.xml`, no feed
+  `<link rel="alternate">`, no cover asset; the site (Listen included) renders
+  byte for byte as with `podcast.enabled: false`. The manifest records one
+  warning finding, `PODCAST_COVER_UNUSABLE`, and `policyResult` is
+  `pass-with-warnings`. Every other cover failure (missing file, digest
+  mismatch, not a PNG or JPEG, not square, outside 1400 to 3000 pixels) still
+  fails the build, as does a cover file that another image of the site shares.
+
 ## [4.19.0] - 2026-11-22
 
 ### Added

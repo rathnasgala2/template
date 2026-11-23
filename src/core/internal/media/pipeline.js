@@ -70,6 +70,17 @@ const EXTENSION_BY_MEDIA_TYPE = Object.freeze({
  */
 
 /**
+ * @param {import('../../../../types/index.d.ts').NormalizedBuildInput} buildInput
+ * @returns {ImageReference | undefined} the podcast feed's cover when it is on
+ */
+function podcastCoverOf(buildInput) {
+  const listen = /** @type {any} */ (buildInput.publication.listen);
+  return listen?.enabled === true && listen.podcast?.enabled === true
+    ? listen.podcast.cover
+    : undefined;
+}
+
+/**
  * Collect every distinct image reference in `buildInput`, deduplicated by
  * path (rejecting a path reused with a conflicting digest).
  *
@@ -77,10 +88,15 @@ const EXTENSION_BY_MEDIA_TYPE = Object.freeze({
  *   the validated build input
  * @param {readonly ImageReference[]} contentImages the assets rendered
  *   bodies reference, already resolved by `content-images.js`
+ * @param {boolean} [withoutPodcastCover] leave out the podcast feed's cover
  * @returns {ImageReference[]} the distinct image references, in
  *   first-seen order
  */
-function collectImageReferences(buildInput, contentImages) {
+function collectImageReferences(
+  buildInput,
+  contentImages,
+  withoutPodcastCover = false,
+) {
   /** @type {Map<string, ImageReference>} */
   const byPath = new Map();
   /** @type {(ref: ImageReference | undefined) => void} */
@@ -100,7 +116,11 @@ function collectImageReferences(buildInput, contentImages) {
   add(buildInput.publication.defaultImage);
   // The podcast feed's cover, when the feed is on (`internal/podcast.js`).
   const podcast = /** @type {any} */ (buildInput.publication.listen);
-  if (podcast?.enabled === true && podcast.podcast?.enabled === true) {
+  if (
+    !withoutPodcastCover &&
+    podcast?.enabled === true &&
+    podcast.podcast?.enabled === true
+  ) {
     add(podcast.podcast.cover);
   }
   for (const author of buildInput.authors) add(author.avatar);
@@ -296,7 +316,7 @@ function processImage(bytes, reference) {
  * @param {{sourceDirectory: string, contentImages?: readonly ImageReference[]}} options
  *   the media pipeline's own options: the read-only source root, and the
  *   assets rendered bodies reference (`content-images.js`)
- * @returns {Promise<{assets: import('../../../../types/index.d.ts').ManifestAssetEntry[], files: PipelineOutputFile[], dimensions: Record<string, {width: number, height: number}>, variants: Record<string, MediaVariant[]>}>}
+ * @returns {Promise<{assets: import('../../../../types/index.d.ts').ManifestAssetEntry[], files: PipelineOutputFile[], dimensions: Record<string, {width: number, height: number}>, variants: Record<string, MediaVariant[]>, podcastCoverFailure?: string}>}
  *   the asset manifest rows, the output files backing them, the pixel
  *   dimensions of each image's canonical original keyed by its output path
  *   (`manifestAsset` has no width/height field, so this is the one place the
@@ -316,6 +336,17 @@ export async function processMedia(
       'publication',
     );
   }
+  // The podcast cover is tolerated only when no other reference shares its
+  // digest (a hero that is the same file must still fail the build).
+  const cover = podcastCoverOf(buildInput);
+  const podcastCoverPath = cover?.path;
+  const podcastCoverOnly =
+    cover !== undefined &&
+    !collectImageReferences(buildInput, contentImages, true).some(
+      (ref) => ref.sourceDigest === cover.sourceDigest,
+    );
+  /** @type {string | undefined} */
+  let podcastCoverFailure;
   const fontReferences = collectFontReferences(buildInput);
   if (fontReferences.length > MAX_FONTS_PER_PUBLICATION) {
     throw new MediaPipelineError(
@@ -339,7 +370,31 @@ export async function processMedia(
     // produce identical files, so each distinct digest is processed (and
     // emitted) once.
     if (Object.hasOwn(variants, reference.sourceDigest)) continue;
-    const outputs = processImage(bytes, reference);
+    /** @type {ReturnType<typeof processImage>} */
+    let outputs;
+    if (podcastCoverOnly && reference.path === podcastCoverPath) {
+      // The podcast cover alone may fail to decode or resize: the site then
+      // builds as if the feed were off (`internal/podcast.js`). The source
+      // is verified above and a PNG or JPEG by its header, so only a decode
+      // or processing failure reaches this catch; every other failure
+      // (missing file, digest mismatch, SVG, unknown format, any other
+      // reference) stays fatal.
+      const format = sniffMediaFormat(bytes);
+      try {
+        outputs = processImage(bytes, reference);
+      } catch (error) {
+        if (
+          !(error instanceof MediaPipelineError) ||
+          (format !== 'png' && format !== 'jpeg')
+        ) {
+          throw error;
+        }
+        podcastCoverFailure = error.message;
+        continue;
+      }
+    } else {
+      outputs = processImage(bytes, reference);
+    }
     for (const output of outputs) {
       totalBytes += output.bytes.byteLength;
       files.push({ path: output.path, bytes: output.bytes });
@@ -402,5 +457,5 @@ export async function processMedia(
     });
   });
 
-  return { assets, files, dimensions, variants };
+  return { assets, files, dimensions, variants, podcastCoverFailure };
 }

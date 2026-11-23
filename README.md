@@ -1342,8 +1342,13 @@ absolute URL, its byte length and type: `audio/mpeg`, or `audio/x-m4a` for an
 `audio/mp4` file), `itunes:duration` (seconds). The cover is held to Apple's
 show-cover rule before anything is written: a PNG or JPEG, square, 1400 to 3000
 pixels (`MEDIA_FORMAT_INVALID` otherwise). The feed uses the media pipeline's
-full-size file, `assets/media/<digest>/original.<png|jpg>`. The template cannot
-tell whether a PNG has an alpha channel, which Apple asks covers not to have.
+full-size file, `assets/media/<digest>/original.<png|jpg>`. A cover that passes
+those checks at the header but cannot be decoded or processed (truncated or
+corrupt image data) does not fail the build: the feed is left out for that run
+(no feed file, no feed `<link>`, no cover asset), the site renders as with the
+podcast off, and the manifest carries one `PODCAST_COVER_UNUSABLE` warning
+finding with `policyResult` `pass-with-warnings`. The template cannot tell
+whether a PNG has an alpha channel, which Apple asks covers not to have.
 
 ## Browser page previews
 

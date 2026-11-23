@@ -11,6 +11,13 @@
  * (`assets/media/<digest>/original.<png|jpg>`); that file is the feed's
  * `itunes:image`. A cover that is absent, not a PNG or JPEG, not square or
  * outside 1400 to 3000 pixels fails the build before anything is written.
+ *
+ * One failure is not fatal: a PNG or JPEG cover whose header is fine but whose
+ * image data cannot be decoded or processed (truncated, corrupt). The build
+ * then turns the feed off (`withoutPodcastFeed`: no feed file, no
+ * `<link rel="alternate">`, no cover asset) and records one manifest warning
+ * (`PODCAST_COVER_UNUSABLE_FINDING`, `policyResult` `pass-with-warnings`); the
+ * rest of the site, Listen included, renders as it does with the feed off.
  */
 
 import { BuildInputValidationError, MediaPipelineError } from '../errors.js';
@@ -189,4 +196,31 @@ export function assertPodcastCover(podcast, { mediaAssets, mediaDimensions }) {
       `must be ${COVER_MIN_PIXELS} to ${COVER_MAX_PIXELS} pixels square (it is ${size.width})`,
     );
   }
+}
+
+/** @type {import('../manifest.js').ManifestFinding} the manifest warning for an undecodable cover */
+export const PODCAST_COVER_UNUSABLE_FINDING = Object.freeze({
+  code: 'PODCAST_COVER_UNUSABLE',
+  severity: /** @type {const} */ ('warning'),
+  pointer: '/publication/listen/podcast/cover',
+  messageKey: 'podcast-cover-unusable',
+});
+
+/**
+ * The build input with the podcast feed switched off, as when the author sets
+ * `listen.podcast.enabled` to `false`.
+ *
+ * @template {{publication: Record<string, any>}} T
+ * @param {T} input a validated build input
+ * @returns {T} a copy whose `publication.listen.podcast.enabled` is `false`
+ */
+export function withoutPodcastFeed(input) {
+  const listen = input.publication.listen;
+  return {
+    ...input,
+    publication: {
+      ...input.publication,
+      listen: { ...listen, podcast: { ...listen.podcast, enabled: false } },
+    },
+  };
 }

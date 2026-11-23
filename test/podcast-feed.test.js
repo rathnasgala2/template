@@ -18,6 +18,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 
 import { renderPublication } from '../src/core/index.js';
+import { encodeJpeg } from '../src/core/internal/media/jpeg-codec.js';
 import { encodePng } from '../src/core/internal/media/png-codec.js';
 import { withoutForwardMembers } from '../src/core/internal/forward-compat.js';
 import { buildRichFixture } from './helpers/page-kind-fixtures.js';
@@ -510,5 +511,131 @@ test('hostile text in titles, descriptions and settings is escaped: the feed par
     }
   } finally {
     await site.cleanup();
+  }
+});
+
+/**
+ * Every file under a directory, relative path to bytes.
+ *
+ * @param {string} root
+ * @returns {Promise<Map<string, Buffer>>}
+ */
+async function readTree(root) {
+  /** @type {Map<string, Buffer>} */
+  const files = new Map();
+  /** @param {string} dir */
+  const walk = async (dir) => {
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) await walk(full);
+      else files.set(path.relative(root, full), await readFile(full));
+    }
+  };
+  await walk(root);
+  return files;
+}
+
+const valid = cover(1400, 1400);
+const validJpeg = encodeJpeg({
+  width: 1400,
+  height: 1400,
+  rgba: Buffer.alloc(1400 * 1400 * 4, 200),
+});
+const BAD_COVERS = /** @type {const} */ ([
+  ['truncated PNG', 'assets/bad.png', valid.subarray(0, 4000)],
+  ['truncated JPEG', 'assets/bad.jpg', validJpeg.subarray(0, 300)],
+  [
+    'PNG header then garbage',
+    'assets/bad.png',
+    Buffer.concat([valid.subarray(0, 33), Buffer.alloc(4000, 0x5a)]),
+  ],
+]);
+
+test('a cover that cannot be decoded turns the feed off, warns, and leaves the site as with the feed off', async () => {
+  for (const [label, file, bytes] of BAD_COVERS) {
+    const reference = /** @type {any} */ ({});
+    const bad = await build(async (dir) => {
+      const input = await podcastInput(dir);
+      Object.assign(
+        input.publication.listen.podcast.cover,
+        await stage(dir, file, bytes),
+      );
+      Object.assign(reference, input.publication.listen.podcast.cover);
+      return input;
+    });
+    const off = await build(async (dir) => {
+      const input = await podcastInput(dir);
+      await stage(dir, file, bytes);
+      input.publication.listen.podcast.enabled = false;
+      return input;
+    });
+    try {
+      assert.ok(!bad.exists(FEED), `${label}: no feed file`);
+      const tree = await readTree(bad.dirs.outputDirectory);
+      for (const [name, content] of tree) {
+        assert.ok(
+          !/podcast\.xml|itunes/.test(content.toString('latin1')),
+          `${label}: ${name} does not mention the feed`,
+        );
+      }
+      assert.ok(
+        !bad.manifest.assets.some((/** @type {any} */ a) =>
+          a.path.includes(reference.sourceDigest.slice(7)),
+        ),
+        `${label}: no cover asset`,
+      );
+      // Byte-identical to the same site with the feed switched off.
+      const offTree = await readTree(off.dirs.outputDirectory);
+      assert.deepEqual([...tree.keys()], [...offTree.keys()], label);
+      for (const [name, content] of tree) {
+        assert.ok(content.equals(offTree.get(name) ?? Buffer.alloc(0)), name);
+      }
+      assert.deepEqual(
+        bad.manifest.findings,
+        [
+          {
+            code: 'PODCAST_COVER_UNUSABLE',
+            severity: 'warning',
+            pointer: '/publication/listen/podcast/cover',
+            messageKey: 'podcast-cover-unusable',
+          },
+        ],
+        label,
+      );
+      assert.equal(bad.manifest.policyResult, 'pass-with-warnings', label);
+      assert.equal(bad.manifest.validation.findingCount, 1, label);
+      assert.deepEqual(off.manifest.findings, []);
+      assert.equal(off.manifest.policyResult, 'pass');
+      // Listen itself is unaffected.
+      const article = bad.manifest.routes.find((/** @type {any} */ r) =>
+        r.path.includes('first-article'),
+      );
+      assert.ok(article, label);
+      assert.match(await bad.html(article.path), /class="g-listen/, label);
+    } finally {
+      await bad.cleanup();
+      await off.cleanup();
+    }
+  }
+});
+
+test('an unrelated podcast failure still fails the build', async () => {
+  // The cover's bytes do not match the declared digest.
+  const dirs = await createRenderDirectories();
+  try {
+    const input = await podcastInput(dirs.sourceDirectory);
+    input.publication.listen.podcast.cover.sourceDigest = `sha256:${'b'.repeat(64)}`;
+    await assert.rejects(
+      () =>
+        renderPublication(input, {
+          outputDirectory: dirs.outputDirectory,
+          workDirectory: dirs.workDirectory,
+          sourceDirectory: dirs.sourceDirectory,
+          provenance: testProvenance(),
+        }),
+      /MEDIA_SOURCE_DIGEST_MISMATCH/,
+    );
+  } finally {
+    await dirs.cleanup();
   }
 });
