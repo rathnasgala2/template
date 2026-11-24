@@ -38,8 +38,16 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      # `--with-deps` runs apt. On 2026-11-24 apt stalled on the runner's regional Ubuntu mirror and
+      # this step sat until the job's 30-minute limit cancelled the release (run 45319279136). The
+      # apt settings make a stalled mirror time out and be retried, and the step's own limit keeps
+      # a hang from costing the whole job.
       - name: Install the Chromium browser for the layout check
-        run: npx playwright install --with-deps chromium
+        timeout-minutes: 8
+        run: |
+          printf '%s\n' 'Acquire::Retries "3";' 'Acquire::http::Timeout "20";' 'Acquire::https::Timeout "20";' \
+            | sudo tee /etc/apt/apt.conf.d/80-gala-timeouts > /dev/null
+          npx playwright install --with-deps chromium
 
       - name: Run repository gates
         run: npm run verify
