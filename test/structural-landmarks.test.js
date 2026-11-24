@@ -20,11 +20,7 @@ import {
   testProvenance,
 } from './helpers/render-fixtures.js';
 import { buildRichFixture } from './helpers/page-kind-fixtures.js';
-import {
-  SKIP_REASON,
-  schemaAcceptsSummaryFaq,
-  withSummaryFaq,
-} from './helpers/summary-faq-fixtures.js';
+import { withSummaryFaq } from './helpers/summary-faq-fixtures.js';
 
 /**
  * @typedef {{nodeName: string, tagName?: string, attrs?: {name: string, value: string}[], childNodes?: Parse5Node[]}} Parse5Node
@@ -206,7 +202,6 @@ test('S2-T06 structural test: one golden page per kind has correct landmarks and
 });
 
 test('S2-T06 structural test: an article with a summary and questions keeps its outline and names its regions', async (t) => {
-  if (!(await schemaAcceptsSummaryFaq())) return t.skip(SKIP_REASON);
   const buildInput = withSummaryFaq(await buildRichFixture(), 'both');
   const { outputDirectory, workDirectory, sourceDirectory, cleanup } =
     await createRenderDirectories();

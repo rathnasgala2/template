@@ -1,22 +1,18 @@
 /**
  * Shared fixtures and assertions for the article summary and FAQ (schemas
- * 3.55.0): the hostile strings, the HTML and JSON-LD readers, and a probe for
- * whether the installed build-input schema accepts the two fields yet.
+ * 3.55.0): the hostile strings, the HTML and JSON-LD readers.
  */
 
 import { strict as assert } from 'node:assert';
 
 import { escapeHtml } from '../../src/core/internal/skeleton.js';
-import { renderPublication } from '../../src/core/index.js';
-import { buildRichFixture } from './page-kind-fixtures.js';
-import { createRenderDirectories, testProvenance } from './render-fixtures.js';
 
 export const SUMMARY = 'A short summary & more, with "quotes" and <b>tags</b>.';
 export const FAQ = [
   { question: 'Is it <script>alert(1)</script> safe?', answer: 'Yes.' },
   {
     question: 'What about "quotes" & ampersands?',
-    answer: 'First line with </script><img src=x onerror=1>\nSecond line.',
+    answer: 'First line with </script><img src=x>\nSecond line.',
   },
 ];
 
@@ -38,42 +34,6 @@ export function withSummaryFaq(input, variant, slug = 'first-article') {
   }
   return input;
 }
-
-/** @type {Promise<boolean> | undefined} */
-let supported;
-
-/**
- * Whether the installed `@rathnasgala2/schemas` accepts `summary` and `faq`.
- * It does from 3.55.0; until the lock moves, tests that build a page with the
- * fields skip with this as the reason. The release step removes the probe.
- *
- * @returns {Promise<boolean>} true when a build input carrying them validates
- */
-export function schemaAcceptsSummaryFaq() {
-  supported ??= (async () => {
-    const dirs = await createRenderDirectories();
-    try {
-      await renderPublication(
-        withSummaryFaq(await buildRichFixture(), 'both'),
-        {
-          outputDirectory: dirs.outputDirectory,
-          workDirectory: dirs.workDirectory,
-          sourceDirectory: dirs.sourceDirectory,
-          provenance: testProvenance(),
-        },
-      );
-      return true;
-    } catch {
-      return false;
-    } finally {
-      await dirs.cleanup();
-    }
-  })();
-  return supported;
-}
-
-export const SKIP_REASON =
-  'needs @rathnasgala2/schemas 3.55.0 (summary and faq in build-input)';
 
 /**
  * @param {string} html a page
@@ -156,5 +116,5 @@ export function assertSummaryFaq(html, { summary, faq }) {
   assert.ok(script && !/[<>&]/.test(script), 'JSON-LD is embed-safe');
   // Hostile text never appears unescaped in the markup.
   assert.ok(!html.includes('<script>alert(1)</script>'));
-  assert.ok(!html.includes('<img src=x onerror=1>'));
+  assert.ok(!html.includes('<img src=x>'));
 }

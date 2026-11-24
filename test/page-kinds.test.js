@@ -24,10 +24,8 @@ import { buildRichFixture, stableId } from './helpers/page-kind-fixtures.js';
 import { applyCurrentRenderPolicy } from './helpers/schema-fixtures.js';
 import {
   FAQ,
-  SKIP_REASON,
   SUMMARY,
   assertSummaryFaq,
-  schemaAcceptsSummaryFaq,
   withSummaryFaq,
 } from './helpers/summary-faq-fixtures.js';
 
@@ -398,8 +396,7 @@ async function renderFirstArticle(buildInput) {
   }
 }
 
-test('summary and FAQ: each alone, both, and neither (hostile text escaped, JSON-LD equal to the page)', async (t) => {
-  if (!(await schemaAcceptsSummaryFaq())) return t.skip(SKIP_REASON);
+test('summary and FAQ: each alone, both, and neither (hostile text escaped, JSON-LD equal to the page)', async () => {
   const none = await renderFirstArticle(await buildRichFixture());
   assertSummaryFaq(none, {});
   assert.ok(!none.includes('g-summary-title') && !none.includes('FAQPage'));

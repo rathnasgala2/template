@@ -75,7 +75,7 @@ not a repository file and lists none.
 
 ## Contract sources and generation commands
 
-This source develops and tests against `@rathnasgala2/schemas@3.45.0` (installed
+This source develops and tests against `@rathnasgala2/schemas@3.55.0` (installed
 exactly by the lock, from the npm registry); the published peer range is
 `^3.26.0`. Template 4.4.0 publishes styling contract 4.1.0
 (`TEMPLATE_STYLING_CONTRACT_VERSION`; its `templateVersion` is 4.4.0, and

@@ -8,6 +8,23 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.20.0] - 2026-11-23
+
+### Added
+
+- **Summary and questions on an article.** An article's optional `summary`
+  (plain text, 1 to 500 characters) renders as a "Summary" box under the title
+  block, above the body. Its optional `faq` (1 to 20 pairs of `question` and
+  `answer`, plain text, line feeds in an answer start a new paragraph) renders
+  as a "Questions and answers" section after the body, before the tags and the
+  closing blocks, as visible text, and adds a `FAQPage` node to the page's
+  JSON-LD whose strings equal the visible ones. An article without either field
+  renders byte for byte as before. The summary is not a description fallback and
+  is not added to feeds, `llms.txt` or per-article Markdown. Both headings are
+  translated in every message catalog. The blocks add no class, so the styling
+  contract and every published theme stay valid. Needs `@rathnasgala2/schemas`
+  3.55.0 to validate the two fields.
+
 ## [4.19.1] - 2026-11-22
 
 ### Fixed

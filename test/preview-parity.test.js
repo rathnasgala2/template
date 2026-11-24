@@ -51,10 +51,8 @@ import {
 import { applyCurrentRenderPolicy } from './helpers/schema-fixtures.js';
 import {
   FAQ,
-  SKIP_REASON,
   SUMMARY,
   assertSummaryFaq,
-  schemaAcceptsSummaryFaq,
   withSummaryFaq,
 } from './helpers/summary-faq-fixtures.js';
 
@@ -1242,8 +1240,7 @@ test('parity: the preview renders the summary and the questions as the build doe
   }
 });
 
-test('parity: a built article with a summary and questions equals its preview', async (t) => {
-  if (!(await schemaAcceptsSummaryFaq())) return t.skip(SKIP_REASON);
+test('parity: a built article with a summary and questions equals its preview', async () => {
   const site = await build({
     input: withSummaryFaq(await buildRichFixture(), 'both'),
   });

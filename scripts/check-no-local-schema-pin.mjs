@@ -16,7 +16,7 @@ const FORBIDDEN = [
 ];
 const FILES = ['package.json', 'package-lock.json'];
 const REGISTRY_TARBALL =
-  'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.45.0.tgz';
+  'https://registry.npmjs.org/@rathnasgala2/schemas/-/schemas-3.55.0.tgz';
 
 /**
  * @param {string} path the file to scan
@@ -58,9 +58,9 @@ async function main() {
     );
   }
   const schemaLock = lock.packages?.['node_modules/@rathnasgala2/schemas'];
-  if (schemaLock?.version !== '3.45.0') {
+  if (schemaLock?.version !== '3.55.0') {
     diagnostics.push(
-      'package-lock.json: the installed @rathnasgala2/schemas entry must be version 3.45.0.',
+      'package-lock.json: the installed @rathnasgala2/schemas entry must be version 3.55.0.',
     );
   }
   if (schemaLock?.resolved !== REGISTRY_TARBALL) {
@@ -77,7 +77,7 @@ async function main() {
     throw new Error(diagnostics.join('\n'));
   }
   console.log(
-    'schema is a caret-range registry peer (installed 3.45.0 pinned by the lock).',
+    'schema is a caret-range registry peer (installed 3.55.0 pinned by the lock).',
   );
 }
 
