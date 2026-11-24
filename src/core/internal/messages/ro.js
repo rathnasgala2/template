@@ -86,6 +86,8 @@ export default Object.freeze({
   olderArticleLabel: 'Mai vechi',
   moreArticlesNavigationLabel: 'Mai multe articole',
   keepReadingHeading: 'Continuă lectura',
+  summaryHeading: 'Rezumat',
+  faqHeading: 'Întrebări și răspunsuri',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Mai multe în ${tag}`,
   interactionsHeading: 'Reacții',

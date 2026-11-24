@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: 'Senesnis',
   moreArticlesNavigationLabel: 'Daugiau straipsnių',
   keepReadingHeading: 'Skaitykite toliau',
+  summaryHeading: 'Santrauka',
+  faqHeading: 'Klausimai ir atsakymai',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Daugiau: ${tag}`,
   interactionsHeading: 'Atsiliepimai',

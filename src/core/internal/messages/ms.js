@@ -87,6 +87,8 @@ export default Object.freeze({
   olderArticleLabel: 'Lebih lama',
   moreArticlesNavigationLabel: 'Lagi artikel',
   keepReadingHeading: 'Teruskan membaca',
+  summaryHeading: 'Ringkasan',
+  faqHeading: 'Soalan dan jawapan',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Lagi dalam ${tag}`,
   interactionsHeading: 'Maklum balas',

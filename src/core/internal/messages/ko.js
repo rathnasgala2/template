@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: '이전 글',
   moreArticlesNavigationLabel: '더 많은 글',
   keepReadingHeading: '계속 읽기',
+  summaryHeading: '요약',
+  faqHeading: '질문과 답변',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `${tag} 더 보기`,
   interactionsHeading: '반응',

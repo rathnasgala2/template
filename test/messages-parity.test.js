@@ -206,3 +206,19 @@ test('the poll sentences are translated, not copied from English', () => {
     );
   }
 });
+
+test('the summary and questions headings are written in every catalog, English only in en', () => {
+  const keys = ['summaryHeading', 'faqHeading'];
+  for (const [tag, catalog] of Object.entries(CATALOGS)) {
+    for (const key of keys) {
+      const value = /** @type {string} */ (catalog[key]);
+      assert.equal(typeof value, 'string', `${tag}.${key}`);
+      assert.ok(value.length > 0, `${tag}.${key}`);
+      if (tag !== 'en') {
+        assert.notEqual(value, en[key], `${tag}.${key} is translated`);
+      }
+    }
+  }
+  assert.equal(en.summaryHeading, 'Summary');
+  assert.equal(en.faqHeading, 'Questions and answers');
+});

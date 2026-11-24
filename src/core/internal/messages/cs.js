@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: 'Starší',
   moreArticlesNavigationLabel: 'Další články',
   keepReadingHeading: 'Číst dál',
+  summaryHeading: 'Shrnutí',
+  faqHeading: 'Otázky a odpovědi',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Více ve štítku ${tag}`,
   interactionsHeading: 'Reakce',

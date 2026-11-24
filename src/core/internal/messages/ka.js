@@ -87,6 +87,8 @@ export default Object.freeze({
   olderArticleLabel: 'უფრო ძველი',
   moreArticlesNavigationLabel: 'მეტი სტატია',
   keepReadingHeading: 'განაგრძეთ კითხვა',
+  summaryHeading: 'მოკლე შინაარსი',
+  faqHeading: 'კითხვები და პასუხები',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `მეტი თემაზე: ${tag}`,
   interactionsHeading: 'გამოხმაურებები',

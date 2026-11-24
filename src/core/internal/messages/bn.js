@@ -86,6 +86,8 @@ export default Object.freeze({
   olderArticleLabel: 'পুরনো',
   moreArticlesNavigationLabel: 'আরও লেখা',
   keepReadingHeading: 'পড়তে থাকুন',
+  summaryHeading: 'সারসংক্ষেপ',
+  faqHeading: 'প্রশ্ন ও উত্তর',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `${tag}-এ আরও`,
   interactionsHeading: 'প্রতিক্রিয়া',

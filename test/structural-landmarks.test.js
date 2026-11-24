@@ -20,6 +20,11 @@ import {
   testProvenance,
 } from './helpers/render-fixtures.js';
 import { buildRichFixture } from './helpers/page-kind-fixtures.js';
+import {
+  SKIP_REASON,
+  schemaAcceptsSummaryFaq,
+  withSummaryFaq,
+} from './helpers/summary-faq-fixtures.js';
 
 /**
  * @typedef {{nodeName: string, tagName?: string, attrs?: {name: string, value: string}[], childNodes?: Parse5Node[]}} Parse5Node
@@ -198,4 +203,37 @@ test('S2-T06 structural test: one golden page per kind has correct landmarks and
       assertSkeletonStructure(html, routePath);
     });
   }
+});
+
+test('S2-T06 structural test: an article with a summary and questions keeps its outline and names its regions', async (t) => {
+  if (!(await schemaAcceptsSummaryFaq())) return t.skip(SKIP_REASON);
+  const buildInput = withSummaryFaq(await buildRichFixture(), 'both');
+  const { outputDirectory, workDirectory, sourceDirectory, cleanup } =
+    await createRenderDirectories();
+  t.after(cleanup);
+  await renderPublication(buildInput, {
+    outputDirectory,
+    workDirectory,
+    sourceDirectory,
+    provenance: testProvenance(),
+  });
+  const routePath = 'fixture-1/first-article/index.html';
+  const html = await readFile(path.join(outputDirectory, routePath), 'utf8');
+  assertSkeletonStructure(html, routePath);
+  const elements = collectElements(/** @type {Parse5Node} */ (parse(html)));
+  for (const id of ['g-summary-title', 'g-faq-title']) {
+    const heading = elements.find((e) => attr(e, 'id') === id);
+    assert.ok(heading, `${id} exists`);
+    assert.equal(heading.tagName, 'h2');
+    const region = elements.find((e) => attr(e, 'aria-labelledby') === id);
+    assert.equal(region?.tagName, 'section');
+    assert.ok(collectElements(region).includes(heading));
+  }
+  const faq = /** @type {Parse5Node} */ (
+    elements.find((e) => attr(e, 'aria-labelledby') === 'g-faq-title')
+  );
+  const levels = collectElements(faq)
+    .filter((e) => /^h[1-6]$/.test(/** @type {string} */ (e.tagName)))
+    .map((e) => e.tagName);
+  assert.deepEqual(levels, ['h2', 'h3', 'h3']);
 });

@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: 'പഴയത്',
   moreArticlesNavigationLabel: 'കൂടുതൽ ലേഖനങ്ങൾ',
   keepReadingHeading: 'വായന തുടരുക',
+  summaryHeading: 'സംഗ്രഹം',
+  faqHeading: 'ചോദ്യങ്ങളും ഉത്തരങ്ങളും',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `${tag} - കൂടുതൽ`,
   interactionsHeading: 'പ്രതികരണങ്ങൾ',

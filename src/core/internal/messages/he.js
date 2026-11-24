@@ -85,6 +85,8 @@ export default Object.freeze({
   olderArticleLabel: 'ישן יותר',
   moreArticlesNavigationLabel: 'עוד מאמרים',
   keepReadingHeading: 'להמשיך לקרוא',
+  summaryHeading: 'סיכום',
+  faqHeading: 'שאלות ותשובות',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `עוד ב${tag}`,
   interactionsHeading: 'תגובות',

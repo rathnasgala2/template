@@ -83,6 +83,7 @@ import {
   renderEditionSelector,
   resolveEditions,
 } from './editions.js';
+import { faqPage, renderFaq, renderSummary } from './summary-faq.js';
 import { renderGalascribeSection, resolvePolicyPages } from './policy-pages.js';
 import { truncateAtWord } from './seo.js';
 import { cardMediaOf } from './first-body-image.js';
@@ -1397,6 +1398,13 @@ export function buildGeneratedPages(validatedInput, options) {
         ? `<div class="g-article-meta">${byline(record, true, isArticle)}${isArticle ? langChips(record) : ''}${isArticle ? share : ''}</div>`
         : '') +
       editionSelector +
+      (isArticle
+        ? renderSummary({
+            summary: frontmatter.summary,
+            heading: text('summaryHeading'),
+            icon: icon('list'),
+          })
+        : '') +
       `</div>`;
     const cover = hero
       ? `<figure class="${composition.articleLayout === 'full-bleed' ? 'g-article-cover g-article-cover-full-bleed' : 'g-wrap g-article-cover'}">${renderImage({ image: hero, alt: heroMedia?.role === 'decorative' ? '' : (heroMedia?.alt ?? ''), priority: true })}</figure>`
@@ -1426,6 +1434,13 @@ export function buildGeneratedPages(validatedInput, options) {
           messages,
         ),
       ) +
+      (isArticle
+        ? renderFaq({
+            faq: frontmatter.faq,
+            heading: text('faqHeading'),
+            icon: icon('bookmark'),
+          })
+        : '') +
       tags +
       renderSlot('article-end') +
       renderSlot('article-footer-ad', { collapsed: true }) +
@@ -1531,25 +1546,33 @@ export function buildGeneratedPages(validatedInput, options) {
         : record,
     );
     const articleGraph = isArticle
-      ? sd.article({
-          url: graphUrl,
-          headline: frontmatter.title,
-          description: contentDescription(record),
-          image: absoluteImage(socialOfContent(record).socialImageRef),
-          datePublished: frontmatter.publishedAt,
-          dateModified: contentLastModified(frontmatter),
-          language: frontmatter.language,
-          authors: recordAuthors.map((author) => ({
-            name: author.displayName,
-            url: absolute(authorHref(author)),
-            sameAs: author.links.map((link) => link.uri),
-          })),
-          tags: frontmatter.tags,
-          series: series
-            ? { name: series, url: absolute(seriesHref(series)) }
-            : undefined,
-          trail: articleTrail,
-        })
+      ? sd
+          .article({
+            url: graphUrl,
+            headline: frontmatter.title,
+            description: contentDescription(record),
+            image: absoluteImage(socialOfContent(record).socialImageRef),
+            datePublished: frontmatter.publishedAt,
+            dateModified: contentLastModified(frontmatter),
+            language: frontmatter.language,
+            authors: recordAuthors.map((author) => ({
+              name: author.displayName,
+              url: absolute(authorHref(author)),
+              sameAs: author.links.map((link) => link.uri),
+            })),
+            tags: frontmatter.tags,
+            series: series
+              ? { name: series, url: absolute(seriesHref(series)) }
+              : undefined,
+            trail: articleTrail,
+          })
+          .concat(
+            faqPage({
+              url: graphUrl,
+              language: frontmatter.language,
+              faq: frontmatter.faq,
+            }),
+          )
       : sd.webPage({
           name: frontmatter.title,
           description: contentDescription(record),

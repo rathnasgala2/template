@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: '古い記事',
   moreArticlesNavigationLabel: 'その他の記事',
   keepReadingHeading: '続けて読む',
+  summaryHeading: '要約',
+  faqHeading: '質問と回答',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `${tag}の記事をもっと見る`,
   interactionsHeading: 'リアクション',

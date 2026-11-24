@@ -617,3 +617,33 @@ test('minifyScript keeps strings and regular expressions and drops comments', ()
     'var a = "x // y";\nvar re = /a\\/\\/b[/]c/g;\nvar n = 4 / 2;\n',
   );
 });
+
+test('FAQPage node: questions as authored, nothing without them, embed-safe once serialized', async () => {
+  const { faqPage } = await import('../src/core/internal/summary-faq.js');
+  const { serializeJsonLd } =
+    await import('../src/core/internal/structured-data.js');
+  assert.deepEqual(
+    faqPage({ url: 'https://x.test/a', language: 'en', faq: undefined }),
+    [],
+  );
+  assert.deepEqual(
+    faqPage({ url: 'https://x.test/a', language: 'en', faq: [] }),
+    [],
+  );
+  const faq = [
+    { question: 'Q "1" <b>?', answer: 'a\nb </script><script>x</script>' },
+  ];
+  const nodes = faqPage({ url: 'https://x.test/a', language: 'en', faq });
+  assert.equal(nodes.length, 1);
+  const text = serializeJsonLd({ '@graph': nodes });
+  assert.ok(!/[<>&]/.test(text));
+  const parsed = JSON.parse(text);
+  assert.equal(parsed['@graph'][0]['@type'], 'FAQPage');
+  assert.deepEqual(
+    parsed['@graph'][0].mainEntity.map((/** @type {any} */ q) => [
+      q.name,
+      q.acceptedAnswer.text,
+    ]),
+    [[faq[0].question, faq[0].answer]],
+  );
+});

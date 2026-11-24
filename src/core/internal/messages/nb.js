@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: 'Eldre',
   moreArticlesNavigationLabel: 'Flere artikler',
   keepReadingHeading: 'Les videre',
+  summaryHeading: 'Sammendrag',
+  faqHeading: 'Spørsmål og svar',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Mer i ${tag}`,
   interactionsHeading: 'Reaksjoner',

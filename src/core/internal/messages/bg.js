@@ -87,6 +87,8 @@ export default Object.freeze({
   olderArticleLabel: 'По-стара',
   moreArticlesNavigationLabel: 'Още статии',
   keepReadingHeading: 'Продължете да четете',
+  summaryHeading: 'Резюме',
+  faqHeading: 'Въпроси и отговори',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Още в ${tag}`,
   interactionsHeading: 'Отзиви',

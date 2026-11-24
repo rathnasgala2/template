@@ -128,6 +128,16 @@ export interface ContentFrontmatterNormalized {
   deleteDate?: string;
   /** The article's audio version, `kind: "article"` only (schemas 3.26.0). */
   listen?: ListenNormalized;
+  /** Plain-text summary shown above the body, 1 to 500 graphemes (schemas 3.55.0). */
+  summary?: string;
+  /** Questions and answers shown after the body, 1 to 20 (schemas 3.55.0). */
+  faq?: readonly ContentFaqItem[];
+}
+
+/** One question and its plain-text answer; the answer may hold line feeds. */
+export interface ContentFaqItem {
+  question: string;
+  answer: string;
 }
 
 /**

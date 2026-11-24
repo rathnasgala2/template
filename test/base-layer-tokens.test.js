@@ -338,3 +338,14 @@ test('a post without a cover collapses the placeholder box in the base styleshee
     /\.g-card-row:has\(> \.g-card-placeholder\) \{ grid-template-columns: minmax\(0, 1fr\); \}/,
   );
 });
+
+test('the summary box and questions section are styled from existing tokens, with no new class', () => {
+  const css = GALA_BASE_COMPONENT_CSS;
+  for (const id of ['g-summary-title', 'g-faq-title']) {
+    assert.ok(css.includes(`[aria-labelledby="${id}"]`), `${id} has a rule`);
+  }
+  assert.ok(css.includes('#g-summary-title'));
+  assert.ok(css.includes('#g-faq-title'));
+  const contract = Object.values(COMPONENT_CLASS_GROUPS).flat();
+  assert.ok(!contract.some((name) => /summary|faq/.test(name)));
+});

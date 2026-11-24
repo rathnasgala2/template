@@ -87,6 +87,8 @@ export default Object.freeze({
   olderArticleLabel: 'پرانا',
   moreArticlesNavigationLabel: 'مزید مضامین',
   keepReadingHeading: 'پڑھتے رہیں',
+  summaryHeading: 'خلاصہ',
+  faqHeading: 'سوالات اور جوابات',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `${tag} میں مزید`,
   interactionsHeading: 'ردعمل',

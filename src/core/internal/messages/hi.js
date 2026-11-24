@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: 'पुराना',
   moreArticlesNavigationLabel: 'और लेख',
   keepReadingHeading: 'पढ़ते रहें',
+  summaryHeading: 'सारांश',
+  faqHeading: 'प्रश्न और उत्तर',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `${tag} में और`,
   interactionsHeading: 'प्रतिक्रियाएँ',

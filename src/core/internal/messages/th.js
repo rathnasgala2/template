@@ -86,6 +86,8 @@ export default Object.freeze({
   olderArticleLabel: 'เก่ากว่า',
   moreArticlesNavigationLabel: 'บทความเพิ่มเติม',
   keepReadingHeading: 'อ่านต่อ',
+  summaryHeading: 'สรุป',
+  faqHeading: 'คำถามและคำตอบ',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `เพิ่มเติมใน ${tag}`,
   interactionsHeading: 'ความเห็น',

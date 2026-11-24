@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: 'Παλαιότερο',
   moreArticlesNavigationLabel: 'Περισσότερα άρθρα',
   keepReadingHeading: 'Συνέχισε το διάβασμα',
+  summaryHeading: 'Περίληψη',
+  faqHeading: 'Ερωτήσεις και απαντήσεις',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Περισσότερα στο ${tag}`,
   interactionsHeading: 'Αντιδράσεις',

@@ -22,6 +22,14 @@ import {
 } from './helpers/render-fixtures.js';
 import { buildRichFixture, stableId } from './helpers/page-kind-fixtures.js';
 import { applyCurrentRenderPolicy } from './helpers/schema-fixtures.js';
+import {
+  FAQ,
+  SKIP_REASON,
+  SUMMARY,
+  assertSummaryFaq,
+  schemaAcceptsSummaryFaq,
+  withSummaryFaq,
+} from './helpers/summary-faq-fixtures.js';
 
 /**
  * @param {string} outputDirectory a rendered candidate output directory
@@ -366,4 +374,50 @@ test('S2-T06 determinism: two clean builds of the rich multi-content-kind fixtur
     firstResult.manifest.artifactDigest,
     secondResult.manifest.artifactDigest,
   );
+});
+
+/**
+ * @param {any} buildInput a build input
+ * @returns {Promise<string>} the first article's page
+ */
+async function renderFirstArticle(buildInput) {
+  const dirs = await createRenderDirectories();
+  try {
+    await renderPublication(buildInput, {
+      outputDirectory: dirs.outputDirectory,
+      workDirectory: dirs.workDirectory,
+      sourceDirectory: dirs.sourceDirectory,
+      provenance: testProvenance(),
+    });
+    return await readRoute(
+      dirs.outputDirectory,
+      'fixture-1/first-article/index.html',
+    );
+  } finally {
+    await dirs.cleanup();
+  }
+}
+
+test('summary and FAQ: each alone, both, and neither (hostile text escaped, JSON-LD equal to the page)', async (t) => {
+  if (!(await schemaAcceptsSummaryFaq())) return t.skip(SKIP_REASON);
+  const none = await renderFirstArticle(await buildRichFixture());
+  assertSummaryFaq(none, {});
+  assert.ok(!none.includes('g-summary-title') && !none.includes('FAQPage'));
+  const variants = /** @type {const} */ ([
+    ['summary', { summary: SUMMARY }],
+    ['faq', { faq: FAQ }],
+    ['both', { summary: SUMMARY, faq: FAQ }],
+  ]);
+  for (const [variant, expected] of variants) {
+    const html = await renderFirstArticle(
+      withSummaryFaq(await buildRichFixture(), variant),
+    );
+    assertSummaryFaq(html, expected);
+    // The Article node is unchanged by either field.
+    assert.equal(
+      html.includes('"@type":"BlogPosting"'),
+      true,
+      `${variant}: the article node stays`,
+    );
+  }
 });

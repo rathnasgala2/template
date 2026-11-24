@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: 'Më i vjetër',
   moreArticlesNavigationLabel: 'Më shumë artikuj',
   keepReadingHeading: 'Vazhdo leximin',
+  summaryHeading: 'Përmbledhje',
+  faqHeading: 'Pyetje dhe përgjigje',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Më shumë te ${tag}`,
   interactionsHeading: 'Përgjigje',

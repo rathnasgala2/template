@@ -86,6 +86,8 @@ export default Object.freeze({
   olderArticleLabel: 'Vanhempi',
   moreArticlesNavigationLabel: 'Lisää artikkeleita',
   keepReadingHeading: 'Jatka lukemista',
+  summaryHeading: 'Tiivistelmä',
+  faqHeading: 'Kysymykset ja vastaukset',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Lisää aiheesta ${tag}`,
   interactionsHeading: 'Reaktiot',

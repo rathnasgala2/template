@@ -87,6 +87,8 @@ export default Object.freeze({
   olderArticleLabel: 'Cũ hơn',
   moreArticlesNavigationLabel: 'Thêm bài viết',
   keepReadingHeading: 'Đọc tiếp',
+  summaryHeading: 'Tóm tắt',
+  faqHeading: 'Câu hỏi và trả lời',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Thêm trong ${tag}`,
   interactionsHeading: 'Phản hồi',

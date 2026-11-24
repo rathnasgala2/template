@@ -85,6 +85,8 @@ export default Object.freeze({
   olderArticleLabel: '较早',
   moreArticlesNavigationLabel: '更多文章',
   keepReadingHeading: '继续阅读',
+  summaryHeading: '摘要',
+  faqHeading: '问题与解答',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `更多 ${tag} 文章`,
   interactionsHeading: '互动',

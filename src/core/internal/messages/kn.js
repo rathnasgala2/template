@@ -87,6 +87,8 @@ export default Object.freeze({
   olderArticleLabel: 'ಹಳೆಯದು',
   moreArticlesNavigationLabel: 'ಇನ್ನಷ್ಟು ಲೇಖನಗಳು',
   keepReadingHeading: 'ಓದುತ್ತಿರಿ',
+  summaryHeading: 'ಸಾರಾಂಶ',
+  faqHeading: 'ಪ್ರಶ್ನೆಗಳು ಮತ್ತು ಉತ್ತರಗಳು',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `${tag} ನಲ್ಲಿ ಇನ್ನಷ್ಟು`,
   interactionsHeading: 'ಪ್ರತಿಕ್ರಿಯೆಗಳು',

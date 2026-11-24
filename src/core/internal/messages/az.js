@@ -87,6 +87,8 @@ export default Object.freeze({
   olderArticleLabel: 'Daha köhnə',
   moreArticlesNavigationLabel: 'Daha çox yazı',
   keepReadingHeading: 'Oxumağa davam edin',
+  summaryHeading: 'Xülasə',
+  faqHeading: 'Suallar və cavablar',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `${tag} üzrə daha çox`,
   interactionsHeading: 'Cavablar',

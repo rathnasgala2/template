@@ -87,6 +87,8 @@ export default Object.freeze({
   olderArticleLabel: 'Vanem',
   moreArticlesNavigationLabel: 'Veel artikleid',
   keepReadingHeading: 'Loe edasi',
+  summaryHeading: 'Kokkuvõte',
+  faqHeading: 'Küsimused ja vastused',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Veel sildi ${tag} all`,
   interactionsHeading: 'Vastused',

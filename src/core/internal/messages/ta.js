@@ -92,6 +92,8 @@ export default Object.freeze({
   olderArticleLabel: 'பழையது',
   moreArticlesNavigationLabel: 'மேலும் கட்டுரைகள்',
   keepReadingHeading: 'தொடர்ந்து படியுங்கள்',
+  summaryHeading: 'சுருக்கம்',
+  faqHeading: 'கேள்விகளும் பதில்களும்',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `${tag} பிரிவில் மேலும்`,
   interactionsHeading: 'எதிர்வினைகள்',

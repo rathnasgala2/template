@@ -86,6 +86,8 @@ export default Object.freeze({
   olderArticleLabel: 'Eldri',
   moreArticlesNavigationLabel: 'Fleiri greinar',
   keepReadingHeading: 'Haltu áfram að lesa',
+  summaryHeading: 'Samantekt',
+  faqHeading: 'Spurningar og svör',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Meira í ${tag}`,
   interactionsHeading: 'Viðbrögð',

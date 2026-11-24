@@ -49,6 +49,14 @@ import {
   testProvenance,
 } from './helpers/render-fixtures.js';
 import { applyCurrentRenderPolicy } from './helpers/schema-fixtures.js';
+import {
+  FAQ,
+  SKIP_REASON,
+  SUMMARY,
+  assertSummaryFaq,
+  schemaAcceptsSummaryFaq,
+  withSummaryFaq,
+} from './helpers/summary-faq-fixtures.js';
 
 const THEME = fileURLToPath(
   new URL('./fixtures/theme-fixture-full', import.meta.url),
@@ -1193,6 +1201,58 @@ test('parity: home page 1 only, with more posts than the page size', async () =>
     const shown = built.replace(/<script\b[\s\S]*?<\/script>/g, '');
     assert.ok(!shown.includes('Extra article 0'), 'the oldest post is later');
     assert.ok(second.includes('Extra article'), 'page 2 lists older posts');
+  } finally {
+    await site.cleanup();
+  }
+});
+
+test('parity: the preview renders the summary and the questions as the build does', async () => {
+  const site = await build();
+  try {
+    currentSite = site;
+    const media = await mediaOf(site);
+    const record = recordOf(site.buildInput, 'first-article');
+    const input = await previewInputOf(site, record, media);
+    const getMessages = await loadMessagesFor(previewLanguages(input));
+    const render = (/** @type {any} */ frontmatter) =>
+      renderContentPreview(
+        { ...input, post: { ...input.post, frontmatter } },
+        { getMessages },
+      );
+    // Neither field: the preview is still the built page, byte for byte.
+    const neither = render(record.frontmatter);
+    assert.equal(
+      neither.html,
+      await site.read('fixture-1/first-article/index.html'),
+    );
+    assert.ok(!neither.html.includes('g-summary-title'));
+    assert.ok(!neither.html.includes('g-faq-title'));
+    assert.ok(!neither.html.includes('FAQPage'));
+    const fm = record.frontmatter;
+    const only = (/** @type {any} */ extra, /** @type {any} */ expected) => {
+      const out = render({ ...fm, ...extra });
+      assert.deepEqual(out.warnings, []);
+      assertSummaryFaq(out.html, expected);
+    };
+    only({ summary: SUMMARY }, { summary: SUMMARY });
+    only({ faq: FAQ }, { faq: FAQ });
+    only({ summary: SUMMARY, faq: FAQ }, { summary: SUMMARY, faq: FAQ });
+  } finally {
+    await site.cleanup();
+  }
+});
+
+test('parity: a built article with a summary and questions equals its preview', async (t) => {
+  if (!(await schemaAcceptsSummaryFaq())) return t.skip(SKIP_REASON);
+  const site = await build({
+    input: withSummaryFaq(await buildRichFixture(), 'both'),
+  });
+  try {
+    await assertParity('summary and faq', site, { minimumPosts: 3 });
+    assertSummaryFaq(await site.read('fixture-1/first-article/index.html'), {
+      summary: SUMMARY,
+      faq: FAQ,
+    });
   } finally {
     await site.cleanup();
   }

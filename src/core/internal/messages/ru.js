@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: 'Старше',
   moreArticlesNavigationLabel: 'Ещё статьи',
   keepReadingHeading: 'Читать дальше',
+  summaryHeading: 'Кратко',
+  faqHeading: 'Вопросы и ответы',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Ещё по тегу ${tag}`,
   interactionsHeading: 'Отклики',

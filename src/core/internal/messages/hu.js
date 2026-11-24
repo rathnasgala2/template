@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: 'Régebbi',
   moreArticlesNavigationLabel: 'További cikkek',
   keepReadingHeading: 'Olvass tovább',
+  summaryHeading: 'Összefoglaló',
+  faqHeading: 'Kérdések és válaszok',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `További cikkek: ${tag}`,
   interactionsHeading: 'Reakciók',

@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: 'Ավելի հին',
   moreArticlesNavigationLabel: 'Ավելի շատ հոդվածներ',
   keepReadingHeading: 'Շարունակեք կարդալ',
+  summaryHeading: 'Ամփոփում',
+  faqHeading: 'Հարցեր և պատասխաններ',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Ավելին՝ ${tag}`,
   interactionsHeading: 'Արձագանքներ',

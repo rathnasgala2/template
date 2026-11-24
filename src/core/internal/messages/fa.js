@@ -86,6 +86,8 @@ export default Object.freeze({
   olderArticleLabel: 'قدیمی‌تر',
   moreArticlesNavigationLabel: 'مقاله‌های بیشتر',
   keepReadingHeading: 'ادامهٔ مطالعه',
+  summaryHeading: 'خلاصه',
+  faqHeading: 'پرسش‌ها و پاسخ‌ها',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `بیشتر در ${tag}`,
   interactionsHeading: 'واکنش‌ها',

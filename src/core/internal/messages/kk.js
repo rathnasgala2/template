@@ -88,6 +88,8 @@ export default Object.freeze({
   olderArticleLabel: 'Ескірек',
   moreArticlesNavigationLabel: 'Тағы мақалалар',
   keepReadingHeading: 'Оқуды жалғастырыңыз',
+  summaryHeading: 'Қысқаша мазмұны',
+  faqHeading: 'Сұрақтар мен жауаптар',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `${tag} бойынша тағы`,
   interactionsHeading: 'Пікірлер',

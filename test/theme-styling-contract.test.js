@@ -1104,3 +1104,8 @@ test('basePath fix: og:image is basePath-joined against baseUrl for a non-root b
     await cleanup();
   }
 });
+
+test('the summary and questions blocks add no class to the styling contract', () => {
+  const classes = Object.values(COMPONENT_CLASS_GROUPS).flat();
+  assert.ok(!classes.some((name) => /summary|faq/.test(name)));
+});

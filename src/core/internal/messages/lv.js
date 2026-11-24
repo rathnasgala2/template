@@ -87,6 +87,8 @@ export default Object.freeze({
   olderArticleLabel: 'Vecāks',
   moreArticlesNavigationLabel: 'Vairāk rakstu',
   keepReadingHeading: 'Lasiet tālāk',
+  summaryHeading: 'Kopsavilkums',
+  faqHeading: 'Jautājumi un atbildes',
   /** @type {(tag: string) => string} */
   moreInTagLabel: (tag) => `Vairāk: ${tag}`,
   interactionsHeading: 'Atsauksmes',

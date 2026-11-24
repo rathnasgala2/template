@@ -693,6 +693,14 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-author-name a:hover { color: var(--gala-color-link); }
   .g-author-bio { color: var(--gala-color-text-muted); font-size: .9375rem; }
   .g-series-box { display: grid; gap: var(--gala-space-3); padding: 1.25rem; border-radius: var(--gala-radius-large); border: var(--gala-border-width) dashed var(--gala-color-border); }
+  .g-article-head > section[aria-labelledby="g-summary-title"], .g-prose > section[aria-labelledby="g-faq-title"] { display: grid; gap: var(--gala-space-3); padding: 1.25rem; border-radius: var(--gala-radius-large); border: var(--gala-border-width) solid var(--gala-color-border); background: var(--gala-color-surface-raised); color: var(--gala-color-text); max-width: 100%; overflow-wrap: anywhere; }
+  .g-article-head > section[aria-labelledby="g-summary-title"] p, .g-prose > section[aria-labelledby="g-faq-title"] p { margin: 0; text-wrap: pretty; }
+  #g-summary-title { margin: 0; }
+  .g-prose > section[aria-labelledby="g-faq-title"] { margin-block: var(--gala-space-8) var(--gala-space-6); gap: var(--gala-space-4); }
+  #g-faq-title { display: flex; align-items: center; gap: .45em; margin: 0; font-size: clamp(1.25rem, 1.1rem + .6vw, 1.5rem); }
+  .g-prose > section[aria-labelledby="g-faq-title"] > div { display: grid; gap: var(--gala-space-2); }
+  .g-prose > section[aria-labelledby="g-faq-title"] h3 { margin: 0; font-size: 1.0625rem; line-height: 1.35; }
+  @media print { .g-article-head > section[aria-labelledby="g-summary-title"], .g-prose > section[aria-labelledby="g-faq-title"] { break-inside: avoid-page; border-color: currentColor; background: none; } }
   .g-pager { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gala-space-4); }
   .g-pager-link { display: grid; align-content: start; gap: .4rem; padding: 1.1rem 1.25rem; border-radius: var(--gala-radius-medium); border: var(--gala-border-width) solid var(--gala-color-border); background: var(--gala-color-surface); transition: transform var(--gala-duration-base) var(--gala-ease-standard), border-color var(--gala-duration-base) var(--gala-ease-standard), box-shadow var(--gala-duration-base) var(--gala-ease-standard); }
   .g-pager-link:hover { border-color: var(--gala-color-text); transform: translate(var(--gala-lift-x), var(--gala-lift-y)); box-shadow: var(--gala-shadow-card-hover); }
@@ -1156,7 +1164,7 @@ export const GALA_BASE_COMPONENT_CSS = `
       @keyframes g-read { from { transform: scaleX(0); } to { transform: scaleX(1); } }
     }
     @supports (animation-timeline: view()) {
-      .g-grid > .g-card, .g-list > .g-card, .g-dated-row, .g-panel, .g-series-card, .g-author-card, .g-series-box, .g-prose > pre, .g-codeblock, .g-prose > figure, .g-prose > blockquote {
+      .g-grid > .g-card, .g-list > .g-card, .g-dated-row, .g-panel, .g-series-card, .g-author-card, .g-series-box, .g-article-head > section[aria-labelledby="g-summary-title"], .g-prose > pre, .g-codeblock, .g-prose > figure, .g-prose > blockquote {
         animation: g-reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 55%;
       }
       @keyframes g-reveal { from { opacity: .15; transform: translateY(28px) scale(.985); } }
