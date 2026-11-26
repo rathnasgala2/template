@@ -33,6 +33,15 @@ and this project adheres to
   Needs the API's `publicFollowers` and schemas 3.56.0; a site without the
   setting renders and behaves as before.
 
+- **Quote block.** A fenced block with the info string `quote` (`text`, `name`;
+  optional `role`, `url`, `photo`) renders a testimonial as `figure.g-quote`:
+  the quote, then the person's name (linked when `url` is set), role and a round
+  photo resolved like a video poster. A malformed block stays a code block. No
+  structured data is added; feeds, email fragments and `llms-full.txt` carry the
+  plain figure (text and a "— name, role" line). The block catalog in
+  `contracts/render-policy.jcs` lists it, so the render policy identity changes.
+  Base-layer styling only, no new public class.
+
 ## [4.20.0] - 2026-11-23
 
 ### Added

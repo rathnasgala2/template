@@ -168,6 +168,11 @@ export const FENCED_BLOCKS = Object.freeze({
     required: Object.freeze(['id', 'question', 'option1', 'option2']),
     optional: Object.freeze(['option3', 'option4', 'option5', 'option6']),
   }),
+  quote: Object.freeze({
+    className: 'g-quote',
+    required: Object.freeze(['text', 'name']),
+    optional: Object.freeze(['role', 'url', 'photo']),
+  }),
   video: Object.freeze({
     className: 'g-video',
     required: Object.freeze(['provider', 'id', 'title']),
@@ -185,6 +190,17 @@ export const POLL_LIMITS = Object.freeze({
   optionMax: 80,
   optionsMin: 2,
   optionsMax: 6,
+});
+
+/**
+ * The quote block's limits, in characters: the quoted text, the person's name
+ * and role, and the `https://` link's length.
+ */
+export const QUOTE_LIMITS = Object.freeze({
+  textMax: 600,
+  nameMax: 80,
+  roleMax: 80,
+  urlMax: 2048,
 });
 
 /**

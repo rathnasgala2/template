@@ -1,5 +1,5 @@
 /**
- * Fenced blocks: the `video`, `bookmark`, `file` and `poll` fence info strings.
+ * Fenced blocks: the `video`, `bookmark`, `file`, `poll` and `quote` fence info strings.
  *
  * A fenced block's body is `key: value` lines. The markdown pipeline
  * (`content-security.js`) hands each fence here; when the info string names a
@@ -17,6 +17,8 @@
  *   not `key: value`, a missing required key or an invalid value makes the
  *   block malformed;
  * - a `poll` block's keys are `id`, `question` and `option1` .. `option6`;
+ * - a `quote` block's keys are `text`, `name`, `role`, `url` (`https://` only)
+ *   and `photo` (a repository image path, like a video's `poster`);
  * - text values: title up to 200, description up to 500, site up to 100
  *   characters, no control characters.
  *
@@ -28,6 +30,7 @@
 import {
   FENCED_BLOCKS,
   POLL_LIMITS,
+  QUOTE_LIMITS,
   VIDEO_PROVIDERS,
 } from './render-policy-content.js';
 import { escapeHtml } from './skeleton.js';
@@ -292,6 +295,51 @@ function pollBlock(values, env) {
 }
 
 /**
+ * A quote: `text` and `name` (required), `role`, `url` (`https://` only) and
+ * `photo` (a repository image path). The caption is the optional photo, the
+ * name (a link when `url` is set) and `, role`.
+ *
+ * @param {Map<string, string>} values the parsed keys
+ * @param {(url: string) => string} normalizeLink markdown-it's link encoder
+ * @returns {string | undefined} the `quote` block's markup
+ */
+function quoteBlock(values, normalizeLink) {
+  if (!hasRequired(values, FENCED_BLOCKS.quote)) return undefined;
+  const text = values.get('text');
+  const name = values.get('name');
+  const role = values.get('role');
+  const url = values.get('url');
+  const photo = values.get('photo');
+  if (
+    !validText(text, QUOTE_LIMITS.textMax) ||
+    !validText(name, QUOTE_LIMITS.nameMax) ||
+    (role !== undefined && !validText(role, QUOTE_LIMITS.roleMax)) ||
+    (photo !== undefined && !validRepositoryPath(photo, IMAGE_PATH))
+  ) {
+    return undefined;
+  }
+  let href;
+  if (url !== undefined) {
+    const parsed = /^https:\/\//i.test(url) ? webUrl(url) : undefined;
+    if (!parsed || url.length > QUOTE_LIMITS.urlMax) return undefined;
+    href = parsed.href;
+  }
+  const who = escapeHtml(/** @type {string} */ (name));
+  return figure(
+    'quote',
+    '',
+    `<blockquote><p>${escapeHtml(/** @type {string} */ (text))}</p></blockquote>` +
+      '<figcaption>' +
+      (photo === undefined
+        ? ''
+        : `<img src="${escapeHtml(normalizeLink(photo))}" alt="">`) +
+      (href === undefined ? who : `<a href="${escapeHtml(href)}">${who}</a>`) +
+      (role === undefined ? '' : `, ${escapeHtml(role)}`) +
+      '</figcaption>',
+  );
+}
+
+/**
  * Render one fence as a block card.
  *
  * @param {string} name the fence's first info word
@@ -310,5 +358,6 @@ export function renderFencedBlock(name, body, normalizeLink, env) {
   if (name === 'video') return videoBlock(values, normalizeLink);
   if (name === 'bookmark') return bookmarkBlock(values);
   if (name === 'poll') return pollBlock(values, env);
+  if (name === 'quote') return quoteBlock(values, normalizeLink);
   return fileBlock(values, normalizeLink);
 }

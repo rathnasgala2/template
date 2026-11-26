@@ -48,6 +48,9 @@ export function htmlToText(html) {
   const stripped = html
     .replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, '')
     .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<figure class="g-quote"[^>]*>[\s\S]*?<\/figure\s*>/gi, (figure) =>
+      figure.replace(/<figcaption\b[^>]*>/i, '<figcaption>— '),
+    )
     .replace(
       /<h([1-6])\b[^>]*>/gi,
       (_match, level) => `\n\n${'#'.repeat(Number(level))} `,
