@@ -1109,3 +1109,8 @@ test('the summary and questions blocks add no class to the styling contract', ()
   const classes = Object.values(COMPONENT_CLASS_GROUPS).flat();
   assert.ok(!classes.some((name) => /summary|faq/.test(name)));
 });
+
+test('the end-of-post action block adds no class to the styling contract', () => {
+  const classes = Object.values(COMPONENT_CLASS_GROUPS).flat();
+  assert.ok(!classes.some((name) => /post-action/.test(name)));
+});

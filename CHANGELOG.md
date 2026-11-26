@@ -8,6 +8,31 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- **An action under each post.** `publication.postAction` (and a post's own
+  front-matter `action`, with `kind: "none"` to hide it) puts one action after
+  the post's body: `follow` (the Follow control for the first author),
+  `newsletter` (the newsletter panel moves into the block and is not repeated at
+  the end of the page; `heading` and `text` replace its title and text) or
+  `link` (one `g-btn` link to an `https://` URL or a site path). It is off until
+  chosen, is an `aside[data-gala-action]` with no new class, appears on articles
+  only and not in feeds, `llms.txt`, `llms-full.txt`, the search index or
+  per-article Markdown. The newsletter email's full-post fragment ends with the
+  `link` kind as a button-style link and carries no other kind. A kind that
+  cannot show (follow with follows off or no author, newsletter with none)
+  renders nothing and adds a `POST_ACTION_UNAVAILABLE` warning finding to the
+  manifest (`policyResult` `pass-with-warnings`). Needs `@rathnasgala2/schemas`
+  3.56.0 to validate the members.
+- **A public follower count.** With
+  `interactions-config.follows.publicCount: true` every Follow control carries
+  `data-follow-count-public` and the script also reads the follow state without
+  a token to show the API's bucketed `publicFollowers` ("20+ followers", hidden
+  at 0). The team still sees the exact count, and a dropped session no longer
+  hides the public figure. The interactive preview simulates a "20+" count.
+  Needs the API's `publicFollowers` and schemas 3.56.0; a site without the
+  setting renders and behaves as before.
+
 ## [4.20.0] - 2026-11-23
 
 ### Added
