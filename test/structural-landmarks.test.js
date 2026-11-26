@@ -21,10 +21,7 @@ import {
 } from './helpers/render-fixtures.js';
 import { buildRichFixture } from './helpers/page-kind-fixtures.js';
 import { withSummaryFaq } from './helpers/summary-faq-fixtures.js';
-import {
-  ACTIONS,
-  postActionInput,
-} from './helpers/post-action-fixtures.js';
+import { ACTIONS, postActionInput } from './helpers/post-action-fixtures.js';
 
 /**
  * @typedef {{nodeName: string, tagName?: string, attrs?: {name: string, value: string}[], childNodes?: Parse5Node[]}} Parse5Node

@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.21.0] - 2026-11-26
+
 ### Added
 
 - **An action under each post.** `publication.postAction` (and a post's own

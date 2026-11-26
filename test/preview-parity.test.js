@@ -44,10 +44,7 @@ import {
   editionRecord,
 } from './helpers/page-kind-fixtures.js';
 import { buildTestPng, sha256Of } from './helpers/media-fixtures.js';
-import {
-  ACTIONS,
-  postActionInput,
-} from './helpers/post-action-fixtures.js';
+import { ACTIONS, postActionInput } from './helpers/post-action-fixtures.js';
 import {
   createRenderDirectories,
   testProvenance,
