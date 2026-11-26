@@ -24,6 +24,7 @@ import {
   AUDIENCE_SCRIPT_PATH,
   audienceOrigins,
   followsEnabled,
+  followsPublicCount,
   serializeAudienceMessages,
 } from './audience.js';
 import {
@@ -785,7 +786,11 @@ export function buildPageDocuments(validatedInput, ctx) {
     mediaUrlOf: urlOf,
     interactions: interactionsOn ? interactionsModule : undefined,
     analytics: analyticsOn ? analyticsModule : undefined,
-    audience: { follows: followsOn, appOrigin: audienceAppOrigin },
+    audience: {
+      follows: followsOn,
+      publicCount: followsPublicCount(interactionsModule),
+      appOrigin: audienceAppOrigin,
+    },
     listen,
     composition,
   });

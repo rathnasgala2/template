@@ -349,3 +349,14 @@ test('the summary box and questions section are styled from existing tokens, wit
   const contract = Object.values(COMPONENT_CLASS_GROUPS).flat();
   assert.ok(!contract.some((name) => /summary|faq/.test(name)));
 });
+
+test('the end-of-post action block is styled from existing tokens, with no new class', () => {
+  const css = GALA_BASE_COMPONENT_CSS;
+  assert.ok(css.includes('aside[data-gala-action]'));
+  assert.ok(css.includes('#g-post-action-title'));
+  assert.ok(css.includes('aside[data-gala-action="follow"]'));
+  assert.ok(css.includes('aside[data-gala-action="newsletter"]'));
+  const contract = Object.values(COMPONENT_CLASS_GROUPS).flat();
+  assert.ok(!contract.some((name) => /post-action/.test(name)));
+  assert.ok(!/\.g-post-action/.test(css));
+});

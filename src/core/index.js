@@ -134,6 +134,7 @@ import {
   PODCAST_FEED_ROUTE,
   RSS_FEED_ROUTE,
 } from './internal/feeds.js';
+import { postActionFindings } from './internal/post-action.js';
 import {
   assertPodcastCover,
   PODCAST_COVER_UNUSABLE_FINDING,
@@ -520,6 +521,14 @@ export async function renderPublication(buildInput, options) {
     validatedInput = withoutPodcastFeed(validatedInput);
     findings.push(PODCAST_COVER_UNUSABLE_FINDING);
   }
+  // An end-of-post action that cannot show (follows off, no author, no
+  // newsletter) is a warning, not a failure (`internal/post-action.js`).
+  findings.push(
+    ...postActionFindings(
+      validatedInput,
+      selectPublishedArticles(validatedInput.content),
+    ),
+  );
   // The podcast cover must meet the artwork rule (`internal/podcast.js`).
   assertPodcastCover(readPodcast(validatedInput.publication), {
     mediaAssets,

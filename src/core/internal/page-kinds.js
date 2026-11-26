@@ -83,6 +83,12 @@ import {
   renderEditionSelector,
   resolveEditions,
 } from './editions.js';
+import {
+  postActionAvailable,
+  renderNewsletterAction,
+  renderPostAction,
+  resolvePostAction,
+} from './post-action.js';
 import { faqPage, renderFaq, renderSummary } from './summary-faq.js';
 import { renderGalascribeSection, resolvePolicyPages } from './policy-pages.js';
 import { truncateAtWord } from './seo.js';
@@ -506,9 +512,10 @@ export function sectionRouterFor(validatedInput, translations) {
  * @param {import('../../../types/index.d.ts').AnalyticsModule} [options.analytics]
  *   the validated analytics module; when set, the Galascribe section of both
  *   policy pages carries the analytics and consent paragraph
- * @param {{follows: boolean, appOrigin: string}} [options.audience] what the
+ * @param {{follows: boolean, publicCount?: boolean, appOrigin: string}} [options.audience] what the
  *   audience features need from the interactions module: whether the Follow
- *   control is on (`interactions-config.follows.enabled`) and the App origin
+ *   control is on (`interactions-config.follows.enabled`), whether its follower
+ *   count is public (`follows.publicCount`) and the App origin
  *   the Galascribe newsletter's no-JavaScript Subscribe link points at
  *   (default: follows off, the production App)
  * @param {import('./translations.js').TranslationResolution} [options.translations]
@@ -574,6 +581,8 @@ export function buildGeneratedPages(validatedInput, options) {
         })
       : '';
   const followsOn = options.audience?.follows === true;
+  const followsPublicCountOn =
+    followsOn && options.audience?.publicCount === true;
   const appOrigin = options.audience?.appOrigin ?? PRODUCTION_APP_ORIGIN;
   const publicBasePath = derivePublicBasePath(baseUrl, basePath);
   const routeProfile = options.routeProfile ?? 'directory-index';
@@ -665,7 +674,13 @@ export function buildGeneratedPages(validatedInput, options) {
       variantsOf: translations.variantsOf,
       countSlot: countSlotOf,
       followControl: (author) =>
-        followsOn ? renderFollowControl({ author, messages: catalog }) : '',
+        followsOn
+          ? renderFollowControl({
+              author,
+              messages: catalog,
+              publicCount: followsPublicCountOn,
+            })
+          : '',
       languageLabel: (tag) => languageLabel(tag, translations.languages),
       localizeAuthor: translations.active
         ? (author, record) =>
@@ -1049,6 +1064,29 @@ export function buildGeneratedPages(validatedInput, options) {
           subscribeUrl,
         })
       : newsletterHtml;
+  // The same panel with the end-of-post action's own heading and text, when
+  // it gave them (`postAction.kind: "newsletter"`).
+  /**
+   * @param {{heading?: string, text?: string}} action
+   * @returns {string} the panel markup
+   */
+  const actionNewsletter = (action) => {
+    const base =
+      galascribeNewsletter && translations.active
+        ? galascribeNewsletter
+        : publication.newsletter;
+    if (!base) return '';
+    const title = action.heading ?? base.title;
+    const text = action.text ?? base.text;
+    return renderNewsletterPanel({
+      newsletter:
+        base.mode === 'galascribe'
+          ? { ...base, title, text }
+          : { ...base, title, text },
+      messages,
+      subscribeUrl,
+    });
+  };
 
   /** @type {GeneratedPage[]} */
   const pages = [];
@@ -1425,6 +1463,42 @@ export function buildGeneratedPages(validatedInput, options) {
             )
             .join('')}</ul>`
         : '';
+    // The end-of-post action block: the post's own choice, else the site's.
+    // An unavailable kind renders nothing (the build records a manifest
+    // finding for it, `postActionFindings`).
+    const chosenAction = isArticle
+      ? resolvePostAction({
+          siteAction: publication.postAction,
+          postAction: frontmatter.action,
+        })
+      : undefined;
+    const actionAuthor = isArticle ? ui.recordAuthors(record)[0] : undefined;
+    const actionShown =
+      chosenAction !== undefined &&
+      postActionAvailable({
+        action: chosenAction,
+        followsOn,
+        hasAuthor: actionAuthor !== undefined,
+        hasNewsletter: publication.newsletter !== undefined,
+      });
+    const actionBlock =
+      !actionShown || chosenAction === undefined
+        ? ''
+        : chosenAction.kind === 'newsletter'
+          ? renderNewsletterAction(actionNewsletter(chosenAction))
+          : renderPostAction({
+              action: chosenAction,
+              followHeading: actionAuthor
+                ? /** @type {(name: string) => string} */ (
+                    messages.followAriaLabel
+                  )(actionAuthor.displayName)
+                : '',
+              followControl: actionAuthor ? follow(actionAuthor) : '',
+              sitePath: siteLocal,
+            });
+    // The panel moves into the block; it is not repeated after "Keep reading".
+    const newsletterMoved =
+      actionBlock !== '' && chosenAction?.kind === 'newsletter';
     const prose =
       `<div class="g-prose">${tocMobile}` +
       renderSlot('article-preamble') +
@@ -1441,6 +1515,7 @@ export function buildGeneratedPages(validatedInput, options) {
             icon: icon('bookmark'),
           })
         : '') +
+      actionBlock +
       tags +
       renderSlot('article-end') +
       renderSlot('article-footer-ad', { collapsed: true }) +
@@ -1628,7 +1703,7 @@ export function buildGeneratedPages(validatedInput, options) {
         `<article class="g-article" data-gala-article-layout="${composition.articleLayout}">${isArticle || isEdition ? '<div class="g-progress" aria-hidden="true"></div>' : ''}` +
         `${articleStructure({ head, cover, toc: tocNav, prose, foot })}</article>` +
         after +
-        (isArticle ? articleNewsletter() : ''),
+        (isArticle && !newsletterMoved ? articleNewsletter() : ''),
     });
   }
 

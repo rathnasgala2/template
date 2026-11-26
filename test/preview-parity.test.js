@@ -45,6 +45,12 @@ import {
 } from './helpers/page-kind-fixtures.js';
 import { buildTestPng, sha256Of } from './helpers/media-fixtures.js';
 import {
+  ACTIONS,
+  SKIP_REASON,
+  postActionInput,
+  schemaAcceptsPostAction,
+} from './helpers/post-action-fixtures.js';
+import {
   createRenderDirectories,
   testProvenance,
 } from './helpers/render-fixtures.js';
@@ -1250,6 +1256,59 @@ test('parity: a built article with a summary and questions equals its preview', 
       summary: SUMMARY,
       faq: FAQ,
     });
+  } finally {
+    await site.cleanup();
+  }
+});
+
+test('parity: a built article with an end-of-post action equals its preview, for every kind and a post override', async (t) => {
+  if (!(await schemaAcceptsPostAction())) return t.skip(SKIP_REASON);
+  const cases = /** @type {const} */ ([
+    ['follow action', { action: ACTIONS.follow, publicCount: true }, 'follow'],
+    ['newsletter action', { action: ACTIONS.newsletter }, 'newsletter'],
+    ['link action', { action: ACTIONS.link }, 'link'],
+    [
+      'action override',
+      { action: ACTIONS.follow, own: { 'first-article': ACTIONS.link } },
+      'link',
+    ],
+  ]);
+  for (const [name, options, firstKind] of cases) {
+    const site = await build({ input: await postActionInput(options) });
+    try {
+      await assertParity(name, site, { minimumPosts: 2 });
+      const html = await site.read('fixture-1/first-article/index.html');
+      assert.ok(html.includes(`data-gala-action="${firstKind}"`), name);
+      assert.equal(html.split(' data-gala-action="').length - 1, 1, name);
+    } finally {
+      await site.cleanup();
+    }
+  }
+});
+
+test('parity: the interactive preview simulates a public follower count for the follow block', async (t) => {
+  if (!(await schemaAcceptsPostAction())) return t.skip(SKIP_REASON);
+  const site = await build({
+    input: await postActionInput({
+      action: ACTIONS.follow,
+      publicCount: true,
+    }),
+  });
+  try {
+    currentSite = site;
+    const media = await mediaOf(site);
+    const record = recordOf(site.buildInput, 'first-article');
+    const input = await previewInputOf(site, record, media);
+    const getMessages = await loadMessagesFor(previewLanguages(input));
+    const out = renderContentPreview(input, {
+      getMessages,
+      preview: { interactive: INTERACTIVE },
+    });
+    assert.ok(out.html.includes('data-gala-action="follow"'));
+    assert.ok(out.html.includes('data-follow-count-public'));
+    // The runtime answers the follow read with a bucket, never a network call.
+    assert.ok(PREVIEW_RUNTIME_SOURCE.includes('publicFollowers'));
+    assert.ok(PREVIEW_RUNTIME_SOURCE.includes("display: '20+'"));
   } finally {
     await site.cleanup();
   }

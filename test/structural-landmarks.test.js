@@ -21,6 +21,12 @@ import {
 } from './helpers/render-fixtures.js';
 import { buildRichFixture } from './helpers/page-kind-fixtures.js';
 import { withSummaryFaq } from './helpers/summary-faq-fixtures.js';
+import {
+  ACTIONS,
+  SKIP_REASON,
+  postActionInput,
+  schemaAcceptsPostAction,
+} from './helpers/post-action-fixtures.js';
 
 /**
  * @typedef {{nodeName: string, tagName?: string, attrs?: {name: string, value: string}[], childNodes?: Parse5Node[]}} Parse5Node
@@ -231,4 +237,46 @@ test('S2-T06 structural test: an article with a summary and questions keeps its 
     .filter((e) => /^h[1-6]$/.test(/** @type {string} */ (e.tagName)))
     .map((e) => e.tagName);
   assert.deepEqual(levels, ['h2', 'h3', 'h3']);
+});
+
+test('S2-T06 structural test: the end-of-post action block is a named aside inside the article body, for every kind', async (t) => {
+  if (!(await schemaAcceptsPostAction())) return t.skip(SKIP_REASON);
+  for (const [kind, action, labelledBy] of /** @type {const} */ ([
+    ['follow', ACTIONS.follow, 'g-post-action-title'],
+    ['newsletter', ACTIONS.newsletter, 'newsletter-title'],
+    ['link', { ...ACTIONS.link, heading: 'Next step' }, 'g-post-action-title'],
+  ])) {
+    const buildInput = await postActionInput({ action });
+    const { outputDirectory, workDirectory, sourceDirectory, cleanup } =
+      await createRenderDirectories();
+    t.after(cleanup);
+    await renderPublication(buildInput, {
+      outputDirectory,
+      workDirectory,
+      sourceDirectory,
+      provenance: testProvenance(),
+    });
+    const routePath = 'fixture-1/first-article/index.html';
+    const html = await readFile(path.join(outputDirectory, routePath), 'utf8');
+    assertSkeletonStructure(html, routePath);
+    const elements = collectElements(/** @type {Parse5Node} */ (parse(html)));
+    const asides = elements.filter((e) => attr(e, 'data-gala-action'));
+    assert.equal(asides.length, 1, kind);
+    const aside = asides[0];
+    assert.equal(aside.tagName, 'aside', kind);
+    assert.equal(attr(aside, 'data-gala-action'), kind);
+    assert.equal(attr(aside, 'aria-labelledby'), labelledBy, kind);
+    const heading = elements.find((e) => attr(e, 'id') === labelledBy);
+    assert.equal(heading?.tagName, 'h2', kind);
+    assert.ok(collectElements(aside).includes(heading), kind);
+    // Inside the article's prose column, not beside it.
+    const prose = elements.find((e) => attr(e, 'class') === 'g-prose');
+    assert.ok(prose && collectElements(prose).includes(aside), kind);
+    // One panel per page: the newsletter did not stay behind at the end.
+    assert.equal(
+      elements.filter((e) => attr(e, 'id') === 'newsletter-title').length,
+      1,
+      kind,
+    );
+  }
 });

@@ -132,7 +132,31 @@ export interface ContentFrontmatterNormalized {
   summary?: string;
   /** Questions and answers shown after the body, 1 to 20 (schemas 3.55.0). */
   faq?: readonly ContentFaqItem[];
+  /**
+   * This post's end-of-post action instead of the site's; `kind: "none"` hides
+   * the block. `kind: "article"` only (schemas 3.56.0).
+   */
+  action?: PostActionOverride;
 }
+
+/**
+ * One end-of-post action (schemas 3.56.0). `heading` is 1 to 80 and `text` 1 to
+ * 280 characters of plain text; a link's `label` is 1 to 40 and its `url` an
+ * absolute `https://` URL or a site path starting with a single `/`.
+ */
+export type PostAction =
+  | { kind: 'follow'; heading?: string; text?: string }
+  | { kind: 'newsletter'; heading?: string; text?: string }
+  | {
+      kind: 'link';
+      heading?: string;
+      text?: string;
+      label: string;
+      url: string;
+    };
+
+/** A post's own action: one of the above, or `none` to hide the block. */
+export type PostActionOverride = PostAction | { kind: 'none' };
 
 /** One question and its plain-text answer; the answer may hold line feeds. */
 export interface ContentFaqItem {
@@ -236,6 +260,10 @@ export interface PublicationNormalized {
         emailContent: 'card' | 'full';
         replyToOwner: boolean;
       };
+  /**
+   * The end-of-post action block (schemas 3.56.0); absent means no block.
+   */
+  postAction?: PostAction;
   /**
    * The contact form (schemas 3.22.0): `intro` is the rendered body of the
    * optional `gala/theme-pages/contact.md`.
@@ -364,7 +392,11 @@ export interface InteractionsConfig {
   };
   publicCounts: { reactions: boolean; comments: boolean };
   /** The author Follow control (schemas 3.22.0); absent means off. */
-  follows?: { enabled: boolean };
+  follows?: {
+    enabled: boolean;
+    /** Show the follower count to everyone, bucketed (schemas 3.56.0); absent means off. */
+    publicCount?: boolean;
+  };
 }
 
 /** `build-input.modules.interactions`: the config plus the two origins. */

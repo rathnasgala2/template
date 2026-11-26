@@ -80,6 +80,19 @@ export function followsEnabled(module) {
 }
 
 /**
+ * Whether every Follow control also shows the follower count to everyone
+ * (schemas 3.56.0 `follows.publicCount`): the Follow control is on and the
+ * site opted in. The count is bucketed by the API like every public count.
+ *
+ * @param {import('../../../types/index.d.ts').InteractionsModule | undefined} module
+ *   the validated interactions module, if any
+ * @returns {boolean} whether the controls carry `data-follow-count-public`
+ */
+export function followsPublicCount(module) {
+  return followsEnabled(module) && module?.config.follows?.publicCount === true;
+}
+
+/**
  * The two origins the script talks to and links to: the interactions
  * module's (the local stack names its own), else the production pair.
  *
@@ -127,19 +140,27 @@ function lookups(messages) {
  * @param {{id: string, displayName: string}} options.author the author (the
  *   stable id keys the follow)
  * @param {Messages} options.messages the page's message catalog
+ * @param {boolean} [options.publicCount] the site shows the follower count to
+ *   everyone (`follows.publicCount`)
  * @returns {string} the control markup
  */
-export function renderFollowControl({ author, messages }) {
+export function renderFollowControl({ author, messages, publicCount }) {
   const { text, call } = lookups(messages);
   const name = author.displayName;
+  // With a public count the figure is not the team's: no "only your team"
+  // hint on it, and the control says so with `data-follow-count-public`.
+  const hint = publicCount ? '' : ` title="${text('followersTeamHint')}"`;
+  const hintText = publicCount
+    ? ''
+    : `<span class="g-sr-only"> ${text('followersTeamHint')}</span>`;
   return (
-    `<span class="g-follow" data-gala-audience="follow" data-author-id="${escapeHtml(author.id)}" data-author-name="${escapeHtml(name)}" data-state="idle" hidden>` +
+    `<span class="g-follow" data-gala-audience="follow" data-author-id="${escapeHtml(author.id)}" data-author-name="${escapeHtml(name)}"${publicCount ? ' data-follow-count-public' : ''} data-state="idle" hidden>` +
     `<button class="g-btn g-follow-btn" type="button" data-follow-action="follow" aria-label="${call('followAriaLabel', name)}">${icon('plus')}<span>${text('followLabel')}</span></button>` +
     `<span class="g-follow-on" data-follow-on hidden>` +
     `<span class="g-follow-state">${icon('check')}<span>${text('followingLabel')}</span></span>` +
     `<button class="g-follow-undo" type="button" data-follow-action="unfollow" aria-label="${call('unfollowAriaLabel', name)}">${text('unfollowLabel')}</button>` +
     `</span>` +
-    `<span class="g-follow-count" data-follow-count title="${text('followersTeamHint')}" hidden>${icon('users')}<span data-follow-count-text></span><span class="g-sr-only"> ${text('followersTeamHint')}</span></span>` +
+    `<span class="g-follow-count" data-follow-count${hint} hidden>${icon('users')}<span data-follow-count-text></span>${hintText}</span>` +
     `<span class="g-follow-status" role="status" aria-live="polite"></span>` +
     `</span>`
   );

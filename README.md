@@ -1145,7 +1145,18 @@ author page. Editions, listings and the home cover story carry none. It ships
   `role="status"` live region; an error also sets `data-error`.
 - **Reading:** with a reader token, one `GET .../authors/{authorId}/follow` per
   distinct author sets every control for that author; without a token nothing is
-  requested. An author the API does not know hides its controls.
+  requested, except for the public count below. An author the API does not know
+  hides its controls.
+- **Follower count:** the team sees the exact `followers` the API sends it. With
+  `interactions-config.follows.publicCount: true` (default off; needs
+  `follows.enabled`; schemas 3.56.0) every control carries
+  `data-follow-count-public`, and the script also reads the follow state
+  anonymously (no Authorization header) to show the API's bucketed
+  `publicFollowers` (`lowerBound`, `display`, `label`): exact from 1 to 9, then
+  "10+", "20+" and so on, shown as "20+ followers" in the page's language and
+  hidden at 0. A signed-in team member still sees the exact number, and a
+  dropped session brings the public figure back instead of hiding it. The public
+  count carries no "only your team sees this" hint.
 - **Following** is `PUT`, **Unfollow** `DELETE`, both with the bearer token.
   `FOLLOWS_DISABLED`, `AUTHOR_NOT_FOUND`/`PUBLICATION_NOT_LIVE`, `RATE_LIMITED`,
   a network failure and anything else each have their own sentence; a rejected
@@ -1161,6 +1172,44 @@ author page. Editions, listings and the home cover story carry none. It ships
 The classes (`g-follow`, `g-follow-btn`, `g-follow-on`, `g-follow-state`,
 `g-follow-undo`, `g-follow-status`) are owned by the base layer and read tokens
 only, like `g-counts`; `g-btn` is the published hook.
+
+### End-of-post action
+
+One action under each article, never a row of buttons. It is off until chosen: a
+site with no setting renders exactly what it rendered before. The site's choice
+is `publication.postAction` in `gala/publication.json`; a post's own
+front-matter `action` replaces it, and `action: {kind: "none"}` hides it on that
+post (schemas 3.56.0; the build input carries both as authored). Three kinds:
+
+- `{kind: "follow", heading?, text?}`: the Follow control for the post's first
+  author, headed "Follow {author name}" (the Follow control's own accessible
+  label, in the page's language) unless `heading` says otherwise.
+- `{kind: "newsletter", heading?, text?}`: the newsletter panel moves here and
+  is not repeated at the end of that page; `heading` and `text` replace the
+  panel's title and text. The home page and listings keep their panel.
+- `{kind: "link", heading?, text?, label, url}`: one `g-btn` link. `url` is an
+  absolute `https://` URL (rendered with `rel="noopener"`) or a site path
+  starting with a single `/` (rendered as the page links the site, base path
+  included).
+
+The block is an `aside` with `data-gala-action="follow|newsletter|link"`, inside
+the article's prose after the questions section (or the body) and before the
+tags; `heading` is its `h2` (`id="g-post-action-title"`, or the panel's
+`newsletter-title`). It adds no class, so the styling contract and every
+published theme stay valid; the base layer styles it by attribute. A `follow`
+block stays hidden until the script shows the control. It is not on pages,
+editions, the home page or listings, and is site chrome: not in feeds,
+`llms.txt`, `llms-full.txt`, the search index or per-article Markdown. The
+newsletter email carries only the `link` kind, as a button-style link at the end
+of the full-post fragment.
+
+A kind that cannot show (follow with follows off or a post with no author,
+newsletter with no `publication.newsletter`) renders nothing and does not fail
+the build: the manifest carries one `POST_ACTION_UNAVAILABLE` warning finding
+per setting that chose it (pointer `/publication/postAction`, or the post's
+`/content/<index>/frontmatter/action`; message key `post-action-unavailable`)
+and `policyResult` is `pass-with-warnings`. The interactive preview shows the
+block like the published page and simulates a public follower count of "20+".
 
 ### Galascribe newsletter
 
@@ -1251,6 +1300,9 @@ generation is certified live and puts it in the newsletter email.
   `style` only on `pre`, `code`, `blockquote`, `table`, `th`, `td`, `hr` and
   `figure`. Rewriting is tag by tag, so text, including code samples that show
   markup, is untouched.
+- When the post's end-of-post action is the `link` kind, the body is followed by
+  one paragraph holding that link as an inline-styled button (site paths made
+  absolute); the `follow` and `newsletter` kinds are not mailed.
 - A fragment is not a page: it is in no sitemap, feed, search index or `llms`
   file, and the manifest lists it like other outputs (`routeClass: "asset"`,
   `text/html; charset=utf-8`). A site on a host that skips underscore folders

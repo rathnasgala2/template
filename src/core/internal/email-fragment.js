@@ -14,6 +14,8 @@
  * - it is a plain document (no theme, no site script, no stylesheet link, no
  *   CSP tag): `<html>`, a `<head>` of charset, robots and title, and a `<body>`
  *   holding one `<div data-gala-email-body lang dir>` with the post's body;
+ * - a post whose end-of-post action is a `link` ends with it as a
+ *   button-style link (`internal/post-action.js`); no other kind is mailed;
  * - the body is the post's sanitized HTML (no script, form, iframe or event
  *   attribute can be in it), with a leading heading that repeats the title
  *   dropped, every link and image `src` absolute, every image the largest
@@ -33,6 +35,7 @@ import {
   dropLeadingTitleHeading,
   selectPublishedArticles,
 } from './page-kinds.js';
+import { renderEmailAction, resolvePostAction } from './post-action.js';
 import { escapeHtml, unescapeHtml } from './skeleton.js';
 import { resolveTextDirection } from './text-direction.js';
 
@@ -172,13 +175,23 @@ export function buildEmailFragments(
       emailBody(dropLeadingTitleHeading(record.body, frontmatter.title)),
       absoluteUrl(contentRoute(frontmatter)),
     );
+    // The end-of-post action reaches the email only as a button-style link
+    // (`link` kind): a subscriber already has the newsletter, and following
+    // needs the site.
+    const actionHtml = renderEmailAction(
+      resolvePostAction({
+        siteAction: validatedInput.publication.postAction,
+        postAction: frontmatter.action,
+      }),
+      absoluteUrl,
+    );
     return {
       contentId: frontmatter.id,
       route: emailFragmentRoute(frontmatter.id),
       content: renderEmailFragment({
         title: frontmatter.title,
         language: frontmatter.language,
-        bodyHtml,
+        bodyHtml: bodyHtml + actionHtml,
       }),
     };
   });

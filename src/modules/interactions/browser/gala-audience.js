@@ -24,7 +24,9 @@
  * applied when the page loads again. The pending record carries the intent
  * `{kind: "follow", authorId}`; the interactions script leaves a sign-in
  * return with that intent to this script, and this script leaves every other
- * intent to it. The state is read with GET only when a token exists.
+ * intent to it. The state is read with GET only when a token exists, except that a control
+ * with `data-follow-count-public` (the site's `follows.publicCount`) also reads
+ * anonymously for `publicFollowers`, the bucketed count every caller gets.
  *
  * Newsletter: `POST .../newsletter-subscriptions` `{email, trap}`. Every
  * accepted answer (including a honeypot hit) reads "Check your inbox to
@@ -121,6 +123,8 @@
 
   /** @type {{accessToken: string, expiresAt: string} | null} */
   let session = null;
+  /** @type {Map<string, string>} each author's public follower sentence */
+  const publicLabels = new Map();
   /** @returns {typeof session} the stored reader session when still valid */
   function loadSession() {
     const stored = readJson('localStorage', SESSION_KEY);
@@ -139,13 +143,19 @@
   function dropSession() {
     session = null;
     writeStorage('localStorage', SESSION_KEY, null);
-    // The follower count is only for a signed-in team member.
+    // The exact follower count is only for a signed-in team member. A public
+    // count (`data-follow-count-public`) is not the session's: it goes back
+    // to the bucket the API gave everyone.
     for (const count of Array.from(
       document.querySelectorAll('[data-follow-count]'),
     )) {
-      /** @type {HTMLElement} */ (count).hidden = true;
+      const control = count.closest('[data-follow-count-public]');
+      const open = control
+        ? publicLabels.get(control.getAttribute('data-author-id') || '') || ''
+        : '';
+      /** @type {HTMLElement} */ (count).hidden = open === '';
       const text = count.querySelector('[data-follow-count-text]');
-      if (text) text.textContent = '';
+      if (text) text.textContent = open;
     }
   }
 
@@ -467,40 +477,91 @@
   }
 
   /**
-   * Show or hide the follower count (visible only to the site's team: the
-   * API sends `followers` to nobody else) on every control for one author.
-   * Anything but a non-negative integer number hides it.
+   * @param {number} n a count
+   * @param {string} shown the figure to show, as the digits or the API's bucket
+   * @returns {string} the sentence ("1 follower", "20+ followers")
+   */
+  function followersSentence(n, shown) {
+    return (n === 1 ? messages.followersOne : messages.followersOther).replace(
+      '{count}',
+      shown,
+    );
+  }
+
+  /**
+   * @param {unknown} followers the answer's exact `followers` (team only)
+   * @returns {string} its sentence, empty unless a non-negative integer
+   */
+  function exactSentence(followers) {
+    if (
+      typeof followers !== 'number' ||
+      !Number.isInteger(followers) ||
+      followers < 0 ||
+      !(messages.followersOne && messages.followersOther)
+    ) {
+      return '';
+    }
+    let formatted = String(followers);
+    try {
+      formatted = followers.toLocaleString(
+        document.documentElement.lang || 'en',
+      );
+    } catch {
+      // An unknown language tag keeps the plain digits.
+    }
+    return followersSentence(followers, formatted);
+  }
+
+  /**
+   * @param {unknown} count the answer's `publicFollowers` (a bucketed
+   *   `PublicCount`: `lowerBound`, `display`, `label`)
+   * @returns {string} its sentence, empty at 0 or when malformed
+   */
+  function publicSentence(count) {
+    const bucket = /** @type {any} */ (count);
+    if (
+      !bucket ||
+      typeof bucket !== 'object' ||
+      typeof bucket.lowerBound !== 'number' ||
+      !Number.isInteger(bucket.lowerBound) ||
+      bucket.lowerBound <= 0 ||
+      typeof bucket.display !== 'string' ||
+      bucket.display === '' ||
+      !(messages.followersOne && messages.followersOther)
+    ) {
+      return '';
+    }
+    return followersSentence(bucket.lowerBound, bucket.display);
+  }
+
+  /**
+   * Show or hide the follower count on every control for one author. The
+   * exact `followers` is the site team's only (the API sends it to nobody
+   * else) and wins when present. A control with `data-follow-count-public`
+   * otherwise shows the bucketed `publicFollowers` every caller gets (hidden
+   * at 0); an answer that carries neither keeps what such a control shows.
+   * Anything but a non-negative integer number hides the exact count.
    *
    * @param {string} authorId
    * @param {unknown} followers the answer's `followers`
+   * @param {unknown} [publicFollowers] the answer's `publicFollowers`
    */
-  function showFollowers(authorId, followers) {
-    const valid =
-      typeof followers === 'number' &&
-      Number.isInteger(followers) &&
-      followers >= 0 &&
-      Boolean(messages.followersOne && messages.followersOther);
-    let label = '';
-    if (valid) {
-      const n = /** @type {number} */ (followers);
-      let formatted = String(n);
-      try {
-        formatted = n.toLocaleString(document.documentElement.lang || 'en');
-      } catch {
-        // An unknown language tag keeps the plain digits.
-      }
-      label = (
-        n === 1 ? messages.followersOne : messages.followersOther
-      ).replace('{count}', formatted);
-    }
+  function showFollowers(authorId, followers, publicFollowers) {
+    const exact = exactSentence(followers);
+    const open = publicSentence(publicFollowers);
+    const answered = publicFollowers !== undefined;
+    if (answered) publicLabels.set(authorId, open);
     for (const control of controlsFor(authorId)) {
       const count = /** @type {HTMLElement | null} */ (
         control.querySelector('[data-follow-count]')
       );
       const text = control.querySelector('[data-follow-count-text]');
       if (!count || !text) continue;
+      const isPublic = control.hasAttribute('data-follow-count-public');
+      if (isPublic && exact === '' && !answered) continue;
+      const label = exact !== '' ? exact : isPublic ? open : '';
       text.textContent = label;
-      count.hidden = !valid;
+      count.hidden = label === '';
     }
   }
 
@@ -554,7 +615,11 @@
           ? result.following
           : adding;
       showFollowing(authorId, following);
-      showFollowers(authorId, result && result.followers);
+      showFollowers(
+        authorId,
+        result && result.followers,
+        result ? result.publicFollowers : undefined,
+      );
       announce(
         status,
         say(following ? 'followed' : 'unfollowed').replace('{name}', name),
@@ -588,40 +653,68 @@
   }
 
   /**
-   * Read each distinct author's state once, when a token exists.
+   * Read each distinct author's state once. With a token the read carries it
+   * (the reader's own state and, for the team, the exact count). Without one
+   * only the authors whose controls show a public count are read, anonymously,
+   * for `publicFollowers`.
    *
    * @returns {Promise<void>}
    */
   async function readFollowStates() {
-    if (!session) return;
+    const signedIn = session !== null;
     const ids = [
-      ...new Set(followControls().map((c) => c.dataset.authorId || '')),
+      ...new Set(
+        followControls()
+          .filter((c) => signedIn || c.hasAttribute('data-follow-count-public'))
+          .map((c) => c.dataset.authorId || ''),
+      ),
     ];
-    await Promise.all(
-      ids.map(async (authorId) => {
-        try {
-          const result = await api(
-            'GET',
-            PUBLICATION_PATH +
-              '/authors/' +
-              encodeURIComponent(authorId) +
-              '/follow',
-            { auth: true },
-          );
+    /**
+     * @param {string} authorId
+     * @param {boolean} withToken whether the read carries the reader's token
+     * @returns {Promise<void>}
+     */
+    async function readOne(authorId, withToken) {
+      try {
+        const result = await api(
+          'GET',
+          PUBLICATION_PATH +
+            '/authors/' +
+            encodeURIComponent(authorId) +
+            '/follow',
+          { auth: withToken },
+        );
+        if (withToken) {
           showFollowing(authorId, Boolean(result && result.following));
-          showFollowers(authorId, result && result.followers);
-        } catch (error) {
-          if (error instanceof ApiError && error.status === 401) dropSession();
+        }
+        showFollowers(
+          authorId,
+          result && result.followers,
+          result ? result.publicFollowers : undefined,
+        );
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          dropSession();
+          // A stale token does not cost a public count its read.
           if (
-            error instanceof ApiError &&
-            (error.code === 'AUTHOR_NOT_FOUND' ||
-              error.code === 'PUBLICATION_NOT_LIVE')
+            withToken &&
+            controlsFor(authorId).some((c) =>
+              c.hasAttribute('data-follow-count-public'),
+            )
           ) {
-            for (const control of controlsFor(authorId)) control.hidden = true;
+            await readOne(authorId, false);
           }
         }
-      }),
-    );
+        if (
+          error instanceof ApiError &&
+          (error.code === 'AUTHOR_NOT_FOUND' ||
+            error.code === 'PUBLICATION_NOT_LIVE')
+        ) {
+          for (const control of controlsFor(authorId)) control.hidden = true;
+        }
+      }
+    }
+    await Promise.all(ids.map((authorId) => readOne(authorId, signedIn)));
   }
 
   async function initFollow() {
