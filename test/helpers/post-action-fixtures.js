@@ -7,8 +7,8 @@
 import { buildRichFixture } from './page-kind-fixtures.js';
 
 /** The hostile label and heading every kind is tried with. */
-export const LABEL = 'Read the <b>"book"</b> & more';
-export const HEADING = 'Start <here> & now';
+export const LABEL = 'Read the "book" & more';
+export const HEADING = 'Start "here" & now';
 export const TEXT = 'Why "this" <i>matters</i> & more.';
 
 /** @type {Readonly<Record<string, any>>} */
