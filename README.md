@@ -1,5 +1,14 @@
 # `@rathnasgala2/template`
 
+**Part of [Galascribe](https://galascribe.com)**, blog publishing software and a
+Markdown publishing platform for a site you own: you write in an editor, every
+post is a Markdown file in your own GitHub repository, and the site is published
+to GitHub Pages on your own domain, with scheduled posts, RSS feeds, six
+built-in themes and search. This repository is the static site renderer that
+turns those Markdown files into the published site.
+[What Galascribe does](https://app.galascribe.com/features) ·
+[Markdown publishing platform](https://app.galascribe.com/markdown-publishing-platform)
+
 The deterministic Eleventy-backed static publication renderer for Galascribe's
 portable author repository format. It is one of the three author-facing S2
 artifacts, alongside one `@rathnasgala2/theme-*` package and
