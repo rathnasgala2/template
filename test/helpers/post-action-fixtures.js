@@ -1,15 +1,10 @@
 /**
  * Shared fixtures for the end-of-post action block (schemas 3.56.0): build
  * inputs that carry `publication.postAction`, a post's `action` and the
- * interactions config's `follows.publicCount`, and a probe for whether the
- * installed build-input schema accepts them yet.
- *
- * Re-pin to 3.56.0: delete {@link schemaAcceptsPostAction}, {@link SKIP_REASON}
- * and every `{skip: ...}` that uses them (search `schemaAcceptsPostAction`).
+ * interactions config's `follows.publicCount`.
  */
 
 import { buildRichFixture } from './page-kind-fixtures.js';
-import { renderSite } from './render-fixtures.js';
 
 /** The hostile label and heading every kind is tried with. */
 export const LABEL = 'Read the <b>"book"</b> & more';
@@ -83,38 +78,6 @@ export async function postActionInput(options = {}) {
   );
   return input;
 }
-
-/** @type {Promise<boolean> | undefined} */
-let supported;
-
-/**
- * Whether the installed `@rathnasgala2/schemas` accepts `postAction`, a
- * front-matter `action` and `follows.publicCount`. It does from 3.56.0; until
- * the lock moves, the tests that build with them skip with {@link SKIP_REASON}.
- *
- * @returns {Promise<boolean>} true when a build input carrying them validates
- */
-export function schemaAcceptsPostAction() {
-  supported ??= (async () => {
-    try {
-      const site = await renderSite(
-        await postActionInput({
-          action: ACTIONS.link,
-          own: { 'second-article': { kind: 'none' } },
-          publicCount: true,
-        }),
-      );
-      await site.cleanup();
-      return true;
-    } catch {
-      return false;
-    }
-  })();
-  return supported;
-}
-
-export const SKIP_REASON =
-  'needs @rathnasgala2/schemas 3.56.0 (postAction, action and follows.publicCount in build-input)';
 
 /** @type {string} the article the tests read */
 export const FIRST_ARTICLE = 'fixture-1/first-article/index.html';

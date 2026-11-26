@@ -28,11 +28,9 @@ import {
   FIRST_ARTICLE,
   HEADING,
   LABEL,
-  SKIP_REASON,
   TEXT,
   actionBlocks,
   postActionInput,
-  schemaAcceptsPostAction,
 } from './helpers/post-action-fixtures.js';
 import { renderSite } from './helpers/render-fixtures.js';
 
@@ -47,17 +45,6 @@ async function build(t, options) {
   const site = await renderSite(input);
   t.after(site.cleanup);
   return { ...site, input };
-}
-
-/**
- * @param {import('node:test').TestContext} t the test
- * @returns {Promise<boolean>} true (after skipping the test) when the
- *   installed schemas do not accept the new members yet
- */
-async function skipped(t) {
-  if (await schemaAcceptsPostAction()) return false;
-  t.skip(SKIP_REASON);
-  return true;
 }
 
 test('resolution: the post decides, none hides, absent falls back to the site', () => {
@@ -241,7 +228,6 @@ test('findings: a post with no author cannot follow its author', async () => {
 });
 
 test('no site setting and no post setting: the page has no block and is byte for byte the page without the feature', async (t) => {
-  if (await skipped(t)) return;
   const plain = await build(t, {});
   assert.equal(actionBlocks(await plain.htmlOf(FIRST_ARTICLE)), 0);
   assert.deepEqual(plain.manifest.findings, []);
@@ -249,7 +235,6 @@ test('no site setting and no post setting: the page has no block and is byte for
 });
 
 test('follow: after the body and before the tags, for the first author, on articles only', async (t) => {
-  if (await skipped(t)) return;
   const site = await build(t, { action: { ...ACTIONS.follow, text: TEXT } });
   const html = await site.htmlOf(FIRST_ARTICLE);
   assert.equal(actionBlocks(html), 1);
@@ -277,7 +262,6 @@ test('follow: after the body and before the tags, for the first author, on artic
 });
 
 test('link: an external URL and a site path, hostile text escaped', async (t) => {
-  if (await skipped(t)) return;
   const external = await build(t, {
     action: { ...ACTIONS.link, heading: HEADING, text: TEXT },
   });
@@ -299,7 +283,6 @@ test('link: an external URL and a site path, hostile text escaped', async (t) =>
 });
 
 test('newsletter: the panel moves into the block and is not repeated; home keeps its own', async (t) => {
-  if (await skipped(t)) return;
   const site = await build(t, {
     action: { kind: 'newsletter', heading: HEADING, text: TEXT },
   });
@@ -341,7 +324,6 @@ test('newsletter: the panel moves into the block and is not repeated; home keeps
 });
 
 test('a post overrides the site, and none hides the block', async (t) => {
-  if (await skipped(t)) return;
   const site = await build(t, {
     action: ACTIONS.follow,
     own: {
@@ -358,7 +340,6 @@ test('a post overrides the site, and none hides the block', async (t) => {
 });
 
 test('a kind that cannot show renders nothing and warns once, without failing the build', async (t) => {
-  if (await skipped(t)) return;
   for (const [label, options] of /** @type {const} */ ([
     ['follow with follows off', { action: ACTIONS.follow, follows: false }],
     ['newsletter with none', { action: ACTIONS.newsletter, newsletter: false }],
@@ -383,7 +364,6 @@ test('a kind that cannot show renders nothing and warns once, without failing th
 });
 
 test('the newsletter email ends with a link-kind action and carries no other kind', async (t) => {
-  if (await skipped(t)) return;
   const fragment = async (/** @type {any} */ action) => {
     const input = await postActionInput({
       action,
@@ -421,7 +401,6 @@ test('the newsletter email ends with a link-kind action and carries no other kin
 });
 
 test('the action is site chrome: no feed, llms file, search index, post list or Markdown mentions it', async (t) => {
-  if (await skipped(t)) return;
   const site = await build(t, {
     action: { ...ACTIONS.link, heading: HEADING, text: TEXT },
     own: { 'second-article': { ...ACTIONS.link, label: 'UNIQUE-OWN-LABEL' } },
@@ -471,7 +450,6 @@ test('the action is site chrome: no feed, llms file, search index, post list or 
 });
 
 test('the follower count is public only when the site opts in', async (t) => {
-  if (await skipped(t)) return;
   const on = await build(t, { action: ACTIONS.follow, publicCount: true });
   const html = await on.htmlOf(FIRST_ARTICLE);
   // The byline control and the author card control and the block's own.

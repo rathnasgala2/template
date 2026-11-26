@@ -23,9 +23,7 @@ import { buildRichFixture } from './helpers/page-kind-fixtures.js';
 import { withSummaryFaq } from './helpers/summary-faq-fixtures.js';
 import {
   ACTIONS,
-  SKIP_REASON,
   postActionInput,
-  schemaAcceptsPostAction,
 } from './helpers/post-action-fixtures.js';
 
 /**
@@ -240,7 +238,6 @@ test('S2-T06 structural test: an article with a summary and questions keeps its 
 });
 
 test('S2-T06 structural test: the end-of-post action block is a named aside inside the article body, for every kind', async (t) => {
-  if (!(await schemaAcceptsPostAction())) return t.skip(SKIP_REASON);
   for (const [kind, action, labelledBy] of /** @type {const} */ ([
     ['follow', ACTIONS.follow, 'g-post-action-title'],
     ['newsletter', ACTIONS.newsletter, 'newsletter-title'],
