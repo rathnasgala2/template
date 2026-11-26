@@ -8,6 +8,19 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.21.1] - 2026-11-26
+
+### Fixed
+
+- **A button inside the post body keeps its own colours.** The prose link rules
+  (colour, underline, `:visited`, `:hover`) no longer match a `g-btn`, so the
+  action block's link button and the newsletter panel's Subscribe button read
+  with their button text colour instead of the link colour.
+- **A quote's caption lines up with its text.** The quote figure now carries the
+  quote's inline-start border and padding, so the caption (and the photo) start
+  where the quote text starts in every theme; a centred theme centres the
+  caption too.
+
 ## [4.21.0] - 2026-11-26
 
 ### Added

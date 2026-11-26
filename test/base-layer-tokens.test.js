@@ -360,3 +360,18 @@ test('the end-of-post action block is styled from existing tokens, with no new c
   assert.ok(!contract.some((name) => /post-action/.test(name)));
   assert.ok(!/\.g-post-action/.test(css));
 });
+
+test('no prose link rule can match a button', () => {
+  const rules = [...GALA_BASE_COMPONENT_CSS.matchAll(/([^{}]+)\{/g)]
+    .flatMap((match) => match[1].split(/,(?![^(]*\))/))
+    .map((selector) => selector.trim())
+    .filter((selector) => /\.g-prose\s+a(?![\w-])/.test(selector));
+  assert.ok(rules.length >= 3, 'the prose link rules are found');
+  for (const selector of rules) {
+    assert.match(
+      selector,
+      /^\.g-prose a:not\([^)]*\.g-btn[^)]*\)/,
+      `prose link selector must exclude .g-btn: ${selector}`,
+    );
+  }
+});

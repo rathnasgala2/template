@@ -631,9 +631,9 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-prose h3 { margin-top: 1.8em; margin-bottom: 0; font-size: clamp(1.25rem, 1.1rem + .6vw, 1.5rem); }
   .g-prose h4 { margin-top: 1.6em; font-size: 1.125rem; }
   .g-prose strong, .g-prose b { font-weight: var(--gala-weight-strong); }
-  .g-prose a:not(.g-tag, [data-toc]) { color: var(--gala-color-link); text-decoration: underline; text-decoration-color: var(--gala-color-link-underline); text-decoration-thickness: var(--gala-link-thickness); text-underline-offset: var(--gala-link-offset); text-decoration-skip-ink: var(--gala-link-skip-ink); transition: text-decoration-color var(--gala-duration-fast) var(--gala-ease-standard), text-underline-offset var(--gala-duration-fast) var(--gala-ease-standard); }
-  .g-prose a:not(.g-tag, [data-toc]):visited { color: var(--gala-color-link-visited); }
-  .g-prose a:not(.g-tag, [data-toc]):hover { text-decoration-color: var(--gala-color-link-underline-hover); text-underline-offset: var(--gala-link-offset-hover); }
+  .g-prose a:not(.g-tag, .g-btn, [data-toc]) { color: var(--gala-color-link); text-decoration: underline; text-decoration-color: var(--gala-color-link-underline); text-decoration-thickness: var(--gala-link-thickness); text-underline-offset: var(--gala-link-offset); text-decoration-skip-ink: var(--gala-link-skip-ink); transition: text-decoration-color var(--gala-duration-fast) var(--gala-ease-standard), text-underline-offset var(--gala-duration-fast) var(--gala-ease-standard); }
+  .g-prose a:not(.g-tag, .g-btn, [data-toc]):visited { color: var(--gala-color-link-visited); }
+  .g-prose a:not(.g-tag, .g-btn, [data-toc]):hover { text-decoration-color: var(--gala-color-link-underline-hover); text-underline-offset: var(--gala-link-offset-hover); }
   .g-prose ul:not(.g-tags), .g-prose ol:not(.g-toc-list) { padding-left: 1.4em; }
   .g-prose ul:not(.g-tags) { list-style: disc; }
   .g-prose ol:not(.g-toc-list) { list-style: decimal; }
@@ -919,9 +919,9 @@ export const GALA_BASE_COMPONENT_CSS = `
     .g-poll__bar { transition: none; }
   }
   /* ---------- quote block (a testimonial: the quote, then who said it; the mark comes from the blockquote rule) ---------- */
-  .g-quote { display: grid; gap: var(--gala-space-3); min-width: 0; margin-block: 2em; }
-  .g-quote blockquote { margin: 0; }
-  .g-quote figcaption { display: flex; align-items: center; flex-wrap: wrap; gap: var(--gala-space-2); padding-inline-start: var(--gala-space-4); font-family: var(--gala-font-ui); font-size: .9375rem; line-height: 1.4; color: var(--gala-color-text-muted); overflow-wrap: anywhere; }
+  .g-quote { display: grid; gap: var(--gala-space-3); min-width: 0; margin-block: 2em; padding: var(--gala-quote-pad); border-left: var(--gala-border-quote); text-align: var(--gala-quote-align); }
+  .g-quote > blockquote { margin: 0; padding: 0; border: 0; }
+  .g-quote figcaption { display: flex; align-items: center; flex-wrap: wrap; gap: var(--gala-space-2); justify-content: var(--gala-quote-align); font-family: var(--gala-font-ui); font-size: .9375rem; line-height: 1.4; color: var(--gala-color-text-muted); overflow-wrap: anywhere; }
   .g-quote figcaption a { color: var(--gala-color-text); font-weight: var(--gala-weight-ui); }
   .g-quote figcaption img { flex: none; width: 2.75rem; height: 2.75rem; max-width: none; object-fit: cover; border-radius: 50%; border: var(--gala-border-card); }
   /* ---------- recommendations (the About page) ---------- */
