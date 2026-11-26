@@ -18,7 +18,8 @@ import {
 
 test('C. module absence: every empty-modules-placements S2 fixture case behaves exactly as its expectedDiagnostics say', async () => {
   const family = await loadS2FixtureFamily('empty-modules-placements');
-  assert.equal(family.cases.length, 10);
+  // SCHEMA-3.56.0 adds the follows.publicCount valid and not-boolean cases.
+  assert.equal(family.cases.length, 12);
   for (const caseId of [
     'build-input-valid-interactions-module',
     'build-input-valid-policies',
@@ -26,6 +27,8 @@ test('C. module absence: every empty-modules-placements S2 fixture case behaves 
     'build-input-rejects-follows-unknown-member',
     'build-input-rejects-follows-without-enabled',
     'build-input-rejects-follows-enabled-not-boolean',
+    'build-input-valid-follows-public-count',
+    'build-input-rejects-follows-public-count-not-boolean',
   ]) {
     assert.ok(
       family.cases.some((fixtureCase) => fixtureCase.caseId === caseId),
