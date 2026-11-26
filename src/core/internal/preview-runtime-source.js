@@ -296,7 +296,15 @@ export const PREVIEW_RUNTIME_SOURCE = String.raw`(function () {
       var author = decodeURIComponent(m[2]);
       if (method === 'PUT') follows[author] = true;
       else if (method === 'DELETE') follows[author] = false;
-      return { status: 200, body: { following: follows[author] === true } };
+      // The bucketed public follower count every caller gets when the site
+      // shows one (follows.publicCount): a fixed "20+" for a preview.
+      return {
+        status: 200,
+        body: {
+          following: follows[author] === true,
+          publicFollowers: { lowerBound: 20, display: '20+', label: '20+ followers' }
+        }
+      };
     }
     if (/^\/v2\/public\/publications\/[^/]+\/newsletter-subscriptions$/.test(path) && method === 'POST') {
       return { status: 202, body: {} };

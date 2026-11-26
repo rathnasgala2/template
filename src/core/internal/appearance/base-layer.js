@@ -701,6 +701,13 @@ export const GALA_BASE_COMPONENT_CSS = `
   .g-prose > section[aria-labelledby="g-faq-title"] > div { display: grid; gap: var(--gala-space-2); }
   .g-prose > section[aria-labelledby="g-faq-title"] h3 { margin: 0; font-size: 1.0625rem; line-height: 1.35; }
   @media print { .g-article-head > section[aria-labelledby="g-summary-title"], .g-prose > section[aria-labelledby="g-faq-title"] { break-inside: avoid-page; border-color: currentColor; background: none; } }
+  .g-prose > aside[data-gala-action] { display: grid; justify-items: start; gap: var(--gala-space-3); margin-block: var(--gala-space-8) var(--gala-space-6); padding: 1.25rem; border-radius: var(--gala-radius-large); border: var(--gala-border-width) solid var(--gala-color-border); background: var(--gala-color-surface-raised); color: var(--gala-color-text); max-width: 100%; overflow-wrap: anywhere; }
+  .g-prose > aside[data-gala-action] > p { margin: 0; color: var(--gala-color-text-muted); text-wrap: pretty; }
+  #g-post-action-title { margin: 0; font-size: clamp(1.25rem, 1.1rem + .6vw, 1.5rem); }
+  .g-prose > aside[data-gala-action="follow"]:not(:has(.g-follow:not([hidden]))) { display: none; }
+  .g-prose > aside[data-gala-action="newsletter"] { display: block; padding: 0; border: 0; background: none; }
+  .g-prose > aside[data-gala-action="newsletter"] .g-newsletter { max-width: none; padding-inline: 0; padding-block: 0; }
+  @media print { .g-prose > aside[data-gala-action] { break-inside: avoid-page; border-color: currentColor; background: none; } }
   .g-pager { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gala-space-4); }
   .g-pager-link { display: grid; align-content: start; gap: .4rem; padding: 1.1rem 1.25rem; border-radius: var(--gala-radius-medium); border: var(--gala-border-width) solid var(--gala-color-border); background: var(--gala-color-surface); transition: transform var(--gala-duration-base) var(--gala-ease-standard), border-color var(--gala-duration-base) var(--gala-ease-standard), box-shadow var(--gala-duration-base) var(--gala-ease-standard); }
   .g-pager-link:hover { border-color: var(--gala-color-text); transform: translate(var(--gala-lift-x), var(--gala-lift-y)); box-shadow: var(--gala-shadow-card-hover); }

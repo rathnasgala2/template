@@ -193,12 +193,20 @@ export function validateInteractionsModule(candidate) {
   boolean(counts.reactions, `${where}.config.publicCounts.reactions`);
   boolean(counts.comments, `${where}.config.publicCounts.comments`);
   if (hasFollows) {
+    // `publicCount` (schemas 3.56.0) is the one optional member.
+    const hasPublicCount =
+      typeof config.follows === 'object' &&
+      config.follows !== null &&
+      'publicCount' in config.follows;
     const follows = exactObject(
       config.follows,
-      ['enabled'],
+      ['enabled', ...(hasPublicCount ? ['publicCount'] : [])],
       `${where}.config.follows`,
     );
     boolean(follows.enabled, `${where}.config.follows.enabled`);
+    if (hasPublicCount) {
+      boolean(follows.publicCount, `${where}.config.follows.publicCount`);
+    }
   }
   return /** @type {import('../../../types/index.d.ts').InteractionsModule} */ (
     /** @type {unknown} */ ({ config, apiOrigin, appOrigin })
