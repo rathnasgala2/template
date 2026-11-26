@@ -191,18 +191,21 @@ test('the policy publishes figure attributes, the block grammar, the frame hosts
     'g-bookmark',
     'g-file',
     'g-poll',
+    'g-quote',
     'g-video',
   ]);
   assert.deepEqual(Object.keys(document.fencedBlocks.blocks), [
     'bookmark',
     'file',
     'poll',
+    'quote',
     'video',
   ]);
   assert.deepEqual(Object.keys(FENCED_BLOCKS), [
     'bookmark',
     'file',
     'poll',
+    'quote',
     'video',
   ]);
   assert.deepEqual(document.fencedBlocks.videoProviders, ['vimeo', 'youtube']);

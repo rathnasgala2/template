@@ -114,12 +114,12 @@ are processed and written once. Images use the base layer's existing `img`
 rules; no class is added. The front-matter `hero` renders as the article's cover
 `<figure>` above the body (`role: "decorative"` renders `alt=""`).
 
-### Fenced blocks: video, bookmark, file and poll cards
+### Fenced blocks: video, bookmark, file, poll and quote cards
 
-A fenced code block whose info string is `video`, `bookmark`, `file` or `poll`
-is a card instead of code. This is the authoring contract the App editor writes
-and reads back; the blocks are part of the render policy (`fencedBlocks` in
-`contracts/render-policy.jcs`), so a change to the grammar changes the policy
+A fenced code block whose info string is `video`, `bookmark`, `file`, `poll` or
+`quote` is a card instead of code. This is the authoring contract the App editor
+writes and reads back; the blocks are part of the render policy (`fencedBlocks`
+in `contracts/render-policy.jcs`), so a change to the grammar changes the policy
 identity.
 
 Grammar. The body is `key: value` lines. The value is the rest of the line,
@@ -188,6 +188,30 @@ sent to sign in as a like does; every failure leaves the list and is announced
 in the live region. The reader-visible sentences are in every message catalog
 (`pollTotalLabel`, `pollYourVoteLabel`, `pollChangeHintLabel`,
 `pollSavedLabel`). The interactive preview simulates the read and the vote.
+
+**Quotes.** A `quote` block is a testimonial: the words, then who said them:
+
+````markdown
+```quote
+text: The words the person said, on one line.
+name: Their real name
+role: Founder, Example Co
+url: https://example.com
+photo: images/people/jane.jpg
+```
+````
+
+Keys: `text` (1 to 600 characters) and `name` (1 to 80) are required; `role` (1
+to 80), `url` (`https://` only, no credentials, at most 2048 characters) and
+`photo` (a repository image path, resolved and inventoried exactly like a
+video's `poster`) are optional. Any other value makes the block malformed (a
+code block). It works in posts and pages, with no script. Stored and page form
+(escaped throughout, no class added to the public styling contract):
+`<figure class="g-quote" data-gala-block="quote"><blockquote><p>text</p></blockquote><figcaption>[<img src alt="">]<a href>name</a>, role</figcaption></figure>`
+(the name is plain text without a `url`; no `role` means no comma). The
+sanitizer needs no new attribute. The block adds no structured data (no
+`Review`, `AggregateRating` or `Quotation`); feeds and email fragments carry the
+same figure, and `llms-full.txt` shows the text and a line `— name, role`.
 
 Stored form (the body is language-neutral policy output): one
 `<figure class="g-video|g-bookmark|g-file" data-gala-block="video|bookmark|file">`

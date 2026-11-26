@@ -911,6 +911,12 @@ export const GALA_BASE_COMPONENT_CSS = `
   @media (prefers-reduced-motion: reduce) {
     .g-poll__bar { transition: none; }
   }
+  /* ---------- quote block (a testimonial: the quote, then who said it; the mark comes from the blockquote rule) ---------- */
+  .g-quote { display: grid; gap: var(--gala-space-3); min-width: 0; margin-block: 2em; }
+  .g-quote blockquote { margin: 0; }
+  .g-quote figcaption { display: flex; align-items: center; flex-wrap: wrap; gap: var(--gala-space-2); padding-inline-start: var(--gala-space-4); font-family: var(--gala-font-ui); font-size: .9375rem; line-height: 1.4; color: var(--gala-color-text-muted); overflow-wrap: anywhere; }
+  .g-quote figcaption a { color: var(--gala-color-text); font-weight: var(--gala-weight-ui); }
+  .g-quote figcaption img { flex: none; width: 2.75rem; height: 2.75rem; max-width: none; object-fit: cover; border-radius: 50%; border: var(--gala-border-card); }
   /* ---------- recommendations (the About page) ---------- */
   .g-recommendations { display: grid; gap: var(--gala-space-4); padding-block: var(--gala-space-8); }
   .g-recommendations__title { font-family: var(--gala-font-display); font-weight: var(--gala-weight-title); font-size: clamp(1.25rem, 1.1rem + .6vw, 1.5rem); }
