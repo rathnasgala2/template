@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [4.22.0] - 2026-11-27
+
 ### Added
 
 - **IndexNow key file.** Every site serves `<publication id>.txt` under its base
