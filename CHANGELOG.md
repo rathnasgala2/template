@@ -8,6 +8,14 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- **IndexNow key file.** Every site serves `<publication id>.txt` under its base
+  (the publication id plus a newline, `text/plain; charset=utf-8`), so
+  Galascribe can submit changed URLs to the IndexNow search engines after a
+  publish. It is a manifest asset, in no sitemap, search index, feed or
+  `llms.txt`.
+
 ## [4.21.1] - 2026-11-26
 
 ### Fixed

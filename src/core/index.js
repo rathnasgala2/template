@@ -194,6 +194,11 @@ import {
   markdownRoute,
 } from './internal/static-outputs.js';
 import { readMarkdownBody } from './internal/static-outputs-node.js';
+import {
+  indexNowKey,
+  indexNowKeyFileContent,
+  indexNowRoute,
+} from './internal/indexnow.js';
 import { buildSitemap } from './internal/sitemap.js';
 import { loadThemeAssets } from './internal/theme-assets.js';
 import {
@@ -625,6 +630,11 @@ export async function renderPublication(buildInput, options) {
       ? { rights: aiPolicy, licenseFileUrl: absoluteSiteUrl(LICENSE_ROUTE) }
       : {}),
   });
+  const indexNowKeyValue = indexNowKey(validatedInput.publication);
+  const indexNowFilePath = projectFixedAssetPath(
+    validatedInput.basePath,
+    indexNowRoute(indexNowKeyValue),
+  );
   const llmsFilePath = projectFixedAssetPath(
     validatedInput.basePath,
     LLMS_ROUTE,
@@ -743,6 +753,11 @@ export async function renderPublication(buildInput, options) {
             permalink: recommendationsFilePath,
           },
         ]),
+    {
+      virtualPath: 'indexnow-key.html',
+      content: indexNowKeyFileContent(indexNowKeyValue),
+      permalink: indexNowFilePath,
+    },
     { virtualPath: 'llms.html', content: llmsTxt, permalink: llmsFilePath },
     {
       virtualPath: 'llms-full.html',
@@ -852,6 +867,10 @@ export async function renderPublication(buildInput, options) {
     [
       recommendationsFilePath,
       { routeClass: 'asset', mediaType: 'application/json; charset=utf-8' },
+    ],
+    [
+      indexNowFilePath,
+      { routeClass: 'asset', mediaType: 'text/plain; charset=utf-8' },
     ],
     [
       llmsFilePath,

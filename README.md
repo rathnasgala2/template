@@ -869,6 +869,19 @@ single switch, byte for byte. With `aiRights`:
   theme and publish-toolchain package versions, source commit and build time,
   taken from the build input; a value the build input does not carry is omitted.
 
+### IndexNow key file
+
+Every site serves `<publication id>.txt` under its base (next to `sitemap.xml`,
+for example `/<id>.txt`, or `/<repo>/<id>.txt` on a project site), holding the
+publication id and one newline as `text/plain; charset=utf-8`. It is the key
+file for IndexNow, the protocol Bing, Yandex and other engines use to learn
+which URLs changed. The key is public by design and is the publication id; the
+file is an asset in the artifact manifest and is in no sitemap, search index,
+feed or `llms.txt`. Unlike `robots.txt` it is not hoisted to the host root, as a
+key under a path only proves that path. Galascribe submits the changed URLs
+after a publish. Previews do not draw it (it is not a page). A publication id
+that is not 8 to 128 letters, digits or dashes fails the build.
+
 ### Prism edition links
 
 Every `<a href>` in an edition page's body gets `rel="nofollow"`, merged with
